@@ -11,7 +11,7 @@ export default function Home() {
           documents, and internal knowledge through intelligent AI agents.
         </p>
         <button className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950">
-          Start Building
+          Launch KAFU AI
         </button>
       </section>
     </main>
