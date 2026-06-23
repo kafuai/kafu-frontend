@@ -2,7 +2,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-8">
       <section className="max-w-4xl text-center">
-        <p className="text-cyan-400 font-semibold mb-4">KAFU AI</p>
+        <p className="text-cyan-400 font-semibold mb-4">KAFU AI V1</p>
         <h1 className="text-5xl font-bold mb-6">
           AI Workforce Platform for Modern Companies
         </h1>
