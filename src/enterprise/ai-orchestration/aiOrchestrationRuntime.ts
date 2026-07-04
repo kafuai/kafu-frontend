@@ -1,57 +1,50 @@
-import { AIAgentProfile } from "./aiAgentTypes";
-import { assertValidAIAgentProfile } from "./aiAgentValidator";
+import { AIOrchestrationCapabilityRegistry } from "./aiOrchestrationCapabilityRegistry";
+import { AIOrchestrationContext } from "./aiOrchestrationContext";
+import { AIOrchestrationPlan } from "./aiOrchestrationPlanner";
+import {
+  addAIOrchestrationStepResult,
+  completeAIOrchestrationResult,
+  createAIOrchestrationResult,
+  AIOrchestrationResult,
+} from "./aiOrchestrationResult";
+import { createAIOrchestrationRoutePlan } from "./aiOrchestrationRoutePlan";
 
-export class AIAgentRegistry {
-  private readonly agents = new Map<string, AIAgentProfile>();
+export interface AIOrchestrationRuntimeInput {
+  executionId: string;
+  plan: AIOrchestrationPlan;
+  context: AIOrchestrationContext;
+  registry: AIOrchestrationCapabilityRegistry;
+}
 
-  register(profile: AIAgentProfile): AIAgentProfile {
-    assertValidAIAgentProfile(profile);
+export function runAIOrchestrationRuntime(
+  input: AIOrchestrationRuntimeInput,
+): AIOrchestrationResult {
+  const routePlan = createAIOrchestrationRoutePlan(
+    input.plan,
+    input.executionId,
+    input.context,
+    input.registry,
+  );
 
-    if (this.agents.has(profile.id)) {
-      throw new Error(`AI agent already exists: ${profile.id}`);
-    }
+  let result = createAIOrchestrationResult(
+    input.executionId,
+    input.plan.workflowId,
+    input.plan.organizationId,
+  );
 
-    this.agents.set(profile.id, profile);
-    return profile;
+  for (const decision of routePlan.decisions) {
+    result = addAIOrchestrationStepResult(result, {
+      stepId: decision.stepId,
+      success: decision.routed,
+      outputs: {
+        capabilityId: decision.capabilityId,
+        routed: decision.routed,
+      },
+      warnings: decision.routed ? [] : ["Step could not be routed."],
+      errors: decision.routed ? [] : ["No matching orchestration capability found."],
+      durationMs: 0,
+    });
   }
 
-  upsert(profile: AIAgentProfile): AIAgentProfile {
-    assertValidAIAgentProfile(profile);
-    this.agents.set(profile.id, profile);
-    return profile;
-  }
-
-  get(agentId: string): AIAgentProfile | undefined {
-    return this.agents.get(agentId);
-  }
-
-  require(agentId: string): AIAgentProfile {
-    const profile = this.get(agentId);
-
-    if (!profile) {
-      throw new Error(`AI agent not found: ${agentId}`);
-    }
-
-    return profile;
-  }
-
-  listByOrganization(organizationId: string): AIAgentProfile[] {
-    return Array.from(this.agents.values()).filter(
-      (agent) => agent.organizationId === organizationId,
-    );
-  }
-
-  listActiveByOrganization(organizationId: string): AIAgentProfile[] {
-    return this.listByOrganization(organizationId).filter(
-      (agent) => agent.status === "active",
-    );
-  }
-
-  remove(agentId: string): boolean {
-    return this.agents.delete(agentId);
-  }
-
-  clear(): void {
-    this.agents.clear();
-  }
+  return completeAIOrchestrationResult(result);
 }
