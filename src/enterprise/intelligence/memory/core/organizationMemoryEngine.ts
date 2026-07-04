@@ -3,15 +3,18 @@ import {
   OrganizationMemoryRecordType,
   OrganizationMemoryStatus,
 } from "../types/organizationMemoryTypes";
+
 import {
   OrganizationMemoryRecord,
   OrganizationMemorySnapshot,
 } from "../models/organizationMemoryModel";
+
 import { OrganizationMemoryValidator } from "../utils/organizationMemoryValidator";
 
 export class OrganizationMemoryEngine {
   private status: OrganizationMemoryStatus = "idle";
   private readonly validator = new OrganizationMemoryValidator();
+
   private readonly records = new Map<string, OrganizationMemoryRecord[]>();
 
   getStatus(): OrganizationMemoryStatus {
@@ -32,8 +35,10 @@ export class OrganizationMemoryEngine {
       throw new Error("Invalid organization memory context.");
     }
 
+    const now = Date.now();
+
     const memoryRecord: OrganizationMemoryRecord = {
-      id: `${context.organizationId}-memory-${Date.now()}`,
+      id: `${context.organizationId}-mem-${now}`,
       organizationId: context.organizationId,
       type,
       title,
@@ -41,7 +46,7 @@ export class OrganizationMemoryEngine {
       priority: context.priority,
       confidence: context.confidence,
       tags,
-      createdAt: new Date(),
+      createdAt: now,
     };
 
     if (!this.validator.validateRecord(memoryRecord)) {
@@ -60,10 +65,12 @@ export class OrganizationMemoryEngine {
   snapshot(organizationId: string): OrganizationMemorySnapshot {
     this.status = "retrieving";
 
+    const records = this.records.get(organizationId) ?? [];
+
     const snapshot: OrganizationMemorySnapshot = {
       organizationId,
-      records: this.records.get(organizationId) ?? [],
-      lastUpdated: new Date(),
+      records,
+      lastUpdated: Date.now(),
     };
 
     if (!this.validator.validateSnapshot(snapshot)) {
@@ -76,9 +83,7 @@ export class OrganizationMemoryEngine {
     return snapshot;
   }
 
-  getRecords(
-    organizationId: string,
-  ): OrganizationMemoryRecord[] {
+  getRecords(organizationId: string): OrganizationMemoryRecord[] {
     return [...(this.records.get(organizationId) ?? [])];
   }
 
@@ -87,23 +92,30 @@ export class OrganizationMemoryEngine {
     type: OrganizationMemoryRecordType,
   ): OrganizationMemoryRecord[] {
     return this.getRecords(organizationId).filter(
-      (record) => record.type === type,
+      (r) => r.type === type,
     );
   }
 
+  // 🔥 IMPROVED SEARCH (simple scoring instead of raw includes)
   search(
     organizationId: string,
     keyword: string,
   ): OrganizationMemoryRecord[] {
-    const query = keyword.trim().toLowerCase();
+    const query = keyword.toLowerCase().trim();
 
-    return this.getRecords(organizationId).filter((record) => {
-      return (
-        record.title.toLowerCase().includes(query) ||
-        record.description.toLowerCase().includes(query) ||
-        record.tags.some((tag) => tag.toLowerCase().includes(query))
-      );
-    });
+    return this.getRecords(organizationId)
+      .map((record) => {
+        let score = 0;
+
+        if (record.title.toLowerCase().includes(query)) score += 3;
+        if (record.description.toLowerCase().includes(query)) score += 2;
+        if (record.tags.some(t => t.toLowerCase().includes(query))) score += 1;
+
+        return { record, score };
+      })
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map((r) => r.record);
   }
 
   count(organizationId: string): number {

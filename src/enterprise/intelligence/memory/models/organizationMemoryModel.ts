@@ -13,11 +13,15 @@ export interface OrganizationMemoryRecord {
   priority: EnterpriseIntelligencePriority;
   confidence: EnterpriseIntelligenceConfidence;
   tags: string[];
-  createdAt: Date;
+
+  // FIX: timestamp instead of Date
+  createdAt: number;
 }
 
 export interface OrganizationMemorySnapshot {
   organizationId: string;
   records: OrganizationMemoryRecord[];
-  lastUpdated: Date;
+
+  // FIX: timestamp instead of Date
+  lastUpdated: number;
 }

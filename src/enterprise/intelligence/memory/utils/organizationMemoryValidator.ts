@@ -6,33 +6,28 @@ import { OrganizationMemoryContext } from "../types/organizationMemoryTypes";
 
 export class OrganizationMemoryValidator {
   validateContext(context: OrganizationMemoryContext): boolean {
-    return Boolean(
-      context.organizationId &&
-        context.domain &&
-        context.priority &&
-        context.confidence,
+    return (
+      !!context.organizationId &&
+      !!context.domain &&
+      !!context.priority &&
+      !!context.confidence
     );
   }
 
   validateRecord(record: OrganizationMemoryRecord): boolean {
-    return Boolean(
-      record.id &&
-        record.organizationId &&
-        record.type &&
-        record.title &&
-        record.description &&
-        record.priority &&
-        record.confidence &&
-        Array.isArray(record.tags) &&
-        record.createdAt,
-    );
+    if (!record.organizationId || !record.id) return false;
+    if (!record.title || !record.description) return false;
+    if (!Array.isArray(record.tags)) return false;
+    if (typeof record.createdAt !== "number") return false;
+
+    return true;
   }
 
   validateSnapshot(snapshot: OrganizationMemorySnapshot): boolean {
-    return Boolean(
-      snapshot.organizationId &&
-        Array.isArray(snapshot.records) &&
-        snapshot.lastUpdated,
+    return (
+      !!snapshot.organizationId &&
+      Array.isArray(snapshot.records) &&
+      typeof snapshot.lastUpdated === "number"
     );
   }
 }
