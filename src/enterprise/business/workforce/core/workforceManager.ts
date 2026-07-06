@@ -14,7 +14,7 @@ export class WorkforceManager {
     const employee: EmployeeProfile = {
       ...input,
       status: "onboarding",
-      hiredAt: Date.now(),
+      hiredAt: input.hireDate ?? Date.now(),
     };
 
     this.employees.set(employee.id, employee);

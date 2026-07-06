@@ -1,14 +1,23 @@
 import { EmployeeStatus } from "../types/workforceTypes";
 
 export interface EmployeeProfile {
-  id: string;
-  organizationId: string;
-  employeeNumber: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  department: string;
-  position: string;
-  status: EmployeeStatus;
-  hiredAt: number;
+  readonly id: string;
+
+  readonly organizationId: string;
+
+  readonly employeeNumber: string;
+
+  readonly firstName: string;
+  readonly lastName: string;
+
+  readonly email: string;
+
+  readonly departmentId: string;
+  readonly positionId: string;
+
+  readonly managerEmployeeId?: string;
+
+  readonly status: EmployeeStatus;
+
+  readonly hiredAt: number;
 }

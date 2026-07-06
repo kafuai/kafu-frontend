@@ -6,12 +6,20 @@ export type EmployeeStatus =
   | "leave";
 
 export interface CreateEmployeeInput {
-  id: string;
-  organizationId: string;
-  employeeNumber: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  department: string;
-  position: string;
+  readonly id: string;
+  readonly organizationId: string;
+
+  readonly employeeNumber: string;
+
+  readonly firstName: string;
+  readonly lastName: string;
+
+  readonly email: string;
+
+  readonly departmentId: string;
+  readonly positionId: string;
+
+  readonly managerEmployeeId?: string;
+
+  readonly hireDate?: number;
 }
