@@ -11,13 +11,17 @@ export class OrganizationManager {
       throw new Error("Invalid organization input.");
     }
 
+    const now = Date.now();
+
     const profile: BusinessOrganizationProfile = {
       ...input,
       status: "onboarding",
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     };
 
     this.organizations.set(profile.id, profile);
+
     return profile;
   }
 
@@ -39,9 +43,11 @@ export class OrganizationManager {
     const updated: BusinessOrganizationProfile = {
       ...organization,
       status: "active",
+      updatedAt: Date.now(),
     };
 
     this.organizations.set(id, updated);
+
     return updated;
   }
 
