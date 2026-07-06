@@ -5,3 +5,4 @@ export * from "./leave";
 export * from "./scheduling";
 export * from "./performance";
 export * from "./kpi";
+export * from "./departments";
