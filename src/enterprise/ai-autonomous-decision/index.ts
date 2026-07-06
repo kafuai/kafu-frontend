@@ -20,3 +20,9 @@ export * from "./aiDecisionReporter";
 export * from "./aiDecisionEvents";
 
 export * from "./aiDecisionRuntime";
+
+export * from "./aiDecisionImpactAnalysis";
+export * from "./aiDecisionExplanation";
+export * from "./aiDecisionGovernance";
+export * from "./aiDecisionTrace";
+export * from "./aiDecisionReview";
