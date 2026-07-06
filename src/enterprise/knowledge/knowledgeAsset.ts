@@ -15,6 +15,7 @@ export interface CreateKnowledgeAssetInput {
   sourceId: string;
   tenantId: string;
   ownerId: string;
+  organizationId?: string;
   sensitivity?: KnowledgeSensitivity;
   confidence?: KnowledgeConfidenceLevel;
   status?: KnowledgeAssetStatus;
@@ -29,6 +30,7 @@ export function createKnowledgeAsset(
   const metadata: KnowledgeMetadata = {
     tenantId: input.tenantId,
     ownerId: input.ownerId,
+    organizationId: input.organizationId,
     createdAt: now,
     updatedAt: now,
     version: 1,

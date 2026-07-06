@@ -30,6 +30,7 @@ export type KnowledgeConfidenceLevel =
 export interface KnowledgeMetadata {
   ownerId: string;
   tenantId: string;
+  organizationId?: string;
   createdAt: string;
   updatedAt: string;
   version: number;
