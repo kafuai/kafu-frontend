@@ -13,3 +13,7 @@ export * from "./aiAutonomousLearningRegistry";
 export * from "./aiAutonomousLearningRuntime";
 export * from "./aiAutonomousLearningReporter";
 export * from "./aiAutonomousLearningEvents";
+
+export * from "./aiEnterpriseLearningProfile";
+export * from "./aiEnterpriseLearningReadiness";
+export * from "./aiEnterpriseLearningSummary";
