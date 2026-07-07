@@ -19,6 +19,7 @@ function baseRiskScore(riskLevel: AIDecisionRiskLevel): number {
       return 0.45;
     case "high":
       return 0.75;
+    case "critical":
     case "severe":
       return 0.95;
   }
@@ -31,11 +32,11 @@ export function assessAIDecisionRisk(
   const blockers: string[] = [];
   const warnings: string[] = [];
 
-  if (option.riskLevel === "severe") {
-    blockers.push("Decision option has severe risk and requires escalation.");
+  if (option.riskLevel === "critical" || option.riskLevel === "severe") {
+    blockers.push("Decision option has critical or severe risk and requires escalation.");
   }
 
-  if (option.feasibility < 0.4) {
+  if ((option.feasibility ?? 1) < 0.4) {
     blockers.push("Decision option feasibility is below enterprise threshold.");
   }
 

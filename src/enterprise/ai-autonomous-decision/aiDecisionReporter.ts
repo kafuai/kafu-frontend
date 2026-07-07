@@ -1,39 +1,33 @@
-import { AIDecisionEngineResult } from "./aiDecisionEngine";
+import { AIDecisionContext } from "./aiDecisionContext";
+import { AIDecisionSelection } from "./aiDecisionSelector";
+import { AIDecisionValidationResult } from "./aiDecisionValidation";
 
 export interface AIDecisionReport {
-  contextId: string;
+  id: string;
   organizationId: string;
   objective: string;
+  selectedOptionTitle?: string;
   selectedOptionId?: string;
-  outcome: string;
-  confidenceScore?: number;
-  riskScore?: number;
-  summary: string;
-  generatedAt: Date;
+  totalOptions: number;
+  isValid: boolean;
+  issuesCount: number;
+  generatedAt: string;
 }
 
 export function createAIDecisionReport(
-  result: AIDecisionEngineResult,
+  context: AIDecisionContext,
+  selection: AIDecisionSelection,
+  validation: AIDecisionValidationResult,
 ): AIDecisionReport {
-  const selectedOptionId = result.selection.selectedOption?.id;
-
-  const confidence = result.confidenceAssessments.find(
-    (item) => item.optionId === selectedOptionId,
-  );
-
-  const risk = result.riskAssessments.find(
-    (item) => item.optionId === selectedOptionId,
-  );
-
   return {
-    contextId: result.context.id,
-    organizationId: result.context.organizationId,
-    objective: result.context.objective,
-    selectedOptionId,
-    outcome: result.outcome.outcome,
-    confidenceScore: confidence?.confidenceScore,
-    riskScore: risk?.riskScore,
-    summary: result.recommendation.summary,
-    generatedAt: new Date(),
+    id: `decision-report-${context.id}`,
+    organizationId: context.organizationId,
+    objective: context.objective,
+    selectedOptionTitle: selection.selectedOption?.title,
+    selectedOptionId: selection.selectedOption?.id,
+    totalOptions: context.options.length,
+    isValid: validation.isValid,
+    issuesCount: validation.issues.length,
+    generatedAt: new Date().toISOString(),
   };
 }

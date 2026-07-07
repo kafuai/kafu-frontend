@@ -1,12 +1,12 @@
 import { AIDecisionCriterion } from "./aiDecisionCriteria";
 import { AIDecisionOption } from "./aiDecisionOption";
-import { AIDecisionScore } from "./aiAutonomousDecisionTypes";
+import { AIDecisionCriterionScoreValue } from "./aiAutonomousDecisionTypes";
 
 export interface AIDecisionCriterionScore {
   criterionId: string;
   criterionName: string;
   weight: number;
-  score: AIDecisionScore;
+  score: AIDecisionCriterionScoreValue;
   weightedScore: number;
 }
 
@@ -24,12 +24,19 @@ function clampScore(value: number): number {
 function scoreByCriterion(
   option: AIDecisionOption,
   criterion: AIDecisionCriterion,
-): AIDecisionScore {
+): AIDecisionCriterionScoreValue {
   switch (criterion.type) {
+    case "impact":
     case "business_value":
       return {
-        value: clampScore(option.expectedValue),
-        reason: "Expected value contribution evaluated against business value.",
+        value: clampScore(option.expectedValue ?? option.expectedImpact),
+        reason: "Expected enterprise value and impact were evaluated.",
+      };
+
+    case "confidence":
+      return {
+        value: clampScore(option.confidence),
+        reason: "Confidence score reflects evidence strength.",
       };
 
     case "cost":
@@ -38,7 +45,14 @@ function scoreByCriterion(
         reason: "Lower estimated cost improves the decision score.",
       };
 
+    case "speed":
+      return {
+        value: clampScore(1 - option.timeToValueDays / 365),
+        reason: "Faster time to value improves the decision score.",
+      };
+
     case "feasibility":
+    case "operational_feasibility":
       return {
         value: clampScore(option.feasibility),
         reason: "Feasibility score reflects implementation likelihood.",
@@ -83,8 +97,9 @@ function scoreByCriterion(
 
     case "compliance":
       return {
-        value: option.riskLevel === "severe" ? 0.2 : 0.8,
-        reason: "Compliance score is reduced for severe risk decisions.",
+        value:
+          option.riskLevel === "severe" || option.riskLevel === "critical" ? 0.2 : 0.8,
+        reason: "Compliance score is reduced for critical or severe risk decisions.",
       };
   }
 }

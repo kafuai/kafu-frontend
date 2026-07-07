@@ -17,7 +17,7 @@ export interface AIDecisionOutcomeResolution {
 
 function isRiskAllowed(
   riskLevel: AIDecisionRiskLevel,
-  allowedRiskLevels: AIDecisionRiskLevel[],
+  allowedRiskLevels: AIDecisionRiskLevel[] = ["low", "medium", "high"],
 ): boolean {
   return allowedRiskLevels.includes(riskLevel);
 }
@@ -67,23 +67,27 @@ export function resolveAIDecisionOutcome(
     };
   }
 
-  if (confidence.confidenceScore < policy.minimumConfidence) {
+  if (confidence.confidenceScore < (policy.minimumConfidence ?? 0.6)) {
     return {
       optionId: selectedOption.id,
-      outcome: "defer",
+      outcome: "deferred",
       reason: "Decision confidence is below policy threshold.",
       requiresHumanApproval: true,
       resolvedAt: new Date(),
     };
   }
 
+  const requiresHumanApproval =
+    (policy.requireHumanApprovalForCritical ?? true) &&
+    selectedOption.priority === "critical";
+
   return {
     optionId: selectedOption.id,
-    outcome: policy.requiresHumanApproval ? "escalate" : "approve",
-    reason: policy.requiresHumanApproval
+    outcome: requiresHumanApproval ? "escalate" : "approved",
+    reason: requiresHumanApproval
       ? "Policy requires human approval before autonomous decision execution."
       : "Decision passed policy gates and is approved.",
-    requiresHumanApproval: policy.requiresHumanApproval,
+    requiresHumanApproval,
     resolvedAt: new Date(),
   };
 }

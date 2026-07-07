@@ -1,43 +1,67 @@
-import {
-  AIDecisionPriority,
-  AIDecisionRiskLevel,
-} from "./aiAutonomousDecisionTypes";
+import { AIAutonomousDecisionRiskLevel } from "./aiAutonomousDecisionTypes";
+import { AIDecisionOption } from "./aiDecisionOption";
 
 export interface AIDecisionPolicy {
   id: string;
   name: string;
-  description: string;
-  minimumScore: number;
-  minimumConfidence: number;
-  allowedRiskLevels: AIDecisionRiskLevel[];
-  autoApprovePriorities: AIDecisionPriority[];
-  requiresHumanApproval: boolean;
-  createdAt: Date;
-}
+  description?: string;
 
-export interface CreateAIDecisionPolicyInput {
-  id: string;
-  name: string;
-  description: string;
   minimumScore?: number;
   minimumConfidence?: number;
-  allowedRiskLevels?: AIDecisionRiskLevel[];
-  autoApprovePriorities?: AIDecisionPriority[];
-  requiresHumanApproval?: boolean;
+
+  allowedRiskLevels?: AIAutonomousDecisionRiskLevel[];
+  maxAllowedRiskLevel?: AIAutonomousDecisionRiskLevel;
+
+  requireHumanApprovalForCritical?: boolean;
+
+  createdAt?: string;
+  createdBy?: string;
 }
 
 export function createAIDecisionPolicy(
-  input: CreateAIDecisionPolicyInput,
+  policy: Omit<AIDecisionPolicy, "createdAt">,
 ): AIDecisionPolicy {
   return {
-    id: input.id,
-    name: input.name,
-    description: input.description,
-    minimumScore: input.minimumScore ?? 0.6,
-    minimumConfidence: input.minimumConfidence ?? 0.55,
-    allowedRiskLevels: input.allowedRiskLevels ?? ["low", "medium"],
-    autoApprovePriorities: input.autoApprovePriorities ?? ["low", "medium"],
-    requiresHumanApproval: input.requiresHumanApproval ?? true,
-    createdAt: new Date(),
+    id: policy.id,
+    name: policy.name,
+    description: policy.description,
+
+    minimumScore: policy.minimumScore ?? 70,
+    minimumConfidence: policy.minimumConfidence ?? 0.6,
+
+    allowedRiskLevels:
+      policy.allowedRiskLevels ?? ["low", "medium", "high"],
+
+    maxAllowedRiskLevel:
+      policy.maxAllowedRiskLevel ?? "high",
+
+    requireHumanApprovalForCritical:
+      policy.requireHumanApprovalForCritical ?? true,
+
+    createdBy: policy.createdBy,
+    createdAt: new Date().toISOString(),
   };
+}
+
+export function isAIDecisionOptionAllowedByPolicy(
+  option: AIDecisionOption,
+  policy: AIDecisionPolicy,
+): boolean {
+  const minimumConfidence = policy.minimumConfidence ?? 0.6;
+
+  const allowedRiskLevels =
+    policy.allowedRiskLevels ?? ["low", "medium", "high"];
+
+  if (option.confidence < minimumConfidence) {
+    return false;
+  }
+
+  if (
+    (policy.requireHumanApprovalForCritical ?? true) &&
+    option.priority === "critical"
+  ) {
+    return false;
+  }
+
+  return allowedRiskLevels.includes(option.riskLevel);
 }

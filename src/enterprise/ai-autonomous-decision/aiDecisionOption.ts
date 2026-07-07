@@ -1,43 +1,31 @@
 import {
-  AIDecisionPriority,
-  AIDecisionRiskLevel,
-  AIDecisionStatus,
+  AIAutonomousDecisionPriority,
+  AIAutonomousDecisionRiskLevel,
+  AIAutonomousDecisionStatus,
 } from "./aiAutonomousDecisionTypes";
 
 export interface AIDecisionOption {
   id: string;
   title: string;
   description: string;
-  priority: AIDecisionPriority;
-  riskLevel: AIDecisionRiskLevel;
+
+  status?: AIAutonomousDecisionStatus;
+  priority: AIAutonomousDecisionPriority;
+  riskLevel: AIAutonomousDecisionRiskLevel;
+
+  expectedImpact: number;
   expectedValue: number;
-  estimatedCost: number;
+  confidence: number;
   feasibility: number;
   urgency: number;
-  status: AIDecisionStatus;
-  createdAt: Date;
-  metadata?: Record<string, unknown>;
-}
 
-export interface CreateAIDecisionOptionInput {
-  id: string;
-  title: string;
-  description: string;
-  priority: AIDecisionPriority;
-  riskLevel: AIDecisionRiskLevel;
-  expectedValue: number;
+  cost: number;
   estimatedCost: number;
-  feasibility: number;
-  urgency: number;
-  metadata?: Record<string, unknown>;
-}
 
-export function createAIDecisionOption(
-  input: CreateAIDecisionOptionInput,
-): AIDecisionOption {
-  return {
-    ...input,
-    status: "draft",
-    createdAt: new Date(),
-  };
+  timeToValueDays: number;
+  estimatedDurationDays?: number;
+
+  benefits?: string[];
+  risks?: string[];
+  dependencies?: string[];
 }

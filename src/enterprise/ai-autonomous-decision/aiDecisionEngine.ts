@@ -113,7 +113,7 @@ export function runAIDecisionEngine(
     riskAssessments,
     minimumScore: policy.minimumScore,
     minimumConfidence: policy.minimumConfidence,
-    allowHighRisk: policy.allowedRiskLevels.includes("high"),
+    allowHighRisk: (policy.allowedRiskLevels ?? ["low", "medium", "high"]).includes("high"),
   });
 
   const selectedConfidence = confidenceAssessments.find(

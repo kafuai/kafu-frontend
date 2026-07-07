@@ -1,36 +1,64 @@
-export type AIDecisionPriority = "low" | "medium" | "high" | "critical";
-
-export type AIDecisionRiskLevel = "low" | "medium" | "high" | "severe";
-
-export type AIDecisionConfidenceLevel = "low" | "medium" | "high" | "very_high";
-
-export type AIDecisionStatus =
+export type AIAutonomousDecisionStatus =
   | "draft"
+  | "evaluating"
   | "evaluated"
   | "selected"
+  | "approved"
   | "rejected"
   | "deferred"
-  | "blocked";
+  | "blocked"
+  | "executed"
+  | "cancelled";
+
+export type AIAutonomousDecisionPriority =
+  | "low"
+  | "medium"
+  | "high"
+  | "critical";
+
+export type AIAutonomousDecisionRiskLevel =
+  | "low"
+  | "medium"
+  | "high"
+  | "critical"
+  | "severe";
+
+export type AIDecisionRiskLevel = AIAutonomousDecisionRiskLevel;
+
+export type AIDecisionConfidenceLevel =
+  | "low"
+  | "medium"
+  | "high"
+  | "very_high";
+
+export type AIDecisionApprovalMode =
+  | "autonomous"
+  | "human_review"
+  | "executive_approval";
 
 export type AIDecisionOutcome =
+  | "approved"
   | "approve"
+  | "rejected"
   | "reject"
+  | "deferred"
   | "defer"
+  | "requires_review"
+  | "requires_mitigation"
+  | "request_more_data"
   | "escalate"
-  | "request_more_data";
+  | "blocked"
+  | "cancelled";
 
-export type AIDecisionCriterionType =
-  | "business_value"
-  | "strategic_alignment"
-  | "risk"
-  | "cost"
-  | "feasibility"
-  | "urgency"
-  | "customer_impact"
-  | "operational_impact"
-  | "compliance";
-
-export interface AIDecisionScore {
+export interface AIDecisionCriterionScoreValue {
   value: number;
   reason: string;
+}
+
+export interface AIAutonomousDecisionMetadata {
+  organizationId: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+  tags?: string[];
 }
