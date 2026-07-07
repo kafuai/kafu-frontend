@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -28,6 +28,7 @@ import {
 } from "@/lib/executive-intelligence";
 
 import { buildExecutiveSummary } from "@/lib/executive-summary";
+import { buildDashboardEnterpriseIntelligence } from "../../src/product/dashboard";
 
 type Company = {
   id: string;
@@ -95,7 +96,7 @@ export default function DashboardPage() {
       setPipeline(pipelineData || []);
 
       if (!companyId) {
-        setMessage("لم يتم العثور على الشركة الحالية. يرجى البدء من Assessment.");
+        setMessage("ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط§ظ„ط´ط±ظƒط© ط§ظ„ط­ط§ظ„ظٹط©. ظٹط±ط¬ظ‰ ط§ظ„ط¨ط¯ط، ظ…ظ† Assessment.");
         setLoading(false);
         return;
       }
@@ -107,7 +108,7 @@ export default function DashboardPage() {
         .single();
 
       if (companyError) {
-        setMessage("حدث خطأ أثناء تحميل بيانات الشركة: " + companyError.message);
+        setMessage("ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط´ط±ظƒط©: " + companyError.message);
         setLoading(false);
         return;
       }
@@ -119,7 +120,7 @@ export default function DashboardPage() {
         .order("question_order", { ascending: true });
 
       if (answersError) {
-        setMessage("حدث خطأ أثناء تحميل إجابات Discovery: " + answersError.message);
+        setMessage("ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، طھط­ظ…ظٹظ„ ط¥ط¬ط§ط¨ط§طھ Discovery: " + answersError.message);
         setLoading(false);
         return;
       }
@@ -168,6 +169,30 @@ export default function DashboardPage() {
     ]
   );
 
+
+  const enterpriseIntelligence = useMemo(
+    () =>
+      company
+        ? buildDashboardEnterpriseIntelligence({
+            organizationId: company.id,
+            companyName: company.name,
+            industry: company.industry,
+            country: company.country,
+            employeeCount: company.employee_count,
+            discoveryAnswersCount: answers.length,
+            readinessScore: readinessNumber,
+            corporateBrainScore: corporateBrainNumber,
+            overdueLeads: pipelineMetrics.overdueLeads,
+          })
+        : null,
+    [
+      company,
+      answers.length,
+      readinessNumber,
+      corporateBrainNumber,
+      pipelineMetrics.overdueLeads,
+    ]
+  );
   const executiveCards = useMemo(
     () =>
       buildExecutiveCards({
@@ -223,19 +248,19 @@ export default function DashboardPage() {
           <p className="font-bold text-emerald-300">KAFU Executive Dashboard</p>
 
           <h1 className="mt-4 text-5xl font-black leading-tight">
-            لوحة القيادة التنفيذية
+            ظ„ظˆط­ط© ط§ظ„ظ‚ظٹط§ط¯ط© ط§ظ„طھظ†ظپظٹط°ظٹط©
           </h1>
 
           <p className="mt-6 max-w-5xl text-xl leading-9 text-slate-300">
-            هذه الصفحة تلخص للإدارة قيمة KAFU AI بناءً على بيانات الشركة
-            الحالية، إجابات Discovery، جاهزية Corporate Brain، والفريق الرقمي
-            المقترح.
+            ظ‡ط°ظ‡ ط§ظ„طµظپط­ط© طھظ„ط®طµ ظ„ظ„ط¥ط¯ط§ط±ط© ظ‚ظٹظ…ط© KAFU AI ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط´ط±ظƒط©
+            ط§ظ„ط­ط§ظ„ظٹط©طŒ ط¥ط¬ط§ط¨ط§طھ DiscoveryطŒ ط¬ط§ظ‡ط²ظٹط© Corporate BrainطŒ ظˆط§ظ„ظپط±ظٹظ‚ ط§ظ„ط±ظ‚ظ…ظٹ
+            ط§ظ„ظ…ظ‚طھط±ط­.
           </p>
         </section>
 
         {loading && (
           <section className="mt-10 rounded-3xl border border-slate-700 bg-white p-10 text-center text-slate-900 shadow-xl">
-            <p className="text-xl font-bold">جاري تحميل Executive Dashboard...</p>
+            <p className="text-xl font-bold">ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ Executive Dashboard...</p>
           </section>
         )}
 
@@ -247,7 +272,7 @@ export default function DashboardPage() {
               href="/assessment"
               className="mt-6 inline-block rounded-2xl bg-slate-900 px-8 py-4 font-bold text-white"
             >
-              العودة إلى Assessment
+              ط§ظ„ط¹ظˆط¯ط© ط¥ظ„ظ‰ Assessment
             </Link>
           </section>
         )}
@@ -255,6 +280,29 @@ export default function DashboardPage() {
         {!loading && !message && (
           <>
             <ExecutiveCards cards={executiveCards} />
+
+            {enterpriseIntelligence && (
+              <section className="mt-8 rounded-3xl border border-emerald-500/20 bg-emerald-50 p-8 text-slate-900 shadow-xl">
+                <h2 className="text-2xl font-bold">Enterprise Intelligence</h2>
+
+                <div className="mt-6 grid gap-6 lg:grid-cols-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-500">Reasoning</p>
+                    <p className="mt-2 font-bold">{enterpriseIntelligence.reasoningSummary}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-slate-500">Executive Decision</p>
+                    <p className="mt-2 font-bold">{enterpriseIntelligence.decisionTitle}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-slate-500">Recommendation</p>
+                    <p className="mt-2 font-bold">{enterpriseIntelligence.recommendationSummary}</p>
+                  </div>
+                </div>
+              </section>
+            )}
 
             <section className="mt-10 grid gap-6 lg:grid-cols-3">
               <ExecutiveSummaryCard summary={executiveSummary} />
@@ -303,21 +351,21 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-bold">Sales Pipeline</h2>
 
               <p className="mt-2 text-slate-600">
-                متابعة العملاء من التسجيل حتى التواصل، الاجتماع، العرض، والإغلاق.
+                ظ…طھط§ط¨ط¹ط© ط§ظ„ط¹ظ…ظ„ط§ط، ظ…ظ† ط§ظ„طھط³ط¬ظٹظ„ ط­طھظ‰ ط§ظ„طھظˆط§طµظ„طŒ ط§ظ„ط§ط¬طھظ…ط§ط¹طŒ ط§ظ„ط¹ط±ط¶طŒ ظˆط§ظ„ط¥ط؛ظ„ط§ظ‚.
               </p>
 
               <div className="mt-6 overflow-x-auto">
                 <table className="w-full text-right">
                   <thead>
                     <tr className="border-b text-slate-500">
-                      <th className="py-3">الشركة</th>
-                      <th className="py-3">المندوب</th>
-                      <th className="py-3">الحالة</th>
-                      <th className="py-3">تغيير الحالة</th>
-                      <th className="py-3">قيمة الفرصة</th>
+                      <th className="py-3">ط§ظ„ط´ط±ظƒط©</th>
+                      <th className="py-3">ط§ظ„ظ…ظ†ط¯ظˆط¨</th>
+                      <th className="py-3">ط§ظ„ط­ط§ظ„ط©</th>
+                      <th className="py-3">طھط؛ظٹظٹط± ط§ظ„ط­ط§ظ„ط©</th>
+                      <th className="py-3">ظ‚ظٹظ…ط© ط§ظ„ظپط±طµط©</th>
                       <th className="py-3">SLA</th>
-                      <th className="py-3">الشخص المسؤول</th>
-                      <th className="py-3">الجوال</th>
+                      <th className="py-3">ط§ظ„ط´ط®طµ ط§ظ„ظ…ط³ط¤ظˆظ„</th>
+                      <th className="py-3">ط§ظ„ط¬ظˆط§ظ„</th>
                     </tr>
                   </thead>
 
@@ -379,7 +427,7 @@ export default function DashboardPage() {
                     {pipeline.length === 0 && (
                       <tr>
                         <td colSpan={8} className="py-8 text-center text-slate-500">
-                          لا توجد Leads في Sales Pipeline بعد.
+                          ظ„ط§ طھظˆط¬ط¯ Leads ظپظٹ Sales Pipeline ط¨ط¹ط¯.
                         </td>
                       </tr>
                     )}
@@ -391,12 +439,12 @@ export default function DashboardPage() {
             <section className="mt-12 flex flex-col justify-between gap-6 rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-10 md:flex-row md:items-center">
               <div>
                 <h3 className="text-3xl font-bold">
-                  Executive Intelligence Layer جاهز للتفعيل
+                  Executive Intelligence Layer ط¬ط§ظ‡ط² ظ„ظ„طھظپط¹ظٹظ„
                 </h3>
 
                 <p className="mt-4 max-w-3xl text-lg leading-9 text-slate-300">
-                  تم تحويل البيانات الأساسية إلى مؤشرات تنفيذية مباشرة، والمرحلة
-                  التالية ستكون تجهيز مولد التقرير التنفيذي.
+                  طھظ… طھط­ظˆظٹظ„ ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ط£ط³ط§ط³ظٹط© ط¥ظ„ظ‰ ظ…ط¤ط´ط±ط§طھ طھظ†ظپظٹط°ظٹط© ظ…ط¨ط§ط´ط±ط©طŒ ظˆط§ظ„ظ…ط±ط­ظ„ط©
+                  ط§ظ„طھط§ظ„ظٹط© ط³طھظƒظˆظ† طھط¬ظ‡ظٹط² ظ…ظˆظ„ط¯ ط§ظ„طھظ‚ط±ظٹط± ط§ظ„طھظ†ظپظٹط°ظٹ.
                 </p>
               </div>
 
@@ -413,3 +461,7 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+
+
+
