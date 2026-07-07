@@ -31,3 +31,13 @@ export * from "./aiOptimizationEvents";
 export * from "./aiOptimizationDashboard";
 export * from "./aiOptimizationPipeline";
 export * from "./aiOptimizationRuntime";
+
+export * from "./core/optimizationOpportunity";
+export * from "./core/optimizationImpactAssessment";
+export * from "./core/optimizationPolicy";
+export * from "./core/optimizationStrategy";
+export * from "./core/optimizationSimulation";
+export * from "./core/optimizationValidator";
+export * from "./core/optimizationGovernance";
+export * from "./core/optimizationAnalytics";
+export * from "./core/optimizationReporter";
