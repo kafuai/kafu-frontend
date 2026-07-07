@@ -1,0 +1,1651 @@
+﻿
+============================================================
+File: aiOrchestrationAnalytics.ts
+============================================================
+
+import { AIOrchestrationMetrics } from "./aiOrchestrationMetrics";
+
+export interface AIOrchestrationAnalytics {
+  executionId: string;
+  workflowId: string;
+  organizationId: string;
+  health: "excellent" | "good" | "degraded" | "critical";
+  recommendations: string[];
+}
+
+export function analyzeAIOrchestrationMetrics(
+  metrics: AIOrchestrationMetrics,
+): AIOrchestrationAnalytics {
+  const recommendations: string[] = [];
+
+  let health: AIOrchestrationAnalytics["health"] = "excellent";
+
+  if (metrics.failedSteps > 0) {
+    health = "degraded";
+    recommendations.push("Review failed orchestration steps and retry policies.");
+  }
+
+  if (metrics.successRate < 0.75) {
+    health = "critical";
+    recommendations.push("Investigate orchestration workflow reliability.");
+  }
+
+  if (metrics.averageStepDurationMs > 10_000) {
+    recommendations.push("Optimize long-running orchestration capabilities.");
+  }
+
+  if (metrics.skippedSteps > 0) {
+    recommendations.push("Review skipped steps to confirm workflow completeness.");
+  }
+
+  return {
+    executionId: metrics.executionId,
+    workflowId: metrics.workflowId,
+    organizationId: metrics.organizationId,
+    health,
+    recommendations,
+  };
+}
+
+
+============================================================
+File: aiOrchestrationApproval.ts
+============================================================
+
+export type AIOrchestrationApprovalStatus =
+  | "pending"
+  | "approved"
+  | "rejected";
+
+export interface AIOrchestrationApproval {
+  id: string;
+  executionId: string;
+  workflowId: string;
+  stepId: string;
+  approver: string;
+  status: AIOrchestrationApprovalStatus;
+  comments?: string;
+  createdAt: Date;
+  decidedAt?: Date;
+}
+
+export function approveAIOrchestrationStep(
+  approval: AIOrchestrationApproval,
+  comments?: string,
+): AIOrchestrationApproval {
+  return {
+    ...approval,
+    status: "approved",
+    comments,
+    decidedAt: new Date(),
+  };
+}
+
+export function rejectAIOrchestrationStep(
+  approval: AIOrchestrationApproval,
+  comments?: string,
+): AIOrchestrationApproval {
+  return {
+    ...approval,
+    status: "rejected",
+    comments,
+    decidedAt: new Date(),
+  };
+}
+
+
+============================================================
+File: aiOrchestrationCapabilityRegistry.ts
+============================================================
+
+import { AIOrchestrationStepType } from "./aiOrchestrationTypes";
+
+export interface AIOrchestrationCapability {
+  id: string;
+  name: string;
+  description: string;
+  type: AIOrchestrationStepType;
+  provider: string;
+  version: string;
+  enabled: boolean;
+  supportedUseCases: string[];
+  requiredContextKeys: string[];
+  outputKeys: string[];
+}
+
+export interface AIOrchestrationCapabilityRegistry {
+  capabilities: AIOrchestrationCapability[];
+}
+
+export function createAIOrchestrationCapabilityRegistry(
+  capabilities: AIOrchestrationCapability[] = [],
+): AIOrchestrationCapabilityRegistry {
+  return {
+    capabilities,
+  };
+}
+
+export function registerAIOrchestrationCapability(
+  registry: AIOrchestrationCapabilityRegistry,
+  capability: AIOrchestrationCapability,
+): AIOrchestrationCapabilityRegistry {
+  const existing = registry.capabilities.some((item) => item.id === capability.id);
+
+  return {
+    capabilities: existing
+      ? registry.capabilities.map((item) =>
+          item.id === capability.id ? capability : item,
+        )
+      : [...registry.capabilities, capability],
+  };
+}
+
+export function findAIOrchestrationCapability(
+  registry: AIOrchestrationCapabilityRegistry,
+  capabilityId: string,
+): AIOrchestrationCapability | undefined {
+  return registry.capabilities.find(
+    (capability) => capability.id === capabilityId && capability.enabled,
+  );
+}
+
+
+============================================================
+File: aiOrchestrationContext.ts
+============================================================
+
+export interface AIOrchestrationContextValue {
+  key: string;
+  value: unknown;
+  source: string;
+  sensitive: boolean;
+}
+
+export interface AIOrchestrationContext {
+  organizationId: string;
+  workflowId: string;
+  executionId: string;
+  userId: string;
+  values: AIOrchestrationContextValue[];
+  createdAt: Date;
+}
+
+export interface CreateAIOrchestrationContextInput {
+  organizationId: string;
+  workflowId: string;
+  executionId: string;
+  userId: string;
+  values?: AIOrchestrationContextValue[];
+}
+
+export function createAIOrchestrationContext(
+  input: CreateAIOrchestrationContextInput,
+): AIOrchestrationContext {
+  return {
+    organizationId: input.organizationId,
+    workflowId: input.workflowId,
+    executionId: input.executionId,
+    userId: input.userId,
+    values: input.values ?? [],
+    createdAt: new Date(),
+  };
+}
+
+export function addAIOrchestrationContextValue(
+  context: AIOrchestrationContext,
+  value: AIOrchestrationContextValue,
+): AIOrchestrationContext {
+  return {
+    ...context,
+    values: [...context.values, value],
+  };
+}
+
+export function getAIOrchestrationContextValue<T = unknown>(
+  context: AIOrchestrationContext,
+  key: string,
+): T | undefined {
+  const item = context.values.find((value) => value.key === key);
+
+  return item?.value as T | undefined;
+}
+
+
+============================================================
+File: aiOrchestrationDashboard.ts
+============================================================
+
+import { AIOrchestrationAnalytics } from "./aiOrchestrationAnalytics";
+import { AIOrchestrationMetrics } from "./aiOrchestrationMetrics";
+
+export interface AIOrchestrationDashboardCard {
+  id: string;
+  title: string;
+  value: string | number;
+  severity: "neutral" | "success" | "warning" | "critical";
+}
+
+export interface AIOrchestrationDashboard {
+  organizationId: string;
+  workflowId: string;
+  executionId: string;
+  cards: AIOrchestrationDashboardCard[];
+  recommendations: string[];
+  updatedAt: Date;
+}
+
+export function createAIOrchestrationDashboard(
+  metrics: AIOrchestrationMetrics,
+  analytics: AIOrchestrationAnalytics,
+): AIOrchestrationDashboard {
+  return {
+    organizationId: metrics.organizationId,
+    workflowId: metrics.workflowId,
+    executionId: metrics.executionId,
+    cards: [
+      {
+        id: "total-steps",
+        title: "Total Steps",
+        value: metrics.totalSteps,
+        severity: "neutral",
+      },
+      {
+        id: "success-rate",
+        title: "Success Rate",
+        value: `${Math.round(metrics.successRate * 100)}%`,
+        severity:
+          metrics.successRate >= 0.9
+            ? "success"
+            : metrics.successRate >= 0.75
+              ? "warning"
+              : "critical",
+      },
+      {
+        id: "failed-steps",
+        title: "Failed Steps",
+        value: metrics.failedSteps,
+        severity: metrics.failedSteps > 0 ? "critical" : "success",
+      },
+      {
+        id: "avg-step-duration",
+        title: "Average Step Duration",
+        value: `${Math.round(metrics.averageStepDurationMs)}ms`,
+        severity:
+          metrics.averageStepDurationMs > 10_000 ? "warning" : "neutral",
+      },
+    ],
+    recommendations: analytics.recommendations,
+    updatedAt: new Date(),
+  };
+}
+
+
+============================================================
+File: aiOrchestrationDecisionGraph.ts
+============================================================
+
+export interface AIOrchestrationDecisionNode {
+  readonly id: string;
+  readonly stepId: string;
+  readonly next: string[];
+  readonly fallback?: string;
+}
+
+export interface AIOrchestrationDecisionGraph {
+  readonly nodes: AIOrchestrationDecisionNode[];
+}
+
+export function createDecisionGraph(
+  nodes: AIOrchestrationDecisionNode[],
+): AIOrchestrationDecisionGraph {
+  return {
+    nodes,
+  };
+}
+
+export function findDecisionNode(
+  graph: AIOrchestrationDecisionGraph,
+  id: string,
+): AIOrchestrationDecisionNode | undefined {
+  return graph.nodes.find((node) => node.id === id);
+}
+
+
+============================================================
+File: aiOrchestrationDependencyResolver.ts
+============================================================
+
+import {
+  AIOrchestrationExecution,
+  AIOrchestrationExecutionStepState,
+} from "./aiOrchestrationExecution";
+import { AIOrchestrationStep } from "./aiOrchestrationTypes";
+
+export interface AIOrchestrationDependencyResolution {
+  stepId: string;
+  ready: boolean;
+  blockedBy: string[];
+}
+
+export function resolveAIOrchestrationStepDependencies(
+  step: AIOrchestrationStep,
+  execution: AIOrchestrationExecution,
+): AIOrchestrationDependencyResolution {
+  const completedStepIds = new Set(
+    execution.stepStates
+      .filter((state) => state.status === "completed")
+      .map((state) => state.stepId),
+  );
+
+  const blockedBy = step.dependencies
+    .filter((dependency) => dependency.required)
+    .filter((dependency) => !completedStepIds.has(dependency.stepId))
+    .map((dependency) => dependency.stepId);
+
+  return {
+    stepId: step.id,
+    ready: blockedBy.length === 0,
+    blockedBy,
+  };
+}
+
+export function getReadyAIOrchestrationSteps(
+  steps: AIOrchestrationStep[],
+  execution: AIOrchestrationExecution,
+): AIOrchestrationStep[] {
+  const stateByStepId = new Map<string, AIOrchestrationExecutionStepState>(
+    execution.stepStates.map((state) => [state.stepId, state]),
+  );
+
+  return steps.filter((step) => {
+    const state = stateByStepId.get(step.id);
+
+    if (!state || state.status !== "pending") {
+      return false;
+    }
+
+    return resolveAIOrchestrationStepDependencies(step, execution).ready;
+  });
+}
+
+export function markBlockedAIOrchestrationSteps(
+  steps: AIOrchestrationStep[],
+  execution: AIOrchestrationExecution,
+): AIOrchestrationExecution {
+  const readyStepIds = new Set(
+    getReadyAIOrchestrationSteps(steps, execution).map((step) => step.id),
+  );
+
+  return {
+    ...execution,
+    stepStates: execution.stepStates.map((state) => {
+      if (state.status !== "pending") {
+        return state;
+      }
+
+      return readyStepIds.has(state.stepId)
+        ? {
+            ...state,
+            status: "ready",
+          }
+        : {
+            ...state,
+            status: "blocked",
+          };
+    }),
+    updatedAt: new Date(),
+  };
+}
+
+
+============================================================
+File: aiOrchestrationEngine.ts
+============================================================
+
+import { AIOrchestrationExecution } from "./aiOrchestrationExecution";
+import { AIOrchestrationPlan } from "./aiOrchestrationPlanner";
+import {
+  AIOrchestrationResult,
+  AIOrchestrationStepResult,
+  addAIOrchestrationStepResult,
+  completeAIOrchestrationResult,
+} from "./aiOrchestrationResult";
+
+export class AIOrchestrationEngine {
+  execute(
+    execution: AIOrchestrationExecution,
+    plan: AIOrchestrationPlan,
+  ): AIOrchestrationResult {
+    let result = {
+      executionId: execution.id,
+      workflowId: execution.workflowId,
+      organizationId: execution.organizationId,
+      success: true,
+      startedAt: new Date(),
+      stepResults: [],
+    } as AIOrchestrationResult;
+
+    for (const item of plan.items) {
+      const stepResult: AIOrchestrationStepResult = {
+        stepId: item.step.id,
+        success: true,
+        outputs: {},
+        warnings: [],
+        errors: [],
+        durationMs: 0,
+      };
+
+      result = addAIOrchestrationStepResult(result, stepResult);
+    }
+
+    return completeAIOrchestrationResult(result);
+  }
+}
+
+
+============================================================
+File: aiOrchestrationEvent.ts
+============================================================
+
+export type AIOrchestrationEventType =
+  | "workflow.started"
+  | "workflow.completed"
+  | "workflow.failed"
+  | "step.started"
+  | "step.completed"
+  | "step.failed"
+  | "route.completed";
+
+export interface AIOrchestrationEvent {
+  id: string;
+  organizationId: string;
+  executionId: string;
+  workflowId: string;
+  type: AIOrchestrationEventType;
+  timestamp: Date;
+  payload: Record<string, unknown>;
+}
+
+export function createAIOrchestrationEvent(
+  event: AIOrchestrationEvent,
+): AIOrchestrationEvent {
+  return {
+    ...event,
+    timestamp: event.timestamp ?? new Date(),
+  };
+}
+
+
+============================================================
+File: aiOrchestrationEventStore.ts
+============================================================
+
+import { AIOrchestrationEvent } from "./aiOrchestrationEvent";
+
+export class AIOrchestrationEventStore {
+  private readonly events: AIOrchestrationEvent[] = [];
+
+  publish(event: AIOrchestrationEvent): void {
+    this.events.push(event);
+  }
+
+  publishMany(events: AIOrchestrationEvent[]): void {
+    this.events.push(...events);
+  }
+
+  getAll(): AIOrchestrationEvent[] {
+    return [...this.events];
+  }
+
+  getByExecution(executionId: string): AIOrchestrationEvent[] {
+    return this.events.filter(
+      (event) => event.executionId === executionId,
+    );
+  }
+
+  clear(): void {
+    this.events.length = 0;
+  }
+}
+
+
+============================================================
+File: aiOrchestrationExecution.ts
+============================================================
+
+import {
+  AIOrchestrationExecutionStatus,
+  AIOrchestrationStepStatus,
+} from "./aiOrchestrationTypes";
+
+export interface AIOrchestrationExecutionStepState {
+  stepId: string;
+  status: AIOrchestrationStepStatus;
+  startedAt?: Date;
+  completedAt?: Date;
+  errorMessage?: string;
+  attempts: number;
+}
+
+export interface AIOrchestrationExecution {
+  id: string;
+  organizationId: string;
+  workflowId: string;
+  status: AIOrchestrationExecutionStatus;
+  requestedBy: string;
+  objective: string;
+  stepStates: AIOrchestrationExecutionStepState[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateAIOrchestrationExecutionInput {
+  id: string;
+  organizationId: string;
+  workflowId: string;
+  requestedBy: string;
+  objective: string;
+  stepIds: string[];
+}
+
+export function createAIOrchestrationExecution(
+  input: CreateAIOrchestrationExecutionInput,
+): AIOrchestrationExecution {
+  const now = new Date();
+
+  return {
+    id: input.id,
+    organizationId: input.organizationId,
+    workflowId: input.workflowId,
+    status: "queued",
+    requestedBy: input.requestedBy,
+    objective: input.objective,
+    stepStates: input.stepIds.map((stepId) => ({
+      stepId,
+      status: "pending",
+      attempts: 0,
+    })),
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+export function updateAIOrchestrationExecutionStatus(
+  execution: AIOrchestrationExecution,
+  status: AIOrchestrationExecutionStatus,
+): AIOrchestrationExecution {
+  return {
+    ...execution,
+    status,
+    updatedAt: new Date(),
+  };
+}
+
+export function updateAIOrchestrationStepState(
+  execution: AIOrchestrationExecution,
+  stepState: AIOrchestrationExecutionStepState,
+): AIOrchestrationExecution {
+  return {
+    ...execution,
+    stepStates: execution.stepStates.map((current) =>
+      current.stepId === stepState.stepId ? stepState : current,
+    ),
+    updatedAt: new Date(),
+  };
+}
+
+
+============================================================
+File: aiOrchestrationExecutionContext.ts
+============================================================
+
+export interface AIOrchestrationExecutionContext {
+  readonly executionId: string;
+  readonly workflowId: string;
+  readonly organizationId: string;
+  readonly variables: Record<string, unknown>;
+  readonly stepOutputs: Record<string, unknown>;
+  readonly sharedMemory: Record<string, unknown>;
+  readonly activeCapabilities: string[];
+  readonly completedSteps: string[];
+  readonly failedSteps: string[];
+  readonly startedAt: Date;
+  readonly updatedAt: Date;
+}
+
+export function createAIOrchestrationExecutionContext(
+  executionId: string,
+  workflowId: string,
+  organizationId: string,
+): AIOrchestrationExecutionContext {
+  const now = new Date();
+
+  return {
+    executionId,
+    workflowId,
+    organizationId,
+    variables: {},
+    stepOutputs: {},
+    sharedMemory: {},
+    activeCapabilities: [],
+    completedSteps: [],
+    failedSteps: [],
+    startedAt: now,
+    updatedAt: now,
+  };
+}
+
+export function updateExecutionVariable(
+  context: AIOrchestrationExecutionContext,
+  key: string,
+  value: unknown,
+): AIOrchestrationExecutionContext {
+  return {
+    ...context,
+    variables: {
+      ...context.variables,
+      [key]: value,
+    },
+    updatedAt: new Date(),
+  };
+}
+
+
+============================================================
+File: aiOrchestrationExecutionSnapshot.ts
+============================================================
+
+import { AIOrchestrationExecutionContext } from "./aiOrchestrationExecutionContext";
+
+export interface AIOrchestrationExecutionSnapshot {
+  readonly executionId: string;
+  readonly checkpoint: string;
+  readonly createdAt: Date;
+  readonly context: AIOrchestrationExecutionContext;
+}
+
+export function createExecutionSnapshot(
+  executionId: string,
+  checkpoint: string,
+  context: AIOrchestrationExecutionContext,
+): AIOrchestrationExecutionSnapshot {
+  return {
+    executionId,
+    checkpoint,
+    createdAt: new Date(),
+    context,
+  };
+}
+
+
+============================================================
+File: aiOrchestrationExecutionTransitions.ts
+============================================================
+
+import {
+  AIOrchestrationExecution,
+  AIOrchestrationExecutionStepState,
+  updateAIOrchestrationStepState,
+} from "./aiOrchestrationExecution";
+
+export function startAIOrchestrationStep(
+  execution: AIOrchestrationExecution,
+  stepId: string,
+): AIOrchestrationExecution {
+  const current = execution.stepStates.find((state) => state.stepId === stepId);
+
+  if (!current) {
+    return execution;
+  }
+
+  const nextState: AIOrchestrationExecutionStepState = {
+    ...current,
+    status: "running",
+    startedAt: new Date(),
+    attempts: current.attempts + 1,
+  };
+
+  return updateAIOrchestrationStepState(execution, nextState);
+}
+
+export function completeAIOrchestrationStep(
+  execution: AIOrchestrationExecution,
+  stepId: string,
+): AIOrchestrationExecution {
+  const current = execution.stepStates.find((state) => state.stepId === stepId);
+
+  if (!current) {
+    return execution;
+  }
+
+  return updateAIOrchestrationStepState(execution, {
+    ...current,
+    status: "completed",
+    completedAt: new Date(),
+  });
+}
+
+export function failAIOrchestrationStep(
+  execution: AIOrchestrationExecution,
+  stepId: string,
+  errorMessage: string,
+): AIOrchestrationExecution {
+  const current = execution.stepStates.find((state) => state.stepId === stepId);
+
+  if (!current) {
+    return execution;
+  }
+
+  return updateAIOrchestrationStepState(execution, {
+    ...current,
+    status: "failed",
+    completedAt: new Date(),
+    errorMessage,
+  });
+}
+
+export function skipAIOrchestrationStep(
+  execution: AIOrchestrationExecution,
+  stepId: string,
+): AIOrchestrationExecution {
+  const current = execution.stepStates.find((state) => state.stepId === stepId);
+
+  if (!current) {
+    return execution;
+  }
+
+  return updateAIOrchestrationStepState(execution, {
+    ...current,
+    status: "skipped",
+    completedAt: new Date(),
+  });
+}
+
+
+============================================================
+File: aiOrchestrationMetrics.ts
+============================================================
+
+import { AIOrchestrationExecution } from "./aiOrchestrationExecution";
+import { AIOrchestrationResult } from "./aiOrchestrationResult";
+
+export interface AIOrchestrationMetrics {
+  executionId: string;
+  workflowId: string;
+  organizationId: string;
+  totalSteps: number;
+  completedSteps: number;
+  failedSteps: number;
+  skippedSteps: number;
+  successRate: number;
+  totalDurationMs: number;
+  averageStepDurationMs: number;
+}
+
+export function calculateAIOrchestrationMetrics(
+  execution: AIOrchestrationExecution,
+  result: AIOrchestrationResult,
+): AIOrchestrationMetrics {
+  const totalSteps = execution.stepStates.length;
+  const completedSteps = execution.stepStates.filter(
+    (step) => step.status === "completed",
+  ).length;
+  const failedSteps = execution.stepStates.filter(
+    (step) => step.status === "failed",
+  ).length;
+  const skippedSteps = execution.stepStates.filter(
+    (step) => step.status === "skipped",
+  ).length;
+
+  const totalDurationMs = result.stepResults.reduce(
+    (total, step) => total + step.durationMs,
+    0,
+  );
+
+  return {
+    executionId: execution.id,
+    workflowId: execution.workflowId,
+    organizationId: execution.organizationId,
+    totalSteps,
+    completedSteps,
+    failedSteps,
+    skippedSteps,
+    successRate: totalSteps === 0 ? 1 : completedSteps / totalSteps,
+    totalDurationMs,
+    averageStepDurationMs:
+      result.stepResults.length === 0
+        ? 0
+        : totalDurationMs / result.stepResults.length,
+  };
+}
+
+
+============================================================
+File: aiOrchestrationPlanner.ts
+============================================================
+
+import {
+  AIOrchestrationStep,
+  AIOrchestrationWorkflow,
+} from "./aiOrchestrationTypes";
+
+export interface AIOrchestrationPlanItem {
+  step: AIOrchestrationStep;
+  order: number;
+  dependencyIds: string[];
+  parallelGroup: number;
+}
+
+export interface AIOrchestrationPlan {
+  workflowId: string;
+  organizationId: string;
+  items: AIOrchestrationPlanItem[];
+  totalSteps: number;
+  parallelGroups: number;
+}
+
+export function createAIOrchestrationPlan(
+  workflow: AIOrchestrationWorkflow,
+): AIOrchestrationPlan {
+  const remaining = [...workflow.steps];
+  const planned: AIOrchestrationPlanItem[] = [];
+  const completed = new Set<string>();
+  let order = 0;
+  let parallelGroup = 0;
+
+  while (remaining.length > 0) {
+    const readySteps = remaining.filter((step) =>
+      step.dependencies.every((dependency) => completed.has(dependency.stepId)),
+    );
+
+    if (readySteps.length === 0) {
+      throw new Error(
+        `Unable to create orchestration plan for workflow '${workflow.id}'. Dependency cycle detected.`,
+      );
+    }
+
+    for (const step of readySteps) {
+      planned.push({
+        step,
+        order,
+        dependencyIds: step.dependencies.map((dependency) => dependency.stepId),
+        parallelGroup,
+      });
+
+      completed.add(step.id);
+      order += 1;
+    }
+
+    for (const readyStep of readySteps) {
+      const index = remaining.findIndex((step) => step.id === readyStep.id);
+
+      if (index >= 0) {
+        remaining.splice(index, 1);
+      }
+    }
+
+    parallelGroup += 1;
+  }
+
+  return {
+    workflowId: workflow.id,
+    organizationId: workflow.organizationId,
+    items: planned,
+    totalSteps: planned.length,
+    parallelGroups: parallelGroup,
+  };
+}
+
+
+============================================================
+File: aiOrchestrationPolicy.ts
+============================================================
+
+export interface AIOrchestrationPolicy {
+  id: string;
+  organizationId: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  requiredApprovals: number;
+  allowedCapabilities: string[];
+  blockedCapabilities: string[];
+  enforceGuardrails: boolean;
+}
+
+export function isCapabilityAllowed(
+  policy: AIOrchestrationPolicy,
+  capability: string,
+): boolean {
+  if (!policy.enabled) {
+    return true;
+  }
+
+  if (policy.blockedCapabilities.includes(capability)) {
+    return false;
+  }
+
+  if (policy.allowedCapabilities.length === 0) {
+    return true;
+  }
+
+  return policy.allowedCapabilities.includes(capability);
+}
+
+
+============================================================
+File: aiOrchestrationPolicyEvaluator.ts
+============================================================
+
+import { AIOrchestrationPolicy } from "./aiOrchestrationPolicy";
+import { AIOrchestrationStep } from "./aiOrchestrationTypes";
+
+export interface AIOrchestrationPolicyEvaluation {
+  allowed: boolean;
+  violations: string[];
+}
+
+export function evaluateAIOrchestrationPolicy(
+  policy: AIOrchestrationPolicy,
+  step: AIOrchestrationStep,
+): AIOrchestrationPolicyEvaluation {
+  const violations: string[] = [];
+
+  if (!policy.enabled) {
+    return {
+      allowed: true,
+      violations,
+    };
+  }
+
+  if (!policy.allowedCapabilities.includes(step.capability) &&
+      policy.allowedCapabilities.length > 0) {
+    violations.push("Capability is not allowed by policy.");
+  }
+
+  if (policy.blockedCapabilities.includes(step.capability)) {
+    violations.push("Capability is blocked by policy.");
+  }
+
+  return {
+    allowed: violations.length === 0,
+    violations,
+  };
+}
+
+
+============================================================
+File: aiOrchestrationReport.ts
+============================================================
+
+import { AIOrchestrationAnalytics } from "./aiOrchestrationAnalytics";
+import { AIOrchestrationMetrics } from "./aiOrchestrationMetrics";
+import { AIOrchestrationResult } from "./aiOrchestrationResult";
+
+export interface AIOrchestrationReport {
+  executionId: string;
+  workflowId: string;
+  organizationId: string;
+  generatedAt: Date;
+  success: boolean;
+  metrics: AIOrchestrationMetrics;
+  analytics: AIOrchestrationAnalytics;
+  stepSummaries: AIOrchestrationReportStepSummary[];
+}
+
+export interface AIOrchestrationReportStepSummary {
+  stepId: string;
+  success: boolean;
+  durationMs: number;
+  warnings: string[];
+  errors: string[];
+}
+
+export function createAIOrchestrationReport(
+  result: AIOrchestrationResult,
+  metrics: AIOrchestrationMetrics,
+  analytics: AIOrchestrationAnalytics,
+): AIOrchestrationReport {
+  return {
+    executionId: result.executionId,
+    workflowId: result.workflowId,
+    organizationId: result.organizationId,
+    generatedAt: new Date(),
+    success: result.success,
+    metrics,
+    analytics,
+    stepSummaries: result.stepResults.map((step) => ({
+      stepId: step.stepId,
+      success: step.success,
+      durationMs: step.durationMs,
+      warnings: step.warnings,
+      errors: step.errors,
+    })),
+  };
+}
+
+
+============================================================
+File: aiOrchestrationResult.ts
+============================================================
+
+export interface AIOrchestrationStepResult {
+  stepId: string;
+  success: boolean;
+  outputs: Record<string, unknown>;
+  warnings: string[];
+  errors: string[];
+  durationMs: number;
+}
+
+export interface AIOrchestrationResult {
+  executionId: string;
+  workflowId: string;
+  organizationId: string;
+  success: boolean;
+  startedAt: Date;
+  completedAt?: Date;
+  stepResults: AIOrchestrationStepResult[];
+}
+
+export function createAIOrchestrationResult(
+  executionId: string,
+  workflowId: string,
+  organizationId: string,
+): AIOrchestrationResult {
+  return {
+    executionId,
+    workflowId,
+    organizationId,
+    success: true,
+    startedAt: new Date(),
+    stepResults: [],
+  };
+}
+
+export function addAIOrchestrationStepResult(
+  result: AIOrchestrationResult,
+  stepResult: AIOrchestrationStepResult,
+): AIOrchestrationResult {
+  return {
+    ...result,
+    success: result.success && stepResult.success,
+    stepResults: [...result.stepResults, stepResult],
+  };
+}
+
+export function completeAIOrchestrationResult(
+  result: AIOrchestrationResult,
+): AIOrchestrationResult {
+  return {
+    ...result,
+    completedAt: new Date(),
+  };
+}
+
+
+============================================================
+File: aiOrchestrationRoutePlan.ts
+============================================================
+
+import {
+  AIOrchestrationCapabilityRegistry,
+} from "./aiOrchestrationCapabilityRegistry";
+import { AIOrchestrationContext } from "./aiOrchestrationContext";
+import { AIOrchestrationPlan } from "./aiOrchestrationPlanner";
+import {
+  AIOrchestrationRouteDecision,
+  routeAIOrchestrationStep,
+} from "./aiOrchestrationRouter";
+
+export interface AIOrchestrationRoutePlan {
+  workflowId: string;
+  executionId: string;
+  decisions: AIOrchestrationRouteDecision[];
+  routable: boolean;
+}
+
+export function createAIOrchestrationRoutePlan(
+  plan: AIOrchestrationPlan,
+  executionId: string,
+  context: AIOrchestrationContext,
+  registry: AIOrchestrationCapabilityRegistry,
+): AIOrchestrationRoutePlan {
+  const decisions = plan.items.map((item) =>
+    routeAIOrchestrationStep(item.step, context, registry),
+  );
+
+  return {
+    workflowId: plan.workflowId,
+    executionId,
+    decisions,
+    routable: decisions.every((decision) => decision.routed),
+  };
+}
+
+
+============================================================
+File: aiOrchestrationRouter.ts
+============================================================
+
+import {
+  AIOrchestrationCapability,
+  AIOrchestrationCapabilityRegistry,
+} from "./aiOrchestrationCapabilityRegistry";
+import { AIOrchestrationContext } from "./aiOrchestrationContext";
+import { AIOrchestrationStep } from "./aiOrchestrationTypes";
+
+export interface AIOrchestrationRouteDecision {
+  stepId: string;
+  capabilityId?: string;
+  routed: boolean;
+  reason: string;
+  missingContextKeys: string[];
+}
+
+export function routeAIOrchestrationStep(
+  step: AIOrchestrationStep,
+  context: AIOrchestrationContext,
+  registry: AIOrchestrationCapabilityRegistry,
+): AIOrchestrationRouteDecision {
+  const capability = registry.capabilities.find(
+    (item) =>
+      item.id === step.capability &&
+      item.type === step.type &&
+      item.enabled,
+  );
+
+  if (!capability) {
+    return {
+      stepId: step.id,
+      routed: false,
+      reason: "No enabled capability matched the step requirement.",
+      missingContextKeys: [],
+    };
+  }
+
+  const contextKeys = new Set(context.values.map((value) => value.key));
+  const missingContextKeys = capability.requiredContextKeys.filter(
+    (key) => !contextKeys.has(key),
+  );
+
+  if (missingContextKeys.length > 0) {
+    return {
+      stepId: step.id,
+      capabilityId: capability.id,
+      routed: false,
+      reason: "Required orchestration context is missing.",
+      missingContextKeys,
+    };
+  }
+
+  return {
+    stepId: step.id,
+    capabilityId: capability.id,
+    routed: true,
+    reason: "Step routed successfully.",
+    missingContextKeys: [],
+  };
+}
+
+export function rankAIOrchestrationCapabilities(
+  step: AIOrchestrationStep,
+  capabilities: AIOrchestrationCapability[],
+): AIOrchestrationCapability[] {
+  return [...capabilities]
+    .filter((capability) => capability.type === step.type && capability.enabled)
+    .sort((left, right) => {
+      const leftUseCaseScore = left.supportedUseCases.includes(step.capability)
+        ? 1
+        : 0;
+      const rightUseCaseScore = right.supportedUseCases.includes(step.capability)
+        ? 1
+        : 0;
+
+      return rightUseCaseScore - leftUseCaseScore;
+    });
+}
+
+
+============================================================
+File: aiOrchestrationRuntime.ts
+============================================================
+
+import { AIOrchestrationCapabilityRegistry } from "./aiOrchestrationCapabilityRegistry";
+import { AIOrchestrationContext } from "./aiOrchestrationContext";
+import { AIOrchestrationPlan } from "./aiOrchestrationPlanner";
+import {
+  addAIOrchestrationStepResult,
+  completeAIOrchestrationResult,
+  createAIOrchestrationResult,
+  AIOrchestrationResult,
+} from "./aiOrchestrationResult";
+import { createAIOrchestrationRoutePlan } from "./aiOrchestrationRoutePlan";
+
+export interface AIOrchestrationRuntimeInput {
+  executionId: string;
+  plan: AIOrchestrationPlan;
+  context: AIOrchestrationContext;
+  registry: AIOrchestrationCapabilityRegistry;
+}
+
+export function runAIOrchestrationRuntime(
+  input: AIOrchestrationRuntimeInput,
+): AIOrchestrationResult {
+  const routePlan = createAIOrchestrationRoutePlan(
+    input.plan,
+    input.executionId,
+    input.context,
+    input.registry,
+  );
+
+  let result = createAIOrchestrationResult(
+    input.executionId,
+    input.plan.workflowId,
+    input.plan.organizationId,
+  );
+
+  for (const decision of routePlan.decisions) {
+    result = addAIOrchestrationStepResult(result, {
+      stepId: decision.stepId,
+      success: decision.routed,
+      outputs: {
+        capabilityId: decision.capabilityId,
+        routed: decision.routed,
+      },
+      warnings: decision.routed ? [] : ["Step could not be routed."],
+      errors: decision.routed ? [] : ["No matching orchestration capability found."],
+      durationMs: 0,
+    });
+  }
+
+  return completeAIOrchestrationResult(result);
+}
+
+
+============================================================
+File: aiOrchestrationStepFactory.ts
+============================================================
+
+import {
+  AIOrchestrationGuardrail,
+  AIOrchestrationPriority,
+  AIOrchestrationStep,
+  AIOrchestrationStepDependency,
+  AIOrchestrationStepType,
+} from "./aiOrchestrationTypes";
+
+export interface CreateAIOrchestrationStepInput {
+  id: string;
+  workflowId: string;
+  name: string;
+  description: string;
+  type: AIOrchestrationStepType;
+  capability: string;
+  dependencies?: AIOrchestrationStepDependency[];
+  guardrails?: AIOrchestrationGuardrail[];
+  timeoutMs?: number;
+  retryLimit?: number;
+  requiredHumanApproval?: boolean;
+  priority?: AIOrchestrationPriority;
+}
+
+export function createAIOrchestrationStep(
+  input: CreateAIOrchestrationStepInput,
+): AIOrchestrationStep {
+  return {
+    id: input.id,
+    workflowId: input.workflowId,
+    name: input.name,
+    description: input.description,
+    type: input.type,
+    capability: input.capability,
+    dependencies: input.dependencies ?? [],
+    guardrails: input.guardrails ?? [],
+    timeoutMs: input.timeoutMs,
+    retryLimit: input.retryLimit,
+    requiredHumanApproval: input.requiredHumanApproval ?? false,
+    priority: input.priority ?? "normal",
+  };
+}
+
+export function createAIModelStep(
+  input: Omit<CreateAIOrchestrationStepInput, "type">,
+): AIOrchestrationStep {
+  return createAIOrchestrationStep({
+    ...input,
+    type: "model",
+  });
+}
+
+export function createAIToolStep(
+  input: Omit<CreateAIOrchestrationStepInput, "type">,
+): AIOrchestrationStep {
+  return createAIOrchestrationStep({
+    ...input,
+    type: "tool",
+  });
+}
+
+export function createAIDecisionStep(
+  input: Omit<CreateAIOrchestrationStepInput, "type">,
+): AIOrchestrationStep {
+  return createAIOrchestrationStep({
+    ...input,
+    type: "decision",
+  });
+}
+
+
+============================================================
+File: aiOrchestrationTypes.ts
+============================================================
+
+export type AIOrchestrationPriority = "low" | "normal" | "high" | "critical";
+
+export type AIOrchestrationStatus =
+  | "draft"
+  | "active"
+  | "paused"
+  | "deprecated"
+  | "archived";
+
+export type AIOrchestrationStepType =
+  | "model"
+  | "tool"
+  | "policy"
+  | "evaluation"
+  | "optimization"
+  | "human_review"
+  | "decision"
+  | "notification";
+
+export type AIOrchestrationStepStatus =
+  | "pending"
+  | "ready"
+  | "running"
+  | "completed"
+  | "failed"
+  | "skipped"
+  | "blocked";
+
+export type AIOrchestrationExecutionStatus =
+  | "queued"
+  | "planning"
+  | "running"
+  | "completed"
+  | "failed"
+  | "cancelled"
+  | "requires_review";
+
+export interface AIOrchestrationMetadata {
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  ownerTeam: string;
+  tags: string[];
+}
+
+export interface AIOrchestrationGuardrail {
+  id: string;
+  name: string;
+  description: string;
+  required: boolean;
+  enforcementMode: "advisory" | "blocking";
+}
+
+export interface AIOrchestrationStepDependency {
+  stepId: string;
+  condition?: string;
+  required: boolean;
+}
+
+export interface AIOrchestrationStep {
+  id: string;
+  workflowId: string;
+  name: string;
+  description: string;
+  type: AIOrchestrationStepType;
+  capability: string;
+  dependencies: AIOrchestrationStepDependency[];
+  guardrails: AIOrchestrationGuardrail[];
+  timeoutMs?: number;
+  retryLimit?: number;
+  requiredHumanApproval: boolean;
+  priority: AIOrchestrationPriority;
+}
+
+export interface AIOrchestrationWorkflow {
+  id: string;
+  organizationId: string;
+  name: string;
+  description: string;
+  status: AIOrchestrationStatus;
+  priority: AIOrchestrationPriority;
+  version: string;
+  objective: string;
+  steps: AIOrchestrationStep[];
+  metadata: AIOrchestrationMetadata;
+}
+
+
+============================================================
+File: aiOrchestrationValidation.ts
+============================================================
+
+import { AIOrchestrationWorkflow } from "./aiOrchestrationTypes";
+
+export interface AIOrchestrationValidationIssue {
+  field: string;
+  message: string;
+  severity: "error" | "warning";
+}
+
+export interface AIOrchestrationValidationResult {
+  valid: boolean;
+  issues: AIOrchestrationValidationIssue[];
+}
+
+export function validateAIOrchestrationWorkflow(
+  workflow: AIOrchestrationWorkflow,
+): AIOrchestrationValidationResult {
+  const issues: AIOrchestrationValidationIssue[] = [];
+
+  if (!workflow.id.trim()) {
+    issues.push({
+      field: "id",
+      message: "Workflow id is required.",
+      severity: "error",
+    });
+  }
+
+  if (!workflow.organizationId.trim()) {
+    issues.push({
+      field: "organizationId",
+      message: "Organization id is required.",
+      severity: "error",
+    });
+  }
+
+  if (!workflow.name.trim()) {
+    issues.push({
+      field: "name",
+      message: "Workflow name is required.",
+      severity: "error",
+    });
+  }
+
+  if (!workflow.objective.trim()) {
+    issues.push({
+      field: "objective",
+      message: "Workflow objective is required.",
+      severity: "error",
+    });
+  }
+
+  if (workflow.steps.length === 0) {
+    issues.push({
+      field: "steps",
+      message: "Workflow should include at least one orchestration step.",
+      severity: "warning",
+    });
+  }
+
+  const stepIds = new Set(workflow.steps.map((step) => step.id));
+
+  for (const step of workflow.steps) {
+    if (!step.name.trim()) {
+      issues.push({
+        field: `steps.${step.id}.name`,
+        message: "Step name is required.",
+        severity: "error",
+      });
+    }
+
+    for (const dependency of step.dependencies) {
+      if (!stepIds.has(dependency.stepId)) {
+        issues.push({
+          field: `steps.${step.id}.dependencies`,
+          message: `Dependency step '${dependency.stepId}' does not exist in workflow.`,
+          severity: "error",
+        });
+      }
+
+      if (dependency.stepId === step.id) {
+        issues.push({
+          field: `steps.${step.id}.dependencies`,
+          message: "Step cannot depend on itself.",
+          severity: "error",
+        });
+      }
+    }
+  }
+
+  return {
+    valid: issues.every((issue) => issue.severity !== "error"),
+    issues,
+  };
+}
+
+
+============================================================
+File: aiOrchestrationWorkflow.ts
+============================================================
+
+import {
+  AIOrchestrationPriority,
+  AIOrchestrationStatus,
+  AIOrchestrationStep,
+  AIOrchestrationWorkflow,
+} from "./aiOrchestrationTypes";
+
+export interface CreateAIOrchestrationWorkflowInput {
+  id: string;
+  organizationId: string;
+  name: string;
+  description: string;
+  objective: string;
+  version: string;
+  priority?: AIOrchestrationPriority;
+  status?: AIOrchestrationStatus;
+  steps?: AIOrchestrationStep[];
+  createdBy: string;
+  ownerTeam: string;
+  tags?: string[];
+}
+
+export function createAIOrchestrationWorkflow(
+  input: CreateAIOrchestrationWorkflowInput,
+): AIOrchestrationWorkflow {
+  const now = new Date();
+
+  return {
+    id: input.id,
+    organizationId: input.organizationId,
+    name: input.name,
+    description: input.description,
+    objective: input.objective,
+    version: input.version,
+    priority: input.priority ?? "normal",
+    status: input.status ?? "draft",
+    steps: input.steps ?? [],
+    metadata: {
+      createdAt: now,
+      updatedAt: now,
+      createdBy: input.createdBy,
+      ownerTeam: input.ownerTeam,
+      tags: input.tags ?? [],
+    },
+  };
+}
+
+export function activateAIOrchestrationWorkflow(
+  workflow: AIOrchestrationWorkflow,
+): AIOrchestrationWorkflow {
+  return {
+    ...workflow,
+    status: "active",
+    metadata: {
+      ...workflow.metadata,
+      updatedAt: new Date(),
+    },
+  };
+}
+
+export function pauseAIOrchestrationWorkflow(
+  workflow: AIOrchestrationWorkflow,
+): AIOrchestrationWorkflow {
+  return {
+    ...workflow,
+    status: "paused",
+    metadata: {
+      ...workflow.metadata,
+      updatedAt: new Date(),
+    },
+  };
+}
+
+export function archiveAIOrchestrationWorkflow(
+  workflow: AIOrchestrationWorkflow,
+): AIOrchestrationWorkflow {
+  return {
+    ...workflow,
+    status: "archived",
+    metadata: {
+      ...workflow.metadata,
+      updatedAt: new Date(),
+    },
+  };
+}
+
+
+============================================================
+File: index.ts
+============================================================
+
+export * from "./aiOrchestrationTypes";
+export * from "./aiOrchestrationWorkflow";
+export * from "./aiOrchestrationStepFactory";
+export * from "./aiOrchestrationValidation";
+export * from "./aiOrchestrationExecution";
+export * from "./aiOrchestrationPlanner";
+export * from "./aiOrchestrationDependencyResolver";
+export * from "./aiOrchestrationExecutionTransitions";
+export * from "./aiOrchestrationContext";
+export * from "./aiOrchestrationCapabilityRegistry";
+export * from "./aiOrchestrationRouter";
+export * from "./aiOrchestrationRoutePlan";
+export * from "./aiOrchestrationResult";
+export * from "./aiOrchestrationEvent";
+export * from "./aiOrchestrationEventStore";
+export * from "./aiOrchestrationEngine";
+export * from "./aiOrchestrationPolicy";
+export * from "./aiOrchestrationApproval";
+export * from "./aiOrchestrationPolicyEvaluator";
+export * from "./aiOrchestrationRuntime";
+export * from "./aiOrchestrationMetrics";
+export * from "./aiOrchestrationAnalytics";
+export * from "./aiOrchestrationReport";
+export * from "./aiOrchestrationDashboard";
+
+

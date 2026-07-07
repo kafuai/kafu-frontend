@@ -1,7 +1,6 @@
+===== aiOrchestrationRuntime.ts =====
 import { AIOrchestrationCapabilityRegistry } from "./aiOrchestrationCapabilityRegistry";
 import { AIOrchestrationContext } from "./aiOrchestrationContext";
-import { AIOrchestrationExecutionContext, createAIOrchestrationExecutionContext } from "./aiOrchestrationExecutionContext";
-import { evaluateAIOrchestrationHealth } from "./aiOrchestrationHealthMonitor";
 import { AIOrchestrationPlan } from "./aiOrchestrationPlanner";
 import {
   addAIOrchestrationStepResult,
@@ -18,20 +17,9 @@ export interface AIOrchestrationRuntimeInput {
   registry: AIOrchestrationCapabilityRegistry;
 }
 
-export interface AIOrchestrationRuntimeOutput {
-  result: AIOrchestrationResult;
-  executionContext: AIOrchestrationExecutionContext;
-}
-
 export function runAIOrchestrationRuntime(
   input: AIOrchestrationRuntimeInput,
-): AIOrchestrationRuntimeOutput {
-  const executionContext = createAIOrchestrationExecutionContext(
-    input.executionId,
-    input.plan.workflowId,
-    input.plan.organizationId,
-  );
-
+): AIOrchestrationResult {
   const routePlan = createAIOrchestrationRoutePlan(
     input.plan,
     input.executionId,
@@ -59,15 +47,46 @@ export function runAIOrchestrationRuntime(
     });
   }
 
-  result = completeAIOrchestrationResult(result);
+  return completeAIOrchestrationResult(result);
+}
 
-  evaluateAIOrchestrationHealth(
-    input.executionId,
-    result.success ? [] : ["Execution completed with errors."],
-  );
+===== aiOrchestrationEngine.ts =====
+import { AIOrchestrationExecution } from "./aiOrchestrationExecution";
+import { AIOrchestrationPlan } from "./aiOrchestrationPlanner";
+import {
+  AIOrchestrationResult,
+  AIOrchestrationStepResult,
+  addAIOrchestrationStepResult,
+  completeAIOrchestrationResult,
+} from "./aiOrchestrationResult";
 
-  return {
-    result,
-    executionContext,
-  };
+export class AIOrchestrationEngine {
+  execute(
+    execution: AIOrchestrationExecution,
+    plan: AIOrchestrationPlan,
+  ): AIOrchestrationResult {
+    let result = {
+      executionId: execution.id,
+      workflowId: execution.workflowId,
+      organizationId: execution.organizationId,
+      success: true,
+      startedAt: new Date(),
+      stepResults: [],
+    } as AIOrchestrationResult;
+
+    for (const item of plan.items) {
+      const stepResult: AIOrchestrationStepResult = {
+        stepId: item.step.id,
+        success: true,
+        outputs: {},
+        warnings: [],
+        errors: [],
+        durationMs: 0,
+      };
+
+      result = addAIOrchestrationStepResult(result, stepResult);
+    }
+
+    return completeAIOrchestrationResult(result);
+  }
 }

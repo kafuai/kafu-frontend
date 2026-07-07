@@ -1,4 +1,6 @@
 import { AIOrchestrationExecution } from "./aiOrchestrationExecution";
+import { AIOrchestrationExecutionSnapshot, createExecutionSnapshot } from "./aiOrchestrationExecutionSnapshot";
+import { AIOrchestrationExecutionContext, createAIOrchestrationExecutionContext } from "./aiOrchestrationExecutionContext";
 import { AIOrchestrationPlan } from "./aiOrchestrationPlanner";
 import {
   AIOrchestrationResult,
@@ -12,6 +14,13 @@ export class AIOrchestrationEngine {
     execution: AIOrchestrationExecution,
     plan: AIOrchestrationPlan,
   ): AIOrchestrationResult {
+    const context: AIOrchestrationExecutionContext =
+      createAIOrchestrationExecutionContext(
+        execution.id,
+        execution.workflowId,
+        execution.organizationId,
+      );
+
     let result = {
       executionId: execution.id,
       workflowId: execution.workflowId,
@@ -33,6 +42,15 @@ export class AIOrchestrationEngine {
 
       result = addAIOrchestrationStepResult(result, stepResult);
     }
+
+    const snapshot: AIOrchestrationExecutionSnapshot =
+      createExecutionSnapshot(
+        execution.id,
+        "completed",
+        context,
+      );
+
+    void snapshot;
 
     return completeAIOrchestrationResult(result);
   }
