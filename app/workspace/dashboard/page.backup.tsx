@@ -1,21 +1,15 @@
-﻿import AIRecommendationCard from "@/components/workspace/dashboard/AIRecommendationCard";
 import AICommandCenter from "@/components/workspace/dashboard/AICommandCenter";
 import AIInsightsFeed from "@/components/workspace/dashboard/AIInsightsFeed";
-import CompanyHealthCard from "@/components/workspace/dashboard/CompanyHealthCard";
 import DashboardHeader from "@/components/workspace/dashboard/DashboardHeader";
-import ExecutiveAlertPanel from "@/components/workspace/dashboard/ExecutiveAlertPanel";
-import ExecutiveBrief from "@/components/workspace/dashboard/ExecutiveBrief";
 import ExecutiveDecisionBar from "@/components/workspace/dashboard/ExecutiveDecisionBar";
 import ExecutiveKPI from "@/components/workspace/dashboard/ExecutiveKPI";
 import ExecutiveMetricsGrid from "@/components/workspace/dashboard/ExecutiveMetricsGrid";
 import ExecutiveProfile from "@/components/workspace/dashboard/ExecutiveProfile";
 import Notifications from "@/components/workspace/dashboard/Notifications";
-import PayrollReadinessCard from "@/components/workspace/dashboard/PayrollReadinessCard";
 import ProgressCard from "@/components/workspace/dashboard/ProgressCard";
 import QuickActions from "@/components/workspace/dashboard/QuickActions";
 import Recommendations from "@/components/workspace/dashboard/Recommendations";
 import RiskOpportunitiesRadar from "@/components/workspace/dashboard/RiskOpportunitiesRadar";
-import StrategicKPICards from "@/components/workspace/dashboard/StrategicKPICards";
 import SystemStatus from "@/components/workspace/dashboard/SystemStatus";
 
 export default function WorkspaceDashboardPage() {
@@ -26,7 +20,6 @@ export default function WorkspaceDashboardPage() {
     >
       <div className="mx-auto w-full max-w-[1700px] space-y-6 px-4 lg:px-8">
         <DashboardHeader />
-        <ExecutiveBrief />
 
         <div className="grid gap-6 xl:grid-cols-12">
           <div className="space-y-6 xl:col-span-8">
@@ -42,8 +35,6 @@ export default function WorkspaceDashboardPage() {
 
         <ExecutiveKPI />
         <ExecutiveMetricsGrid />
-        <CompanyHealthCard />
-        <StrategicKPICards />
         <RiskOpportunitiesRadar />
 
         <div className="grid gap-6 xl:grid-cols-12">
@@ -53,9 +44,6 @@ export default function WorkspaceDashboardPage() {
           </div>
 
           <div className="space-y-6 xl:col-span-4">
-            <PayrollReadinessCard />
-            <AIRecommendationCard />
-            <ExecutiveAlertPanel />
             <ProgressCard />
             <Notifications />
             <QuickActions />
