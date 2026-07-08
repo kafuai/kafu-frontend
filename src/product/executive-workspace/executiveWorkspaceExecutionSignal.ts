@@ -25,6 +25,18 @@ export interface ExecutiveWorkspaceExecutionSignalResult {
   completionRate: number;
 }
 
+export interface ExecutiveDemoExperienceSignal {
+  companyName: string;
+  companyHealthScore: number;
+  strategicExecutionScore: number;
+  financialPerformanceScore: number;
+  workforceStabilityScore: number;
+  payrollReadinessScore: number;
+  criticalAlerts: string[];
+  aiBriefing: string;
+  recommendedExecutiveActions: string[];
+}
+
 export function buildExecutiveWorkspaceExecutionSignal(
   input: ExecutiveWorkspaceExecutionSignalInput,
 ): ExecutiveWorkspaceExecutionSignalResult {
@@ -55,5 +67,28 @@ export function buildExecutiveWorkspaceExecutionSignal(
     attentionLevel,
     recommendedExecutiveAction,
     completionRate,
+  };
+}
+
+export function buildExecutiveDemoExperienceSignal(): ExecutiveDemoExperienceSignal {
+  return {
+    companyName: "Nexa Holdings",
+    companyHealthScore: 82,
+    strategicExecutionScore: 76,
+    financialPerformanceScore: 88,
+    workforceStabilityScore: 74,
+    payrollReadinessScore: 87,
+    criticalAlerts: [
+      "18 payroll exceptions remain unresolved before month-end closure.",
+      "7 strategic projects are delayed and require executive review.",
+      "Workforce stability is below target in selected departments.",
+    ],
+    aiBriefing:
+      "KAFU AI analyzed Finance, HR, Operations, Strategy, and Workforce signals. The company is financially healthy, but payroll readiness, execution delays, and workforce stability require executive attention before month-end closure.",
+    recommendedExecutiveActions: [
+      "Review payroll exceptions with HR and Finance before payroll export.",
+      "Run an executive review for delayed transformation initiatives.",
+      "Prioritize manager follow-up for departments with elevated workforce risk.",
+    ],
   };
 }
