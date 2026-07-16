@@ -5,6 +5,13 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { getCurrentCompanyId } from "@/lib/companySession";
 
+import ExecutiveHero from "@/components/executive-dashboard/ExecutiveHero";
+import ExecutiveKpiGrid from "@/components/executive-dashboard/ExecutiveKpiGrid";
+import ExecutiveInsights from "@/components/executive-dashboard/ExecutiveInsights";
+import ExecutiveDecisionCenter from "@/components/executive-dashboard/ExecutiveDecisionCenter";
+import ExecutiveActivityFeed from "@/components/executive-dashboard/ExecutiveActivityFeed";
+import ExecutiveHealthOverview from "@/components/executive-dashboard/ExecutiveHealthOverview";
+
 import LeadStageButtons from "./LeadStageButtons";
 import ExecutiveCards from "@/components/dashboard/ExecutiveCards";
 import ExecutiveSignals from "@/components/dashboard/ExecutiveSignals";
@@ -244,6 +251,23 @@ export default function DashboardPage() {
       dir="rtl"
     >
       <div className="mx-auto max-w-7xl">
+
+        <ExecutiveHero />
+
+        <div className="mt-8">
+          <ExecutiveKpiGrid />
+        </div>
+
+        <div className="mt-8 grid gap-6 xl:grid-cols-2">
+          <ExecutiveInsights />
+          <ExecutiveDecisionCenter />
+        </div>
+
+        <div className="mt-8 grid gap-6 xl:grid-cols-2">
+          <ExecutiveHealthOverview />
+          <ExecutiveActivityFeed />
+        </div>
+        
         <section className="rounded-3xl border border-slate-700 bg-slate-900/70 p-10 shadow-xl">
           <p className="font-bold text-emerald-300">KAFU Executive Dashboard</p>
 
