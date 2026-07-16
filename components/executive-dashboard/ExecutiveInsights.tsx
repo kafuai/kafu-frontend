@@ -17,14 +17,13 @@ export default function ExecutiveInsights() {
       icon: TrendingUp,
       title:
         locale === "ar"
-          ? "أولوية تحسين تجربة الموظف"
+          ? "تحسين تجربة الموظف أولوية تنفيذية"
           : "Employee experience is the top improvement priority",
       description:
         locale === "ar"
-          ? "الطلبات اليدوية والاستفسارات المتكررة تستهلك وقتًا إداريًا كبيرًا."
+          ? "الطلبات اليدوية والاستفسارات المتكررة تستهلك وقتًا إداريًا كبيرًا وتؤثر في سرعة الاستجابة."
           : "Manual requests and repeated inquiries are consuming significant administrative time.",
-      tone:
-        "bg-[var(--success-background)] text-[var(--success)]",
+      tone: "bg-[var(--success-background)] text-[var(--success)]",
     },
     {
       icon: AlertTriangle,
@@ -34,10 +33,9 @@ export default function ExecutiveInsights() {
           : "Knowledge source gap detected",
       description:
         locale === "ar"
-          ? "رفع السياسات والإجراءات الأكثر استخدامًا سيحسن دقة Corporate Brain."
+          ? "رفع السياسات والإجراءات الأكثر استخدامًا سيحسن دقة Corporate Brain وجودة الإجابات."
           : "Uploading the most-used policies and procedures will improve Corporate Brain accuracy.",
-      tone:
-        "bg-[var(--warning-background)] text-[var(--warning)]",
+      tone: "bg-[var(--warning-background)] text-[var(--warning)]",
     },
     {
       icon: BrainCircuit,
@@ -47,10 +45,9 @@ export default function ExecutiveInsights() {
           : "Strong readiness for intelligent execution",
       description:
         locale === "ar"
-          ? "البنية الحالية تدعم بدء تشغيل أول مجموعة من الوكلاء الرقميين."
+          ? "البنية الحالية تدعم بدء تشغيل أول مجموعة من الوكلاء الرقميين ضمن نطاق واضح وقابل للقياس."
           : "The current foundation supports activating the first group of digital agents.",
-      tone:
-        "bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+      tone: "bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
     },
   ];
 
@@ -70,8 +67,8 @@ export default function ExecutiveInsights() {
 
           <p className="mt-1 text-xs text-[var(--text-muted)]">
             {locale === "ar"
-              ? "أهم ما اكتشفه KAFU AI حاليًا"
-              : "What KAFU AI has identified right now"}
+              ? "أهم ما اكتشفه KAFU AI من البيانات الحالية"
+              : "What KAFU AI has identified from current data"}
           </p>
         </div>
       </div>

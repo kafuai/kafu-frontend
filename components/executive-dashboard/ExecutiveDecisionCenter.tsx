@@ -15,13 +15,13 @@ export default function ExecutiveDecisionCenter() {
 
   const decisions = [
     locale === "ar"
-      ? "اعتماد تشغيل أول AI Agent لخدمة الموظفين."
+      ? "اعتماد تشغيل أول وكيل ذكاء اصطناعي لخدمة الموظفين."
       : "Approve deployment of the first Employee AI Agent.",
     locale === "ar"
-      ? "رفع السياسات الداخلية إلى Corporate Brain."
-      : "Upload internal policies into Corporate Brain.",
+      ? "رفع السياسات الداخلية ذات الأولوية إلى Corporate Brain."
+      : "Upload priority internal policies into Corporate Brain.",
     locale === "ar"
-      ? "تفعيل الملخص التنفيذي الأسبوعي."
+      ? "تفعيل الملخص التنفيذي الأسبوعي للإدارة."
       : "Enable the weekly executive brief.",
   ];
 
@@ -43,16 +43,16 @@ export default function ExecutiveDecisionCenter() {
         </div>
 
         <Clock3
-          className="text-[var(--brand-primary)]"
+          className="shrink-0 text-[var(--brand-primary)]"
           size={20}
         />
       </div>
 
       <div className="mt-6 space-y-3">
-        {decisions.map((decision) => (
+        {decisions.map((decision, index) => (
           <article
-            key={decision}
-            className="flex items-start justify-between gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4"
+            key={`${decision}-${index}`}
+            className="flex items-start justify-between gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4 transition hover:border-[var(--brand-primary)]"
           >
             <div className="flex items-start gap-3">
               <CheckCircle2
@@ -67,7 +67,7 @@ export default function ExecutiveDecisionCenter() {
 
             <DirectionIcon
               size={16}
-              className="shrink-0 text-[var(--brand-primary)]"
+              className="mt-1 shrink-0 text-[var(--brand-primary)]"
             />
           </article>
         ))}

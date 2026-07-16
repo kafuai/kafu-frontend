@@ -23,7 +23,7 @@ export default function ExecutiveKpiGrid() {
       value: "84%",
       note:
         locale === "ar"
-          ? "مستقر ويتحسن"
+          ? "مستقرة وتتحسن"
           : "Stable and improving",
     },
     {
@@ -35,7 +35,7 @@ export default function ExecutiveKpiGrid() {
       value: "78%",
       note:
         locale === "ar"
-          ? "المعرفة متصلة"
+          ? "المعرفة مترابطة"
           : "Knowledge connected",
     },
     {
@@ -47,7 +47,7 @@ export default function ExecutiveKpiGrid() {
       value: "6",
       note:
         locale === "ar"
-          ? "تحت المراقبة"
+          ? "تحت المراقبة حاليًا"
           : "Currently monitored",
     },
     {
@@ -59,7 +59,7 @@ export default function ExecutiveKpiGrid() {
       value: "12",
       note:
         locale === "ar"
-          ? "3 ذات أولوية"
+          ? "3 ذات أولوية عالية"
           : "3 high priority",
     },
     {
@@ -67,7 +67,7 @@ export default function ExecutiveKpiGrid() {
       label:
         locale === "ar"
           ? "نشاط اليوم"
-          : "Today’s Activity",
+          : "Today's Activity",
       value: "27",
       note:
         locale === "ar"
@@ -84,7 +84,7 @@ export default function ExecutiveKpiGrid() {
         return (
           <article
             key={item.label}
-            className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)]"
+            className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]"
           >
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
               <Icon size={20} />
