@@ -1,9 +1,24 @@
+import {
+  Building2,
+  CircleDollarSign,
+  Target,
+  Users,
+} from "lucide-react";
+
 type PipelineSnapshotProps = {
   totalCompanies: number;
   totalLeads: number;
   pipelineValue: number;
   conversionRate: number;
 };
+
+function formatPipelineValue(value: number) {
+  return new Intl.NumberFormat("en-SA", {
+    style: "currency",
+    currency: "SAR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 export default function PipelineSnapshot({
   totalCompanies,
@@ -13,45 +28,70 @@ export default function PipelineSnapshot({
 }: PipelineSnapshotProps) {
   const metrics = [
     {
+      icon: Building2,
       title: "الشركات المسجلة",
-      value: totalCompanies.toString(),
+      value: totalCompanies.toLocaleString(),
     },
     {
-      title: "Leads",
-      value: totalLeads.toString(),
+      icon: Users,
+      title: "الفرص المسجلة",
+      value: totalLeads.toLocaleString(),
     },
     {
-      title: "Pipeline Value",
-      value: `${pipelineValue.toLocaleString()} SAR`,
+      icon: CircleDollarSign,
+      title: "قيمة المسار",
+      value: formatPipelineValue(pipelineValue),
     },
     {
-      title: "Conversion",
+      icon: Target,
+      title: "معدل التحويل",
       value: `${conversionRate}%`,
     },
   ];
 
   return (
-    <div className="rounded-3xl border border-slate-700 bg-white p-8 text-slate-900 shadow-xl">
-      <h2 className="text-3xl font-bold">
-        Business Pipeline Snapshot
-      </h2>
+    <section className="rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)] lg:col-span-2 sm:p-8">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+          Business Pipeline
+        </p>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => (
-          <div
-            key={metric.title}
-            className="rounded-2xl bg-slate-100 p-5"
-          >
-            <p className="text-slate-500">
-              {metric.title}
-            </p>
+        <h2 className="mt-1 text-2xl font-black text-[var(--text-primary)]">
+          ملخص مسار الأعمال
+        </h2>
 
-            <h3 className="mt-3 text-3xl font-black">
-              {metric.value}
-            </h3>
-          </div>
-        ))}
+        <p className="mt-2 text-sm leading-7 text-[var(--text-muted)]">
+          نظرة تنفيذية على حجم الفرص التجارية وقيمة المسار ومعدل التحويل.
+        </p>
       </div>
-    </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        {metrics.map((metric) => {
+          const Icon = metric.icon;
+
+          return (
+            <article
+              key={metric.title}
+              className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-5"
+            >
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                <Icon size={18} />
+              </span>
+
+              <p className="mt-4 text-sm font-bold text-[var(--text-muted)]">
+                {metric.title}
+              </p>
+
+              <h3
+                className="mt-2 text-2xl font-black text-[var(--text-primary)]"
+                dir={metric.title === "قيمة المسار" ? "ltr" : undefined}
+              >
+                {metric.value}
+              </h3>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }
