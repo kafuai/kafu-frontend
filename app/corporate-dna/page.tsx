@@ -147,8 +147,8 @@ export default function CorporateDNAPage() {
 
   return (
     <main
-      className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-6 py-12 text-white"
-      dir="rtl"
+       className="min-h-screen bg-[var(--background)] px-6 py-12 text-[var(--text-primary)]"
+    dir="rtl"
     >
       <div className="mx-auto max-w-7xl">
         <section className="rounded-3xl border border-slate-700 bg-slate-900/70 p-10 shadow-xl">
@@ -192,17 +192,17 @@ export default function CorporateDNAPage() {
               {readiness.map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-3xl border border-slate-700 bg-white p-6 text-slate-900 shadow-xl"
+                  className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 text-[var(--text-primary)] shadow-[var(--shadow-small)]"
                 >
-                  <p className="font-semibold text-slate-500">{item.label}</p>
+                  <p className="mt-5 h-3 overflow-hidden rounded-full bg-slate-200">{item.label}</p>
 
                   <h2 className="mt-4 text-4xl font-black">
                     {item.value}
                   </h2>
 
-                  <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-200">
+                  <div className="mt-5 h-3 overflow-hidden rounded-full bg-[var(--surface-muted)]">
                     <div
-                      className="h-full rounded-full bg-emerald-600"
+                      className="h-full rounded-full bg-[var(--brand-primary)]"
                       style={{ width: item.value }}
                     />
                   </div>
@@ -214,11 +214,11 @@ export default function CorporateDNAPage() {
               {dnaSections.map((section) => (
                 <div
                   key={section.title}
-                  className="rounded-3xl border border-slate-700 bg-white p-8 text-slate-900 shadow-xl transition hover:-translate-y-1 hover:border-emerald-500"
+                  className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-8 text-[var(--text-primary)] shadow-[var(--shadow-small)] transition hover:-translate-y-1 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
                 >
                   <div className="text-5xl">{section.icon}</div>
 
-                  <p className="mt-6 font-bold text-emerald-700">
+                  <p className="mt-6 font-bold text-[var(--brand-primary)]">
                     {section.title}
                   </p>
 
@@ -226,7 +226,7 @@ export default function CorporateDNAPage() {
                     {section.subtitle}
                   </h2>
 
-                  <p className="mt-4 leading-8 text-slate-600">
+                  <p className="mt-4 leading-8 text-[var(--text-secondary)]">
                     {section.desc}
                   </p>
 
@@ -234,7 +234,7 @@ export default function CorporateDNAPage() {
                     {section.items.map((item) => (
                       <div
                         key={item}
-                        className="rounded-2xl bg-slate-100 px-4 py-3 leading-7 text-slate-700"
+                        className="rounded-2xl bg-[var(--surface-muted)] px-4 py-3 leading-7 text-[var(--text-secondary)]"
                       >
                         ✅ {item}
                       </div>

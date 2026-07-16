@@ -148,12 +148,12 @@ export default function DigitalWorkforcePage() {
 
   return (
     <main
-      className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-6 py-12 text-white"
+      className="min-h-screen bg-[var(--background)] px-6 py-12 text-[var(--text-primary)]"
       dir="rtl"
     >
       <section className="mx-auto max-w-7xl">
-        <div className="rounded-3xl border border-slate-700 bg-slate-900/70 p-10 shadow-xl">
-          <p className="font-bold text-emerald-300">
+        <div className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-10 shadow-[var(--shadow-medium)]">
+          <p className="font-bold text-[var(--brand-primary)]">
             Digital Workforce Recommendation
           </p>
 
@@ -161,7 +161,7 @@ export default function DigitalWorkforcePage() {
             الفريق الرقمي المقترح لمؤسستكم
           </h1>
 
-          <p className="mt-6 max-w-5xl text-xl leading-9 text-slate-300">
+          <p className="mt-6 max-w-5xl text-xl leading-9 text-[var(--text-secondary)]">
             بناءً على بيانات الشركة وجلسة الاستكشاف وCorporate DNA وCorporate
             Brain، يقترح كفو فريقاً رقمياً مرحلياً يناسب واقع المؤسسة
             وأولوياتها التشغيلية.
@@ -193,15 +193,15 @@ export default function DigitalWorkforcePage() {
               {impactCards.map((card) => (
                 <div
                   key={card.label}
-                  className="rounded-3xl border border-slate-700 bg-white p-6 text-slate-900 shadow-xl"
+                  className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 text-[var(--text-primary)] shadow-[var(--shadow-small)]"
                 >
-                  <p className="font-semibold text-slate-500">{card.label}</p>
+                  <p className="font-semibold text-[var(--text-muted)]">{card.label}</p>
 
                   <h2 className="mt-3 text-4xl font-black">
                     {card.value}
                   </h2>
 
-                  <p className="mt-3 text-sm font-bold text-emerald-700">
+                  <p className="mt-3 text-sm font-bold text-[var(--brand-primary)]">
                     {card.note}
                   </p>
                 </div>
@@ -242,14 +242,14 @@ export default function DigitalWorkforcePage() {
               {team.map((member) => (
                 <div
                   key={member.title}
-                  className="rounded-3xl border border-slate-700 bg-white p-8 text-slate-900 shadow-xl transition hover:-translate-y-1 hover:border-emerald-500"
+                  className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-8 text-[var(--text-primary)] shadow-[var(--shadow-small)] transition hover:-translate-y-1 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
                 >
                   <div className="mb-6 flex items-center justify-between">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-2xl text-white">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--brand-primary)] text-2xl text-white">
                       {member.icon}
                     </div>
 
-                    <span className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+                    <span className="rounded-full bg-[var(--brand-subtle)] px-4 py-2 text-sm font-bold text-[var(--brand-primary)]">
                       {member.priority}
                     </span>
                   </div>
@@ -258,11 +258,11 @@ export default function DigitalWorkforcePage() {
                     {member.title}
                   </h2>
 
-                  <p className="mt-2 text-sm font-bold text-emerald-700">
+                  <p className="mt-2 text-sm font-bold text-[var(--brand-primary)]">
                     {member.subtitle}
                   </p>
 
-                  <p className="mt-5 leading-8 text-slate-600">
+                  <p className="mt-5 leading-8 text-[var(--text-secondary)]">
                     {member.desc}
                   </p>
 
@@ -272,9 +272,9 @@ export default function DigitalWorkforcePage() {
                       <span>{member.readiness}</span>
                     </div>
 
-                    <div className="h-3 overflow-hidden rounded-full bg-slate-200">
+                    <div className="h-3 overflow-hidden rounded-full bg-[var(--surface-muted)]">
                       <div
-                        className="h-full rounded-full bg-emerald-600"
+                        className="h-full rounded-full bg-[var(--brand-primary)]"
                         style={{ width: member.readiness }}
                       />
                     </div>
@@ -284,7 +284,7 @@ export default function DigitalWorkforcePage() {
                     {member.tasks.map((task) => (
                       <div
                         key={task}
-                        className="rounded-2xl bg-slate-100 px-4 py-3 text-slate-700"
+                        className="rounded-2xl bg-[var(--surface-muted)] px-4 py-3 text-[var(--text-secondary)]"
                       >
                         ✅ {task}
                       </div>
