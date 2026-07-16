@@ -1,19 +1,24 @@
+import type { ReactNode } from "react";
+
 import WorkspaceHeader from "@/components/layout/WorkspaceHeader";
 import WorkspaceSidebar from "@/components/layout/WorkspaceSidebar";
 
+interface WorkspaceLayoutProps {
+  children: ReactNode;
+}
+
 export default function WorkspaceLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
+}: WorkspaceLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-50" dir="ltr">
-      <div className="mx-auto flex max-w-7xl gap-6 px-6 py-8">
+    <div className="workspace-layout">
+      <div className="workspace-layout__container">
         <WorkspaceSidebar />
 
-        <main className="min-w-0 flex-1" dir="rtl">
-          <div className="space-y-8">
-            <WorkspaceHeader />
+        <main className="workspace-layout__main">
+          <WorkspaceHeader />
+
+          <div className="workspace-layout__content">
             {children}
           </div>
         </main>

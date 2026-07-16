@@ -1,85 +1,190 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  BrainCircuit,
+  Building2,
+  Gauge,
+  LayoutDashboard,
+  Network,
+  Route,
+  Sparkles,
+  UsersRound,
+} from "lucide-react";
 
-const workspaceLinks = [
-  { title: "🏠 Workspace", href: "/company-workspace", active: true },
-  { title: "📊 Company Dashboard", href: "/company-dashboard" },
-  { title: "🧭 Executive Journey", href: "/journey" },
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+const navigationSections = [
+  {
+    id: "workspace",
+    title: {
+      ar: "مساحة العمل",
+      en: "Workspace",
+    },
+    items: [
+      {
+        translationKey: "navigation.workspace",
+        href: "/company-workspace",
+        icon: Building2,
+      },
+      {
+        translationKey: "navigation.dashboard",
+        href: "/company-dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        label: {
+          ar: "الرحلة التنفيذية",
+          en: "Executive Journey",
+        },
+        href: "/journey",
+        icon: Route,
+      },
+    ],
+  },
+  {
+    id: "intelligence",
+    title: {
+      ar: "الذكاء المؤسسي",
+      en: "Enterprise Intelligence",
+    },
+    items: [
+      {
+        translationKey: "navigation.modules",
+        href: "/modules",
+        icon: Network,
+      },
+      {
+        translationKey: "navigation.corporateBrain",
+        href: "/corporate-brain",
+        icon: BrainCircuit,
+      },
+      {
+        translationKey: "navigation.corporateDNA",
+        href: "/corporate-dna",
+        icon: Sparkles,
+      },
+    ],
+  },
+  {
+    id: "operations",
+    title: {
+      ar: "التنفيذ والعمليات",
+      en: "Execution & Operations",
+    },
+    items: [
+      {
+        translationKey: "navigation.digitalWorkforce",
+        href: "/digital-workforce",
+        icon: UsersRound,
+      },
+      {
+        translationKey: "navigation.commandCenter",
+        href: "/command-center",
+        icon: Gauge,
+      },
+    ],
+  },
 ];
-
-const aiLinks = [
-  { title: "🤖 AI Modules", href: "/modules" },
-  { title: "🧠 Corporate Brain", href: "/corporate-brain" },
-];
-
-const operationsLinks = [
-  { title: "👥 Digital Workforce", href: "/digital-workforce" },
-  { title: "⚡ Command Center", href: "/command-center" },
-];
-
-function SidebarSection({
-  title,
-  links,
-}: {
-  title: string;
-  links: { title: string; href: string; active?: boolean }[];
-}) {
-  return (
-    <div className="space-y-2">
-      <p className="px-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-        {title}
-      </p>
-
-      {links.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={`block rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-            item.active
-              ? "bg-slate-900 text-white shadow"
-              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-          }`}
-        >
-          {item.title}
-        </Link>
-      ))}
-    </div>
-  );
-}
 
 export default function WorkspaceSidebar() {
+  const pathname = usePathname();
+  const { locale, t } = useLocalization();
+
   return (
-    <aside className="sticky top-6 flex h-[calc(100vh-3rem)] w-64 flex-col rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900">KAFU AI</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Company Operating System
-        </p>
+    <aside className="workspace-sidebar">
+      <div className="workspace-sidebar__company">
+        <span className="workspace-sidebar__company-icon">
+          <Building2 size={20} />
+        </span>
+
+        <div className="workspace-sidebar__company-content">
+          <span className="workspace-sidebar__company-label">
+            {t("workspace.activeCompany")}
+          </span>
+
+          <strong className="workspace-sidebar__company-name">
+            {t("workspace.companyName")}
+          </strong>
+
+          <span className="workspace-sidebar__company-details">
+            {t("workspace.companyDetails")}
+          </span>
+        </div>
       </div>
 
-      <div className="mb-6 rounded-2xl bg-slate-50 p-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-          Active Company
-        </p>
+      <nav
+        className="workspace-sidebar__navigation"
+        aria-label={
+          locale === "ar"
+            ? "التنقل داخل مساحة العمل"
+            : "Workspace navigation"
+        }
+      >
+        {navigationSections.map((section) => (
+          <section
+            key={section.id}
+            className="workspace-sidebar__section"
+          >
+            <h2 className="workspace-sidebar__section-title">
+              {section.title[locale]}
+            </h2>
 
-        <p className="mt-2 font-bold text-slate-900">
-          شركة الفراشة الزرقاء
-        </p>
+            <div className="workspace-sidebar__links">
+              {section.items.map((item) => {
+                const isActive =
+                  pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`);
 
-        <p className="mt-1 text-sm text-slate-500">
-          75 Employees · Saudi Arabia
-        </p>
-      </div>
+                const Icon = item.icon;
 
-      <nav className="flex-1 space-y-6 overflow-y-auto">
-        <SidebarSection title="Workspace" links={workspaceLinks} />
-        <SidebarSection title="AI" links={aiLinks} />
-        <SidebarSection title="Operations" links={operationsLinks} />
+                const title =
+                  "translationKey" in item &&
+                  item.translationKey
+                    ? t(item.translationKey)
+                    : "label" in item && item.label
+                      ? item.label[locale]
+                      : "";
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="workspace-sidebar__link"
+                    data-active={isActive}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    <Icon
+                      className="workspace-sidebar__link-icon"
+                      size={18}
+                      strokeWidth={2}
+                    />
+
+                    <span>{title}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </nav>
 
-      <div className="mt-6 rounded-2xl bg-slate-900 p-4 text-white">
-        <p className="text-sm font-semibold">Phase 2</p>
-        <p className="mt-1 text-xs text-slate-300">
-          Workspace UI in progress.
+      <div className="workspace-sidebar__status">
+        <div className="workspace-sidebar__status-heading">
+          <span className="workspace-sidebar__status-indicator" />
+
+          <strong>
+            {locale === "ar"
+              ? "المنصة تعمل"
+              : "Platform Operational"}
+          </strong>
+        </div>
+
+        <p>
+          {locale === "ar"
+            ? "أنظمة الذكاء المؤسسي متصلة وجاهزة."
+            : "Enterprise intelligence systems are connected and ready."}
         </p>
       </div>
     </aside>

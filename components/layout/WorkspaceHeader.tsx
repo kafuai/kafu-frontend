@@ -1,25 +1,40 @@
-export default function WorkspaceHeader() {
-  return (
-    <header className="rounded-3xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-bold uppercase tracking-wider text-slate-400">
-            Workspace
-          </p>
+"use client";
 
-          <h2 className="mt-1 text-2xl font-bold text-slate-900">
-            Company Command Workspace
-          </h2>
+import { Activity, Building2, Sparkles } from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+export default function WorkspaceHeader() {
+  const { locale, t } = useLocalization();
+
+  return (
+    <header className="workspace-page-header">
+      <div className="workspace-page-header__content">
+        <span className="workspace-page-header__eyebrow">
+          <Building2 size={15} />
+          {t("workspace.label")}
+        </span>
+
+        <h1 className="workspace-page-header__title">
+          {t("workspace.title")}
+        </h1>
+
+        <p className="workspace-page-header__description">
+          {locale === "ar"
+            ? "إدارة القرارات والأداء والذكاء المؤسسي من مساحة تنفيذ موحدة."
+            : "Manage decisions, performance, and enterprise intelligence from one unified execution workspace."}
+        </p>
+      </div>
+
+      <div className="workspace-page-header__signals">
+        <div className="workspace-page-header__signal">
+          <Activity size={16} />
+          <span>{t("common.active")}</span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
-            Active
-          </div>
-
-          <div className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600">
-            Phase 2
-          </div>
+        <div className="workspace-page-header__signal workspace-page-header__signal--primary">
+          <Sparkles size={16} />
+          <span>{t("common.phase")}</span>
         </div>
       </div>
     </header>
