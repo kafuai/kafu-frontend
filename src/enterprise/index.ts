@@ -13,3 +13,4 @@ export * from "./enterprise-demo-presentation/enterpriseDemoPresentationSequence
 export * from "./enterprise-demo-presentation/enterpriseDemoPresentationProgress";
 export * from "./enterprise-demo-presentation/enterpriseDemoPresentationViewModel";
 export * from "./executive-demo-environment";
+export * from "./executive-demo-analytics";
