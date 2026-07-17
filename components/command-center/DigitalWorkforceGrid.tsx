@@ -76,13 +76,13 @@ export default function DigitalWorkforceGrid({
 
           <h3 className="mt-4 font-black text-[var(--text-primary)]">
             {locale === "ar"
-              ? "لا توجد وكلاء رقمية"
+              ? "لا يوجد وكلاء رقميون"
               : "No digital agents available"}
           </h3>
 
           <p className="mt-2 text-sm text-[var(--text-muted)]">
             {locale === "ar"
-              ? "ستظهر الوكلاء المقترحة هنا عند توفر بيانات المؤسسة."
+              ? "سيظهر الوكلاء المقترحون هنا عند توفر بيانات المؤسسة."
               : "Recommended agents will appear when organization data is available."}
           </p>
         </div>
@@ -121,9 +121,7 @@ export default function DigitalWorkforceGrid({
 
               <div className="mt-5 flex items-center justify-between text-xs font-bold text-[var(--text-secondary)]">
                 <span>
-                  {locale === "ar"
-                    ? "الحمل الحالي"
-                    : "Current Load"}
+                  {locale === "ar" ? "الحمل الحالي" : "Current Load"}
                 </span>
 
                 <span>{agent.load}%</span>
@@ -132,9 +130,7 @@ export default function DigitalWorkforceGrid({
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--surface)]">
                 <div
                   className="h-full rounded-full bg-[var(--brand-primary)]"
-                  style={{
-                    width: getLoadWidth(agent.load),
-                  }}
+                  style={{ width: getLoadWidth(agent.load) }}
                 />
               </div>
 

@@ -32,20 +32,35 @@ export default function AIRecommendations({
       </div>
 
       <div className="mt-6 space-y-3">
-        {recommendations.map((recommendation, index) => (
-          <article
-            key={`${recommendation}-${index}`}
-            className="flex items-start gap-4 rounded-2xl bg-[var(--success-background)] p-4"
-          >
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--success)] text-sm font-black text-white">
-              {index + 1}
-            </span>
+        {recommendations.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[var(--border-default)] bg-[var(--surface-muted)] p-8 text-center">
+            <Lightbulb
+              size={26}
+              className="mx-auto text-[var(--text-muted)]"
+            />
 
-            <p className="text-xs font-bold leading-6 text-[var(--text-secondary)]">
-              {recommendation}
+            <p className="mt-4 text-sm font-bold text-[var(--text-secondary)]">
+              {locale === "ar"
+                ? "لا توجد توصيات متاحة حتى الآن."
+                : "No recommendations available yet."}
             </p>
-          </article>
-        ))}
+          </div>
+        ) : (
+          recommendations.map((recommendation, index) => (
+            <article
+              key={`${recommendation}-${index}`}
+              className="flex items-start gap-4 rounded-2xl bg-[var(--success-background)] p-4"
+            >
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--success)] text-sm font-black text-white">
+                {index + 1}
+              </span>
+
+              <p className="text-xs font-bold leading-6 text-[var(--text-secondary)]">
+                {recommendation}
+              </p>
+            </article>
+          ))
+        )}
       </div>
     </section>
   );

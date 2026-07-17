@@ -21,7 +21,7 @@ export default function CommandCenterKpis({
       icon: Building2,
       label:
         locale === "ar"
-          ? "مساحة العمل"
+          ? "مساحة العمل النشطة"
           : "Active Workspace",
       value: companyName,
       note:
@@ -47,7 +47,9 @@ export default function CommandCenterKpis({
         locale === "ar"
           ? "إشارات الاستكشاف"
           : "Discovery Signals",
-      value: discoveryAnswersCount.toLocaleString(),
+      value: discoveryAnswersCount.toLocaleString(
+        locale === "ar" ? "ar-SA" : "en-US",
+      ),
       note:
         locale === "ar"
           ? "مدخلات تنفيذية"
@@ -62,7 +64,7 @@ export default function CommandCenterKpis({
       value: "99%",
       note:
         locale === "ar"
-          ? "الأنظمة الأساسية متصلة"
+          ? "الأنظمة الأساسية تعمل"
           : "Core systems operational",
     },
   ];

@@ -25,11 +25,14 @@ export default function ExecutiveAlerts({
 
         <div>
           <h2 className="text-base font-black text-[var(--text-primary)]">
-            {locale === "ar" ? "التنبيهات التنفيذية" : "Executive Alerts"}
+            {locale === "ar"
+              ? "التنبيهات التنفيذية"
+              : "Executive Alerts"}
           </h2>
 
           <p className="mt-1 text-xs text-[var(--text-muted)]">
-            {alerts.length} {locale === "ar" ? "تنبيهات نشطة" : "Active Alerts"}
+            {alerts.length}{" "}
+            {locale === "ar" ? "تنبيهات نشطة" : "Active Alerts"}
           </p>
         </div>
       </div>

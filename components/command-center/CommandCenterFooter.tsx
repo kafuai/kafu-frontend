@@ -16,21 +16,21 @@ export default function CommandCenterFooter({
 
           <h2 className="text-2xl font-black text-[var(--text-primary)]">
             {locale === "ar"
-              ? "المنصة جاهزة للعرض التنفيذي"
+              ? "المنصة جاهزة للمراجعة التنفيذية"
               : "Platform Ready for Executive Review"}
           </h2>
         </div>
 
         <p className="mt-3 max-w-3xl leading-7 text-[var(--text-secondary)]">
           {locale === "ar"
-            ? "استعرض الأداء والتوصيات والقرارات من لوحة القيادة التنفيذية."
+            ? "استعرض أداء المؤسسة والتوصيات والقرارات من لوحة القيادة التنفيذية."
             : "Review enterprise performance, recommendations, and decisions from the executive dashboard."}
         </p>
       </div>
 
       <Link
         href="/dashboard"
-        className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-6 font-black text-[var(--surface)] transition hover:opacity-90"
+        className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-6 font-black text-[var(--surface)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
       >
         {locale === "ar"
           ? "فتح لوحة القيادة"

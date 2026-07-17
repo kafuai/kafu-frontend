@@ -35,7 +35,7 @@ export default function CommandCenterHero({
 
           <Link
             href="/dashboard"
-            className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] px-5 font-black text-[var(--text-primary)] transition hover:bg-[var(--surface-muted)]"
+            className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] px-5 font-black text-[var(--text-primary)] transition hover:bg-[var(--surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
             {locale === "ar"
               ? "فتح لوحة القيادة التنفيذية"
@@ -56,7 +56,9 @@ export default function CommandCenterHero({
             </p>
 
             <p className="mt-1 text-[10px] opacity-80">
-              99% System Health
+              {locale === "ar"
+                ? "صحة الأنظمة 99%"
+                : "99% System Health"}
             </p>
           </div>
         </div>
