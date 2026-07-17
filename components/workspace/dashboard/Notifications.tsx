@@ -1,84 +1,114 @@
-export default function Notifications() {
+import { Bell } from "lucide-react";
+
+type NotificationsProps = {
+  locale?: "ar" | "en";
+};
+
+export default function Notifications({
+  locale = "en",
+}: NotificationsProps = {}) {
+  
   const notifications = [
     {
-      title: "طلبات تحتاج مراجعة",
-      desc: "يوجد 3 طلبات موظفين بانتظار قرار إداري.",
-      level: "عاجل",
-      color: "rose",
-      time: "منذ 5 دقائق",
+      title:
+        locale === "ar"
+          ? "طلبات تحتاج إلى مراجعة"
+          : "Requests require review",
+      description:
+        locale === "ar"
+          ? "توجد ثلاثة طلبات موظفين بانتظار قرار إداري."
+          : "Three employee requests are awaiting a management decision.",
+      level: locale === "ar" ? "عاجل" : "Urgent",
+      time: locale === "ar" ? "منذ 5 دقائق" : "5 minutes ago",
+      indicatorClass: "bg-[var(--warning)]",
     },
     {
-      title: "تحديث مؤشر الجاهزية",
-      desc: "تم تحديث مؤشر الجاهزية بعد آخر تحليل للبيانات.",
-      level: "معلومة",
-      color: "sky",
-      time: "منذ 20 دقيقة",
+      title:
+        locale === "ar"
+          ? "تحديث مؤشر الجاهزية"
+          : "Readiness score updated",
+      description:
+        locale === "ar"
+          ? "تم تحديث مؤشر الجاهزية بعد تحليل بيانات الاستكشاف."
+          : "The readiness score was updated after analyzing discovery data.",
+      level: locale === "ar" ? "معلومة" : "Information",
+      time: locale === "ar" ? "منذ 20 دقيقة" : "20 minutes ago",
+      indicatorClass: "bg-[var(--brand-primary)]",
     },
     {
-      title: "توصية ذكية جديدة",
-      desc: "KAFU AI يقترح تحسين مسار الموافقات الداخلية.",
+      title:
+        locale === "ar"
+          ? "توصية ذكية جديدة"
+          : "New AI recommendation",
+      description:
+        locale === "ar"
+          ? "تقترح KAFU AI تحسين مسار الموافقات الداخلية."
+          : "KAFU AI recommends improving the internal approval workflow.",
       level: "AI",
-      color: "emerald",
-      time: "الآن",
+      time: locale === "ar" ? "الآن" : "Now",
+      indicatorClass: "bg-[var(--success)]",
     },
   ];
 
-  const colors: Record<string, string> = {
-    rose: "bg-rose-500",
-    sky: "bg-sky-500",
-    emerald: "bg-emerald-500",
-  };
-
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-black text-slate-950">
-            التنبيهات
-          </h2>
+    <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <Bell size={20} />
+          </span>
 
-          <p className="mt-1 text-sm text-slate-500">
-            آخر التنبيهات المهمة للإدارة التنفيذية.
-          </p>
+          <div>
+            <h2 className="text-xl font-black text-[var(--text-primary)]">
+              {locale === "ar" ? "التنبيهات" : "Notifications"}
+            </h2>
+
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              {locale === "ar"
+                ? "آخر التنبيهات المهمة للإدارة التنفيذية."
+                : "Latest important executive notifications."}
+            </p>
+          </div>
         </div>
 
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
-          {notifications.length} جديد
+        <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-black text-[var(--text-secondary)]">
+          {notifications.length}{" "}
+          {locale === "ar" ? "جديدة" : "New"}
         </span>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-3">
         {notifications.map((item) => (
-          <div
+          <article
             key={item.title}
-            className="group rounded-3xl border border-slate-200 bg-slate-50 p-5 transition hover:bg-white hover:shadow-md"
+            className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-5 transition hover:border-[var(--brand-primary)]"
           >
             <div className="flex items-start gap-4">
-              <div
-                className={`mt-2 h-3 w-3 rounded-full ${colors[item.color]}`}
+              <span
+                className={`mt-2 h-2.5 w-2.5 shrink-0 rounded-full ${item.indicatorClass}`}
               />
 
-              <div className="flex-1">
-                <div className="flex items-center justify-between gap-4">
-                  <h3 className="font-black text-slate-950">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="font-black text-[var(--text-primary)]">
                     {item.title}
                   </h3>
 
-                  <span className="text-xs font-bold text-slate-400">
+                  <span className="shrink-0 text-xs font-bold text-[var(--text-muted)]">
                     {item.time}
                   </span>
                 </div>
 
-                <p className="mt-2 text-sm leading-7 text-slate-600">
-                  {item.desc}
+                <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
+                  {item.description}
                 </p>
 
-                <div className="mt-4 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-slate-600">
+                <span className="mt-4 inline-flex rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-black text-[var(--text-secondary)]">
                   {item.level}
-                </div>
+                </span>
               </div>
             </div>
-          </div>
+          </article>
         ))}
       </div>
     </section>

@@ -1,91 +1,148 @@
-export default function ExecutiveKPI() {
+import {
+  AlertTriangle,
+  Lightbulb,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+
+type ExecutiveKPIProps = {
+  locale?: "ar" | "en";
+  readinessScore?: number;
+};
+
+export default function ExecutiveKPI({
+  locale = "en",
+  readinessScore = 82,
+}: ExecutiveKPIProps = {}) {
   const kpis = [
     {
-      title: "مؤشر الجاهزية",
-      value: "82%",
-      subtitle: "تحسن ملحوظ في جاهزية الشركة",
-      icon: "📈",
+      title:
+        locale === "ar"
+          ? "مؤشر الجاهزية"
+          : "Readiness Score",
+      value: `${readinessScore}%`,
+      subtitle:
+        locale === "ar"
+          ? "مستوى جاهزية المؤسسة الحالي للتحول الذكي."
+          : "Current enterprise readiness for intelligent transformation.",
       trend: "+18%",
-      trendLabel: "مقارنة بالشهر الماضي",
-      tone: "emerald",
+      trendLabel:
+        locale === "ar"
+          ? "تحسن متوقع بعد استكمال الاستكشاف"
+          : "Expected improvement after discovery completion",
+      icon: TrendingUp,
+      iconClass:
+        "bg-[var(--success-background)] text-[var(--success)]",
     },
     {
-      title: "طلبات الموظفين",
+      title:
+        locale === "ar"
+          ? "طلبات الموظفين"
+          : "Employee Requests",
       value: "24",
-      subtitle: "طلبات مفتوحة تحتاج متابعة تنفيذية",
-      icon: "🧾",
+      subtitle:
+        locale === "ar"
+          ? "طلبات مفتوحة تحتاج إلى متابعة تنفيذية."
+          : "Open requests requiring operational follow-up.",
       trend: "+6",
-      trendLabel: "طلبات جديدة هذا الأسبوع",
-      tone: "sky",
+      trendLabel:
+        locale === "ar"
+          ? "طلبات جديدة هذا الأسبوع"
+          : "New requests this week",
+      icon: Users,
+      iconClass:
+        "bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
     },
     {
-      title: "المخاطر التشغيلية",
+      title:
+        locale === "ar"
+          ? "المخاطر التشغيلية"
+          : "Operational Risks",
       value: "6",
-      subtitle: "مخاطر تحتاج قرار إداري سريع",
-      icon: "⚠️",
+      subtitle:
+        locale === "ar"
+          ? "مخاطر تحتاج إلى قرار إداري ومتابعة."
+          : "Risks requiring management decisions and follow-up.",
       trend: "-2",
-      trendLabel: "انخفاض في المخاطر الحرجة",
-      tone: "rose",
+      trendLabel:
+        locale === "ar"
+          ? "انخفاض في المخاطر الحرجة"
+          : "Reduction in critical risks",
+      icon: AlertTriangle,
+      iconClass:
+        "bg-[var(--warning-background)] text-[var(--warning)]",
     },
     {
-      title: "فرص التحسين",
+      title:
+        locale === "ar"
+          ? "فرص التحسين"
+          : "Improvement Opportunities",
       value: "11",
-      subtitle: "اقتراحات قابلة للتنفيذ خلال 30 يومًا",
-      icon: "💡",
+      subtitle:
+        locale === "ar"
+          ? "فرص قابلة للتنفيذ خلال الثلاثين يومًا القادمة."
+          : "Opportunities actionable within the next 30 days.",
       trend: "+4",
-      trendLabel: "فرص جديدة قابلة للتنفيذ",
-      tone: "amber",
+      trendLabel:
+        locale === "ar"
+          ? "فرص جديدة قابلة للتنفيذ"
+          : "New actionable opportunities",
+      icon: Lightbulb,
+      iconClass:
+        "bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
     },
   ];
 
-  const toneClasses: Record<string, string> = {
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    sky: "bg-sky-50 text-sky-700 border-sky-100",
-    rose: "bg-rose-50 text-rose-700 border-rose-100",
-    amber: "bg-amber-50 text-amber-700 border-amber-100",
-  };
-
   return (
     <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-      {kpis.map((kpi) => (
-        <div
-          key={kpi.title}
-          className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div
-              className={`flex h-12 w-12 items-center justify-center rounded-2xl border text-xl ${toneClasses[kpi.tone]}`}
-            >
-              {kpi.icon}
+      {kpis.map((kpi) => {
+        const Icon = kpi.icon;
+
+        return (
+          <article
+            key={kpi.title}
+            className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <span
+                className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${kpi.iconClass}`}
+              >
+                <Icon size={21} />
+              </span>
+
+              <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-black text-[var(--text-secondary)]">
+                {kpi.trend}
+              </span>
             </div>
 
-            <span
-              className={`rounded-full border px-3 py-1 text-xs font-black ${toneClasses[kpi.tone]}`}
-            >
-              {kpi.trend}
-            </span>
-          </div>
+            <div className="mt-6">
+              <p className="text-sm font-bold text-[var(--text-muted)]">
+                {kpi.title}
+              </p>
 
-          <div className="mt-7">
-            <p className="text-sm font-bold text-slate-500">{kpi.title}</p>
+              <h3 className="mt-3 text-4xl font-black tracking-tight text-[var(--text-primary)]">
+                {kpi.value}
+              </h3>
 
-            <h3 className="mt-3 text-5xl font-black tracking-tight text-slate-950">
-              {kpi.value}
-            </h3>
+              <p className="mt-4 text-sm leading-7 text-[var(--text-secondary)]">
+                {kpi.subtitle}
+              </p>
+            </div>
 
-            <p className="mt-4 text-sm leading-7 text-slate-600">
-              {kpi.subtitle}
-            </p>
-          </div>
+            <div className="mt-6 rounded-2xl bg-[var(--surface-muted)] p-4">
+              <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">
+                {locale === "ar"
+                  ? "المؤشر التنفيذي"
+                  : "Executive Indicator"}
+              </p>
 
-          <div className="mt-6 rounded-2xl bg-slate-50 p-4">
-            <p className="text-xs font-bold text-slate-400">المؤشر التنفيذي</p>
-            <p className="mt-1 text-sm font-black text-slate-700">
-              {kpi.trendLabel}
-            </p>
-          </div>
-        </div>
-      ))}
+              <p className="mt-2 text-xs font-black leading-6 text-[var(--text-secondary)]">
+                {kpi.trendLabel}
+              </p>
+            </div>
+          </article>
+        );
+      })}
     </section>
   );
 }
