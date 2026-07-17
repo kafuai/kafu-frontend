@@ -62,3 +62,13 @@ export * from "./final-polish/finalPolishEngine";
 export * from "./final-polish/finalPolishAssessment";
 export * from "./final-polish/finalPolishSummary";
 export * from "./final-polish/finalPolishViewModel";
+
+export * from "./demo-validation/demoValidationTypes";
+export * from "./demo-validation/demoValidation";
+export * from "./demo-validation/demoValidationContext";
+export * from "./demo-validation/demoValidationValidator";
+export * from "./demo-validation/demoValidationBuilder";
+export * from "./demo-validation/demoValidationEngine";
+export * from "./demo-validation/demoValidationAssessment";
+export * from "./demo-validation/demoValidationSummary";
+export * from "./demo-validation/demoValidationViewModel";
