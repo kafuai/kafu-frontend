@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   BrainCircuit,
@@ -47,7 +47,7 @@ export default function CorporateBrainMemory({
           : "Discovery Memory",
       description:
         locale === "ar"
-          ? `تم حفظ ${discoveryAnswerCount} إشارة استكشافية لاستخدامها في التحليل والقرارات.`
+          ? `تم حفظ ${discoveryAnswerCount} إشارة استكشافية لاستخدامها في التحليل ودعم القرارات.`
           : `${discoveryAnswerCount} discovery signals are retained for analysis and decision support.`,
       status:
         locale === "ar"
@@ -64,7 +64,7 @@ export default function CorporateBrainMemory({
           : "Decision Memory",
       description:
         locale === "ar"
-          ? "يحفظ النظام التوصيات السابقة ومسؤولي التنفيذ والنتائج المتوقعة."
+          ? "يحتفظ النظام بالتوصيات السابقة ومسؤولي التنفيذ والنتائج المتوقعة."
           : "The system retains previous recommendations, execution owners, and expected outcomes.",
       status:
         locale === "ar"
@@ -86,7 +86,7 @@ export default function CorporateBrainMemory({
           <div>
             <h2 className="text-base font-black text-[var(--text-primary)]">
               {locale === "ar"
-                ? "ذاكرة المؤسسة"
+                ? "ذاكرة المؤسسة الذكية"
                 : "Enterprise AI Memory"}
             </h2>
 
@@ -100,6 +100,7 @@ export default function CorporateBrainMemory({
 
         <span className="inline-flex items-center gap-2 rounded-full bg-[var(--success-background)] px-3 py-2 text-[10px] font-black text-[var(--success)]">
           <ShieldCheck size={13} />
+
           {locale === "ar"
             ? "ذاكرة آمنة"
             : "Secure Memory"}
@@ -137,6 +138,7 @@ export default function CorporateBrainMemory({
 
               <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-[var(--success)]">
                 <CheckCircle2 size={14} />
+
                 {locale === "ar"
                   ? "متاح للتحليل"
                   : "Available for analysis"}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import {
@@ -118,14 +118,14 @@ export default function CorporateBrainKnowledgePanel({
             : "Performance Data",
         description:
           locale === "ar"
-            ? "مؤشرات الأداء والنتائج التشغيلية والمالية للمؤسسة."
+            ? "مؤشرات الأداء والنتائج التشغيلية والمالية والاستراتيجية للمؤسسة."
             : "Operational, financial, and strategic performance indicators.",
         sourceCount: 6,
         readiness: 62,
         status: "processing" as KnowledgeSourceStatus,
         searchableText:
           locale === "ar"
-            ? "الأداء المؤشرات المالية التشغيلية"
+            ? "الأداء المؤشرات المالية التشغيلية الاستراتيجية"
             : "performance metrics financial operational",
       },
       {
@@ -144,7 +144,7 @@ export default function CorporateBrainKnowledgePanel({
         status: "processing" as KnowledgeSourceStatus,
         searchableText:
           locale === "ar"
-            ? "الرسم المعرفي العلاقات القرارات المخاطر"
+            ? "الرسم المعرفي العلاقات القرارات المخاطر الأهداف"
             : "knowledge graph relationships decisions risks",
       },
     ],
@@ -187,7 +187,7 @@ export default function CorporateBrainKnowledgePanel({
 
             <p className="mt-1 max-w-3xl text-xs leading-6 text-[var(--text-muted)]">
               {locale === "ar"
-                ? "مصادر المعرفة التي يستخدمها Corporate Brain لفهم المؤسسة وإنتاج إجابات موثقة."
+                ? "مصادر المعرفة التي يستخدمها Corporate Brain لفهم المؤسسة وإنتاج إجابات موثوقة."
                 : "Knowledge sources used by Corporate Brain to understand the organization and generate grounded answers."}
             </p>
           </div>

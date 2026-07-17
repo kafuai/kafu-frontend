@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   ArrowUpRight,
@@ -99,7 +99,9 @@ export default function CorporateBrainRelatedInsights() {
               className="group rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4 transition hover:border-[var(--brand-primary)]"
             >
               <div className="flex items-start gap-3">
-                <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${insight.tone}`}>
+                <span
+                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${insight.tone}`}
+                >
                   <Icon size={17} />
                 </span>
 
