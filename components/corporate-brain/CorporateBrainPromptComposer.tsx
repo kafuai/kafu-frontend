@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   ArrowUp,
@@ -36,7 +36,7 @@ export default function CorporateBrainPromptComposer({
         rows={3}
         placeholder={
           locale === "ar"
-            ? "ط§ط³ط£ظ„ Corporate Brain ط¹ظ† ط§ظ„ط£ط¯ط§ط، ط£ظˆ ط§ظ„ظ…ط®ط§ط·ط± ط£ظˆ ط§ظ„ظ‚ط±ط§ط±ط§طھ ط£ظˆ ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ط©..."
+            ? "اسأل Corporate Brain عن الأداء أو المخاطر أو القرارات أو معرفة المؤسسة..."
             : "Ask Corporate Brain about performance, risks, decisions, or enterprise knowledge..."
         }
         className="w-full resize-none border-0 bg-transparent px-2 py-2 text-sm leading-7 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
@@ -49,7 +49,7 @@ export default function CorporateBrainPromptComposer({
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
             aria-label={
               locale === "ar"
-                ? "ط¥ط±ظپط§ظ‚ ظ…ظ„ظپ"
+                ? "إرفاق ملف"
                 : "Attach file"
             }
           >
@@ -61,7 +61,7 @@ export default function CorporateBrainPromptComposer({
             className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
             aria-label={
               locale === "ar"
-                ? "ط¥ط¯ط®ط§ظ„ طµظˆطھظٹ"
+                ? "إدخال صوتي"
                 : "Voice input"
             }
           >
@@ -72,7 +72,7 @@ export default function CorporateBrainPromptComposer({
             <Sparkles size={14} />
 
             {locale === "ar"
-              ? "ظ…ط¯ط¹ظˆظ… ط¨ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ط©"
+              ? "مدعوم بمعرفة المؤسسة"
               : "Grounded in enterprise knowledge"}
           </span>
         </div>
@@ -83,7 +83,7 @@ export default function CorporateBrainPromptComposer({
           disabled={!value.trim()}
           className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[var(--text-primary)] px-5 text-xs font-black text-[var(--surface)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {locale === "ar" ? "طھط­ظ„ظٹظ„" : "Analyze"}
+          {locale === "ar" ? "تحليل" : "Analyze"}
           <ArrowUp size={17} />
         </button>
       </div>

@@ -1,4 +1,4 @@
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+﻿import { AlertTriangle, ShieldCheck } from "lucide-react";
 
 export type CommandCenterAlert = {
   id: string;
@@ -32,7 +32,9 @@ export default function ExecutiveAlerts({
 
           <p className="mt-1 text-xs text-[var(--text-muted)]">
             {alerts.length}{" "}
-            {locale === "ar" ? "تنبيهات نشطة" : "Active Alerts"}
+            {locale === "ar"
+              ? "تنبيهات نشطة"
+              : "Active Alerts"}
           </p>
         </div>
       </div>

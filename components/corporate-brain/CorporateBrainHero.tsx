@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   BrainCircuit,
@@ -29,7 +29,7 @@ export default function CorporateBrainHero({
       value: knowledgeSources,
       label:
         locale === "ar"
-          ? "ظ…طµط§ط¯ط± ط§ظ„ظ…ط¹ط±ظپط©"
+          ? "مصادر المعرفة"
           : "Knowledge Sources",
     },
     {
@@ -37,7 +37,7 @@ export default function CorporateBrainHero({
       value: discoveryAnswers,
       label:
         locale === "ar"
-          ? "ط¥ط¬ط§ط¨ط§طھ ط§ظ„ط§ط³طھظƒط´ط§ظپ"
+          ? "إجابات الاستكشاف"
           : "Discovery Answers",
     },
     {
@@ -45,7 +45,7 @@ export default function CorporateBrainHero({
       value: "92%",
       label:
         locale === "ar"
-          ? "ظ…ط³طھظˆظ‰ ط§ظ„ط«ظ‚ط©"
+          ? "مستوى الثقة"
           : "Confidence Level",
     },
   ];
@@ -61,7 +61,7 @@ export default function CorporateBrainHero({
               <Sparkles size={15} />
 
               {locale === "ar"
-                ? "ط§ظ„ط°ظƒط§ط، ط§ظ„طھظ†ظپظٹط°ظٹ ظ„ظ„ظ…ط¤ط³ط³ط©"
+                ? "الذكاء التنفيذي للمؤسسة"
                 : "Enterprise Executive Intelligence"}
             </div>
 
@@ -77,7 +77,7 @@ export default function CorporateBrainHero({
 
                 <p className="mt-3 max-w-3xl text-base leading-8 text-[var(--text-secondary)] md:text-lg">
                   {locale === "ar"
-                    ? `ط§ظ„ط¹ظ‚ظ„ ط§ظ„ظ…ط¤ط³ط³ظٹ ظ„ظ€ ${companyName}طŒ ظٹط¬ظ…ط¹ ط§ظ„ظ…ط¹ط±ظپط© ظˆط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆط§ظ„ظ‚ط±ط§ط±ط§طھ ظپظٹ ظ…ط³ط§ط­ط© ظ…ظˆط­ط¯ط© ظ„ظ„ط°ظƒط§ط، ط§ظ„طھظ†ظپظٹط°ظٹ.`
+                    ? `العقل المؤسسي لـ ${companyName}، يجمع المعرفة والبيانات والقرارات في مساحة موحدة للذكاء التنفيذي.`
                     : `The enterprise brain for ${companyName}, connecting organizational knowledge, data, and decisions in one executive intelligence workspace.`}
                 </p>
               </div>
@@ -93,13 +93,13 @@ export default function CorporateBrainHero({
             <div>
               <p className="text-xs font-black">
                 {locale === "ar"
-                  ? "ط§ظ„ط¹ظ‚ظ„ ط§ظ„ظ…ط¤ط³ط³ظٹ ظ…طھطµظ„"
+                  ? "العقل المؤسسي متصل"
                   : "Corporate Brain Connected"}
               </p>
 
               <p className="mt-0.5 text-[11px] opacity-80">
                 {locale === "ar"
-                  ? "ط¬ط§ظ‡ط² ظ„ظ„طھط­ظ„ظٹظ„ ظˆط§ظ„ط§ط³طھط¬ط§ط¨ط©"
+                  ? "جاهز للتحليل والاستجابة"
                   : "Ready to analyze and respond"}
               </p>
             </div>

@@ -1,4 +1,4 @@
-import { Activity } from "lucide-react";
+﻿import { Activity } from "lucide-react";
 
 export type CommandCenterActivity = {
   id: string;
@@ -25,7 +25,9 @@ export default function LiveActivity({
 
         <div>
           <h2 className="text-xl font-black text-[var(--text-primary)]">
-            {locale === "ar" ? "النشاط المباشر" : "Live Activity"}
+            {locale === "ar"
+              ? "النشاط المباشر"
+              : "Live Activity"}
           </h2>
 
           <p className="mt-1 text-xs text-[var(--text-muted)]">
