@@ -14,3 +14,12 @@ export * from "./enterprise-demo-presentation/enterpriseDemoPresentationProgress
 export * from "./enterprise-demo-presentation/enterpriseDemoPresentationViewModel";
 export * from "./executive-demo-environment";
 export * from "./executive-demo-analytics";
+export * from "./executive-demo-decision-briefing/executiveDemoDecisionBriefingTypes";
+export * from "./executive-demo-decision-briefing/executiveDemoDecisionBriefing";
+export * from "./executive-demo-decision-briefing/executiveDemoDecisionBriefingContext";
+export * from "./executive-demo-decision-briefing/executiveDemoDecisionBriefingValidator";
+export * from "./executive-demo-decision-briefing/executiveDemoDecisionBriefingBuilder";
+export * from "./executive-demo-decision-briefing/executiveDemoDecisionBriefingEngine";
+export * from "./executive-demo-decision-briefing/executiveDemoDecisionBriefingRecommendation";
+export * from "./executive-demo-decision-briefing/executiveDemoDecisionBriefingSummary";
+export * from "./executive-demo-decision-briefing/executiveDemoDecisionBriefingViewModel";
