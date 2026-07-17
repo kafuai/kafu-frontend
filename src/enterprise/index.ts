@@ -52,3 +52,13 @@ export * from "./production-readiness-qa/productionReadinessQAEngine";
 export * from "./production-readiness-qa/productionReadinessQAAssessment";
 export * from "./production-readiness-qa/productionReadinessQASummary";
 export * from "./production-readiness-qa/productionReadinessQAViewModel";
+
+export * from "./final-polish/finalPolishTypes";
+export * from "./final-polish/finalPolish";
+export * from "./final-polish/finalPolishContext";
+export * from "./final-polish/finalPolishValidator";
+export * from "./final-polish/finalPolishBuilder";
+export * from "./final-polish/finalPolishEngine";
+export * from "./final-polish/finalPolishAssessment";
+export * from "./final-polish/finalPolishSummary";
+export * from "./final-polish/finalPolishViewModel";
