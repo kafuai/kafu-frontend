@@ -8,6 +8,7 @@ import { calculateSimulationScore } from "./aiExecutionSimulationScoring";
 export function simulateExecution(
   scenario: AIExecutionScenario,
 ): AIExecutionSimulationResult {
+  void scenario;
   const metrics: AIExecutionSimulationMetrics = {
     probabilityOfSuccess: 0.85,
     estimatedDurationMs: 1500,

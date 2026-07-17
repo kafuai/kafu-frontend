@@ -1,7 +1,4 @@
-import type {
-  DecisionSupportResult,
-  RankedDecisionOption,
-} from "./decisionSupportResult";
+import type { RankedDecisionOption } from "./decisionSupportResult";
 import type { DecisionSupportContext } from "./decisionSupportContext";
 import { DecisionScoreCalculator } from "./decisionScoreCalculator";
 

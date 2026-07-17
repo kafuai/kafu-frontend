@@ -26,36 +26,36 @@ interface LocalizationContextValue {
 const translations: Record<AppLocale, TranslationDictionary> = {
   ar: {
     "brand.name": "KAFU AI",
-    "brand.description": "نظام التشغيل المؤسسي المدعوم بالذكاء الاصطناعي",
+    "brand.description": "ط·آ¸أ¢â‚¬آ ط·آ·ط¢آ¸ط·آ·ط¢آ§ط·آ¸أ¢â‚¬آ¦ ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¹آ¾ط·آ·ط¢آ´ط·آ·ط·â€؛ط·آ¸ط¸آ¹ط·آ¸أ¢â‚¬â€چ ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ¤ط·آ·ط¢آ³ط·آ·ط¢آ³ط·آ¸ط¸آ¹ ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ¯ط·آ·ط¢آ¹ط·آ¸ط«â€ ط·آ¸أ¢â‚¬آ¦ ط·آ·ط¢آ¨ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ°ط·آ¸ط¦â€™ط·آ·ط¢آ§ط·آ·ط·إ’ ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ§ط·آ·ط¢آµط·آ·ط¢آ·ط·آ¸أ¢â‚¬آ ط·آ·ط¢آ§ط·آ·ط¢آ¹ط·آ¸ط¸آ¹",
 
-    "common.active": "نشط",
-    "common.phase": "المرحلة الثانية",
-    "common.search": "بحث",
-    "common.notifications": "الإشعارات",
-    "common.settings": "الإعدادات",
-    "common.language": "اللغة",
-    "common.theme": "المظهر",
+    "common.active": "ط·آ¸أ¢â‚¬آ ط·آ·ط¢آ´ط·آ·ط¢آ·",
+    "common.phase": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ±ط·آ·ط¢آ­ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ«ط·آ·ط¢آ§ط·آ¸أ¢â‚¬آ ط·آ¸ط¸آ¹ط·آ·ط¢آ©",
+    "common.search": "ط·آ·ط¢آ¨ط·آ·ط¢آ­ط·آ·ط¢آ«",
+    "common.notifications": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ¥ط·آ·ط¢آ´ط·آ·ط¢آ¹ط·آ·ط¢آ§ط·آ·ط¢آ±ط·آ·ط¢آ§ط·آ·ط¹آ¾",
+    "common.settings": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ¥ط·آ·ط¢آ¹ط·آ·ط¢آ¯ط·آ·ط¢آ§ط·آ·ط¢آ¯ط·آ·ط¢آ§ط·آ·ط¹آ¾",
+    "common.language": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬â€چط·آ·ط·â€؛ط·آ·ط¢آ©",
+    "common.theme": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ¸ط·آ¸أ¢â‚¬طŒط·آ·ط¢آ±",
 
-    "navigation.home": "الرئيسية",
-    "navigation.workspace": "مساحة العمل",
-    "navigation.dashboard": "لوحة القيادة",
-    "navigation.modules": "الوحدات",
-    "navigation.corporateBrain": "العقل المؤسسي",
-    "navigation.corporateDNA": "الحمض المؤسسي",
-    "navigation.digitalWorkforce": "القوى العاملة الرقمية",
-    "navigation.commandCenter": "مركز القيادة",
+    "navigation.home": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ±ط·آ·ط¢آ¦ط·آ¸ط¸آ¹ط·آ·ط¢آ³ط·آ¸ط¸آ¹ط·آ·ط¢آ©",
+    "navigation.workspace": "ط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ³ط·آ·ط¢آ§ط·آ·ط¢آ­ط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ¹ط·آ¸أ¢â‚¬آ¦ط·آ¸أ¢â‚¬â€چ",
+    "navigation.dashboard": "ط·آ¸أ¢â‚¬â€چط·آ¸ط«â€ ط·آ·ط¢آ­ط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬ع‘ط·آ¸ط¸آ¹ط·آ·ط¢آ§ط·آ·ط¢آ¯ط·آ·ط¢آ©",
+    "navigation.modules": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸ط«â€ ط·آ·ط¢آ­ط·آ·ط¢آ¯ط·آ·ط¢آ§ط·آ·ط¹آ¾",
+    "navigation.corporateBrain": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ¹ط·آ¸أ¢â‚¬ع‘ط·آ¸أ¢â‚¬â€چ ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ¤ط·آ·ط¢آ³ط·آ·ط¢آ³ط·آ¸ط¸آ¹",
+    "navigation.corporateDNA": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ­ط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ¶ ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ¤ط·آ·ط¢آ³ط·آ·ط¢آ³ط·آ¸ط¸آ¹",
+    "navigation.digitalWorkforce": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬ع‘ط·آ¸ط«â€ ط·آ¸أ¢â‚¬آ° ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ¹ط·آ·ط¢آ§ط·آ¸أ¢â‚¬آ¦ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ±ط·آ¸أ¢â‚¬ع‘ط·آ¸أ¢â‚¬آ¦ط·آ¸ط¸آ¹ط·آ·ط¢آ©",
+    "navigation.commandCenter": "ط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ±ط·آ¸ط¦â€™ط·آ·ط¢آ² ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬ع‘ط·آ¸ط¸آ¹ط·آ·ط¢آ§ط·آ·ط¢آ¯ط·آ·ط¢آ©",
 
-    "workspace.title": "مساحة قيادة الشركة",
-    "workspace.label": "مساحة العمل",
-    "workspace.activeCompany": "الشركة النشطة",
-    "workspace.companyName": "شركة الفراشة الزرقاء",
-    "workspace.companyDetails": "75 موظفًا · المملكة العربية السعودية",
+    "workspace.title": "ط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ³ط·آ·ط¢آ§ط·آ·ط¢آ­ط·آ·ط¢آ© ط·آ¸أ¢â‚¬ع‘ط·آ¸ط¸آ¹ط·آ·ط¢آ§ط·آ·ط¢آ¯ط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ´ط·آ·ط¢آ±ط·آ¸ط¦â€™ط·آ·ط¢آ©",
+    "workspace.label": "ط·آ¸أ¢â‚¬آ¦ط·آ·ط¢آ³ط·آ·ط¢آ§ط·آ·ط¢آ­ط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ¹ط·آ¸أ¢â‚¬آ¦ط·آ¸أ¢â‚¬â€چ",
+    "workspace.activeCompany": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ´ط·آ·ط¢آ±ط·آ¸ط¦â€™ط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬آ ط·آ·ط¢آ´ط·آ·ط¢آ·ط·آ·ط¢آ©",
+    "workspace.companyName": "ط·آ·ط¢آ´ط·آ·ط¢آ±ط·آ¸ط¦â€™ط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸ط¸آ¾ط·آ·ط¢آ±ط·آ·ط¢آ§ط·آ·ط¢آ´ط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ²ط·آ·ط¢آ±ط·آ¸أ¢â‚¬ع‘ط·آ·ط¢آ§ط·آ·ط·إ’",
+    "workspace.companyDetails": "75 ط·آ¸أ¢â‚¬آ¦ط·آ¸ط«â€ ط·آ·ط¢آ¸ط·آ¸ط¸آ¾ط·آ¸أ¢â‚¬آ¹ط·آ·ط¢آ§ ط·آ¢ط¢آ· ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬آ¦ط·آ¸أ¢â‚¬آ¦ط·آ¸أ¢â‚¬â€چط·آ¸ط¦â€™ط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ¹ط·آ·ط¢آ±ط·آ·ط¢آ¨ط·آ¸ط¸آ¹ط·آ·ط¢آ© ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ³ط·آ·ط¢آ¹ط·آ¸ط«â€ ط·آ·ط¢آ¯ط·آ¸ط¸آ¹ط·آ·ط¢آ©",
 
-    "theme.light": "فاتح",
-    "theme.dark": "داكن",
-    "theme.system": "النظام",
+    "theme.light": "ط·آ¸ط¸آ¾ط·آ·ط¢آ§ط·آ·ط¹آ¾ط·آ·ط¢آ­",
+    "theme.dark": "ط·آ·ط¢آ¯ط·آ·ط¢آ§ط·آ¸ط¦â€™ط·آ¸أ¢â‚¬آ ",
+    "theme.system": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ¸أ¢â‚¬آ ط·آ·ط¢آ¸ط·آ·ط¢آ§ط·آ¸أ¢â‚¬آ¦",
 
-    "language.arabic": "العربية",
+    "language.arabic": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ¹ط·آ·ط¢آ±ط·آ·ط¢آ¨ط·آ¸ط¸آ¹ط·آ·ط¢آ©",
     "language.english": "English",
   },
   en: {
@@ -83,13 +83,13 @@ const translations: Record<AppLocale, TranslationDictionary> = {
     "workspace.label": "Workspace",
     "workspace.activeCompany": "Active Company",
     "workspace.companyName": "Blue Butterfly Company",
-    "workspace.companyDetails": "75 Employees · Saudi Arabia",
+    "workspace.companyDetails": "75 Employees ط·آ¢ط¢آ· Saudi Arabia",
 
     "theme.light": "Light",
     "theme.dark": "Dark",
     "theme.system": "System",
 
-    "language.arabic": "العربية",
+    "language.arabic": "ط·آ·ط¢آ§ط·آ¸أ¢â‚¬â€چط·آ·ط¢آ¹ط·آ·ط¢آ±ط·آ·ط¢آ¨ط·آ¸ط¸آ¹ط·آ·ط¢آ©",
     "language.english": "English",
   },
 };
@@ -129,8 +129,14 @@ export function LocalizationProvider({
   useEffect(() => {
     const storedLocale = getStoredLocale();
 
-    setLocaleState(storedLocale);
-    applyLocale(storedLocale);
+    const timeoutId = window.setTimeout(() => {
+      setLocaleState(storedLocale);
+      applyLocale(storedLocale);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [applyLocale]);
 
   const setLocale = useCallback(

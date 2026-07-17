@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -620,6 +620,7 @@ export default function DashboardPage() {
                           Boolean(item.response_deadline) &&
                           !CLOSED_PIPELINE_STATUSES.has(item.status ?? "") &&
                           new Date(item.response_deadline as string).getTime() <
+                            // eslint-disable-next-line react-hooks/purity
                             Date.now();
 
                         return (

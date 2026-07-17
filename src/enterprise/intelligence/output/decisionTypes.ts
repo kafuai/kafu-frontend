@@ -7,7 +7,7 @@ export interface AIAction {
 
   payload: {
     message?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 
   createdAt: number;

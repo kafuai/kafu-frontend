@@ -1,8 +1,19 @@
 import ExecutiveCard from "./ExecutiveCard";
 import ExecutiveHeader from "./ExecutiveHeader";
 
+type CorporateBrain = {
+  decisionStyle?: string | null;
+  executionMode?: string | null;
+  riskPosture?: string | null;
+  thinkingPatterns?: string[] | null;
+  blindSpots?: string[] | null;
+  leadershipSignals?: string[] | null;
+  executiveSummary?: string | null;
+  recommendedLeadershipFocus?: string | null;
+};
+
 type CorporateBrainCardProps = {
-  brain: any;
+  brain?: CorporateBrain | null;
 };
 
 export default function CorporateBrainCard({
@@ -19,8 +30,8 @@ export default function CorporateBrainCard({
         <div className="relative z-10">
           <ExecutiveHeader
             eyebrow="Corporate Brain"
-            title="العقل التشغيلي للمؤسسة"
-            description="تحليل لطريقة تفكير المؤسسة في اتخاذ القرار، إدارة الأولويات، والتعامل مع المخاطر."
+            title="ط§ظ„ط¹ظ‚ظ„ ط§ظ„طھط´ط؛ظٹظ„ظٹ ظ„ظ„ظ…ط¤ط³ط³ط©"
+            description="طھط­ظ„ظٹظ„ ظ„ط·ط±ظٹظ‚ط© طھظپظƒظٹط± ط§ظ„ظ…ط¤ط³ط³ط© ظپظٹ ط§طھط®ط§ط° ط§ظ„ظ‚ط±ط§ط±طŒ ط¥ط¯ط§ط±ط© ط§ظ„ط£ظˆظ„ظˆظٹط§طھطŒ ظˆط§ظ„طھط¹ط§ظ…ظ„ ظ…ط¹ ط§ظ„ظ…ط®ط§ط·ط±."
             light
             className="mb-0"
           />
@@ -57,7 +68,7 @@ export default function CorporateBrainCard({
         <section className="mt-8 grid gap-6 lg:grid-cols-2">
           <BrainInsight
             eyebrow="Executive Brain Summary"
-            title="ملخص العقل التشغيلي"
+            title="ظ…ظ„ط®طµ ط§ظ„ط¹ظ‚ظ„ ط§ظ„طھط´ط؛ظٹظ„ظٹ"
             body={
               brain.executiveSummary ||
               "No executive brain summary available yet."
@@ -67,7 +78,7 @@ export default function CorporateBrainCard({
 
           <BrainInsight
             eyebrow="Recommended Leadership Focus"
-            title="تركيز القيادة المقترح"
+            title="طھط±ظƒظٹط² ط§ظ„ظ‚ظٹط§ط¯ط© ط§ظ„ظ…ظ‚طھط±ط­"
             body={
               brain.recommendedLeadershipFocus ||
               "No leadership focus recommendation available yet."

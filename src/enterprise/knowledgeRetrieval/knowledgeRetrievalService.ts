@@ -1,5 +1,4 @@
 import { KnowledgeRetrievalEngine } from "./knowledgeRetrievalEngine";
-import { KnowledgeRetrievalProvider } from "./knowledgeRetrievalProvider";
 import { KnowledgeRetrievalRegistry } from "./knowledgeRetrievalRegistry";
 import { KnowledgeRetrievalRequest } from "./knowledgeRetrievalRequest";
 import {

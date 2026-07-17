@@ -104,8 +104,7 @@ export class EnterpriseDemoExperienceInitializer {
         scenarios: runtimeScenarios,
       });
 
-    const experience =
-      this.dependencies.context.initialize(
+    this.dependencies.context.initialize(
         input.configuration,
         scenarios,
       );

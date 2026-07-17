@@ -1,4 +1,4 @@
-import { Crisis, CrisisSeverity, CrisisStatus } from "./crisisTypes";
+import { Crisis } from "./crisisTypes";
 
 export type CrisisMetrics = {
   totalCrises: number;

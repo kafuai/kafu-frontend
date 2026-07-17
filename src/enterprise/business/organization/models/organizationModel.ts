@@ -6,11 +6,11 @@ import {
   OrganizationStatus,
 } from "../types/organizationTypes";
 
-export interface OrganizationLegalProfile extends OrganizationLegalProfileInput {}
+export type OrganizationLegalProfile = OrganizationLegalProfileInput;
 
-export interface OrganizationContactProfile extends OrganizationContactProfileInput {}
+export type OrganizationContactProfile = OrganizationContactProfileInput;
 
-export interface OrganizationBrandProfile extends OrganizationBrandProfileInput {}
+export type OrganizationBrandProfile = OrganizationBrandProfileInput;
 
 export interface BusinessOrganizationProfile {
   readonly id: string;

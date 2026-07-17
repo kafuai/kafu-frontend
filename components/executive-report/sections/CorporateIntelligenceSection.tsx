@@ -4,8 +4,8 @@ import ExecutiveConversation from "../ExecutiveConversation";
 import ExecutiveIntelligencePanel from "../ExecutiveIntelligencePanel";
 
 type Props = {
-  corporateDNA: any;
-  corporateBrain: any;
+  corporateDNA: Parameters<typeof CorporateDNACard>[0]["dna"];
+  corporateBrain: Parameters<typeof CorporateBrainCard>[0]["brain"];
   score: number;
   status: string;
   maturityLevel: string;
@@ -40,13 +40,13 @@ export default function CorporateIntelligenceSection({
           </p>
 
           <h2 className="max-w-4xl text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-            من قراءة البيانات إلى فهم طريقة عمل المؤسسة
+            ظ…ظ† ظ‚ط±ط§ط،ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ ط¥ظ„ظ‰ ظپظ‡ظ… ط·ط±ظٹظ‚ط© ط¹ظ…ظ„ ط§ظ„ظ…ط¤ط³ط³ط©
           </h2>
 
           <p className="max-w-4xl text-base leading-8 text-slate-600">
-            يبدأ KAFU AI في هذه المرحلة بتحويل نتائج جلسة Discovery إلى هوية
-            تشغيلية وعقل مؤسسي يساعد الإدارة على فهم القرار، المخاطر، وفرص
-            النمو بصورة قابلة للتنفيذ.
+            ظٹط¨ط¯ط£ KAFU AI ظپظٹ ظ‡ط°ظ‡ ط§ظ„ظ…ط±ط­ظ„ط© ط¨طھط­ظˆظٹظ„ ظ†طھط§ط¦ط¬ ط¬ظ„ط³ط© Discovery ط¥ظ„ظ‰ ظ‡ظˆظٹط©
+            طھط´ط؛ظٹظ„ظٹط© ظˆط¹ظ‚ظ„ ظ…ط¤ط³ط³ظٹ ظٹط³ط§ط¹ط¯ ط§ظ„ط¥ط¯ط§ط±ط© ط¹ظ„ظ‰ ظپظ‡ظ… ط§ظ„ظ‚ط±ط§ط±طŒ ط§ظ„ظ…ط®ط§ط·ط±طŒ ظˆظپط±طµ
+            ط§ظ„ظ†ظ…ظˆ ط¨طµظˆط±ط© ظ‚ط§ط¨ظ„ط© ظ„ظ„طھظ†ظپظٹط°.
           </p>
         </div>
 

@@ -70,8 +70,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedTheme = getStoredTheme();
 
-    setThemeState(storedTheme);
-    applyTheme(storedTheme);
+    const timeoutId = window.setTimeout(() => {
+      setThemeState(storedTheme);
+      applyTheme(storedTheme);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [applyTheme]);
 
   useEffect(() => {

@@ -1,5 +1,4 @@
 import { ContextState } from "./contextState";
-import { ContextSignal } from "./contextSignal";
 
 export interface ContextResolutionResult {
   state: ContextState;
