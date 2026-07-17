@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   FileCheck2,
@@ -24,44 +24,44 @@ export default function CorporateBrainSuggestedActions({
       icon: TrendingUp,
       title:
         locale === "ar"
-          ? "حلّل أداء الشركة"
+          ? "طھط­ظ„ظٹظ„ ط£ط¯ط§ط، ط§ظ„ط´ط±ظƒط©"
           : "Analyze company performance",
       prompt:
         locale === "ar"
-          ? "حلّل أداء الشركة وحدد أهم ثلاث فرص للتحسين."
+          ? "ط­ظ„ظ„ ط£ط¯ط§ط، ط§ظ„ط´ط±ظƒط© ظˆط­ط¯ط¯ ط£ظ‡ظ… ط«ظ„ط§ط« ظپط±طµ ظ„ظ„طھط­ط³ظٹظ†."
           : "Analyze company performance and identify the top three improvement opportunities.",
     },
     {
       icon: ShieldAlert,
       title:
         locale === "ar"
-          ? "استعرض المخاطر"
+          ? "ظ…ط±ط§ط¬ط¹ط© ظ…ط®ط§ط·ط± ط§ظ„ظ…ط¤ط³ط³ط©"
           : "Review enterprise risks",
       prompt:
         locale === "ar"
-          ? "ما أهم المخاطر المؤسسية التي تحتاج إلى تدخل تنفيذي؟"
+          ? "ظ…ط§ ط£ظ‡ظ… ط§ظ„ظ…ط®ط§ط·ط± ط§ظ„ظ…ط¤ط³ط³ظٹط© ط§ظ„طھظٹ طھطھط·ظ„ط¨ طھط¯ط®ظ„ظ‹ط§ طھظ†ظپظٹط°ظٹظ‹ط§طں"
           : "What enterprise risks currently require executive intervention?",
     },
     {
       icon: FileCheck2,
       title:
         locale === "ar"
-          ? "راجع السياسات"
+          ? "ظ…ط±ط§ط¬ط¹ط© ط§ظ„ط³ظٹط§ط³ط§طھ ط§ظ„ط¯ط§ط®ظ„ظٹط©"
           : "Review internal policies",
       prompt:
         locale === "ar"
-          ? "راجع جاهزية السياسات الداخلية وحدد الفجوات المعرفية."
+          ? "ط±ط§ط¬ط¹ ط¬ط§ظ‡ط²ظٹط© ط§ظ„ط³ظٹط§ط³ط§طھ ط§ظ„ط¯ط§ط®ظ„ظٹط© ظˆط­ط¯ط¯ ط§ظ„ظپط¬ظˆط§طھ ط§ظ„ظ…ط¹ط±ظپظٹط©."
           : "Review internal policy readiness and identify knowledge gaps.",
     },
     {
       icon: Lightbulb,
       title:
         locale === "ar"
-          ? "اقترح قرارًا"
+          ? "ط§ظ‚طھط±ط§ط­ ظ‚ط±ط§ط± طھظ†ظپظٹط°ظٹ"
           : "Recommend a decision",
       prompt:
         locale === "ar"
-          ? "اقترح القرار التنفيذي الأعلى أولوية بناءً على بيانات المؤسسة."
+          ? "ط§ظ‚طھط±ط­ ط§ظ„ظ‚ط±ط§ط± ط§ظ„طھظ†ظپظٹط°ظٹ ط§ظ„ط£ط¹ظ„ظ‰ ط£ظˆظ„ظˆظٹط© ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¤ط³ط³ط©."
           : "Recommend the highest-priority executive decision based on enterprise data.",
     },
   ];
@@ -76,13 +76,13 @@ export default function CorporateBrainSuggestedActions({
         <div>
           <h2 className="text-sm font-black text-[var(--text-primary)]">
             {locale === "ar"
-              ? "استفسارات تنفيذية مقترحة"
+              ? "ط§ط³طھظپط³ط§ط±ط§طھ طھظ†ظپظٹط°ظٹط© ظ…ظ‚طھط±ط­ط©"
               : "Suggested Executive Queries"}
           </h2>
 
           <p className="mt-1 text-xs text-[var(--text-muted)]">
             {locale === "ar"
-              ? "ابدأ بتحليل جاهز أو اكتب سؤالك الخاص."
+              ? "ط§ط¨ط¯ط£ ط¨طھط­ظ„ظٹظ„ ط¬ط§ظ‡ط² ط£ظˆ ط§ظƒطھط¨ ط³ط¤ط§ظ„ظƒ ط§ظ„ط®ط§طµ."
               : "Start with a ready analysis or ask your own question."}
           </p>
         </div>

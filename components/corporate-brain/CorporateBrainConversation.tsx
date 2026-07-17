@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Bot,
@@ -24,8 +24,21 @@ export default function CorporateBrainConversation({
   const displayedPrompt =
     userPrompt ||
     (locale === "ar"
-      ? "ما أهم الأولويات التنفيذية التي يجب التركيز عليها الآن؟"
+      ? "ظ…ط§ ط£ظ‡ظ… ط§ظ„ط£ظˆظ„ظˆظٹط§طھ ط§ظ„طھظ†ظپظٹط°ظٹط© ط§ظ„طھظٹ ظٹط¬ط¨ ط§ظ„طھط±ظƒظٹط² ط¹ظ„ظٹظ‡ط§ ط§ظ„ط¢ظ†طں"
       : "What are the most important executive priorities right now?");
+
+  const priorities =
+    locale === "ar"
+      ? [
+          "ط§ط³طھظƒظ…ط§ظ„ ظ…طµط§ط¯ط± ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ط¯ط§ط®ظ„ظٹط©",
+          "طھظˆط«ظٹظ‚ ط§ظ„ط³ظٹط§ط³ط§طھ ظˆط§ظ„ط¥ط¬ط±ط§ط،ط§طھ ط§ظ„ط­ط±ط¬ط©",
+          "ط±ط¨ط· ط§ظ„ظ‚ط±ط§ط±ط§طھ ط¨ظ…ط¤ط´ط±ط§طھ ط§ظ„ط£ط¯ط§ط،",
+        ]
+      : [
+          "Complete internal knowledge sources",
+          "Document critical policies and procedures",
+          "Connect decisions to performance indicators",
+        ];
 
   return (
     <section className="flex min-h-[520px] flex-col rounded-[26px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
@@ -38,13 +51,13 @@ export default function CorporateBrainConversation({
           <div>
             <h2 className="text-sm font-black text-[var(--text-primary)]">
               {locale === "ar"
-                ? "المساعد التنفيذي الذكي"
+                ? "ط§ظ„ظ…ط³ط§ط¹ط¯ ط§ظ„طھظ†ظپظٹط°ظٹ ط§ظ„ط°ظƒظٹ"
                 : "Executive AI Copilot"}
             </h2>
 
             <p className="mt-1 text-xs text-[var(--text-muted)]">
               {locale === "ar"
-                ? "إجابات مبنية على معرفة المؤسسة"
+                ? "ط¥ط¬ط§ط¨ط§طھ ظ…ط¨ظ†ظٹط© ط¹ظ„ظ‰ ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ط©"
                 : "Answers grounded in enterprise knowledge"}
             </p>
           </div>
@@ -52,7 +65,8 @@ export default function CorporateBrainConversation({
 
         <div className="inline-flex items-center gap-2 rounded-full bg-[var(--success-background)] px-3 py-2 text-[11px] font-black text-[var(--success)]">
           <ShieldCheck size={14} />
-          {locale === "ar" ? "موثّق" : "Grounded"}
+
+          {locale === "ar" ? "ظ…ظˆط«ظ‘ظ‚" : "Grounded"}
         </div>
       </div>
 
@@ -77,22 +91,12 @@ export default function CorporateBrainConversation({
           <div className="max-w-[92%] rounded-2xl rounded-ss-sm border border-[var(--border-default)] bg-[var(--surface)] px-5 py-5 shadow-[var(--shadow-small)]">
             <p className="text-sm leading-8 text-[var(--text-secondary)]">
               {locale === "ar"
-                ? `بناءً على بيانات ${companyName} ونتائج الاستكشاف الحالية، فإن الأولوية التنفيذية هي تحويل المعرفة المتفرقة إلى نظام قرارات موحد. يظهر التحليل ثلاث أولويات رئيسية: استكمال مصادر المعرفة الداخلية، توثيق السياسات والإجراءات، وربط مؤشرات الأداء بمركز القيادة التنفيذي.`
+                ? `ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ط¨ظٹط§ظ†ط§طھ ${companyName} ظˆظ†طھط§ط¦ط¬ ط§ظ„ط§ط³طھظƒط´ط§ظپ ط§ظ„ط­ط§ظ„ظٹط©طŒ ظپط¥ظ† ط§ظ„ط£ظˆظ„ظˆظٹط© ط§ظ„طھظ†ظپظٹط°ظٹط© ظ‡ظٹ طھط­ظˆظٹظ„ ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ظ…طھظپط±ظ‚ط© ط¥ظ„ظ‰ ظ†ط¸ط§ظ… ظ…ظˆط­ط¯ ظ„ط¯ط¹ظ… ط§ظ„ظ‚ط±ط§ط±ط§طھ. ظˆظٹط­ط¯ط¯ ط§ظ„طھط­ظ„ظٹظ„ ط«ظ„ط§ط« ط£ظˆظ„ظˆظٹط§طھ ط±ط¦ظٹط³ظٹط©: ط§ط³طھظƒظ…ط§ظ„ ظ…طµط§ط¯ط± ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ط¯ط§ط®ظ„ظٹط©طŒ ظˆطھظˆط«ظٹظ‚ ط§ظ„ط³ظٹط§ط³ط§طھ ظˆط§ظ„ط¥ط¬ط±ط§ط،ط§طھطŒ ظˆط±ط¨ط· ظ…ط¤ط´ط±ط§طھ ط§ظ„ط£ط¯ط§ط، ط¨ظ…ط±ظƒط² ط§ظ„ظ‚ظٹط§ط¯ط© ط§ظ„طھظ†ظپظٹط°ظٹ.`
                 : `Based on current ${companyName} data and discovery insights, the immediate executive priority is to transform fragmented knowledge into a unified decision system. The analysis identifies three priorities: completing internal knowledge sources, documenting policies and procedures, and connecting performance indicators to the executive command center.`}
             </p>
 
             <div className="mt-5 grid gap-3">
-              {[
-                locale === "ar"
-                  ? "استكمال مصادر المعرفة الداخلية"
-                  : "Complete internal knowledge sources",
-                locale === "ar"
-                  ? "توثيق السياسات والإجراءات الحرجة"
-                  : "Document critical policies and procedures",
-                locale === "ar"
-                  ? "ربط القرارات بمؤشرات الأداء"
-                  : "Connect decisions to performance indicators",
-              ].map((item) => (
+              {priorities.map((item) => (
                 <div
                   key={item}
                   className="flex items-center gap-3 rounded-xl bg-[var(--surface-muted)] px-4 py-3"
@@ -112,14 +116,15 @@ export default function CorporateBrainConversation({
             <div className="mt-5 flex flex-wrap gap-2 border-t border-[var(--border-default)] pt-4">
               <span className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-subtle)] px-3 py-2 text-[10px] font-extrabold text-[var(--brand-primary)]">
                 <FileText size={13} />
+
                 {locale === "ar"
-                  ? "بيانات الاستكشاف"
+                  ? "ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط³طھظƒط´ط§ظپ"
                   : "Discovery Data"}
               </span>
 
               <span className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-muted)] px-3 py-2 text-[10px] font-extrabold text-[var(--text-muted)]">
                 {locale === "ar"
-                  ? "الثقة 92%"
+                  ? "ظ…ط³طھظˆظ‰ ط§ظ„ط«ظ‚ط© 92%"
                   : "92% Confidence"}
               </span>
             </div>
