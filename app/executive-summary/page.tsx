@@ -202,6 +202,7 @@ export default function ExecutiveSummaryPage() {
         aria-hidden="true"
         className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.10),transparent_30%)]"
       />
+
       <div
         aria-hidden="true"
         className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:48px_48px]"
@@ -213,8 +214,10 @@ export default function ExecutiveSummaryPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10 shadow-[0_0_40px_rgba(37,99,235,0.22)]">
               <Sparkles className="h-5 w-5 text-blue-300" />
             </div>
+
             <div>
               <p className="text-sm font-bold tracking-[0.20em]">KAFU AI</p>
+
               <p className="text-xs text-slate-400">
                 Enterprise Operating Intelligence
               </p>
@@ -241,9 +244,11 @@ export default function ExecutiveSummaryPage() {
               label={copy.eyebrow}
               className="border-blue-400/20 bg-blue-400/10 px-3 py-1.5 text-[11px] tracking-wide text-blue-200"
             />
+
             <h1 className="mt-6 max-w-4xl text-4xl font-bold tracking-[-0.04em] sm:text-5xl lg:text-6xl">
               {copy.title}
             </h1>
+
             <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-400">
               {copy.subtitle}
             </p>
@@ -253,10 +258,12 @@ export default function ExecutiveSummaryPage() {
             <div className="rounded-2xl border border-white/10 bg-white/[0.045] px-5 py-4">
               <div className="flex items-center gap-3">
                 <Clock3 className="h-5 w-5 text-blue-300" />
+
                 <div>
                   <p className="text-xs uppercase tracking-[0.12em] text-slate-500">
                     {copy.reviewTime}
                   </p>
+
                   <p className="mt-1 font-semibold">{copy.reviewValue}</p>
                 </div>
               </div>
@@ -266,8 +273,10 @@ export default function ExecutiveSummaryPage() {
               <p className="text-xs uppercase tracking-[0.12em] text-emerald-300/70">
                 {copy.healthLabel}
               </p>
+
               <div className="mt-1 flex items-center gap-3">
                 <p className="text-xl font-bold">{copy.healthValue}</p>
+
                 <StatusBadge
                   status="healthy"
                   label={copy.healthStatus}
@@ -281,6 +290,7 @@ export default function ExecutiveSummaryPage() {
         <section className="mt-12">
           <div className="mb-5 flex items-center gap-3">
             <BriefcaseBusiness className="h-5 w-5 text-blue-300" />
+
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-400">
               {copy.prioritiesLabel}
             </h2>
@@ -313,7 +323,10 @@ export default function ExecutiveSummaryPage() {
                     </span>
                   </div>
 
-                  <h3 className="mt-6 text-xl font-semibold">{priority.title}</h3>
+                  <h3 className="mt-6 text-xl font-semibold">
+                    {priority.title}
+                  </h3>
+
                   <p className="mt-3 text-sm leading-6 text-slate-300">
                     {priority.insight}
                   </p>
@@ -324,12 +337,16 @@ export default function ExecutiveSummaryPage() {
                     ) : (
                       <Activity className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
                     )}
+
                     <p className="text-xs leading-5 text-slate-400">
                       {priority.impact}
                     </p>
                   </div>
 
-                  <button className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-300 transition hover:text-blue-200">
+                  <button
+                    type="button"
+                    className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-300 transition hover:text-blue-200"
+                  >
                     {priority.action}
                     <DirectionIcon className="h-4 w-4" />
                   </button>
@@ -342,6 +359,7 @@ export default function ExecutiveSummaryPage() {
         <section className="mt-10">
           <div className="mb-5 flex items-center gap-3">
             <Activity className="h-5 w-5 text-blue-300" />
+
             <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-400">
               {copy.snapshotLabel}
             </h2>
@@ -359,6 +377,7 @@ export default function ExecutiveSummaryPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <p className="text-sm text-slate-400">{metric.label}</p>
+
                       <p className="mt-2 text-2xl font-bold">{metric.value}</p>
                     </div>
 
@@ -371,6 +390,7 @@ export default function ExecutiveSummaryPage() {
                     <p className="text-sm font-semibold text-emerald-300">
                       {metric.trend}
                     </p>
+
                     <p className="mt-1 text-xs text-slate-500">
                       {metric.helper}
                     </p>
@@ -390,7 +410,11 @@ export default function ExecutiveSummaryPage() {
 
               <div>
                 <h2 className="text-xl font-semibold">{copy.aiTitle}</h2>
-                <p className="mt-2 leading-7 text-slate-300">{copy.aiText}</p>
+
+                <p className="mt-2 leading-7 text-slate-300">
+                  {copy.aiText}
+                </p>
+
                 <div className="mt-3 inline-flex items-center gap-2 text-xs text-blue-300">
                   <CheckCircle2 className="h-4 w-4" />
                   {copy.aiConfidence}
@@ -420,6 +444,7 @@ export default function ExecutiveSummaryPage() {
             ) : (
               <ArrowLeft className="h-4 w-4" />
             )}
+
             {copy.secondaryAction}
           </Link>
 
