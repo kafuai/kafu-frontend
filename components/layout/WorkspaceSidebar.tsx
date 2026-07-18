@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -140,8 +140,7 @@ export default function WorkspaceSidebar() {
                 const Icon = item.icon;
 
                 const title =
-                  "translationKey" in item &&
-                  item.translationKey
+                  "translationKey" in item && item.translationKey
                     ? t(item.translationKey)
                     : "label" in item && item.label
                       ? item.label[locale]
