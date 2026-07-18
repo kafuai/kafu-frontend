@@ -4,6 +4,7 @@ import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import AppShell from "@/components/foundation/AppShell";
 
 import "./globals.css";
+import "./styles/enterprise-header.css";
 
 const ibmArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
@@ -28,3 +29,4 @@ export default function RootLayout({
     </html>
   );
 }
+
