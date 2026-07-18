@@ -12,11 +12,11 @@ export default function Notifications({
     {
       title:
         locale === "ar"
-          ? "طلبات تحتاج إلى مراجعة"
+          ? "����� ����� ��� ������"
           : "Requests require review",
       description:
         locale === "ar"
-          ? "توجد ثلاثة طلبات موظفين بانتظار قرار إداري."
+          ? "���� ����� ����� ������ ������� ���� �����."
           : "Three employee requests are awaiting a management decision.",
       level: locale === "ar" ? "عاجل" : "Urgent",
       time: locale === "ar" ? "منذ 5 دقائق" : "5 minutes ago",
@@ -45,7 +45,7 @@ export default function Notifications({
           ? "تقترح KAFU AI تحسين مسار الموافقات الداخلية."
           : "KAFU AI recommends improving the internal approval workflow.",
       level: "AI",
-      time: locale === "ar" ? "الآن" : "Now",
+      time: locale === "ar" ? "����" : "Now",
       indicatorClass: "bg-[var(--success)]",
     },
   ];
@@ -65,7 +65,7 @@ export default function Notifications({
 
             <p className="mt-1 text-xs text-[var(--text-muted)]">
               {locale === "ar"
-                ? "آخر التنبيهات المهمة للإدارة التنفيذية."
+                ? "��� ��������� ������ ������� ���������."
                 : "Latest important executive notifications."}
             </p>
           </div>

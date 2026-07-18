@@ -37,17 +37,17 @@ export default function ExecutiveKPI({
     {
       title:
         locale === "ar"
-          ? "طلبات الموظفين"
+          ? "����� ��������"
           : "Employee Requests",
       value: "24",
       subtitle:
         locale === "ar"
-          ? "طلبات مفتوحة تحتاج إلى متابعة تنفيذية."
+          ? "����� ������ ����� ��� ������ �������."
           : "Open requests requiring operational follow-up.",
       trend: "+6",
       trendLabel:
         locale === "ar"
-          ? "طلبات جديدة هذا الأسبوع"
+          ? "����� ����� ��� �������"
           : "New requests this week",
       icon: Users,
       iconClass:
@@ -56,17 +56,17 @@ export default function ExecutiveKPI({
     {
       title:
         locale === "ar"
-          ? "المخاطر التشغيلية"
+          ? "������� ���������"
           : "Operational Risks",
       value: "6",
       subtitle:
         locale === "ar"
-          ? "مخاطر تحتاج إلى قرار إداري ومتابعة."
+          ? "����� ����� ��� ���� ����� �������."
           : "Risks requiring management decisions and follow-up.",
       trend: "-2",
       trendLabel:
         locale === "ar"
-          ? "انخفاض في المخاطر الحرجة"
+          ? "������ �� ������� ������"
           : "Reduction in critical risks",
       icon: AlertTriangle,
       iconClass:

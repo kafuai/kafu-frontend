@@ -30,7 +30,7 @@ export default function WorkspaceActions({
     {
       title:
         locale === "ar"
-          ? "وحدات الذكاء الاصطناعي"
+          ? "����� ������ ���������"
           : "AI Modules",
       description:
         locale === "ar"

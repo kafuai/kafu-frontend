@@ -18,7 +18,7 @@ export default function AIHealthWidget({
         : "Highly Ready"
       : safeScore >= 50
         ? locale === "ar"
-          ? "جاهزية متوسطة"
+          ? "������ ������"
           : "Moderately Ready"
         : locale === "ar"
           ? "يحتاج إلى استكمال"

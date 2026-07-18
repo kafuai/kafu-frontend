@@ -53,7 +53,7 @@ export default function CompanyWorkspacePage() {
         if (isMounted) {
           setErrorMessage(
             locale === "ar"
-              ? "لم يتم العثور على مؤسسة نشطة. يرجى إكمال التقييم أولًا."
+              ? "�� ��� ������ ��� ����� ����. ���� ����� ������� �����."
               : "No active organization was found. Please complete the assessment first.",
           );
           setLoading(false);

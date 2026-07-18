@@ -15,7 +15,7 @@ export default function CompanyStats({
 }: CompanyStatsProps) {
   const stats = [
     {
-      label: locale === "ar" ? "عدد الموظفين" : "Employees",
+      label: locale === "ar" ? "��� ��������" : "Employees",
       value:
         employeeCount !== null
           ? employeeCount.toLocaleString(
@@ -34,7 +34,7 @@ export default function CompanyStats({
       icon: MapPin,
     },
     {
-      label: locale === "ar" ? "القطاع" : "Industry",
+      label: locale === "ar" ? "������" : "Industry",
       value:
         industry ||
         (locale === "ar" ? "غير محدد" : "Not specified"),

@@ -28,13 +28,13 @@ export default function UpcomingTasks({
     {
       task:
         locale === "ar"
-          ? "تحديث خطة المخاطر"
+          ? "����� ��� �������"
           : "Update risk plan",
       due:
         locale === "ar"
           ? "هذا الأسبوع"
           : "This week",
-      status: locale === "ar" ? "مخطط" : "Planned",
+      status: locale === "ar" ? "����" : "Planned",
     },
   ];
 
