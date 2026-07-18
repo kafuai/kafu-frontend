@@ -20,47 +20,85 @@ import SystemStatus from "@/components/workspace/dashboard/SystemStatus";
 
 export default function WorkspaceDashboardPage() {
   return (
-    <main
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-8"
-      dir="rtl"
-    >
-      <div className="mx-auto w-full max-w-[1700px] space-y-6 px-4 lg:px-8">
-        <DashboardHeader />
-        <ExecutiveBrief />
+    <main className="min-h-screen bg-slate-100/80 py-6 lg:py-10" dir="rtl">
+      <div className="mx-auto w-full max-w-[1700px] space-y-8 px-4 sm:px-6 lg:px-8">
+        <section className="space-y-6">
+          <DashboardHeader />
+          <ExecutiveBrief />
+        </section>
 
-        <div className="grid gap-6 xl:grid-cols-12">
-          <div className="space-y-6 xl:col-span-8">
-            <AICommandCenter />
-            <ExecutiveDecisionBar />
+        <section className="rounded-[2rem] border border-slate-200/80 bg-white/60 p-4 shadow-sm backdrop-blur sm:p-6">
+          <div className="grid gap-6 xl:grid-cols-12">
+            <div className="space-y-6 xl:col-span-8">
+              <AICommandCenter />
+              <ExecutiveDecisionBar />
+            </div>
+
+            <div className="space-y-6 xl:col-span-4">
+              <ExecutiveProfile />
+              <SystemStatus />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-6">
+          <div className="px-1">
+            <p className="text-sm font-black text-emerald-600">
+              Executive Performance
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black text-slate-950">
+              مؤشرات الأداء والجاهزية
+            </h2>
+
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+              قراءة تنفيذية موحدة لأهم مؤشرات الأداء، صحة الشركة، والجاهزية
+              الاستراتيجية.
+            </p>
           </div>
 
-          <div className="space-y-6 xl:col-span-4">
-            <ExecutiveProfile />
-            <SystemStatus />
-          </div>
-        </div>
+          <ExecutiveKPI />
+          <ExecutiveMetricsGrid />
+          <CompanyHealthCard />
+          <StrategicKPICards />
+        </section>
 
-        <ExecutiveKPI />
-        <ExecutiveMetricsGrid />
-        <CompanyHealthCard />
-        <StrategicKPICards />
-        <RiskOpportunitiesRadar />
+        <section className="rounded-[2rem] border border-slate-200/80 bg-white/60 p-4 shadow-sm backdrop-blur sm:p-6">
+          <RiskOpportunitiesRadar />
+        </section>
 
-        <div className="grid gap-6 xl:grid-cols-12">
-          <div className="space-y-6 xl:col-span-8">
-            <AIInsightsFeed />
-            <Recommendations />
+        <section className="space-y-6">
+          <div className="px-1">
+            <p className="text-sm font-black text-sky-600">
+              Intelligence & Actions
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black text-slate-950">
+              الرؤى والتوصيات التنفيذية
+            </h2>
+
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+              توصيات وتنبيهات وإجراءات عملية تساعد الإدارة على الانتقال من
+              الرؤية إلى التنفيذ.
+            </p>
           </div>
 
-          <div className="space-y-6 xl:col-span-4">
-            <PayrollReadinessCard />
-            <AIRecommendationCard />
-            <ExecutiveAlertPanel />
-            <ProgressCard />
-            <Notifications />
-            <QuickActions />
+          <div className="grid gap-6 xl:grid-cols-12">
+            <div className="space-y-6 xl:col-span-8">
+              <AIInsightsFeed />
+              <Recommendations />
+            </div>
+
+            <div className="space-y-6 xl:col-span-4">
+              <PayrollReadinessCard />
+              <AIRecommendationCard />
+              <ExecutiveAlertPanel />
+              <ProgressCard />
+              <Notifications />
+              <QuickActions />
+            </div>
           </div>
-        </div>
+        </section>
       </div>
     </main>
   );
