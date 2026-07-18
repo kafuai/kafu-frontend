@@ -15,10 +15,10 @@ function StandardApplicationShell({
   children,
 }: AppShellProps) {
   return (
-    <div className="enterprise-application-shell">
+    <div className="kafu-enterprise-shell">
       <EnterpriseHeader />
 
-      <main className="enterprise-application-content">
+      <main className="kafu-enterprise-shell__content">
         {children}
       </main>
     </div>

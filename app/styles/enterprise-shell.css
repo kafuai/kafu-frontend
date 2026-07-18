@@ -1,0 +1,15 @@
+.kafu-enterprise-shell {
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--text-primary);
+}
+
+.kafu-enterprise-shell__content {
+  min-height: calc(100vh - 64px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .kafu-enterprise-shell__content > * {
+    animation: fadeIn 180ms ease-out;
+  }
+}
