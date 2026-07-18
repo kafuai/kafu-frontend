@@ -6,6 +6,7 @@ import AppShell from "@/components/foundation/AppShell";
 import "./globals.css";
 import "./styles/enterprise-header.css";
 import "./styles/enterprise-shell.css";
+import "./styles/enterprise-workspace.css";
 
 const ibmArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
@@ -30,3 +31,4 @@ export default function RootLayout({
     </html>
   );
 }
+
