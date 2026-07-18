@@ -2,9 +2,11 @@ export function calculateCustomerOnboardingProgress(
   completed: number,
   total: number,
 ): number {
-  if (total <= 0) {
+  if (total <= 0 || completed <= 0) {
     return 0;
   }
 
-  return Math.round((completed / total) * 100);
+  const progress = Math.round((completed / total) * 100);
+
+  return Math.min(progress, 100);
 }
