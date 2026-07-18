@@ -1,4 +1,12 @@
-﻿export type ExecutiveDecisionBriefingPriority =
+﻿export type ExecutiveDecisionBriefingStatus =
+  | "draft"
+  | "in-review"
+  | "ready"
+  | "approved"
+  | "deferred"
+  | "rejected";
+
+export type ExecutiveDecisionBriefingPriority =
   | "critical"
   | "high"
   | "medium"
@@ -7,32 +15,15 @@
 export type ExecutiveDecisionBriefingConfidence =
   | "very-high"
   | "high"
-  | "moderate"
+  | "medium"
   | "low";
-
-export type ExecutiveDecisionBriefingStatus =
-  | "draft"
-  | "ready"
-  | "presented"
-  | "approved"
-  | "deferred";
-
-export type ExecutiveDecisionBriefingImpactArea =
-  | "revenue"
-  | "cost"
-  | "risk"
-  | "operations"
-  | "customer"
-  | "workforce"
-  | "governance"
-  | "technology";
 
 export interface ExecutiveDecisionBriefingMetric {
   id: string;
   label: string;
   value: string;
   description?: string;
-  trend?: "positive" | "negative" | "stable";
+  trend?: "improving" | "stable" | "declining";
 }
 
 export interface ExecutiveDecisionBriefingEvidence {
@@ -40,7 +31,7 @@ export interface ExecutiveDecisionBriefingEvidence {
   title: string;
   summary: string;
   source?: string;
-  strength: ExecutiveDecisionBriefingConfidence;
+  confidence?: ExecutiveDecisionBriefingConfidence;
 }
 
 export interface ExecutiveDecisionBriefingRisk {
@@ -55,9 +46,10 @@ export interface ExecutiveDecisionBriefingAction {
   id: string;
   title: string;
   description: string;
-  owner?: string;
-  targetDate?: string;
+  owner: string;
   priority: ExecutiveDecisionBriefingPriority;
+  dueDate?: string;
+  status?: "pending" | "in-progress" | "completed";
 }
 
 export interface ExecutiveDecisionBriefingOption {
@@ -66,8 +58,8 @@ export interface ExecutiveDecisionBriefingOption {
   summary: string;
   advantages: string[];
   tradeoffs: string[];
-  estimatedImpact?: string;
-  recommended?: boolean;
+  estimatedImpact: string;
+  recommended: boolean;
 }
 
 export interface ExecutiveDecisionBriefing {
@@ -79,10 +71,10 @@ export interface ExecutiveDecisionBriefing {
   decisionRequired: string;
   recommendedDecision: string;
   rationale: string;
+  status: ExecutiveDecisionBriefingStatus;
   priority: ExecutiveDecisionBriefingPriority;
   confidence: ExecutiveDecisionBriefingConfidence;
-  status: ExecutiveDecisionBriefingStatus;
-  impactAreas: ExecutiveDecisionBriefingImpactArea[];
+  impactAreas: string[];
   keyMetrics: ExecutiveDecisionBriefingMetric[];
   evidence: ExecutiveDecisionBriefingEvidence[];
   risks: ExecutiveDecisionBriefingRisk[];
@@ -90,10 +82,11 @@ export interface ExecutiveDecisionBriefing {
   options: ExecutiveDecisionBriefingOption[];
   createdAt: string;
   updatedAt: string;
-  presentationDate?: string;
+  readyAt?: string;
+  approvedAt?: string;
 }
 
-export interface ExecutiveDecisionBriefingInput {
+export interface CreateExecutiveDecisionBriefingInput {
   organizationId: string;
   companyName: string;
   title: string;
@@ -101,9 +94,9 @@ export interface ExecutiveDecisionBriefingInput {
   decisionRequired: string;
   recommendedDecision: string;
   rationale: string;
-  priority?: ExecutiveDecisionBriefingPriority;
-  confidence?: ExecutiveDecisionBriefingConfidence;
-  impactAreas?: ExecutiveDecisionBriefingImpactArea[];
+  priority: ExecutiveDecisionBriefingPriority;
+  confidence: ExecutiveDecisionBriefingConfidence;
+  impactAreas: string[];
   keyMetrics?: ExecutiveDecisionBriefingMetric[];
   evidence?: ExecutiveDecisionBriefingEvidence[];
   risks?: ExecutiveDecisionBriefingRisk[];

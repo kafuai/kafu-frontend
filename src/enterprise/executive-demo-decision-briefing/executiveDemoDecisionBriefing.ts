@@ -1,25 +1,19 @@
-﻿import {
+﻿import type {
+  CreateExecutiveDecisionBriefingInput,
   ExecutiveDecisionBriefing,
-  ExecutiveDecisionBriefingInput,
 } from "./executiveDemoDecisionBriefingTypes";
 
-function createBriefingId(organizationId: string): string {
-  const normalizedOrganizationId = organizationId
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  return `decision-briefing-${normalizedOrganizationId || "organization"}-${Date.now()}`;
+function createBriefingId(): string {
+  return `executive-decision-briefing-${crypto.randomUUID()}`;
 }
 
 export function createExecutiveDecisionBriefing(
-  input: ExecutiveDecisionBriefingInput,
+  input: CreateExecutiveDecisionBriefingInput,
 ): ExecutiveDecisionBriefing {
   const timestamp = new Date().toISOString();
 
   return {
-    id: createBriefingId(input.organizationId),
+    id: createBriefingId(),
     organizationId: input.organizationId.trim(),
     companyName: input.companyName.trim(),
     title: input.title.trim(),
@@ -27,10 +21,10 @@ export function createExecutiveDecisionBriefing(
     decisionRequired: input.decisionRequired.trim(),
     recommendedDecision: input.recommendedDecision.trim(),
     rationale: input.rationale.trim(),
-    priority: input.priority ?? "high",
-    confidence: input.confidence ?? "high",
     status: "draft",
-    impactAreas: input.impactAreas ?? [],
+    priority: input.priority,
+    confidence: input.confidence,
+    impactAreas: input.impactAreas.map((area) => area.trim()).filter(Boolean),
     keyMetrics: input.keyMetrics ?? [],
     evidence: input.evidence ?? [],
     risks: input.risks ?? [],
@@ -44,29 +38,25 @@ export function createExecutiveDecisionBriefing(
 export function markExecutiveDecisionBriefingReady(
   briefing: ExecutiveDecisionBriefing,
 ): ExecutiveDecisionBriefing {
+  const timestamp = new Date().toISOString();
+
   return {
     ...briefing,
     status: "ready",
-    updatedAt: new Date().toISOString(),
+    readyAt: timestamp,
+    updatedAt: timestamp,
   };
 }
 
 export function approveExecutiveDecisionBriefing(
   briefing: ExecutiveDecisionBriefing,
 ): ExecutiveDecisionBriefing {
+  const timestamp = new Date().toISOString();
+
   return {
     ...briefing,
     status: "approved",
-    updatedAt: new Date().toISOString(),
-  };
-}
-
-export function deferExecutiveDecisionBriefing(
-  briefing: ExecutiveDecisionBriefing,
-): ExecutiveDecisionBriefing {
-  return {
-    ...briefing,
-    status: "deferred",
-    updatedAt: new Date().toISOString(),
+    approvedAt: timestamp,
+    updatedAt: timestamp,
   };
 }
