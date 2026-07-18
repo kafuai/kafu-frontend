@@ -227,26 +227,27 @@ html[dir="ltr"] body {
 .enterprise-header {
   position: sticky;
   top: 0;
-  z-index: 50;
-  min-height: 76px;
-  border-bottom: 1px solid var(--border-default);
+  z-index: 100;
+  min-height: 68px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--border-default) 65%, transparent);
   background: color-mix(
     in srgb,
-    var(--surface) 92%,
+    var(--surface) 94%,
     transparent
   );
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
 }
 
 .enterprise-header__inner {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 24px;
-  width: min(100%, 1600px);
-  min-height: 76px;
+  gap: 16px;
+  width: min(100%, 1500px);
+  min-height: 68px;
   margin: 0 auto;
-  padding: 0 28px;
+  padding: 0 20px;
 }
 
 .enterprise-header__brand-group,
@@ -910,4 +911,77 @@ html {
 
 body {
   overflow-x: hidden;
+}
+/* KAFU AI Brand Integration */
+.enterprise-brand {
+  min-width: 132px;
+}
+
+.enterprise-brand__logo {
+  display: block;
+  width: 116px;
+  height: auto;
+  object-fit: contain;
+}
+
+.enterprise-header {
+  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="dark"] .enterprise-header {
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.26);
+}
+
+.enterprise-header__inner {
+  gap: 20px;
+}
+
+.enterprise-header__brand-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.enterprise-navigation__link {
+  position: relative;
+}
+
+.enterprise-navigation__link[data-active="true"]::after {
+  position: absolute;
+  right: 12px;
+  bottom: 3px;
+  left: 12px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+.enterprise-icon-button,
+.user-menu,
+.language-switcher,
+.theme-switcher,
+.workspace-selector,
+.ai-status {
+  backdrop-filter: blur(12px);
+}
+
+@media (max-width: 980px) {
+  .enterprise-brand {
+    min-width: 118px;
+  }
+
+  .enterprise-brand__logo {
+    width: 118px;
+  }
+}
+
+@media (max-width: 640px) {
+  .enterprise-brand {
+    min-width: 104px;
+  }
+
+  .enterprise-brand__logo {
+    width: 104px;
+  }
 }
