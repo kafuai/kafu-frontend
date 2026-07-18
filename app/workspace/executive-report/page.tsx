@@ -10,6 +10,7 @@ import {
   Sparkles,
   Target,
   TriangleAlert,
+  TrendingUp,
 } from "lucide-react";
 
 const executiveMetrics = [
@@ -17,25 +18,29 @@ const executiveMetrics = [
     label: "الجاهزية العامة",
     value: "82%",
     note: "جاهزية مرتفعة",
-    tone: "bg-emerald-50 text-emerald-700",
+    tone: "bg-[var(--success-background)] text-[var(--success)]",
+    indicator: "bg-[var(--success)]",
   },
   {
     label: "المخاطر النشطة",
     value: "3",
     note: "تحتاج متابعة",
-    tone: "bg-rose-50 text-rose-700",
+    tone: "bg-[var(--critical-background)] text-[var(--critical)]",
+    indicator: "bg-[var(--critical)]",
   },
   {
     label: "فرص التحسين",
     value: "11",
-    note: "فرص قابلة للتنفيذ",
-    tone: "bg-sky-50 text-sky-700",
+    note: "قابلة للتنفيذ",
+    tone: "bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    indicator: "bg-[var(--brand-primary)]",
   },
   {
     label: "ثقة KAFU AI",
     value: "96%",
     note: "تحليل موثوق",
-    tone: "bg-violet-50 text-violet-700",
+    tone: "bg-[var(--surface-muted)] text-[var(--text-secondary)]",
+    indicator: "bg-[var(--text-muted)]",
   },
 ];
 
@@ -43,20 +48,35 @@ const priorities = [
   {
     title: "تسريع دورة الموافقات",
     description:
-      "تقليل الوقت بين رفع الطلب واعتماده من خلال مسار موافقات تنفيذي واضح.",
+      "تقليل الوقت بين رفع الطلب واعتماده من خلال مسار تنفيذي واضح، مع تحديد المسؤوليات ومراحل التصعيد ومواعيد الاستجابة.",
     impact: "أثر مرتفع",
   },
   {
     title: "توحيد بيانات الموظفين",
     description:
-      "اعتماد مصدر بيانات مركزي يرفع دقة التقارير ويقلل المعالجة اليدوية.",
+      "اعتماد مصدر بيانات مركزي يرفع دقة التقارير ويقلل الاعتماد على المعالجة اليدوية المتكررة بين الإدارات.",
     impact: "أثر متوسط",
   },
   {
     title: "تفعيل التقرير التنفيذي الأسبوعي",
     description:
-      "توفير ملخص دوري للإدارة يعرض القرارات والمخاطر وفرص التحسين.",
-    impact: "Quick Win",
+      "توفير ملخص دوري للإدارة يعرض القرارات والمخاطر وفرص التحسين والإجراءات ذات الأولوية بصورة موحدة.",
+    impact: "إنجاز سريع",
+  },
+];
+
+const risks = [
+  {
+    title: "بطء دورة الموافقات التنفيذية",
+    level: "مرتفع",
+  },
+  {
+    title: "الاعتماد على المعالجة اليدوية",
+    level: "متوسط",
+  },
+  {
+    title: "تشتت بيانات الموظفين",
+    level: "متوسط",
   },
 ];
 
@@ -68,129 +88,160 @@ export default function ExecutiveReportPage() {
   async function handleShare() {
     const reportUrl = window.location.href;
 
-    if (navigator.share) {
-      await navigator.share({
-        title: "KAFU AI Executive Report",
-        text: "التقرير التنفيذي من KAFU AI",
-        url: reportUrl,
-      });
-      return;
-    }
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "KAFU AI Executive Report",
+          text: "التقرير التنفيذي من KAFU AI",
+          url: reportUrl,
+        });
 
-    await navigator.clipboard.writeText(reportUrl);
-    alert("تم نسخ رابط التقرير");
+        return;
+      }
+
+      await navigator.clipboard.writeText(reportUrl);
+      alert("تم نسخ رابط التقرير");
+    } catch {
+      // تم إلغاء المشاركة أو تعذر الوصول إلى الحافظة.
+    }
   }
 
   return (
     <main
-      className="min-h-screen bg-slate-100 px-4 py-6 sm:px-6 lg:px-8 lg:py-10 print:bg-white print:p-0"
+      className="min-h-screen bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8 lg:py-6 print:bg-white print:p-0"
       dir="rtl"
     >
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-xl print:max-w-none print:rounded-none print:border-0 print:shadow-none">
-        <header className="relative overflow-hidden bg-slate-950 px-6 py-8 text-white sm:px-10 lg:px-12 lg:py-12 print:bg-white print:px-0 print:py-8 print:text-slate-950">
-          <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-400/10 blur-3xl print:hidden" />
-          <div className="absolute -bottom-24 right-0 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl print:hidden" />
-
-          <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-3xl">
+      <div className="mx-auto max-w-[1440px] overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-medium)] print:max-w-none print:rounded-none print:border-0 print:shadow-none">
+        <header className="border-b border-[var(--border-default)] bg-[var(--surface)] px-6 py-4 sm:px-8 lg:px-10 lg:py-5 print:px-0 print:py-6">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+            <div className="min-w-0 max-w-4xl">
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 print:bg-slate-100">
-                  <Sparkles
-                    size={22}
-                    className="text-emerald-400 print:text-emerald-600"
-                  />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                  <Sparkles size={19} strokeWidth={1.9} />
                 </span>
 
-                <div>
-                  <p className="text-sm font-black text-emerald-400 print:text-emerald-600">
+                <div className="min-w-0">
+                  <p className="text-sm font-extrabold text-[var(--brand-primary)]">
                     KAFU AI Executive Report
                   </p>
 
-                  <p className="mt-1 text-xs text-slate-400 print:text-slate-500">
-                    تقرير الإدارة التنفيذية
+                  <p className="mt-0.5 text-xs font-semibold text-[var(--text-muted)]">
+                    منصة الذكاء التنفيذي المؤسسي
                   </p>
                 </div>
               </div>
 
-              <h1 className="mt-7 text-4xl font-black tracking-tight sm:text-5xl">
-                التقرير التنفيذي للشركة
-              </h1>
+              <div className="mt-3">
+                <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)] sm:text-4xl">
+                  التقرير التنفيذي للشركة
+                </h1>
 
-              <p className="mt-5 max-w-2xl text-sm leading-8 text-slate-300 sm:text-base print:text-slate-600">
-                قراءة تنفيذية مختصرة تلخص مستوى الجاهزية، المخاطر، القرارات
-                ذات الأولوية، وفرص التحسين المقترحة بواسطة KAFU AI.
-              </p>
+                <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--text-secondary)] sm:text-base">
+                  قراءة تنفيذية مركزة توضح مستوى الجاهزية، والمخاطر الحالية،
+                  والقرارات ذات الأولوية، وفرص التحسين المقترحة بواسطة KAFU AI.
+                </p>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-xs font-bold text-[var(--text-secondary)]">
+                  <span className="h-2 w-2 rounded-full bg-[var(--success)]" />
+                  حالة المؤسسة مستقرة
+                </span>
+
+                <span className="inline-flex rounded-full border border-[var(--border-default)] bg-[var(--surface)] px-3 py-1.5 text-xs font-bold text-[var(--text-muted)]">
+                  آخر تحديث: اليوم
+                </span>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 print:hidden">
+            <div className="flex flex-wrap items-center gap-2 print:hidden xl:flex-nowrap xl:justify-end xl:pt-1">
               <Link
                 href="/workspace/dashboard"
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/20"
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3.5 text-sm font-extrabold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
               >
-                <ArrowRight size={18} />
+                <ArrowRight size={16} />
                 العودة للوحة
               </Link>
 
               <button
                 type="button"
                 onClick={handlePrint}
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/20"
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3.5 text-sm font-extrabold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
               >
-                <Printer size={18} />
+                <Printer size={16} />
                 طباعة
               </button>
 
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/20"
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3.5 text-sm font-extrabold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
               >
-                <Share2 size={18} />
+                <Share2 size={16} />
                 مشاركة
               </button>
 
               <button
                 type="button"
                 onClick={handlePrint}
-                className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-emerald-400"
+                className="inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-xl border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3.5 text-sm font-extrabold text-white shadow-[var(--shadow-small)] transition hover:opacity-90"
               >
-                <Download size={18} />
+                <Download size={16} />
                 تنزيل PDF
               </button>
             </div>
           </div>
         </header>
 
-        <div className="space-y-10 px-6 py-8 sm:px-10 lg:px-12 lg:py-12 print:px-0 print:py-8">
+        <div className="space-y-5 px-6 py-5 sm:px-8 lg:px-10 lg:py-6 print:px-0 print:py-6">
           <section>
-            <div>
-              <p className="text-sm font-black text-emerald-600">
-                Executive Snapshot
-              </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                  Executive Snapshot
+                </p>
 
-              <h2 className="mt-2 text-3xl font-black text-slate-950">
-                ملخص المؤشرات الرئيسية
-              </h2>
+                <h2 className="mt-1.5 text-2xl font-black text-[var(--text-primary)]">
+                  ملخص المؤشرات الرئيسية
+                </h2>
 
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                نظرة موحدة على أهم الأرقام التي يحتاجها صانع القرار قبل
-                الانتقال إلى الخطوات التنفيذية التالية.
-              </p>
+                <p className="mt-1.5 max-w-3xl text-sm leading-7 text-[var(--text-secondary)]">
+                  أهم المؤشرات التي يحتاجها صانع القرار لفهم الوضع الحالي قبل
+                  الانتقال إلى الإجراءات التنفيذية.
+                </p>
+              </div>
+
+              <span className="inline-flex w-fit rounded-full bg-[var(--surface-muted)] px-3 py-1.5 text-xs font-bold text-[var(--text-muted)]">
+                بيانات تنفيذية موحدة
+              </span>
             </div>
 
-            <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 print:grid-cols-4">
               {executiveMetrics.map((item) => (
                 <article
                   key={item.label}
-                  className="rounded-3xl border border-slate-200 bg-slate-50 p-6 print:bg-white"
+                  className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-4 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)] print:bg-white print:shadow-none"
                 >
-                  <p className="text-sm font-bold text-slate-500">
-                    {item.label}
-                  </p>
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">
+                      {item.label}
+                    </p>
 
-                  <p className="mt-4 text-4xl font-black tracking-tight text-slate-950">
-                    {item.value}
-                  </p>
+                    <span
+                      className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.indicator}`}
+                    />
+                  </div>
+
+                  <div className="mt-4 flex items-end justify-between gap-3">
+                    <p className="text-5xl font-black tracking-tight text-[var(--text-primary)]">
+                      {item.value}
+                    </p>
+
+                    <TrendingUp
+                      size={18}
+                      className="mb-1 text-[var(--text-muted)]"
+                    />
+                  </div>
 
                   <span
                     className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-black ${item.tone}`}
@@ -202,86 +253,98 @@ export default function ExecutiveReportPage() {
             </div>
           </section>
 
-          <section className="grid gap-6 lg:grid-cols-12">
-            <article className="rounded-[2rem] border border-slate-200 bg-slate-50 p-7 lg:col-span-7 print:bg-white">
+          <section className="grid gap-5 lg:grid-cols-12">
+            <article className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-6 lg:col-span-7 print:bg-white">
               <div className="flex items-start gap-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                  <CheckCircle2 size={24} />
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--success-background)] text-[var(--success)]">
+                  <CheckCircle2 size={21} />
                 </span>
 
                 <div>
-                  <p className="text-sm font-black text-emerald-600">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--success)]">
                     Executive Summary
                   </p>
 
-                  <h2 className="mt-2 text-2xl font-black text-slate-950">
+                  <h2 className="mt-1.5 text-2xl font-black leading-snug text-[var(--text-primary)]">
                     الشركة تتحرك باتجاه جاهزية تشغيلية أعلى
                   </h2>
                 </div>
               </div>
 
-              <p className="mt-6 text-sm leading-8 text-slate-600">
+              <p className="mt-4 text-sm leading-8 text-[var(--text-secondary)]">
                 تظهر المؤشرات الحالية تقدمًا واضحًا في جاهزية الموارد البشرية
-                وجودة تجربة الموظف، مع مستوى مرتفع من الثقة في التحليل
-                التنفيذي. وتتمثل الأولوية الرئيسية في تسريع الموافقات وتقليل
-                الاعتماد على الإجراءات اليدوية.
+                وجودة تجربة الموظف، مع مستوى مرتفع من الثقة في التحليل التنفيذي.
+                وتتمثل الأولوية الرئيسية في تسريع الموافقات وتقليل الاعتماد على
+                الإجراءات اليدوية.
               </p>
 
-              <div className="mt-7 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl bg-white p-5">
-                  <p className="text-xs font-bold text-slate-400">
+              <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface)] p-4">
+                  <p className="text-xs font-bold text-[var(--text-muted)]">
                     الوضع العام
                   </p>
-                  <p className="mt-2 font-black text-emerald-700">مستقر</p>
+                  <p className="mt-2 font-black text-[var(--success)]">مستقر</p>
                 </div>
 
-                <div className="rounded-2xl bg-white p-5">
-                  <p className="text-xs font-bold text-slate-400">
+                <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface)] p-4">
+                  <p className="text-xs font-bold text-[var(--text-muted)]">
                     اتجاه الأداء
                   </p>
-                  <p className="mt-2 font-black text-sky-700">صاعد</p>
+                  <p className="mt-2 font-black text-[var(--brand-primary)]">
+                    صاعد
+                  </p>
                 </div>
 
-                <div className="rounded-2xl bg-white p-5">
-                  <p className="text-xs font-bold text-slate-400">
+                <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface)] p-4">
+                  <p className="text-xs font-bold text-[var(--text-muted)]">
                     مستوى التدخل
                   </p>
-                  <p className="mt-2 font-black text-amber-700">متوسط</p>
+                  <p className="mt-2 font-black text-[var(--warning)]">متوسط</p>
                 </div>
               </div>
             </article>
 
-            <article className="rounded-[2rem] bg-slate-950 p-7 text-white lg:col-span-5 print:border print:border-slate-200 print:bg-white print:text-slate-950">
-              <div className="flex items-center gap-4">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/15 text-rose-400 print:bg-rose-50 print:text-rose-600">
-                  <TriangleAlert size={24} />
+            <article className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)] lg:col-span-5 print:bg-white print:shadow-none">
+              <div className="flex items-start gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--critical-background)] text-[var(--critical)]">
+                  <TriangleAlert size={21} />
                 </span>
 
                 <div>
-                  <p className="text-sm font-black text-rose-400 print:text-rose-600">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--critical)]">
                     Risk Overview
                   </p>
 
-                  <h2 className="mt-1 text-2xl font-black">
+                  <h2 className="mt-1.5 text-2xl font-black text-[var(--text-primary)]">
                     أهم المخاطر الحالية
                   </h2>
                 </div>
               </div>
 
-              <div className="mt-7 space-y-4">
-                {[
-                  "بطء دورة الموافقات التنفيذية",
-                  "الاعتماد على المعالجة اليدوية",
-                  "تشتت بيانات الموظفين",
-                ].map((risk, index) => (
+              <div className="mt-5 space-y-3">
+                {risks.map((risk, index) => (
                   <div
-                    key={risk}
-                    className="flex items-center justify-between gap-4 rounded-2xl bg-white/10 p-4 print:bg-slate-50"
+                    key={risk.title}
+                    className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-3.5"
                   >
-                    <span className="text-sm font-bold">{risk}</span>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface)] text-xs font-black text-[var(--text-muted)]">
+                        {index + 1}
+                      </span>
 
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-rose-300 print:bg-rose-50 print:text-rose-600">
-                      {index === 0 ? "مرتفع" : "متوسط"}
+                      <span className="text-sm font-bold leading-6 text-[var(--text-secondary)]">
+                        {risk.title}
+                      </span>
+                    </div>
+
+                    <span
+                      className={
+                        risk.level === "مرتفع"
+                          ? "shrink-0 rounded-full bg-[var(--critical-background)] px-3 py-1 text-xs font-black text-[var(--critical)]"
+                          : "shrink-0 rounded-full bg-[var(--warning-background)] px-3 py-1 text-xs font-black text-[var(--warning)]"
+                      }
+                    >
+                      {risk.level}
                     </span>
                   </div>
                 ))}
@@ -291,53 +354,64 @@ export default function ExecutiveReportPage() {
 
           <section>
             <div className="flex items-start gap-4">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                <Target size={24} />
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                <Target size={21} />
               </span>
 
               <div>
-                <p className="text-sm font-black text-sky-600">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                   Recommended Priorities
                 </p>
 
-                <h2 className="mt-1 text-3xl font-black text-slate-950">
+                <h2 className="mt-1.5 text-2xl font-black text-[var(--text-primary)]">
                   الأولويات التنفيذية المقترحة
                 </h2>
+
+                <p className="mt-1.5 max-w-3xl text-sm leading-7 text-[var(--text-secondary)]">
+                  إجراءات عملية مرتبة حسب الأولوية والأثر المتوقع على الأداء
+                  المؤسسي.
+                </p>
               </div>
             </div>
 
-            <div className="mt-7 grid gap-5 lg:grid-cols-3">
+            <div className="mt-5 grid gap-4 lg:grid-cols-3">
               {priorities.map((priority, index) => (
                 <article
                   key={priority.title}
-                  className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm print:shadow-none"
+                  className="flex min-h-full flex-col rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-4 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)] print:shadow-none"
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand-subtle)] text-sm font-black text-[var(--brand-primary)]">
                       {index + 1}
                     </span>
 
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+                    <span className="rounded-full bg-[var(--success-background)] px-3 py-1 text-xs font-black text-[var(--success)]">
                       {priority.impact}
                     </span>
                   </div>
 
-                  <h3 className="mt-6 text-xl font-black text-slate-950">
+                  <h3 className="mt-4 text-lg font-black leading-snug text-[var(--text-primary)]">
                     {priority.title}
                   </h3>
 
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                  <p className="mt-2.5 flex-1 text-sm leading-7 text-[var(--text-secondary)]">
                     {priority.description}
                   </p>
+
+                  <div className="mt-4 border-t border-[var(--border-default)] pt-3.5">
+                    <span className="text-xs font-bold text-[var(--text-muted)]">
+                      أولوية تنفيذية رقم {index + 1}
+                    </span>
+                  </div>
                 </article>
               ))}
             </div>
           </section>
 
-          <footer className="flex flex-col gap-4 border-t border-slate-200 pt-7 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <footer className="flex flex-col gap-2 border-t border-[var(--border-default)] pt-5 text-sm text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
             <p>تم إنشاء هذا التقرير بواسطة KAFU AI.</p>
 
-            <p className="font-bold text-slate-700">
+            <p className="font-bold text-[var(--text-secondary)]">
               Executive Intelligence Platform
             </p>
           </footer>

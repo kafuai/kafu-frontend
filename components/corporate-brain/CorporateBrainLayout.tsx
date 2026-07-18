@@ -47,16 +47,13 @@ export default function CorporateBrainLayout({
   answers,
 }: CorporateBrainLayoutProps) {
   const { locale } = useLocalization();
+  const isArabic = locale === "ar";
 
   const [prompt, setPrompt] = useState("");
-  const [submittedPrompt, setSubmittedPrompt] =
-    useState("");
+  const [submittedPrompt, setSubmittedPrompt] = useState("");
 
   const companyName =
-    company.name ||
-    (locale === "ar"
-      ? "المؤسسة"
-      : "The organization");
+    company.name || (isArabic ? "المؤسسة" : "The organization");
 
   const knowledgeSources = 3 + answers.length;
 
@@ -74,40 +71,42 @@ export default function CorporateBrainLayout({
   const readinessItems = [
     {
       icon: Database,
-      title:
-        locale === "ar"
-          ? "بيانات المؤسسة"
-          : "Company Data",
-      value: "100%",
+      title: isArabic ? "بيانات المؤسسة" : "Company Data",
+      value: 100,
     },
     {
       icon: FileText,
-      title:
-        locale === "ar"
-          ? "بيانات الاستكشاف"
-          : "Discovery Intelligence",
-      value: answers.length > 0 ? "85%" : "30%",
+      title: isArabic
+        ? "بيانات الاستكشاف"
+        : "Discovery Intelligence",
+      value: answers.length > 0 ? 85 : 30,
     },
     {
       icon: BookOpenCheck,
-      title:
-        locale === "ar"
-          ? "السياسات الداخلية"
-          : "Internal Policies",
-      value: "45%",
+      title: isArabic
+        ? "السياسات الداخلية"
+        : "Internal Policies",
+      value: 45,
     },
     {
       icon: Network,
-      title:
-        locale === "ar"
-          ? "الرسم المعرفي"
-          : "Knowledge Graph",
-      value: "62%",
+      title: isArabic
+        ? "الرسم المعرفي"
+        : "Knowledge Graph",
+      value: 62,
     },
   ];
 
+  const overallReadiness = Math.round(
+    readinessItems.reduce((total, item) => total + item.value, 0) /
+      readinessItems.length,
+  );
+
   return (
-    <div className="min-h-[calc(100vh-76px)] bg-[var(--background)] px-5 py-7 md:px-8 lg:px-10">
+    <main
+      className="min-h-[calc(100vh-76px)] bg-[var(--background)] px-5 py-6 md:px-8 lg:px-10"
+      dir={isArabic ? "rtl" : "ltr"}
+    >
       <div className="mx-auto max-w-[1580px] space-y-6">
         <CorporateBrainHero
           companyName={companyName}
@@ -115,8 +114,8 @@ export default function CorporateBrainLayout({
           discoveryAnswers={answers.length}
         />
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-5">
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-5">
             <CorporateBrainConversation
               companyName={companyName}
               userPrompt={submittedPrompt}
@@ -130,73 +129,90 @@ export default function CorporateBrainLayout({
           </div>
 
           <aside className="space-y-5">
-            <CorporateBrainSuggestedActions
-              onSelect={setPrompt}
-            />
+            <CorporateBrainSuggestedActions onSelect={setPrompt} />
 
-            <section className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)]">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-black text-[var(--text-primary)]">
-                    {locale === "ar"
-                      ? "جاهزية العقل المؤسسي"
-                      : "Corporate Brain Readiness"}
-                  </h2>
+            <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+              <div className="h-1 bg-[var(--brand-primary)]" />
 
-                  <p className="mt-1 text-xs text-[var(--text-muted)]">
-                    {locale === "ar"
-                      ? "حالة طبقات المعرفة الحالية"
-                      : "Current knowledge layer status"}
-                  </p>
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                      Knowledge Readiness
+                    </p>
+
+                    <h2 className="mt-2 text-base font-black text-[var(--text-primary)]">
+                      {isArabic
+                        ? "جاهزية العقل المؤسسي"
+                        : "Corporate Brain Readiness"}
+                    </h2>
+
+                    <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">
+                      {isArabic
+                        ? "الحالة الحالية لطبقات المعرفة المؤسسية"
+                        : "Current status of enterprise knowledge layers"}
+                    </p>
+                  </div>
+
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--success-background)] text-[var(--success)]">
+                    <ShieldCheck size={20} />
+                  </span>
                 </div>
 
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--success-background)] text-[var(--success)]">
-                  <ShieldCheck size={19} />
-                </span>
-              </div>
+                <div className="mt-5 flex items-end justify-between rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-4 py-3">
+                  <div>
+                    <p className="text-xs font-bold text-[var(--text-muted)]">
+                      {isArabic
+                        ? "الجاهزية الإجمالية"
+                        : "Overall readiness"}
+                    </p>
 
-              <div className="mt-5 space-y-5">
-                {readinessItems.map((item) => {
-                  const Icon = item.icon;
-                  const numericValue = Number.parseInt(
-                    item.value,
-                    10,
-                  );
+                    <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">
+                      {overallReadiness}%
+                    </p>
+                  </div>
 
-                  return (
-                    <div key={item.title}>
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2">
-                          <Icon
-                            size={15}
-                            className="text-[var(--brand-primary)]"
-                          />
+                  <span className="rounded-full bg-[var(--success-background)] px-3 py-1.5 text-[11px] font-black text-[var(--success)]">
+                    {isArabic ? "قيد التطوير" : "In progress"}
+                  </span>
+                </div>
 
-                          <span className="text-xs font-bold text-[var(--text-secondary)]">
-                            {item.title}
+                <div className="mt-5 space-y-5">
+                  {readinessItems.map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <div key={item.title}>
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                              <Icon size={15} />
+                            </span>
+
+                            <span className="truncate text-xs font-bold text-[var(--text-secondary)]">
+                              {item.title}
+                            </span>
+                          </div>
+
+                          <span className="shrink-0 text-xs font-black text-[var(--text-primary)]">
+                            {item.value}%
                           </span>
                         </div>
 
-                        <span className="text-xs font-black text-[var(--text-primary)]">
-                          {item.value}
-                        </span>
+                        <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-muted)]">
+                          <div
+                            className="h-full rounded-full bg-[var(--brand-primary)] transition-[width] duration-500"
+                            style={{ width: `${item.value}%` }}
+                          />
+                        </div>
                       </div>
-
-                      <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-muted)]">
-                        <div
-                          className="h-full rounded-full bg-[var(--brand-primary)]"
-                          style={{
-                            width: `${numericValue}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </section>
           </aside>
-        </div>
+        </section>
 
         <CorporateBrainKnowledgePanel
           company={company}
@@ -213,16 +229,14 @@ export default function CorporateBrainLayout({
           discoveryAnswerCount={answers.length}
         />
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
-          <CorporateBrainKnowledgeGraph
-            companyName={companyName}
-          />
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
+          <CorporateBrainKnowledgeGraph companyName={companyName} />
 
           <CorporateBrainRelatedInsights />
-        </div>
+        </section>
 
         <CorporateBrainTimeline />
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Activity, Building2, Sparkles } from "lucide-react";
 

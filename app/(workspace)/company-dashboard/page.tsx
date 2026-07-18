@@ -13,7 +13,6 @@ import {
   CircleAlert,
   Languages,
   LineChart,
-  Sparkles,
   Target,
   TrendingUp,
   UsersRound,
@@ -39,6 +38,8 @@ const content = {
     scoreValue: "86",
     scoreStatus: "Healthy",
     dimensionsTitle: "Health Dimensions",
+    dimensionsHelper:
+      "A consolidated view of financial, commercial, operational, people, and AI readiness.",
     dimensions: [
       {
         title: "Financial Health",
@@ -94,6 +95,7 @@ const content = {
     timelineTitle: "Executive Health Timeline",
     timelineHelper: "Last 30 days",
     timelineValues: [72, 75, 78, 80, 82, 84, 86],
+    timelineLabels: ["Day 1", "Day 5", "Day 10", "Day 15", "Day 20", "Day 25", "Today"],
     summaryTitle: "Executive Summary",
     summaries: [
       {
@@ -140,6 +142,8 @@ const content = {
     scoreValue: "86",
     scoreStatus: "جيدة",
     dimensionsTitle: "أبعاد صحة المؤسسة",
+    dimensionsHelper:
+      "رؤية موحدة للصحة المالية والتجارية والتشغيلية ورأس المال البشري والجاهزية للذكاء الاصطناعي.",
     dimensions: [
       {
         title: "الصحة المالية",
@@ -195,6 +199,15 @@ const content = {
     timelineTitle: "المسار الزمني لصحة المؤسسة",
     timelineHelper: "آخر 30 يومًا",
     timelineValues: [72, 75, 78, 80, 82, 84, 86],
+    timelineLabels: [
+      "اليوم 1",
+      "اليوم 5",
+      "اليوم 10",
+      "اليوم 15",
+      "اليوم 20",
+      "اليوم 25",
+      "اليوم",
+    ],
     summaryTitle: "الملخص التنفيذي",
     summaries: [
       {
@@ -236,78 +249,49 @@ const content = {
 const toneClasses = {
   success: {
     bar: "bg-emerald-400",
-    icon: "bg-emerald-500/10 text-emerald-300",
+    icon: "bg-emerald-400/10 text-emerald-300",
     text: "text-emerald-300",
-    border:
-      "border-emerald-400/15 bg-emerald-400/[0.06]",
+    surface: "border-emerald-400/15 bg-emerald-400/[0.045]",
   },
   attention: {
     bar: "bg-amber-400",
-    icon: "bg-amber-500/10 text-amber-300",
+    icon: "bg-amber-400/10 text-amber-300",
     text: "text-amber-300",
-    border:
-      "border-amber-400/15 bg-amber-400/[0.06]",
+    surface: "border-amber-400/15 bg-amber-400/[0.045]",
   },
   critical: {
-    bar: "bg-red-400",
-    icon: "bg-red-500/10 text-red-300",
-    text: "text-red-300",
-    border: "border-red-400/15 bg-red-400/[0.06]",
+    bar: "bg-rose-400",
+    icon: "bg-rose-400/10 text-rose-300",
+    text: "text-rose-300",
+    surface: "border-rose-400/15 bg-rose-400/[0.045]",
   },
   good: {
     bar: "bg-blue-400",
-    icon: "bg-blue-500/10 text-blue-300",
+    icon: "bg-blue-400/10 text-blue-300",
     text: "text-blue-300",
-    border: "border-blue-400/15 bg-blue-400/[0.06]",
+    surface: "border-blue-400/15 bg-blue-400/[0.045]",
   },
 } as const;
 
 export default function CompanyDashboardPage() {
-  const [language, setLanguage] =
-    useState<Language>("en");
+  const [language, setLanguage] = useState<Language>("en");
 
   const copy = content[language];
   const isArabic = language === "ar";
-  const DirectionIcon = isArabic
-    ? ArrowLeft
-    : ArrowRight;
+  const DirectionIcon = isArabic ? ArrowLeft : ArrowRight;
 
   return (
     <main
       dir={isArabic ? "rtl" : "ltr"}
-      className="relative min-h-screen overflow-hidden bg-[#06101f] text-white"
+      className="relative min-h-screen overflow-hidden text-white"
     >
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.09),transparent_30%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.07),transparent_28%)]"
       />
 
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:48px_48px]"
-      />
-
-      <section className="relative mx-auto max-w-7xl px-6 py-6 sm:px-8 lg:px-12">
-        <header className="flex items-center justify-between">
-          <Link
-            href="/welcome"
-            className="flex items-center gap-3"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10 shadow-[0_0_40px_rgba(37,99,235,0.22)]">
-              <Sparkles className="h-5 w-5 text-blue-300" />
-            </div>
-
-            <div>
-              <p className="text-sm font-bold tracking-[0.20em]">
-                KAFU AI
-              </p>
-
-              <p className="text-xs text-slate-400">
-                Enterprise Operating Intelligence
-              </p>
-            </div>
-          </Link>
-
+      <section className="relative mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10">
+        <div className="flex justify-end">
           <ExecutiveButton
             variant="ghost"
             size="small"
@@ -316,76 +300,84 @@ export default function CompanyDashboardPage() {
                 current === "en" ? "ar" : "en",
               )
             }
-            leftIcon={
-              <Languages className="h-4 w-4" />
-            }
-            className="border border-white/10 text-slate-200 hover:bg-white/10 hover:text-white"
+            leftIcon={<Languages className="h-4 w-4" />}
+            className="border border-white/[0.08] bg-white/[0.03] text-slate-300 hover:bg-white/[0.07] hover:text-white"
           >
             {copy.languageLabel}
           </ExecutiveButton>
-        </header>
-
-        <div className="mt-14 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div>
-            <StatusBadge
-              status="healthy"
-              label={copy.eyebrow}
-              className="border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-[11px] tracking-wide text-emerald-200"
-            />
-
-            <h1 className="mt-6 max-w-4xl text-4xl font-bold tracking-[-0.04em] sm:text-5xl lg:text-6xl">
-              {copy.title}
-            </h1>
-
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-400">
-              {copy.subtitle}
-            </p>
-          </div>
-
-          <div className="min-w-72 rounded-3xl border border-emerald-400/15 bg-emerald-400/[0.07] p-6 backdrop-blur">
-            <p className="text-xs uppercase tracking-[0.14em] text-emerald-300/70">
-              {copy.scoreLabel}
-            </p>
-
-            <div className="mt-3 flex items-end gap-2">
-              <span className="text-5xl font-bold">
-                {copy.scoreValue}
-              </span>
-
-              <span className="pb-1 text-xl text-slate-500">
-                / 100
-              </span>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-
-              <span className="text-sm font-semibold text-emerald-300">
-                {copy.scoreStatus}
-              </span>
-            </div>
-          </div>
         </div>
 
-        <section className="mt-12">
-          <div className="mb-5 flex items-center gap-3">
-            <Building2 className="h-5 w-5 text-blue-300" />
+        <section className="mt-6 overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_80px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+          <div className="grid gap-8 p-7 sm:p-9 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center lg:p-10">
+            <div>
+              <StatusBadge
+                status="healthy"
+                label={copy.eyebrow}
+                className="border-emerald-400/15 bg-emerald-400/[0.07] px-3 py-1.5 text-[11px] tracking-wide text-emerald-200"
+              />
 
-            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-400">
-              {copy.dimensionsTitle}
-            </h2>
+              <h1 className="mt-5 max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
+                {copy.title}
+              </h1>
+
+              <p className="mt-5 max-w-3xl text-base leading-8 text-slate-400 sm:text-lg">
+                {copy.subtitle}
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-emerald-400/15 bg-emerald-400/[0.055] p-6">
+              <p className="text-xs font-medium uppercase tracking-[0.13em] text-emerald-300/70">
+                {copy.scoreLabel}
+              </p>
+
+              <div className="mt-4 flex items-end gap-2">
+                <span className="text-6xl font-semibold tracking-[-0.06em]">
+                  {copy.scoreValue}
+                </span>
+
+                <span className="pb-2 text-base text-slate-500">
+                  / 100
+                </span>
+              </div>
+
+              <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+                <div className="h-full w-[86%] rounded-full bg-emerald-400" />
+              </div>
+
+              <div className="mt-4 flex items-center gap-2 text-sm font-medium text-emerald-300">
+                <CheckCircle2 className="h-4 w-4" />
+                {copy.scoreStatus}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <Building2 className="h-5 w-5 text-blue-300" />
+
+                <h2 className="text-lg font-semibold text-white">
+                  {copy.dimensionsTitle}
+                </h2>
+              </div>
+
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                {copy.dimensionsHelper}
+              </p>
+            </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
             {copy.dimensions.map((dimension) => {
               const Icon = dimension.icon;
-              const tone =
-                toneClasses[dimension.tone];
+              const tone = toneClasses[dimension.tone];
 
               return (
                 <article
                   key={dimension.title}
-                  className="rounded-3xl border border-white/[0.08] bg-white/[0.045] p-5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/20 hover:bg-white/[0.07]"
+                  className="group flex min-h-[290px] flex-col rounded-3xl border border-white/[0.075] bg-white/[0.035] p-5 transition duration-300 hover:-translate-y-1 hover:border-white/[0.13] hover:bg-white/[0.055]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div
@@ -395,40 +387,38 @@ export default function CompanyDashboardPage() {
                     </div>
 
                     <span
-                      className={`text-sm font-semibold ${tone.text}`}
+                      className={`text-xs font-semibold ${tone.text}`}
                     >
                       {dimension.status}
                     </span>
                   </div>
 
-                  <h3 className="mt-5 text-lg font-semibold">
+                  <h3 className="mt-5 min-h-14 text-lg font-semibold leading-7 text-white">
                     {dimension.title}
                   </h3>
 
-                  <div className="mt-4 flex items-end gap-2">
-                    <span className="text-3xl font-bold">
+                  <div className="mt-3 flex items-end gap-2">
+                    <span className="text-3xl font-semibold tracking-[-0.04em]">
                       {dimension.score}
                     </span>
 
-                    <span className="pb-1 text-sm text-slate-600">
-                      /100
+                    <span className="pb-1 text-xs text-slate-600">
+                      / 100
                     </span>
                   </div>
 
-                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
                     <div
                       className={`h-full rounded-full ${tone.bar}`}
-                      style={{
-                        width: `${dimension.score}%`,
-                      }}
+                      style={{ width: `${dimension.score}%` }}
                     />
                   </div>
 
-                  <p className="mt-4 text-sm leading-6 text-slate-400">
+                  <p className="mt-4 flex-1 text-sm leading-6 text-slate-400">
                     {dimension.insight}
                   </p>
 
-                  <p className="mt-4 border-t border-white/[0.06] pt-4 text-xs text-slate-500">
+                  <p className="mt-5 border-t border-white/[0.06] pt-4 text-xs leading-5 text-slate-500">
                     {dimension.metric}
                   </p>
                 </article>
@@ -437,9 +427,9 @@ export default function CompanyDashboardPage() {
           </div>
         </section>
 
-        <section className="mt-10 grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-          <article className="rounded-3xl border border-white/[0.08] bg-white/[0.045] p-6 backdrop-blur sm:p-8">
-            <div className="flex items-center justify-between">
+        <section className="mt-8 grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+          <article className="rounded-3xl border border-white/[0.075] bg-white/[0.035] p-6 sm:p-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <LineChart className="h-5 w-5 text-blue-300" />
 
@@ -453,51 +443,57 @@ export default function CompanyDashboardPage() {
               </span>
             </div>
 
-            <div className="mt-8 flex h-48 items-end gap-3">
-              {copy.timelineValues.map(
-                (value, index) => (
-                  <div
-                    key={`${value}-${index}`}
-                    className="flex flex-1 flex-col items-center gap-3"
-                  >
-                    <span className="text-xs font-semibold text-slate-500">
-                      {value}
-                    </span>
-
+            <div className="mt-8 flex h-56 items-end gap-2 sm:gap-4">
+              {copy.timelineValues.map((value, index) => (
+                <div
+                  key={`${value}-${index}`}
+                  className="flex h-full flex-1 flex-col justify-end gap-3"
+                >
+                  <div className="flex flex-1 items-end">
                     <div
-                      className="w-full rounded-t-xl bg-gradient-to-t from-blue-600 to-cyan-400 opacity-80 transition hover:opacity-100"
+                      className="relative w-full rounded-t-xl border border-blue-300/10 bg-gradient-to-t from-blue-600/75 to-cyan-400/85 transition hover:from-blue-500 hover:to-cyan-300"
                       style={{ height: `${value}%` }}
-                    />
+                    >
+                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[11px] font-semibold text-slate-400">
+                        {value}
+                      </span>
+                    </div>
                   </div>
-                ),
-              )}
+
+                  <span className="truncate text-center text-[10px] text-slate-600 sm:text-xs">
+                    {copy.timelineLabels[index]}
+                  </span>
+                </div>
+              ))}
             </div>
           </article>
 
-          <article className="rounded-3xl border border-blue-400/15 bg-blue-500/[0.07] p-6 backdrop-blur sm:p-8">
+          <article className="flex flex-col rounded-3xl border border-blue-400/15 bg-blue-500/[0.055] p-6 sm:p-8">
             <div className="flex items-center gap-3">
-              <Bot className="h-5 w-5 text-blue-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-400/10 text-blue-300">
+                <Bot className="h-5 w-5" />
+              </div>
 
               <h2 className="text-lg font-semibold">
                 {copy.aiTitle}
               </h2>
             </div>
 
-            <p className="mt-5 text-sm leading-7 text-slate-300">
+            <p className="mt-5 flex-1 text-sm leading-7 text-slate-300">
               {copy.aiText}
             </p>
 
-            <div className="mt-5 text-xs text-blue-300">
+            <div className="mt-5 text-xs font-medium text-blue-300">
               {copy.aiConfidence}
             </div>
 
-            <div className="mt-8 rounded-2xl border border-white/[0.07] bg-black/10 p-5">
-              <p className="text-xs uppercase tracking-[0.14em] text-slate-500">
+            <div className="mt-7 rounded-2xl border border-white/[0.07] bg-black/10 p-5">
+              <p className="text-xs uppercase tracking-[0.13em] text-slate-500">
                 {copy.impactLabel}
               </p>
 
               <div className="mt-2 flex items-end gap-3">
-                <span className="text-4xl font-bold text-emerald-300">
+                <span className="text-4xl font-semibold tracking-[-0.04em] text-emerald-300">
                   {copy.impactValue}
                 </span>
 
@@ -506,14 +502,26 @@ export default function CompanyDashboardPage() {
                 </span>
               </div>
             </div>
+
+            <Link href={copy.nextHref} className="mt-6">
+              <ExecutiveButton
+                size="large"
+                rightIcon={
+                  <DirectionIcon className="h-5 w-5" />
+                }
+                className="w-full border-0 bg-gradient-to-r from-blue-600 to-cyan-500 shadow-[0_12px_30px_rgba(37,99,235,0.22)] hover:from-blue-500 hover:to-cyan-400"
+              >
+                {copy.primaryAction}
+              </ExecutiveButton>
+            </Link>
           </article>
         </section>
 
-        <section className="mt-10">
+        <section className="mt-8">
           <div className="mb-5 flex items-center gap-3">
             <Activity className="h-5 w-5 text-blue-300" />
 
-            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <h2 className="text-lg font-semibold">
               {copy.summaryTitle}
             </h2>
           </div>
@@ -526,7 +534,7 @@ export default function CompanyDashboardPage() {
               return (
                 <article
                   key={item.title}
-                  className={`rounded-3xl border p-6 ${tone.border}`}
+                  className={`rounded-3xl border p-6 ${tone.surface}`}
                 >
                   <div
                     className={`flex h-11 w-11 items-center justify-center rounded-2xl ${tone.icon}`}
@@ -545,36 +553,6 @@ export default function CompanyDashboardPage() {
               );
             })}
           </div>
-        </section>
-
-        <section className="mt-10 flex flex-col gap-6 rounded-3xl border border-white/[0.08] bg-white/[0.045] p-6 backdrop-blur sm:p-8 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex max-w-3xl items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-300">
-              <Activity className="h-5 w-5" />
-            </div>
-
-            <div>
-              <h2 className="text-xl font-semibold">
-                {copy.aiTitle}
-              </h2>
-
-              <p className="mt-2 leading-7 text-slate-400">
-                {copy.aiText}
-              </p>
-            </div>
-          </div>
-
-          <Link href={copy.nextHref}>
-            <ExecutiveButton
-              size="large"
-              rightIcon={
-                <DirectionIcon className="h-5 w-5" />
-              }
-              className="min-w-64 border-0 bg-gradient-to-r from-blue-600 to-cyan-500 shadow-[0_12px_32px_rgba(37,99,235,0.28)] hover:from-blue-500 hover:to-cyan-400"
-            >
-              {copy.primaryAction}
-            </ExecutiveButton>
-          </Link>
         </section>
 
         <footer className="mt-8 flex flex-col gap-4 border-t border-white/[0.07] pt-6 sm:flex-row sm:items-center sm:justify-between">
