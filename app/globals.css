@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
   --background: #f8fafc;
@@ -1113,3 +1113,4 @@ html[data-theme="dark"] .enterprise-header {
     width: 104px;
   }
 }
+

@@ -21,40 +21,46 @@
 
 export function LandingValue() {
   return (
-    <section className="border-b border-white/10 bg-slate-900 px-6 py-24 lg:px-10">
+    <section className="border-b border-[var(--landing-border)] bg-[var(--landing-bg-secondary)] px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-7xl">
-        <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
+        <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:gap-14">
+          <div className="max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--landing-accent)] sm:text-sm">
               Why KAFU AI
             </p>
 
-            <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-5xl">
+            <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--landing-text-primary)] sm:text-4xl lg:text-[2.75rem]">
               نظام تشغيل ذكي للمعرفة والقرار والتنفيذ
             </h2>
 
-            <p className="mt-6 text-lg leading-8 text-slate-400">
-              KAFU AI لا يقدم لوحة معلومات إضافية. بل يبني طبقة ذكاء مؤسسي
+            <p className="mt-5 text-base leading-8 text-[var(--landing-text-secondary)] sm:text-lg">
+              KAFU AI لا يقدم لوحة معلومات إضافية، بل يبني طبقة ذكاء مؤسسي
               تساعد القيادة والفرق على فهم الواقع، تحديد الأولويات، وتنفيذ
               القرارات بثقة.
             </p>
           </div>
 
-          <div className="space-y-5">
-            {VALUE_PILLARS.map((pillar) => (
+          <div className="space-y-4">
+            {VALUE_PILLARS.map((pillar, index) => (
               <article
                 key={pillar.eyebrow}
-                className="rounded-3xl border border-white/10 bg-slate-950/70 p-7"
+                className="rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-surface)] p-6 transition duration-200 hover:border-[var(--landing-accent-border)] hover:bg-[var(--landing-surface-hover)]"
               >
-                <p className="text-sm font-semibold text-cyan-300">
-                  {pillar.eyebrow}
-                </p>
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--landing-accent)]">
+                    {pillar.eyebrow}
+                  </p>
 
-                <h3 className="mt-2 text-2xl font-semibold text-white">
+                  <span className="text-xs font-medium text-[var(--landing-text-muted)]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                </div>
+
+                <h3 className="mt-3 text-xl font-semibold leading-7 text-[var(--landing-text-primary)]">
                   {pillar.title}
                 </h3>
 
-                <p className="mt-3 leading-7 text-slate-400">
+                <p className="mt-2 text-sm leading-7 text-[var(--landing-text-secondary)] sm:text-base">
                   {pillar.description}
                 </p>
               </article>
@@ -65,3 +71,4 @@ export function LandingValue() {
     </section>
   );
 }
+

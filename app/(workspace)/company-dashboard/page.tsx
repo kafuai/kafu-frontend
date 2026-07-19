@@ -29,7 +29,7 @@ type Language = "en" | "ar";
 
 const content = {
   en: {
-    languageLabel: "ط§ظ„ط¹ط±ط¨ظٹط©",
+    languageLabel: "العربية",
     eyebrow: "Company Health",
     title: "Your organization is healthy.",
     subtitle:
@@ -99,7 +99,7 @@ const content = {
     summaryTitle: "Executive Summary",
     summaries: [
       {
-        title: "Whatâ€™s Going Well",
+        title: "What’s Going Well",
         text:
           "Revenue is above the previous quarter, cash remains stable, and employee engagement is strong.",
         tone: "success",
@@ -134,113 +134,113 @@ const content = {
   },
   ar: {
     languageLabel: "English",
-    eyebrow: "طµط­ط© ط§ظ„ظ…ط¤ط³ط³ط©",
-    title: "ظ…ط¤ط³ط³طھظƒ ظپظٹ ظˆط¶ط¹ طµط­ظٹ ط¬ظٹط¯.",
+    eyebrow: "صحة المؤسسة",
+    title: "مؤسستك في وضع صحي جيد.",
     subtitle:
-      "ظ„ط§ ظٹط²ط§ظ„ ط§ظ„ط£ط¯ط§ط، ط§ظ„ظ…ط§ظ„ظٹ ظ‚ظˆظٹظ‹ط§طŒ ط¨ظٹظ†ظ…ط§ ظٹطھظ…ط«ظ„ ط§ظ„طھط­ط¯ظٹ ط§ظ„ط±ط¦ظٹط³ظٹ ظپظٹ ط³ط±ط¹ط© طھظ†ظپظٹط° ط§ظ„ط§ط¹طھظ…ط§ط¯ط§طھ ظˆط§ظ„ظ…ط¨ط§ط¯ط±ط§طھ ط§ظ„ط§ط³طھط±ط§طھظٹط¬ظٹط©.",
-    scoreLabel: "ظ…ط¤ط´ط± طµط­ط© ط§ظ„ظ…ط¤ط³ط³ط©",
+      "لا يزال الأداء المالي قويًا، بينما يتمثل التحدي الرئيسي في سرعة تنفيذ الاعتمادات والمبادرات الاستراتيجية.",
+    scoreLabel: "مؤشر صحة المؤسسة",
     scoreValue: "86",
-    scoreStatus: "ط¬ظٹط¯ط©",
-    dimensionsTitle: "ط£ط¨ط¹ط§ط¯ طµط­ط© ط§ظ„ظ…ط¤ط³ط³ط©",
+    scoreStatus: "جيدة",
+    dimensionsTitle: "أبعاد صحة المؤسسة",
     dimensionsHelper:
-      "ط±ط¤ظٹط© ظ…ظˆط­ط¯ط© ظ„ظ„طµط­ط© ط§ظ„ظ…ط§ظ„ظٹط© ظˆط§ظ„طھط¬ط§ط±ظٹط© ظˆط§ظ„طھط´ط؛ظٹظ„ظٹط© ظˆط±ط£ط³ ط§ظ„ظ…ط§ظ„ ط§ظ„ط¨ط´ط±ظٹ ظˆط§ظ„ط¬ط§ظ‡ط²ظٹط© ظ„ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ.",
+      "رؤية موحدة للصحة المالية والتجارية والتشغيلية ورأس المال البشري والجاهزية للذكاء الاصطناعي.",
     dimensions: [
       {
-        title: "ط§ظ„طµط­ط© ط§ظ„ظ…ط§ظ„ظٹط©",
+        title: "الصحة المالية",
         score: 92,
-        status: "ظ…ظ…طھط§ط²ط©",
+        status: "ممتازة",
         insight:
-          "ظ„ط§ طھط²ط§ظ„ ط§ظ„ط¥ظٹط±ط§ط¯ط§طھ ظˆط§ظ„ط±ط¨ط­ظٹط© ظˆط§ظ„ط³ظٹظˆظ„ط© ط§ظ„ظ†ظ‚ط¯ظٹط© ظپظٹ ظˆط¶ط¹ ظ‚ظˆظٹ.",
-        metric: "ظ…ط¯ط© ط§ظ„طھط؛ط·ظٹط© ط§ظ„ظ†ظ‚ط¯ظٹط©: 14.6 ط´ظ‡ط±ظ‹ط§",
+          "لا تزال الإيرادات والربحية والسيولة النقدية في وضع قوي.",
+        metric: "مدة التغطية النقدية: 14.6 شهرًا",
         icon: Banknote,
         tone: "success",
       },
       {
-        title: "ط§ظ„طµط­ط© ط§ظ„طھط¬ط§ط±ظٹط©",
+        title: "الصحة التجارية",
         score: 78,
-        status: "ط¬ظٹط¯ط©",
+        status: "جيدة",
         insight:
-          "ظ…ط³ط§ط± ط§ظ„ظپط±طµ طµط­ظٹطŒ ظ„ظƒظ† طھط­ظˆظٹظ„ ظپط±طµ ظ‚ط·ط§ط¹ ط§ظ„ظ…ط¤ط³ط³ط§طھ طھط¨ط§ط·ط£.",
-        metric: "ظپط±طµ ظ…ط¹ط±ط¶ط© ظ„ظ„ط®ط·ط±: 2.8 ظ…ظ„ظٹظˆظ† ط¯ظˆظ„ط§ط±",
+          "مسار الفرص صحي، لكن تحويل فرص قطاع المؤسسات تباطأ.",
+        metric: "فرص معرضة للخطر: 2.8 مليون دولار",
         icon: TrendingUp,
         tone: "attention",
       },
       {
-        title: "ط§ظ„طµط­ط© ط§ظ„طھط´ط؛ظٹظ„ظٹط©",
+        title: "الصحة التشغيلية",
         score: 74,
-        status: "طھط­طھط§ط¬ ط¥ظ„ظ‰ ط§ظ‡طھظ…ط§ظ…",
+        status: "تحتاج إلى اهتمام",
         insight:
-          "طھط£ط®ط± ط§ظ„ط§ط¹طھظ…ط§ط¯ط§طھ ظٹط­ط¯ ظ…ظ† ط³ط±ط¹ط© ط§ظ„طھظ†ظپظٹط°.",
-        metric: "ظ…طھظˆط³ط· ط¯ظˆط±ط© ط§ظ„ط§ط¹طھظ…ط§ط¯: 11 ظٹظˆظ…ظ‹ط§",
+          "تأخر الاعتمادات يحد من سرعة التنفيذ.",
+        metric: "متوسط دورة الاعتماد: 11 يومًا",
         icon: Workflow,
         tone: "critical",
       },
       {
-        title: "طµط­ط© ط±ط£ط³ ط§ظ„ظ…ط§ظ„ ط§ظ„ط¨ط´ط±ظٹ",
+        title: "صحة رأس المال البشري",
         score: 91,
-        status: "ظ…ظ…طھط§ط²ط©",
+        status: "ممتازة",
         insight:
-          "ظ…ط³طھظˆظٹط§طھ ط§ظ„طھظپط§ط¹ظ„ ظˆط§ظ„ط¥ظ†طھط§ط¬ظٹط© ط£ط¹ظ„ظ‰ ظ…ظ† ط§ظ„ظ…ط³طھظ‡ط¯ظپ.",
-        metric: "ط§ظ„طھظپط§ط¹ظ„ ط§ظ„ظˆط¸ظٹظپظٹ: 94%",
+          "مستويات التفاعل والإنتاجية أعلى من المستهدف.",
+        metric: "التفاعل الوظيفي: 94%",
         icon: UsersRound,
         tone: "success",
       },
       {
-        title: "ط§ظ„ط¬ط§ظ‡ط²ظٹط© ظ„ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ",
+        title: "الجاهزية للذكاء الاصطناعي",
         score: 88,
-        status: "ظ‚ظˆظٹط©",
+        status: "قوية",
         insight:
-          "ط¬ظˆط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆظ…ط³طھظˆظ‰ ط§ظ„طھط¨ظ†ظٹ ظٹط¯ط¹ظ…ط§ظ† ط§ظ„ظ…ط²ظٹط¯ ظ…ظ† ط§ظ„ط£طھظ…طھط©.",
-        metric: "ظ†ط³ط¨ط© طھط¨ظ†ظٹ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ: 81%",
+          "جودة البيانات ومستوى التبني يدعمان المزيد من الأتمتة.",
+        metric: "نسبة تبني الذكاء الاصطناعي: 81%",
         icon: BrainCircuit,
         tone: "good",
       },
     ],
-    timelineTitle: "ط§ظ„ظ…ط³ط§ط± ط§ظ„ط²ظ…ظ†ظٹ ظ„طµط­ط© ط§ظ„ظ…ط¤ط³ط³ط©",
-    timelineHelper: "ط¢ط®ط± 30 ظٹظˆظ…ظ‹ط§",
+    timelineTitle: "المسار الزمني لصحة المؤسسة",
+    timelineHelper: "آخر 30 يومًا",
     timelineValues: [72, 75, 78, 80, 82, 84, 86],
     timelineLabels: [
-      "ط§ظ„ظٹظˆظ… 1",
-      "ط§ظ„ظٹظˆظ… 5",
-      "ط§ظ„ظٹظˆظ… 10",
-      "ط§ظ„ظٹظˆظ… 15",
-      "ط§ظ„ظٹظˆظ… 20",
-      "ط§ظ„ظٹظˆظ… 25",
-      "ط§ظ„ظٹظˆظ…",
+      "اليوم 1",
+      "اليوم 5",
+      "اليوم 10",
+      "اليوم 15",
+      "اليوم 20",
+      "اليوم 25",
+      "اليوم",
     ],
-    summaryTitle: "ط§ظ„ظ…ظ„ط®طµ ط§ظ„طھظ†ظپظٹط°ظٹ",
+    summaryTitle: "الملخص التنفيذي",
     summaries: [
       {
-        title: "ظ…ط§ ظٹط³ظٹط± ط¨ط´ظƒظ„ ط¬ظٹط¯",
+        title: "ما يسير بشكل جيد",
         text:
-          "ط§ظ„ط¥ظٹط±ط§ط¯ط§طھ ط£ط¹ظ„ظ‰ ظ…ظ† ط§ظ„ط±ط¨ط¹ ط§ظ„ط³ط§ط¨ظ‚طŒ ظˆط§ظ„ط³ظٹظˆظ„ط© ظ…ط³طھظ‚ط±ط©طŒ ظˆطھظپط§ط¹ظ„ ط§ظ„ظ…ظˆط¸ظپظٹظ† ظ‚ظˆظٹ.",
+          "الإيرادات أعلى من الربع السابق، والسيولة مستقرة، وتفاعل الموظفين قوي.",
         tone: "success",
         icon: CheckCircle2,
       },
       {
-        title: "ظ…ط§ ظٹط­طھط§ط¬ ط¥ظ„ظ‰ ط§ظ‡طھظ…ط§ظ…",
+        title: "ما يحتاج إلى اهتمام",
         text:
-          "ط¯ظˆط±ط§طھ ط§ظ„ط§ط¹طھظ…ط§ط¯ ظˆطھط£ط®ط± ط§ظ„ظ…ط¨ط§ط¯ط±ط§طھ ط§ظ„ط§ط³طھط±ط§طھظٹط¬ظٹط© ظٹط­ط¯ط§ظ† ظ…ظ† ط§ظ„ظ†ظ…ظˆ.",
+          "دورات الاعتماد وتأخر المبادرات الاستراتيجية يحدان من النمو.",
         tone: "attention",
         icon: CircleAlert,
       },
       {
-        title: "ط§ظ„ط¥ط¬ط±ط§ط، ط§ظ„طھظ†ظپظٹط°ظٹ ط§ظ„ظ…ظ‚طھط±ط­",
+        title: "الإجراء التنفيذي المقترح",
         text:
-          "ط£طھظ…طھط© ط§ط¹طھظ…ط§ط¯ ط§ظ„ط¹ط±ظˆط¶ ظˆطھط¹ظٹظٹظ† ظ…ط³ط¤ظˆظ„ طھظ†ظپظٹط°ظٹ ظˆط§ط­ط¯ ظ„ظ„ظ…ط¨ط§ط¯ط±ط§طھ ط§ظ„ظ…طھط£ط®ط±ط©.",
+          "أتمتة اعتماد العروض وتعيين مسؤول تنفيذي واحد للمبادرات المتأخرة.",
         tone: "good",
         icon: Target,
       },
     ],
-    aiTitle: "طھظˆطµظٹط© KAFU AI",
+    aiTitle: "توصية KAFU AI",
     aiText:
-      "ظٹظ…ظƒظ† ظ„طھظ‚ظ„ظٹظ„ ط®ط·ظˆط§طھ ط§ظ„ط§ط¹طھظ…ط§ط¯ ط§ظ„ظٹط¯ظˆظٹط© ط®ظپط¶ ظ…طھظˆط³ط· ط§ظ„ط¯ظˆط±ط© ظ…ظ† 11 ظٹظˆظ…ظ‹ط§ ط¥ظ„ظ‰ ظ†ط­ظˆ 7 ط£ظٹط§ظ…طŒ ظ…ظ…ط§ ظٹط­ط³ظ† ط³ط±ط¹ط© ط§ظ„ظ…ط¨ظٹط¹ط§طھ ظˆط¯ظ‚ط© ط§ظ„طھظˆظ‚ط¹ط§طھ.",
-    aiConfidence: "ط¯ط±ط¬ط© ط«ظ‚ط© ط§ظ„طھط­ظ„ظٹظ„: 96%",
-    impactLabel: "ط§ظ„ط£ط«ط± ط§ظ„ظ…طھظˆظ‚ط¹",
+      "يمكن لتقليل خطوات الاعتماد اليدوية خفض متوسط الدورة من 11 يومًا إلى نحو 7 أيام، مما يحسن سرعة المبيعات ودقة التوقعات.",
+    aiConfidence: "درجة ثقة التحليل: 96%",
+    impactLabel: "الأثر المتوقع",
     impactValue: "+12%",
-    impactText: "ظپظٹ ط³ط±ط¹ط© ط§ظ„ط¥ظٹط±ط§ط¯ط§طھ",
-    primaryAction: "طھط­ظ„ظٹظ„ ط§ظ„ط£ط³ط¨ط§ط¨ ط§ظ„ط¬ط°ط±ظٹط©",
-    secondaryAction: "ط§ظ„ط¹ظˆط¯ط© ط¥ظ„ظ‰ ط§ظ„ط¥ط­ط§ط·ط© ط§ظ„طھظ†ظپظٹط°ظٹط©",
+    impactText: "في سرعة الإيرادات",
+    primaryAction: "تحليل الأسباب الجذرية",
+    secondaryAction: "العودة إلى الإحاطة التنفيذية",
     nextHref: "/corporate-brain",
     backHref: "/executive-summary",
   },
@@ -291,21 +291,6 @@ export default function CompanyDashboardPage() {
       />
 
       <section className="relative mx-auto max-w-[1580px] space-y-5 px-5 py-5 md:px-7 lg:px-8">
-        <div className="flex justify-end">
-          <ExecutiveButton
-            variant="ghost"
-            size="small"
-            onClick={() =>
-              setLanguage((current) =>
-                current === "en" ? "ar" : "en",
-              )
-            }
-            leftIcon={<Languages className="h-4 w-4" />}
-            className="border border-[var(--border-default)] bg-[var(--surface)] text-[var(--text-secondary)] shadow-[var(--shadow-small)] hover:border-[var(--brand-primary)] hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
-          >
-            {copy.languageLabel}
-          </ExecutiveButton>
-        </div>
 
         <section className="relative overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
           <div className="absolute inset-y-0 end-0 w-1 bg-[var(--brand-primary)]" />
@@ -315,7 +300,7 @@ export default function CompanyDashboardPage() {
             className="pointer-events-none absolute -start-24 -top-28 h-72 w-72 rounded-full bg-[color-mix(in_srgb,var(--brand-primary)_6%,transparent)]"
           />
 
-          <div className="relative grid items-center gap-4 px-6 py-5 md:px-7 lg:grid-cols-[minmax(0,1fr)_250px] lg:px-8">
+          <div className="relative grid items-center gap-5 px-6 py-6 md:px-7 lg:grid-cols-[minmax(0,1fr)_250px] lg:px-8">
             <div className="min-w-0">
               <StatusBadge
                 status="healthy"
@@ -340,7 +325,7 @@ export default function CompanyDashboardPage() {
               </div>
             </div>
 
-            <article className="rounded-[16px] border border-[var(--border-default)] bg-[var(--surface-muted)] px-4 py-3.5">
+            <article className="rounded-[16px] border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
               <p className="text-[11px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)]">
                 {copy.scoreLabel}
               </p>
@@ -442,7 +427,7 @@ export default function CompanyDashboardPage() {
               return (
                 <article
                   key={dimension.title}
-                  className="group flex h-full min-h-[188px] flex-col rounded-[18px] border border-[var(--border-default)] bg-[var(--surface)] p-4 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-medium)]"
+                  className="group flex h-full min-h-[205px] flex-col rounded-[18px] border border-[var(--border-default)] bg-[var(--surface)] p-4 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-medium)]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div
@@ -483,7 +468,7 @@ export default function CompanyDashboardPage() {
                     {dimension.insight}
                   </p>
 
-                  <p className="mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
+                  <p className="mt-4 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-500">
                     {dimension.metric}
                   </p>
                 </article>
@@ -508,7 +493,7 @@ export default function CompanyDashboardPage() {
               </span>
             </div>
 
-            <div className="mt-5 flex h-32 items-end gap-2 sm:gap-3">
+            <div className="mt-5 flex h-36 items-end gap-2 sm:gap-3">
               {copy.timelineValues.map((value, index) => (
                 <div
                   key={`${value}-${index}`}
@@ -620,7 +605,7 @@ export default function CompanyDashboardPage() {
           </div>
         </section>
 
-        <footer className="mt-4 flex flex-col gap-3 border-t border-[var(--border-default)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <footer className="mt-5 flex flex-col gap-3 border-t border-[var(--border-default)] pt-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href={copy.backHref}
             className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition hover:text-slate-950"
@@ -635,7 +620,7 @@ export default function CompanyDashboardPage() {
           </Link>
 
           <p className="text-xs text-slate-600">
-            KAFU AI آ· Enterprise Operating Intelligence
+            KAFU AI · Enterprise Operating Intelligence
           </p>
         </footer>
       </section>

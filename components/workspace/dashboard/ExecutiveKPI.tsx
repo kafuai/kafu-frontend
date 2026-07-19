@@ -94,42 +94,48 @@ export default function ExecutiveKPI({
   ];
 
   return (
-    <section className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+    <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
       {kpis.map((kpi) => {
         const Icon = kpi.icon;
 
         return (
           <article
             key={kpi.title}
-            className="group flex min-h-[230px] flex-col rounded-[18px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--brand-primary)_20%,var(--border-default))] hover:shadow-[var(--shadow-medium)]"
+            className="group flex min-h-[210px] flex-col rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--brand-primary)_20%,var(--border-default))] hover:shadow-[var(--shadow-medium)]"
           >
             <div className="flex items-start justify-between gap-4">
               <span
-                className={`inline-flex h-11 w-11 items-center justify-center rounded-[13px] ${kpi.iconClass}`}
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[color-mix(in_srgb,currentColor_10%,transparent)] ${kpi.iconClass}`}
               >
-                <Icon size={19} />
+                <Icon size={18} />
               </span>
 
-              <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--text-secondary)]">
+              <span
+                className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--text-secondary)]"
+                dir="ltr"
+              >
                 {kpi.trend}
               </span>
             </div>
 
-            <div className="mt-5">
+            <div className="mt-4">
               <p className="text-xs font-bold text-[var(--text-muted)]">
                 {kpi.title}
               </p>
 
-              <h3 className="mt-2 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text-primary)]">
+              <h3
+                className="mt-1.5 text-3xl font-extrabold leading-none tracking-[-0.04em] text-[var(--text-primary)]"
+                dir="ltr"
+              >
                 {kpi.value}
               </h3>
 
-              <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
+              <p className="mt-2.5 text-sm leading-6 text-[var(--text-secondary)]">
                 {kpi.subtitle}
               </p>
             </div>
 
-            <div className="mt-auto border-t border-[var(--border-default)] pt-4">
+            <div className="mt-auto border-t border-[var(--border-default)] pt-3.5">
               <p className="text-[11px] font-bold leading-5 text-[var(--text-muted)]">
                 {kpi.trendLabel}
               </p>
@@ -140,3 +146,4 @@ export default function ExecutiveKPI({
     </section>
   );
 }
+

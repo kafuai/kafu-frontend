@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import {
@@ -196,29 +196,31 @@ export default function ExecutiveSummaryPage() {
   return (
     <main
       dir={isArabic ? "rtl" : "ltr"}
-      className="relative min-h-screen overflow-hidden bg-[#06101f] text-white"
+      className="relative min-h-[calc(100vh-76px)] overflow-hidden bg-[var(--background)] text-[var(--text-primary)]"
     >
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.10),transparent_30%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--brand-primary)_8%,transparent),transparent_32%),radial-gradient(circle_at_bottom_right,color-mix(in_srgb,var(--brand-primary)_5%,transparent),transparent_30%)]"
       />
 
       <div
         aria-hidden="true"
-        className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(255,255,255,0.8)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.8)_1px,transparent_1px)] [background-size:48px_48px]"
+        className="pointer-events-none absolute inset-0 opacity-40 [background-image:linear-gradient(var(--border-default)_1px,transparent_1px),linear-gradient(90deg,var(--border-default)_1px,transparent_1px)] [background-size:48px_48px]"
       />
 
-      <section className="relative mx-auto max-w-7xl px-6 py-6 sm:px-8 lg:px-12">
+      <section className="relative mx-auto max-w-[1580px] space-y-6 px-5 py-5 md:px-7 lg:px-8">
         <header className="flex items-center justify-between">
           <Link href="/welcome" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-400/20 bg-blue-500/10 shadow-[0_0_40px_rgba(37,99,235,0.22)]">
-              <Sparkles className="h-5 w-5 text-blue-300" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-[color-mix(in_srgb,var(--brand-primary)_18%,var(--border-default))] bg-[var(--brand-subtle)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
+              <Sparkles className="h-5 w-5" />
             </div>
 
             <div>
-              <p className="text-sm font-bold tracking-[0.20em]">KAFU AI</p>
+              <p className="text-sm font-black tracking-[0.2em] text-[var(--text-primary)]">
+                KAFU AI
+              </p>
 
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--text-muted)]">
                 Enterprise Operating Intelligence
               </p>
             </div>
@@ -231,72 +233,77 @@ export default function ExecutiveSummaryPage() {
               setLanguage((current) => (current === "en" ? "ar" : "en"))
             }
             leftIcon={<Languages className="h-4 w-4" />}
-            className="border border-white/10 text-slate-200 hover:bg-white/10 hover:text-white"
+            className="border border-[var(--border-default)] bg-[var(--surface)] text-[var(--text-secondary)] shadow-[var(--shadow-small)] hover:border-[var(--brand-primary)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
           >
             {copy.languageLabel}
           </ExecutiveButton>
         </header>
 
-        <div className="mt-14 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div>
-            <StatusBadge
-              status="good"
-              label={copy.eyebrow}
-              className="border-blue-400/20 bg-blue-400/10 px-3 py-1.5 text-[11px] tracking-wide text-blue-200"
-            />
+        <section className="overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+          <div className="grid gap-6 px-6 py-7 md:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className={isArabic ? "text-right" : "text-left"}><StatusBadge
+                status="good"
+                label={copy.eyebrow}
+                className="border-[color-mix(in_srgb,var(--brand-primary)_20%,var(--border-default))] bg-[var(--brand-subtle)] px-3 py-1.5 text-[11px] tracking-wide text-[var(--brand-primary)]"
+              />
 
-            <h1 className="mt-6 max-w-4xl text-4xl font-bold tracking-[-0.04em] sm:text-5xl lg:text-6xl">
-              {copy.title}
-            </h1>
+              <h1 className="mt-5 max-w-4xl text-[2.2rem] font-black leading-[1.08] tracking-[-0.04em] text-[var(--text-primary)] sm:text-[2.8rem] lg:text-[3.4rem]">
+                {copy.title}
+              </h1>
 
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-400">
-              {copy.subtitle}
-            </p>
-          </div>
+              <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--text-secondary)] md:text-lg md:leading-8">
+                {copy.subtitle}
+              </p>
+            </div>
 
-          <div className="flex gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.045] px-5 py-4">
-              <div className="flex items-center gap-3">
-                <Clock3 className="h-5 w-5 text-blue-300" />
+            <div className={["grid gap-3 sm:grid-cols-2", isArabic ? "lg:justify-self-start" : "lg:justify-self-end"].join(" ")}>
+              <article className="rounded-[16px] border border-[var(--border-default)] bg-[var(--surface-muted)] px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <Clock3 className="h-5 w-5 text-[var(--brand-primary)]" />
 
-                <div>
-                  <p className="text-xs uppercase tracking-[0.12em] text-slate-500">
-                    {copy.reviewTime}
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                      {copy.reviewTime}
+                    </p>
+
+                    <p className="mt-1 font-black text-[var(--text-primary)]">
+                      {copy.reviewValue}
+                    </p>
+                  </div>
+                </div>
+              </article>
+
+              <article className="rounded-[16px] border border-[color-mix(in_srgb,var(--success)_18%,var(--border-default))] bg-[var(--success-background)] px-5 py-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--success)]">
+                  {copy.healthLabel}
+                </p>
+
+                <div className="mt-1.5 flex items-center gap-3">
+                  <p className="text-xl font-black text-[var(--text-primary)]">
+                    {copy.healthValue}
                   </p>
 
-                  <p className="mt-1 font-semibold">{copy.reviewValue}</p>
+                  <StatusBadge
+                    status="healthy"
+                    label={copy.healthStatus}
+                    className="border-[color-mix(in_srgb,var(--success)_22%,var(--border-default))] bg-[var(--surface)] text-[var(--success)]"
+                  />
                 </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.07] px-5 py-4">
-              <p className="text-xs uppercase tracking-[0.12em] text-emerald-300/70">
-                {copy.healthLabel}
-              </p>
-
-              <div className="mt-1 flex items-center gap-3">
-                <p className="text-xl font-bold">{copy.healthValue}</p>
-
-                <StatusBadge
-                  status="healthy"
-                  label={copy.healthStatus}
-                  className="border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
-                />
-              </div>
+              </article>
             </div>
           </div>
-        </div>
+        </section>
 
-        <section className="mt-12">
-          <div className="mb-5 flex items-center gap-3">
-            <BriefcaseBusiness className="h-5 w-5 text-blue-300" />
+        <section>
+          <div className="mb-4 flex items-center gap-3">
+            <BriefcaseBusiness className="h-5 w-5 text-[var(--brand-primary)]" />
 
-            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-[var(--text-secondary)]">
               {copy.prioritiesLabel}
             </h2>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid items-stretch gap-4 lg:grid-cols-3">
             {copy.priorities.map((priority, index) => {
               const Icon = priority.icon;
               const isCritical = priority.status === "critical";
@@ -304,48 +311,48 @@ export default function ExecutiveSummaryPage() {
               return (
                 <article
                   key={priority.title}
-                  className="group rounded-3xl border border-white/[0.08] bg-white/[0.045] p-6 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/20 hover:bg-white/[0.07] hover:shadow-[0_24px_60px_rgba(37,99,235,0.12)]"
+                  className="group flex h-full flex-col rounded-[18px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-medium)]"
                 >
                   <div className="flex items-start justify-between">
                     <div
                       className={[
-                        "flex h-11 w-11 items-center justify-center rounded-2xl",
+                        "flex h-11 w-11 items-center justify-center rounded-[14px]",
                         isCritical
-                          ? "bg-red-500/10 text-red-300"
-                          : "bg-amber-500/10 text-amber-300",
+                          ? "bg-[var(--critical-background)] text-[var(--critical)]"
+                          : "bg-[var(--warning-background)] text-[var(--warning)]",
                       ].join(" ")}
                     >
                       <Icon className="h-5 w-5" />
                     </div>
 
-                    <span className="text-xs font-semibold text-slate-600">
+                    <span className="text-xs font-black text-[var(--text-muted)]">
                       0{index + 1}
                     </span>
                   </div>
 
-                  <h3 className="mt-6 text-xl font-semibold">
+                  <h3 className="mt-5 text-xl font-black text-[var(--text-primary)]">
                     {priority.title}
                   </h3>
 
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                  <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
                     {priority.insight}
                   </p>
 
-                  <div className="mt-5 flex items-start gap-2 rounded-2xl border border-white/[0.06] bg-black/10 p-4">
+                  <div className="mt-5 flex items-start gap-2 rounded-[14px] border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
                     {isCritical ? (
-                      <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
+                      <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-[var(--critical)]" />
                     ) : (
-                      <Activity className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                      <Activity className="mt-0.5 h-4 w-4 shrink-0 text-[var(--warning)]" />
                     )}
 
-                    <p className="text-xs leading-5 text-slate-400">
+                    <p className="text-xs leading-5 text-[var(--text-secondary)]">
                       {priority.impact}
                     </p>
                   </div>
 
                   <button
                     type="button"
-                    className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-300 transition hover:text-blue-200"
+                    className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-black text-[var(--brand-primary)] transition hover:opacity-80"
                   >
                     {priority.action}
                     <DirectionIcon className="h-4 w-4" />
@@ -356,42 +363,46 @@ export default function ExecutiveSummaryPage() {
           </div>
         </section>
 
-        <section className="mt-10">
-          <div className="mb-5 flex items-center gap-3">
-            <Activity className="h-5 w-5 text-blue-300" />
+        <section>
+          <div className="mb-4 flex items-center gap-3">
+            <Activity className="h-5 w-5 text-[var(--brand-primary)]" />
 
-            <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <h2 className="text-sm font-black uppercase tracking-[0.14em] text-[var(--text-secondary)]">
               {copy.snapshotLabel}
             </h2>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {copy.metrics.map((metric) => {
               const Icon = metric.icon;
 
               return (
                 <article
                   key={metric.label}
-                  className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-5 transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.065]"
+                  className="rounded-[18px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-medium)]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm text-slate-400">{metric.label}</p>
+                      <p className="text-sm font-semibold text-[var(--text-secondary)]">
+                        {metric.label}
+                      </p>
 
-                      <p className="mt-2 text-2xl font-bold">{metric.value}</p>
+                      <p className="mt-2 text-2xl font-black text-[var(--text-primary)]">
+                        {metric.value}
+                      </p>
                     </div>
 
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-300">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
                       <Icon className="h-5 w-5" />
                     </div>
                   </div>
 
-                  <div className="mt-5 border-t border-white/[0.06] pt-4">
-                    <p className="text-sm font-semibold text-emerald-300">
+                  <div className="mt-5 border-t border-[var(--border-default)] pt-4">
+                    <p className="text-sm font-black text-[var(--success)]">
                       {metric.trend}
                     </p>
 
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">
                       {metric.helper}
                     </p>
                   </div>
@@ -401,21 +412,23 @@ export default function ExecutiveSummaryPage() {
           </div>
         </section>
 
-        <section className="mt-10 rounded-3xl border border-blue-400/15 bg-blue-500/[0.07] p-6 backdrop-blur sm:p-8">
+        <section className="rounded-[20px] border border-[color-mix(in_srgb,var(--brand-primary)_18%,var(--border-default))] bg-[var(--brand-subtle)] p-6 shadow-[var(--shadow-small)] sm:p-7">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex max-w-4xl items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-300">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[15px] bg-[var(--surface)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
                 <Sparkles className="h-5 w-5" />
               </div>
 
               <div>
-                <h2 className="text-xl font-semibold">{copy.aiTitle}</h2>
+                <h2 className="text-xl font-black text-[var(--text-primary)]">
+                  {copy.aiTitle}
+                </h2>
 
-                <p className="mt-2 leading-7 text-slate-300">
+                <p className="mt-2 leading-7 text-[var(--text-secondary)]">
                   {copy.aiText}
                 </p>
 
-                <div className="mt-3 inline-flex items-center gap-2 text-xs text-blue-300">
+                <div className="mt-3 inline-flex items-center gap-2 text-xs font-black text-[var(--brand-primary)]">
                   <CheckCircle2 className="h-4 w-4" />
                   {copy.aiConfidence}
                 </div>
@@ -426,7 +439,7 @@ export default function ExecutiveSummaryPage() {
               <ExecutiveButton
                 size="large"
                 rightIcon={<DirectionIcon className="h-5 w-5" />}
-                className="min-w-72 border-0 bg-gradient-to-r from-blue-600 to-cyan-500 shadow-[0_12px_32px_rgba(37,99,235,0.28)] hover:from-blue-500 hover:to-cyan-400"
+                className="min-w-72 border-0 bg-[var(--brand-primary)] text-white shadow-[var(--shadow-medium)] hover:opacity-90"
               >
                 {copy.primaryAction}
               </ExecutiveButton>
@@ -434,10 +447,10 @@ export default function ExecutiveSummaryPage() {
           </div>
         </section>
 
-        <footer className="mt-8 flex flex-col gap-4 border-t border-white/[0.07] pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <footer className="flex flex-col gap-4 border-t border-[var(--border-default)] pt-5 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href={copy.backHref}
-            className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
+            className="inline-flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] transition hover:text-[var(--text-primary)]"
           >
             {isArabic ? (
               <ArrowRight className="h-4 w-4" />
@@ -448,7 +461,7 @@ export default function ExecutiveSummaryPage() {
             {copy.secondaryAction}
           </Link>
 
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-[var(--text-muted)]">
             KAFU AI · Enterprise Operating Intelligence
           </p>
         </footer>
@@ -456,3 +469,6 @@ export default function ExecutiveSummaryPage() {
     </main>
   );
 }
+
+
+

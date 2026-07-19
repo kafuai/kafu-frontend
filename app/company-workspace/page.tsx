@@ -189,10 +189,10 @@ export default function CompanyWorkspacePage() {
 
   return (
     <main
-      className="company-workspace-page min-h-screen bg-[var(--background)] px-5 py-8 md:px-8 lg:px-10 xl:px-12"
+      className="company-workspace-page min-h-screen bg-[var(--background)] px-4 py-6 sm:px-6 md:px-8 md:py-7 lg:px-10"
       dir={locale === "ar" ? "rtl" : "ltr"}
     >
-      <div className="mx-auto max-w-[1640px] space-y-6 md:space-y-7">
+      <div className="mx-auto max-w-[1500px] space-y-5 md:space-y-6">
         <CompanyHero
           locale={locale}
           name={
@@ -226,7 +226,7 @@ export default function CompanyWorkspacePage() {
         </section>
 
         <section
-          className="grid items-stretch gap-5 md:gap-6 xl:grid-cols-[minmax(290px,350px)_minmax(0,1fr)]"
+          className="grid items-stretch gap-5 md:gap-6 xl:grid-cols-[minmax(300px,340px)_minmax(0,1fr)]"
           aria-label={
             locale === "ar"
               ? "التقدم والإجراءات التنفيذية"
@@ -254,7 +254,7 @@ export default function CompanyWorkspacePage() {
           <UpcomingTasks locale={locale} />
         </section>
 
-        <footer className="flex flex-col gap-2 border-t border-[var(--border-default)] px-1 pt-5 text-xs text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
+        <footer className="flex flex-col gap-2 border-t border-[var(--border-default)] px-1 pt-5 text-xs font-medium text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
           <span>
             {locale === "ar"
               ? "مساحة العمل التنفيذية للمؤسسة"

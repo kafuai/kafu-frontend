@@ -1,165 +1,282 @@
-import Link from "next/link";
+﻿import Link from "next/link";
+import {
+  ArrowUpLeft,
+  BriefcaseBusiness,
+  Building2,
+  CheckCircle2,
+  Cpu,
+  Landmark,
+  Settings2,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  UsersRound,
+  WalletCards,
+  type LucideIcon,
+} from "lucide-react";
 
-export default function ExecutiveRoleSelectionPage() {
-  const roles = [
-    {
-      icon: "🏢",
-      title: "مالك الشركة / المؤسس",
-      subtitle: "Owner / Founder",
-      focus:
-        "سأركز على بناء قيمة الشركة، التوسع، الاستثمار، والاستعداد للنمو.",
-      color: "from-amber-500 to-orange-500",
-    },
-    {
-      icon: "🎯",
-      title: "الرئيس التنفيذي",
-      subtitle: "Chief Executive Officer (CEO)",
-      focus:
-        "سأركز على القرارات الاستراتيجية، النمو، المخاطر، والعائد على الاستثمار.",
-      color: "from-emerald-500 to-teal-500",
-    },
-    {
-      icon: "👥",
-      title: "مدير الموارد البشرية",
-      subtitle: "CHRO / HR Director",
-      focus:
-        "سأركز على الموظفين، السياسات، التوظيف، تجربة الموظف، والامتثال.",
-      color: "from-sky-500 to-blue-600",
-    },
-    {
-      icon: "⚙️",
-      title: "مدير العمليات",
-      subtitle: "COO",
-      focus:
-        "سأركز على العمليات اليومية، الكفاءة، الاختناقات، وتحسين الأداء.",
-      color: "from-violet-500 to-purple-600",
-    },
-    {
-      icon: "💰",
-      title: "المدير المالي",
-      subtitle: "Chief Financial Officer",
-      focus:
-        "سأركز على التكاليف، الربحية، التدفقات النقدية، ومؤشرات الأداء المالية.",
-      color: "from-green-500 to-emerald-600",
-    },
-    {
-      icon: "💻",
-      title: "مدير التقنية",
-      subtitle: "CIO / CTO",
-      focus:
-        "سأركز على الأنظمة، الأمن السيبراني، التكاملات، والجاهزية التقنية.",
-      color: "from-cyan-500 to-indigo-600",
-    },
-  ];
+type ExecutiveRole = {
+  title: string;
+  subtitle: string;
+  focus: string;
+  icon: LucideIcon;
+  tone: string;
+};
 
+const executiveRoles: ExecutiveRole[] = [
+  {
+    title: "مالك الشركة أو المؤسس",
+    subtitle: "Owner / Founder",
+    focus:
+      "التركيز على بناء قيمة المؤسسة، التوسع، الاستثمار، استدامة الأعمال، والاستعداد للنمو.",
+    icon: Building2,
+    tone:
+      "bg-[var(--warning-background)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_14%,var(--border-default))]",
+  },
+  {
+    title: "الرئيس التنفيذي",
+    subtitle: "Chief Executive Officer · CEO",
+    focus:
+      "التركيز على القرارات الاستراتيجية، النمو، المخاطر، الأداء المؤسسي، والعائد على الاستثمار.",
+    icon: BriefcaseBusiness,
+    tone:
+      "bg-[var(--success-background)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_14%,var(--border-default))]",
+  },
+  {
+    title: "مدير الموارد البشرية",
+    subtitle: "CHRO / HR Director",
+    focus:
+      "التركيز على الموظفين، السياسات، التوظيف، تجربة الموظف، الأداء، والامتثال.",
+    icon: UsersRound,
+    tone:
+      "bg-[var(--brand-subtle)] text-[var(--brand-primary)] border-[color-mix(in_srgb,var(--brand-primary)_14%,var(--border-default))]",
+  },
+  {
+    title: "مدير العمليات",
+    subtitle: "Chief Operating Officer · COO",
+    focus:
+      "التركيز على العمليات اليومية، الكفاءة، الاختناقات التشغيلية، وجودة تنفيذ الأعمال.",
+    icon: Settings2,
+    tone:
+      "bg-[var(--brand-subtle)] text-[var(--brand-primary)] border-[color-mix(in_srgb,var(--brand-primary)_14%,var(--border-default))]",
+  },
+  {
+    title: "المدير المالي",
+    subtitle: "Chief Financial Officer · CFO",
+    focus:
+      "التركيز على التكاليف، الربحية، التدفقات النقدية، الميزانيات، ومؤشرات الأداء المالي.",
+    icon: WalletCards,
+    tone:
+      "bg-[var(--success-background)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_14%,var(--border-default))]",
+  },
+  {
+    title: "مدير التقنية",
+    subtitle: "CIO / CTO",
+    focus:
+      "التركيز على الأنظمة، الأمن السيبراني، التكاملات، البنية التقنية، والجاهزية الرقمية.",
+    icon: Cpu,
+    tone:
+      "bg-[var(--brand-subtle)] text-[var(--brand-primary)] border-[color-mix(in_srgb,var(--brand-primary)_14%,var(--border-default))]",
+  },
+];
+
+const selectionBenefits = [
+  {
+    title: "أسئلة أكثر دقة",
+    description:
+      "تكييف مسار الاستكشاف وفق مسؤولياتك والقرارات التي تتخذها داخل المؤسسة.",
+    icon: Target,
+  },
+  {
+    title: "تحليل تنفيذي مخصص",
+    description:
+      "ترتيب المؤشرات والمخاطر والفرص بحسب الأولويات الفعلية لدورك.",
+    icon: Sparkles,
+  },
+  {
+    title: "توصيات قابلة للتنفيذ",
+    description:
+      "تقديم توصيات عملية مرتبطة بصلاحياتك وأهدافك ومجال مسؤوليتك.",
+    icon: ShieldCheck,
+  },
+];
+
+export default function CompanyProfilePage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
-      <div className="mx-auto max-w-7xl px-6 py-16">
+    <main
+      className="min-h-screen bg-[var(--background)] px-4 py-6 sm:px-6 md:px-8 md:py-7 lg:px-10"
+      dir="rtl"
+    >
+      <div className="mx-auto max-w-[1500px] space-y-6">
+        <section className="relative overflow-hidden rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] px-5 py-6 shadow-[var(--shadow-small)] sm:px-7 sm:py-7 lg:px-8">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 start-0 w-1 bg-[var(--brand-primary)]"
+          />
 
-        {/* Hero */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -end-24 -top-24 h-64 w-64 rounded-full bg-[color-mix(in_srgb,var(--brand-primary)_6%,transparent)]"
+          />
 
-        <section className="text-center">
+          <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center">
+            <div className="flex min-w-0 items-start gap-4">
+              <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-[13px] border border-[color-mix(in_srgb,var(--brand-primary)_14%,var(--border-default))] bg-[var(--brand-subtle)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
+                <Landmark size={22} />
+              </span>
 
-          <div className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-2 text-sm font-semibold text-emerald-300">
-            KAFU Executive AI
-          </div>
-
-          <h1 className="mt-8 text-5xl font-black leading-tight lg:text-6xl">
-            أهلاً بك في كفو
-          </h1>
-
-          <p className="mt-5 text-2xl text-slate-300">
-            مستشارك التنفيذي الذكي لاتخاذ القرارات وتحليل الأعمال.
-          </p>
-
-          <p className="mx-auto mt-8 max-w-4xl text-lg leading-9 text-slate-400">
-            قبل أن نبدأ، أحتاج أن أعرف من تمثل داخل المؤسسة.
-            <br />
-            سأغيّر طريقة الحوار، الأسئلة، التحليلات، والمؤشرات بالكامل
-            بحسب مسؤولياتك التنفيذية.
-          </p>
-
-        </section>
-
-        {/* Cards */}
-
-        <section className="mt-16 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
-
-          {roles.map((role) => (
-
-            <Link
-              key={role.title}
-              href="/assessment"
-              className="group overflow-hidden rounded-3xl border border-slate-700 bg-slate-900/60 transition duration-300 hover:-translate-y-2 hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/10"
-            >
-
-              <div className={`h-2 bg-gradient-to-r ${role.color}`} />
-
-              <div className="p-8">
-
-                <div className="text-5xl">
-                  {role.icon}
-                </div>
-
-                <h2 className="mt-6 text-2xl font-bold">
-                  {role.title}
-                </h2>
-
-                <p className="mt-2 text-sm font-semibold text-emerald-400">
-                  {role.subtitle}
+              <div className="min-w-0">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                  KAFU Executive AI
                 </p>
 
-                <p className="mt-6 leading-8 text-slate-300">
-                  {role.focus}
+                <h1 className="mt-2 text-2xl font-extrabold leading-tight tracking-[-0.035em] text-[var(--text-primary)] sm:text-3xl lg:text-[34px]">
+                  اختر دورك التنفيذي داخل المؤسسة
+                </h1>
+
+                <p className="mt-3 max-w-3xl text-sm font-medium leading-7 text-[var(--text-secondary)] sm:text-base">
+                  سيستخدم KAFU AI هذا الاختيار لتخصيص الأسئلة والتحليلات
+                  والمؤشرات والتوصيات وفق مسؤولياتك وأولوياتك التنفيذية.
                 </p>
-
-                <div className="mt-8 flex items-center justify-between rounded-2xl bg-slate-800 px-5 py-4 transition group-hover:bg-emerald-500 group-hover:text-white">
-                  <span className="font-semibold">
-                    بدء الجلسة بهذا الدور
-                  </span>
-
-                  <span className="text-xl">
-                    →
-                  </span>
-                </div>
-
               </div>
+            </div>
 
-            </Link>
+            <div className="rounded-[16px] border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[var(--success-background)] text-[var(--success)]">
+                  <CheckCircle2 size={18} />
+                </span>
 
-          ))}
+                <div>
+                  <p className="text-sm font-extrabold text-[var(--text-primary)]">
+                    جلسة مخصصة بالكامل
+                  </p>
 
+                  <p className="mt-1 text-xs leading-6 text-[var(--text-secondary)]">
+                    يمكنك المتابعة مباشرة بعد اختيار الدور، وسيبقى مسار
+                    التقييم مرتبطًا بأهدافك التنفيذية.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
-        {/* Bottom */}
+        <section
+          className="grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+          aria-label="اختيار الدور التنفيذي"
+        >
+          {executiveRoles.map((role) => {
+            const Icon = role.icon;
 
-        <section className="mt-16 rounded-3xl border border-slate-700 bg-slate-900/60 p-10">
+            return (
+              <Link
+                key={role.title}
+                href="/assessment"
+                className="group flex min-h-[280px] flex-col rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--brand-primary)_24%,var(--border-default))] hover:shadow-[var(--shadow-medium)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 sm:p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <span
+                    className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] border ${role.tone}`}
+                  >
+                    <Icon size={20} />
+                  </span>
 
-          <h3 className="text-3xl font-bold">
-            لماذا نبدأ بهذه الخطوة؟
-          </h3>
+                  <ArrowUpLeft
+                    size={17}
+                    className="mt-1 text-[var(--text-muted)] transition duration-200 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--brand-primary)]"
+                  />
+                </div>
 
-          <div className="mt-6 space-y-5 text-lg leading-9 text-slate-300">
+                <div className="mt-5">
+                  <h2 className="text-lg font-extrabold leading-7 text-[var(--text-primary)]">
+                    {role.title}
+                  </h2>
 
-            <p>
-              لأن المدير التنفيذي لا يرى المؤسسة بالطريقة نفسها التي يراها
-              مدير الموارد البشرية أو المدير المالي.
-            </p>
+                  <p
+                    className="mt-1 text-xs font-extrabold text-[var(--brand-primary)]"
+                    dir="ltr"
+                  >
+                    {role.subtitle}
+                  </p>
 
-            <p>
-              KAFU لا يقدم إجابات عامة، بل يبني جلسة استشارية مختلفة لكل
-              مسؤول داخل الشركة.
-            </p>
+                  <p className="mt-4 text-sm leading-7 text-[var(--text-secondary)]">
+                    {role.focus}
+                  </p>
+                </div>
 
-            <p className="font-semibold text-emerald-300">
-              بمجرد اختيار دورك، سأتكيف مع طريقة تفكيرك وأبدأ جلسة تناسب
-              مسؤولياتك وقراراتك.
-            </p>
+                <div className="mt-auto border-t border-[var(--border-default)] pt-4">
+                  <span className="inline-flex items-center gap-2 text-xs font-extrabold text-[var(--brand-primary)]">
+                    ابدأ الجلسة بهذا الدور
+                    <ArrowUpLeft
+                      size={14}
+                      className="transition duration-200 group-hover:-translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </section>
 
+        <section className="rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] sm:p-6 lg:p-7">
+          <div className="flex items-start gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+              <Sparkles size={19} />
+            </span>
+
+            <div>
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                تجربة تنفيذية مخصصة
+              </p>
+
+              <h2 className="mt-1.5 text-xl font-extrabold text-[var(--text-primary)] sm:text-2xl">
+                لماذا نبدأ بتحديد دورك؟
+              </h2>
+
+              <p className="mt-2 max-w-4xl text-sm leading-7 text-[var(--text-secondary)]">
+                تختلف زاوية اتخاذ القرار بين المؤسس والرئيس التنفيذي ومديري
+                الموارد البشرية والعمليات والمالية والتقنية. لذلك لا يقدم KAFU
+                AI تجربة عامة، بل يبني جلسة تتوافق مع مسؤوليات كل قائد داخل
+                المؤسسة.
+              </p>
+            </div>
           </div>
 
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {selectionBenefits.map((benefit) => {
+              const Icon = benefit.icon;
+
+              return (
+                <article
+                  key={benefit.title}
+                  className="rounded-[16px] border border-[var(--border-default)] bg-[var(--surface-muted)] p-4"
+                >
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-[11px] bg-[var(--surface)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
+                    <Icon size={17} />
+                  </span>
+
+                  <h3 className="mt-4 text-sm font-extrabold text-[var(--text-primary)]">
+                    {benefit.title}
+                  </h3>
+
+                  <p className="mt-1.5 text-xs leading-6 text-[var(--text-secondary)]">
+                    {benefit.description}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
         </section>
 
+        <footer className="flex flex-col gap-2 border-t border-[var(--border-default)] px-1 pt-5 text-xs font-medium text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
+          <span>اختيار الملف التنفيذي للمؤسسة</span>
+
+          <span className="inline-flex items-center gap-2">
+            <Building2 size={13} />
+            KAFU AI
+          </span>
+        </footer>
       </div>
     </main>
   );

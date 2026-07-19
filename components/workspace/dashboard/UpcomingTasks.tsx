@@ -38,21 +38,21 @@ export default function UpcomingTasks({
   ];
 
   return (
-    <section className="h-full rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] sm:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
-            <CalendarCheck size={19} />
+    <section className="flex h-full min-h-[420px] flex-col rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] sm:p-6">
+      <div className="flex min-h-12 items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <CalendarCheck size={18} />
           </span>
 
-          <div>
+          <div className="min-w-0">
             <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
               {locale === "ar"
                 ? "المهام القادمة"
                 : "Upcoming Tasks"}
             </h2>
 
-            <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
+            <p className="mt-0.5 text-xs leading-5 text-[var(--text-muted)]">
               {locale === "ar"
                 ? "الإجراءات المطلوب متابعتها خلال الفترة الحالية."
                 : "Actions requiring follow-up during the current period."}
@@ -60,19 +60,19 @@ export default function UpcomingTasks({
           </div>
         </div>
 
-        <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--text-secondary)]">
+        <span className="shrink-0 rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--text-secondary)]">
           {locale === "ar" ? "هذا الأسبوع" : "This week"}
         </span>
       </div>
 
-      <div className="mt-5 divide-y divide-[var(--border-default)]">
+      <div className="mt-5 flex-1 divide-y divide-[var(--border-default)]">
         {tasks.map((item) => (
           <article
             key={item.task}
-            className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+            className="flex min-h-[104px] items-center justify-between gap-4 py-4 first:pt-0 last:min-h-0 last:pb-0"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-extrabold text-[var(--text-primary)]">
+              <p className="text-sm font-extrabold text-[var(--text-primary)]">
                 {item.task}
               </p>
 
@@ -89,7 +89,7 @@ export default function UpcomingTasks({
               </div>
             </div>
 
-            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-muted)] text-[var(--text-muted)]">
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] border border-[var(--border-default)] bg-[var(--surface-muted)] text-[var(--text-muted)] transition duration-150 hover:border-[color-mix(in_srgb,var(--brand-primary)_20%,var(--border-default))] hover:text-[var(--brand-primary)]">
               <ChevronRight
                 size={15}
                 className="rtl:rotate-180"
@@ -101,3 +101,4 @@ export default function UpcomingTasks({
     </section>
   );
 }
+

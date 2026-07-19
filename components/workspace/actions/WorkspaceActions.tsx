@@ -53,7 +53,7 @@ export default function WorkspaceActions({
   ];
 
   return (
-    <section className="grid h-full gap-4 md:grid-cols-3">
+    <section className="grid h-full gap-5 md:grid-cols-2 xl:grid-cols-3">
       {actions.map((action) => {
         const Icon = action.icon;
 
@@ -61,24 +61,24 @@ export default function WorkspaceActions({
           <Link
             key={action.href}
             href={action.href}
-            className="group flex min-h-[190px] flex-col rounded-[18px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--brand-primary)_28%,var(--border-default))] hover:shadow-[var(--shadow-medium)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            className="group flex min-h-[188px] flex-col rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--brand-primary)_24%,var(--border-default))] hover:shadow-[var(--shadow-medium)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
           >
             <div className="flex items-start justify-between gap-4">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-[13px] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
-                <Icon size={19} />
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-[12px] border border-[color-mix(in_srgb,var(--brand-primary)_12%,transparent)] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                <Icon size={18} />
               </span>
 
               <ArrowUpRight
-                size={17}
-                className="text-[var(--text-muted)] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)] rtl:group-hover:-translate-x-0.5"
+                size={16}
+                className="mt-0.5 text-[var(--text-muted)] transition duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)] rtl:group-hover:-translate-x-0.5"
               />
             </div>
 
-            <h3 className="mt-5 text-base font-extrabold text-[var(--text-primary)]">
+            <h3 className="mt-4 text-base font-extrabold leading-6 text-[var(--text-primary)]">
               {action.title}
             </h3>
 
-            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            <p className="mt-1.5 line-clamp-3 text-sm leading-6 text-[var(--text-secondary)]">
               {action.description}
             </p>
 
@@ -91,3 +91,4 @@ export default function WorkspaceActions({
     </section>
   );
 }
+

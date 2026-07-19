@@ -50,19 +50,19 @@ export default function Notifications({
   ];
 
   return (
-    <section className="h-full rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] sm:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
-            <Bell size={19} />
+    <section className="flex h-full min-h-[420px] flex-col rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] sm:p-6">
+      <div className="flex min-h-12 items-start justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <Bell size={18} />
           </span>
 
-          <div>
+          <div className="min-w-0">
             <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
               {locale === "ar" ? "التنبيهات" : "Notifications"}
             </h2>
 
-            <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
+            <p className="mt-0.5 text-xs leading-5 text-[var(--text-muted)]">
               {locale === "ar"
                 ? "آخر التنبيهات التنفيذية ذات الأولوية."
                 : "Latest priority executive notifications."}
@@ -70,17 +70,16 @@ export default function Notifications({
           </div>
         </div>
 
-        <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--text-secondary)]">
-          {notifications.length}{" "}
-          {locale === "ar" ? "جديدة" : "New"}
+        <span className="shrink-0 rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--text-secondary)]">
+          {notifications.length} {locale === "ar" ? "جديدة" : "New"}
         </span>
       </div>
 
-      <div className="mt-5 divide-y divide-[var(--border-default)]">
+      <div className="mt-5 flex-1 divide-y divide-[var(--border-default)]">
         {notifications.map((item) => (
           <article
             key={item.title}
-            className="py-4 first:pt-0 last:pb-0"
+            className="min-h-[104px] py-4 first:pt-0 last:min-h-0 last:pb-0"
           >
             <div className="flex items-start gap-3">
               <span
@@ -88,7 +87,7 @@ export default function Notifications({
               />
 
               <div className="min-w-0 flex-1">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                   <h3 className="text-sm font-extrabold text-[var(--text-primary)]">
                     {item.title}
                   </h3>
@@ -113,3 +112,4 @@ export default function Notifications({
     </section>
   );
 }
+

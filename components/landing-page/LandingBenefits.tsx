@@ -39,38 +39,38 @@
 
 export function LandingBenefits() {
   return (
-    <section className="border-b border-white/10 bg-slate-950 px-6 py-24 lg:px-10">
+    <section className="border-b border-[var(--landing-border)] bg-[var(--landing-bg-primary)] px-6 py-20 lg:px-10">
       <div className="mx-auto max-w-7xl">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--landing-accent)] sm:text-sm">
             Executive Benefits
           </p>
 
-          <h2 className="mt-5 text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+          <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--landing-text-primary)] sm:text-4xl lg:text-[2.75rem]">
             قيمة مباشرة للقيادة والمؤسسة
           </h2>
 
-          <p className="mt-6 text-lg leading-8 text-slate-400">
+          <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--landing-text-secondary)] sm:text-lg">
             لا يقاس نجاح KAFU AI بعدد التقارير التي ينتجها، بل بقدرته على
             تحسين سرعة القرار وجودة التنفيذ والنتائج المؤسسية.
           </p>
         </div>
 
-        <div className="mt-14 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-grid-divider)] md:grid-cols-2 lg:grid-cols-3">
           {EXECUTIVE_BENEFITS.map((benefit) => (
             <article
               key={benefit.title}
-              className="bg-slate-950 p-7 transition hover:bg-slate-900"
+              className="min-h-52 bg-[var(--landing-bg-primary)] p-6 transition duration-200 hover:bg-[var(--landing-bg-secondary)]"
             >
-              <p className="text-sm font-semibold text-cyan-300">
+              <p className="text-xs font-semibold text-[var(--landing-accent)]">
                 {benefit.metric}
               </p>
 
-              <h3 className="mt-5 text-xl font-semibold text-white">
+              <h3 className="mt-4 text-lg font-semibold leading-7 text-[var(--landing-text-primary)]">
                 {benefit.title}
               </h3>
 
-              <p className="mt-4 leading-7 text-slate-400">
+              <p className="mt-3 text-sm leading-7 text-[var(--landing-text-secondary)] sm:text-base">
                 {benefit.description}
               </p>
             </article>
@@ -80,3 +80,4 @@ export function LandingBenefits() {
     </section>
   );
 }
+

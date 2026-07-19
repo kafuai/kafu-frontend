@@ -9,7 +9,10 @@ import { LandingCTA } from "./LandingCTA";
 
 export function LandingPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main
+      className="min-h-screen bg-[var(--landing-bg-primary)] text-[var(--landing-text-primary)]"
+      dir="rtl"
+    >
       <LandingHero />
       <LandingAudience />
       <LandingProblem />
