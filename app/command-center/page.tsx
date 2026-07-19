@@ -57,9 +57,10 @@ export default function CommandCenterPage() {
         if (isMounted) {
           setMessage(
             locale === "ar"
-              ? "لم يتم العثور على بيانات الشركة. يرجى إكمال التقييم أولًا."
+              ? "لم يتم العثور على بيانات المؤسسة. يرجى إكمال التقييم أولًا."
               : "Company data was not found. Please complete the assessment first.",
           );
+
           setLoading(false);
         }
 
@@ -121,8 +122,7 @@ export default function CommandCenterPage() {
   }, [locale]);
 
   const companyName =
-    company?.name ||
-    (locale === "ar" ? "المؤسسة" : "Organization");
+    company?.name || (locale === "ar" ? "المؤسسة" : "Organization");
 
   const agents = useMemo<CommandCenterAgent[]>(
     () => [
@@ -165,7 +165,7 @@ export default function CommandCenterPage() {
             : "Executive HR Advisor",
         description:
           locale === "ar"
-            ? "ينتج الملخصات والتوصيات التنفيذية للإدارة."
+            ? "ينتج الملخصات والتوصيات التنفيذية الموجهة للإدارة."
             : "Produces executive summaries and management recommendations.",
         status: locale === "ar" ? "متصل" : "Online",
         load: 69,
@@ -182,7 +182,7 @@ export default function CommandCenterPage() {
           locale === "ar"
             ? "يدعم فرز المرشحين وتحليل السير الذاتية وإعداد القوائم القصيرة."
             : "Supports candidate screening, resume analysis, and shortlist preparation.",
-        status: locale === "ar" ? "استعداد" : "Standby",
+        status: locale === "ar" ? "وضع الاستعداد" : "Standby",
         load: 42,
         priority: locale === "ar" ? "متوسطة" : "Medium",
       },
@@ -195,9 +195,9 @@ export default function CommandCenterPage() {
             : "Compliance Intelligence Advisor",
         description:
           locale === "ar"
-            ? "يراقب الالتزام بالسياسات والمتطلبات التنظيمية."
+            ? "يراقب الالتزام بالسياسات والمتطلبات التنظيمية المعتمدة."
             : "Monitors compliance with policies and regulatory requirements.",
-        status: locale === "ar" ? "معالجة" : "Processing",
+        status: locale === "ar" ? "قيد المعالجة" : "Processing",
         load: 58,
         priority: locale === "ar" ? "متوسطة" : "Medium",
       },
@@ -212,7 +212,7 @@ export default function CommandCenterPage() {
           locale === "ar"
             ? "يتابع مؤشرات التوطين والتنبيهات والمخاطر المرتبطة بها."
             : "Tracks localization indicators, alerts, and associated risks.",
-        status: locale === "ar" ? "مراقبة" : "Monitoring",
+        status: locale === "ar" ? "قيد المراقبة" : "Monitoring",
         load: company?.country === "Saudi Arabia" ? 62 : 40,
         priority:
           company?.country === "Saudi Arabia"
@@ -233,11 +233,11 @@ export default function CommandCenterPage() {
         id: "knowledge-sources",
         title:
           locale === "ar"
-            ? "مصادر معرفة مطلوبة"
+            ? "مصادر المعرفة مطلوبة"
             : "Knowledge sources required",
         description:
           locale === "ar"
-            ? "ارفع السياسات والإجراءات الداخلية لزيادة دقة Corporate Brain."
+            ? "ارفع السياسات والإجراءات الداخلية لزيادة دقة العقل المؤسسي."
             : "Upload internal policies and procedures to improve Corporate Brain accuracy.",
         level: locale === "ar" ? "عالية" : "High",
       },
@@ -249,7 +249,7 @@ export default function CommandCenterPage() {
             : "Discovery data available",
         description:
           locale === "ar"
-            ? "يمكن استخدام إجابات الاستكشاف الحالية في التوصيات التنفيذية."
+            ? "يمكن الآن استخدام إجابات الاستكشاف الحالية في التوصيات التنفيذية."
             : "Current discovery answers can now be used in executive recommendations.",
         level: locale === "ar" ? "متوسطة" : "Medium",
       },
@@ -261,7 +261,7 @@ export default function CommandCenterPage() {
             : "Agent deployment is simulated",
         description:
           locale === "ar"
-            ? "الوكلاء حاليًا في وضع العرض والتوصية، وليس التنفيذ الفعلي."
+            ? "الوكلاء معروضون حاليًا في وضع التوصية والعرض، وليس التنفيذ الفعلي."
             : "Agents are currently presented in recommendation and demo mode, not live execution.",
         level: locale === "ar" ? "متوسطة" : "Medium",
       },
@@ -303,7 +303,7 @@ export default function CommandCenterPage() {
             : "Digital workforce mapped",
         description:
           locale === "ar"
-            ? "تم ربط الوكلاء بـ Corporate DNA وCorporate Brain."
+            ? "تم ربط الوكلاء بالحمض المؤسسي والعقل المؤسسي."
             : "Digital agents were connected to Corporate DNA and Corporate Brain.",
         time: locale === "ar" ? "قبل 3 دقائق" : "3 minutes ago",
       },
@@ -370,11 +370,9 @@ export default function CommandCenterPage() {
 
           <Link
             href="/assessment"
-            className="mt-7 inline-flex min-h-12 items-center justify-center rounded-xl bg-[var(--text-primary)] px-7 font-bold text-[var(--surface)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 text-sm font-bold text-slate-900 transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
-            {locale === "ar"
-              ? "العودة إلى التقييم"
-              : "Go to Assessment"}
+            {locale === "ar" ? "العودة إلى التقييم" : "Go to Assessment"}
           </Link>
         </section>
       </main>
@@ -383,10 +381,10 @@ export default function CommandCenterPage() {
 
   return (
     <main
-      className="min-h-[calc(100vh-76px)] bg-[var(--background)] px-5 py-7 md:px-8 lg:px-10"
+      className="min-h-[calc(100vh-76px)] bg-[var(--background)] px-5 py-6 md:px-8 lg:px-10"
       dir={locale === "ar" ? "rtl" : "ltr"}
     >
-      <div className="mx-auto max-w-[1580px] space-y-6">
+      <div className="mx-auto max-w-[1580px] space-y-5">
         <CommandCenterHero locale={locale} />
 
         <CommandCenterKpis
@@ -395,7 +393,7 @@ export default function CommandCenterPage() {
           discoveryAnswersCount={answers.length}
         />
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
           <DigitalWorkforceGrid
             locale={locale}
             companyName={companyName}
@@ -405,7 +403,7 @@ export default function CommandCenterPage() {
           <ExecutiveAlerts locale={locale} alerts={alerts} />
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-2">
+        <section className="grid gap-5 lg:grid-cols-2">
           <LiveActivity locale={locale} activities={activities} />
 
           <AIRecommendations

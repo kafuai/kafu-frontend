@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Activity,
@@ -84,21 +84,24 @@ export default function ExecutiveKpiGrid() {
         return (
           <article
             key={item.label}
-            className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]"
+            className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-4 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]"
           >
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
-              <Icon size={20} />
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+              <Icon size={19} />
             </span>
 
-            <p className="mt-5 text-xs font-bold text-[var(--text-muted)]">
+            <p className="mt-4 min-h-5 text-xs font-bold leading-5 text-[var(--text-muted)]">
               {item.label}
             </p>
 
-            <h2 className="mt-2 text-3xl font-black text-[var(--text-primary)]">
+            <h2
+              className="mt-1 text-3xl font-black tracking-tight text-[var(--text-primary)]"
+              dir="ltr"
+            >
               {item.value}
             </h2>
 
-            <p className="mt-2 text-xs font-bold text-[var(--brand-primary)]">
+            <p className="mt-1 min-h-5 text-xs font-bold leading-5 text-[var(--brand-primary)]">
               {item.note}
             </p>
           </article>

@@ -1,0 +1,1583 @@
+﻿
+
+============================================================
+FILE: app\(workspace)\company-workspace\page.tsx
+============================================================
+
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
+
+import CompanyHero from "@/components/workspace/hero/CompanyHero";
+import WorkspaceActions from "@/components/workspace/actions/WorkspaceActions";
+import AIHealthWidget from "@/components/workspace/widgets/AIHealthWidget";
+import ExecutiveProgress from "@/components/workspace/dashboard/ExecutiveProgress";
+import ExecutiveKPIs from "@/components/workspace/dashboard/ExecutiveKPI";
+import Notifications from "@/components/workspace/dashboard/Notifications";
+import UpcomingTasks from "@/components/workspace/dashboard/UpcomingTasks";
+import { useLocalization } from "@/components/localization/LocalizationContext";
+import { getCurrentCompanyId } from "@/lib/companySession";
+import { supabase } from "@/lib/supabase";
+
+type Company = {
+  id: string;
+  name: string | null;
+  industry: string | null;
+  country: string | null;
+  employee_count: number | null;
+};
+
+const TOTAL_DISCOVERY_QUESTIONS = 44;
+
+export default function CompanyWorkspacePage() {
+  const { locale } = useLocalization();
+
+  const [company, setCompany] = useState<Company | null>(null);
+  const [completedAnswers, setCompletedAnswers] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const readinessScore = Math.min(
+    Math.round((completedAnswers / TOTAL_DISCOVERY_QUESTIONS) * 100),
+    100,
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadWorkspace() {
+      setLoading(true);
+      setErrorMessage("");
+
+      const companyId = getCurrentCompanyId();
+
+      if (!companyId) {
+        if (isMounted) {
+          setErrorMessage(
+            locale === "ar"
+              ? "لم يتم العثور على مؤسسة نشطة. يرجى إكمال التقييم أولًا."
+              : "No active organization was found. Please complete the assessment first.",
+          );
+          setLoading(false);
+        }
+
+        return;
+      }
+
+      try {
+        const [
+          { data: companyData, error: companyError },
+          { count, error: answersError },
+        ] = await Promise.all([
+          supabase
+            .from("companies")
+            .select("id, name, industry, country, employee_count")
+            .eq("id", companyId)
+            .single(),
+          supabase
+            .from("discovery_answers")
+            .select("id", {
+              count: "exact",
+              head: true,
+            })
+            .eq("company_id", companyId),
+        ]);
+
+        if (companyError) {
+          throw new Error(companyError.message);
+        }
+
+        if (answersError) {
+          throw new Error(answersError.message);
+        }
+
+        if (isMounted) {
+          setCompany(companyData);
+          setCompletedAnswers(count ?? 0);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+
+        if (isMounted) {
+          setErrorMessage(
+            locale === "ar"
+              ? `تعذر تحميل مساحة عمل المؤسسة: ${message}`
+              : `Failed to load the company workspace: ${message}`,
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadWorkspace();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [locale]);
+
+  if (loading) {
+    return (
+      <main
+        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-10 md:px-8"
+        dir={locale === "ar" ? "rtl" : "ltr"}
+      >
+        <section
+          className="w-full max-w-md rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] px-8 py-10 text-center shadow-[var(--shadow-small)]"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="mx-auto block h-10 w-10 animate-spin rounded-full border-[3px] border-[var(--border-default)] border-t-[var(--brand-primary)]" />
+
+          <h1 className="mt-5 text-lg font-black tracking-tight text-[var(--text-primary)]">
+            {locale === "ar"
+              ? "جارٍ تجهيز مساحة العمل"
+              : "Preparing workspace"}
+          </h1>
+
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            {locale === "ar"
+              ? "يتم تحميل بيانات المؤسسة ومؤشرات الجاهزية التنفيذية."
+              : "Loading organization data and executive readiness indicators."}
+          </p>
+        </section>
+      </main>
+    );
+  }
+
+  if (errorMessage || !company) {
+    return (
+      <main
+        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-10 md:px-8"
+        dir={locale === "ar" ? "rtl" : "ltr"}
+      >
+        <section
+          className="w-full max-w-xl rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] px-8 py-10 text-center shadow-[var(--shadow-small)] md:px-10"
+          role="alert"
+        >
+          <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)]">
+            <AlertTriangle size={27} />
+          </span>
+
+          <h1 className="mt-5 text-2xl font-black tracking-tight text-[var(--text-primary)]">
+            {locale === "ar"
+              ? "تعذر فتح مساحة العمل"
+              : "Workspace unavailable"}
+          </h1>
+
+          <p className="mx-auto mt-3 max-w-md break-words text-sm leading-7 text-[var(--text-secondary)]">
+            {errorMessage ||
+              (locale === "ar"
+                ? "لم يتم العثور على بيانات المؤسسة."
+                : "Company data was not found.")}
+          </p>
+
+          <Link
+            href="/assessment"
+            className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--text-primary)] px-6 text-sm font-bold text-[var(--surface)] transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+          >
+            {locale === "ar"
+              ? "العودة إلى التقييم"
+              : "Go to assessment"}
+          </Link>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main
+      className="min-h-[calc(100vh-76px)] bg-[var(--background)] px-4 py-5 sm:px-5 md:px-8 md:py-7 lg:px-10"
+      dir={locale === "ar" ? "rtl" : "ltr"}
+    >
+      <div className="mx-auto max-w-[1540px] space-y-5 md:space-y-6">
+        <CompanyHero
+          locale={locale}
+          name={
+            company.name ||
+            (locale === "ar"
+              ? "مؤسسة بدون اسم"
+              : "Unnamed Company")
+          }
+          industry={company.industry}
+          country={company.country}
+          employees={company.employee_count}
+        />
+
+        <section
+          className="space-y-5 md:space-y-6"
+          aria-label={
+            locale === "ar"
+              ? "مؤشرات صحة المؤسسة"
+              : "Organization health indicators"
+          }
+        >
+          <AIHealthWidget
+            locale={locale}
+            score={readinessScore}
+          />
+
+          <ExecutiveKPIs
+            locale={locale}
+            readinessScore={readinessScore}
+          />
+        </section>
+
+        <section
+          className="grid items-stretch gap-5 md:gap-6 xl:grid-cols-[minmax(300px,360px)_minmax(0,1fr)]"
+          aria-label={
+            locale === "ar"
+              ? "التقدم والإجراءات التنفيذية"
+              : "Progress and executive actions"
+          }
+        >
+          <ExecutiveProgress
+            locale={locale}
+            completed={completedAnswers}
+            total={TOTAL_DISCOVERY_QUESTIONS}
+          />
+
+          <WorkspaceActions locale={locale} />
+        </section>
+
+        <section
+          className="grid items-stretch gap-5 md:gap-6 lg:grid-cols-2"
+          aria-label={
+            locale === "ar"
+              ? "التنبيهات والمهام القادمة"
+              : "Notifications and upcoming tasks"
+          }
+        >
+          <Notifications locale={locale} />
+          <UpcomingTasks locale={locale} />
+        </section>
+      </div>
+    </main>
+  );
+}
+
+============================================================
+FILE: app\(workspace)\layout.tsx
+============================================================
+
+import type { ReactNode } from "react";
+
+import WorkspaceHeader from "@/components/layout/WorkspaceHeader";
+import WorkspaceSidebar from "@/components/layout/WorkspaceSidebar";
+
+interface WorkspaceLayoutProps {
+  children: ReactNode;
+}
+
+export default function WorkspaceLayout({
+  children,
+}: WorkspaceLayoutProps) {
+  return (
+    <div className="workspace-layout">
+      <div className="workspace-layout__container">
+        <WorkspaceSidebar />
+
+        <main className="workspace-layout__main">
+          <WorkspaceHeader />
+
+          <div className="workspace-layout__content">
+            {children}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+============================================================
+FILE: components\layout\WorkspaceHeader.tsx
+============================================================
+
+"use client";
+
+import { Activity, Building2, Sparkles } from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+export default function WorkspaceHeader() {
+  const { locale, t } = useLocalization();
+
+  return (
+    <header className="workspace-page-header">
+      <div className="workspace-page-header__content">
+        <span className="workspace-page-header__eyebrow">
+          <Building2 size={14} />
+          {t("workspace.label")}
+        </span>
+
+        <h1 className="workspace-page-header__title">
+          {t("workspace.title")}
+        </h1>
+
+        <p className="workspace-page-header__description">
+          {locale === "ar"
+            ? "إدارة القرارات والأداء والذكاء المؤسسي من مساحة تنفيذ موحدة."
+            : "Manage decisions, performance, and enterprise intelligence from one unified execution workspace."}
+        </p>
+      </div>
+
+      <div
+        className="workspace-page-header__signals"
+        aria-label={
+          locale === "ar"
+            ? "حالة مساحة العمل"
+            : "Workspace status"
+        }
+      >
+        <div className="workspace-page-header__signal">
+          <Activity size={15} />
+          <span>{t("common.active")}</span>
+        </div>
+
+        <div className="workspace-page-header__signal workspace-page-header__signal--primary">
+          <Sparkles size={15} />
+          <span>{t("common.phase")}</span>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+============================================================
+FILE: components\workspace\hero\CompanyHero.tsx
+============================================================
+
+import { Building2 } from "lucide-react";
+import CompanyStats from "./CompanyStats";
+
+type CompanyHeroProps = {
+  locale: "ar" | "en";
+  name: string;
+  industry: string | null;
+  country: string | null;
+  employees: number | null;
+};
+
+export default function CompanyHero({
+  locale,
+  name,
+  industry,
+  country,
+  employees,
+}: CompanyHeroProps) {
+  return (
+    <section className="rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-medium)] md:p-8">
+      <div className="flex items-start gap-4">
+        <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+          <Building2 size={25} />
+        </span>
+
+        <div>
+          <p className="text-xs font-black uppercase tracking-wider text-[var(--brand-primary)]">
+            {locale === "ar"
+              ? "مساحة عمل المؤسسة"
+              : "Company Workspace"}
+          </p>
+
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-[var(--text-primary)] md:text-4xl">
+            {name}
+          </h1>
+
+          <p className="mt-3 max-w-3xl leading-7 text-[var(--text-secondary)]">
+            {locale === "ar"
+              ? "مساحة موحدة لمتابعة جاهزية المؤسسة والمؤشرات والمهام والتنبيهات التنفيذية."
+              : "A unified workspace for enterprise readiness, KPIs, tasks, and executive alerts."}
+          </p>
+        </div>
+      </div>
+
+      <CompanyStats
+        locale={locale}
+        industry={industry}
+        country={country}
+        employeeCount={employees}
+      />
+    </section>
+  );
+}
+
+============================================================
+FILE: components\workspace\hero\CompanyStats.tsx
+============================================================
+
+import { BriefcaseBusiness, MapPin, Users } from "lucide-react";
+
+type CompanyStatsProps = {
+  locale: "ar" | "en";
+  industry: string | null;
+  country: string | null;
+  employeeCount: number | null;
+};
+
+export default function CompanyStats({
+  locale,
+  industry,
+  country,
+  employeeCount,
+}: CompanyStatsProps) {
+  const stats = [
+    {
+      label: locale === "ar" ? "��� ��������" : "Employees",
+      value:
+        employeeCount !== null
+          ? employeeCount.toLocaleString(
+              locale === "ar" ? "ar-SA" : "en-US",
+            )
+          : locale === "ar"
+            ? "غير محدد"
+            : "Not specified",
+      icon: Users,
+    },
+    {
+      label: locale === "ar" ? "الدولة" : "Country",
+      value:
+        country ||
+        (locale === "ar" ? "غير محددة" : "Not specified"),
+      icon: MapPin,
+    },
+    {
+      label: locale === "ar" ? "������" : "Industry",
+      value:
+        industry ||
+        (locale === "ar" ? "غير محدد" : "Not specified"),
+      icon: BriefcaseBusiness,
+    },
+  ];
+
+  return (
+    <div className="mt-8 grid gap-4 md:grid-cols-3">
+      {stats.map((stat) => {
+        const Icon = stat.icon;
+
+        return (
+          <article
+            key={stat.label}
+            className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-5"
+          >
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--brand-primary)]">
+                <Icon size={18} />
+              </span>
+
+              <p className="text-xs font-bold text-[var(--text-muted)]">
+                {stat.label}
+              </p>
+            </div>
+
+            <p
+              className="mt-4 truncate text-xl font-black text-[var(--text-primary)]"
+              title={stat.value}
+            >
+              {stat.value}
+            </p>
+          </article>
+        );
+      })}
+    </div>
+  );
+}
+
+============================================================
+FILE: components\workspace\widgets\AIHealthWidget.tsx
+============================================================
+
+import { BrainCircuit } from "lucide-react";
+
+type AIHealthWidgetProps = {
+  locale: "ar" | "en";
+  score: number;
+};
+
+export default function AIHealthWidget({
+  locale,
+  score,
+}: AIHealthWidgetProps) {
+  const safeScore = Math.min(Math.max(score, 0), 100);
+
+  const status =
+    safeScore >= 80
+      ? locale === "ar"
+        ? "جاهزية عالية"
+        : "Highly Ready"
+      : safeScore >= 50
+        ? locale === "ar"
+          ? "������ ������"
+          : "Moderately Ready"
+        : locale === "ar"
+          ? "يحتاج إلى استكمال"
+          : "Needs Completion";
+
+  return (
+    <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)]">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-start gap-4">
+          <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--success-background)] text-[var(--success)]">
+            <BrainCircuit size={25} />
+          </span>
+
+          <div>
+            <p className="text-xs font-black uppercase tracking-wider text-[var(--text-muted)]">
+              {locale === "ar"
+                ? "صحة الذكاء المؤسسي"
+                : "AI Health"}
+            </p>
+
+            <h3 className="mt-2 text-3xl font-black text-[var(--text-primary)]">
+              {safeScore}% {status}
+            </h3>
+
+            <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
+              {locale === "ar"
+                ? "مؤشر الجاهزية محسوب بناءً على إجابات الاستكشاف المكتملة."
+                : "Readiness is calculated from completed discovery answers."}
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full md:w-72">
+          <div className="flex items-center justify-between text-xs font-bold text-[var(--text-secondary)]">
+            <span>
+              {locale === "ar" ? "التقدم" : "Progress"}
+            </span>
+
+            <span>{safeScore}%</span>
+          </div>
+
+          <div className="mt-3 h-3 overflow-hidden rounded-full bg-[var(--surface-muted)]">
+            <div
+              className="h-full rounded-full bg-[var(--success)] transition-all duration-500"
+              style={{ width: `${safeScore}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+============================================================
+FILE: components\workspace\dashboard\ExecutiveKPI.tsx
+============================================================
+
+import {
+  AlertTriangle,
+  Lightbulb,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+
+type ExecutiveKPIProps = {
+  locale?: "ar" | "en";
+  readinessScore?: number;
+};
+
+export default function ExecutiveKPI({
+  locale = "en",
+  readinessScore = 82,
+}: ExecutiveKPIProps = {}) {
+  const kpis = [
+    {
+      title:
+        locale === "ar"
+          ? "مؤشر الجاهزية"
+          : "Readiness Score",
+      value: `${readinessScore}%`,
+      subtitle:
+        locale === "ar"
+          ? "مستوى جاهزية المؤسسة الحالي للتحول الذكي."
+          : "Current enterprise readiness for intelligent transformation.",
+      trend: "+18%",
+      trendLabel:
+        locale === "ar"
+          ? "تحسن متوقع بعد استكمال الاستكشاف"
+          : "Expected improvement after discovery completion",
+      icon: TrendingUp,
+      iconClass:
+        "bg-[var(--success-background)] text-[var(--success)]",
+    },
+    {
+      title:
+        locale === "ar"
+          ? "����� ��������"
+          : "Employee Requests",
+      value: "24",
+      subtitle:
+        locale === "ar"
+          ? "����� ������ ����� ��� ������ �������."
+          : "Open requests requiring operational follow-up.",
+      trend: "+6",
+      trendLabel:
+        locale === "ar"
+          ? "����� ����� ��� �������"
+          : "New requests this week",
+      icon: Users,
+      iconClass:
+        "bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    },
+    {
+      title:
+        locale === "ar"
+          ? "������� ���������"
+          : "Operational Risks",
+      value: "6",
+      subtitle:
+        locale === "ar"
+          ? "����� ����� ��� ���� ����� �������."
+          : "Risks requiring management decisions and follow-up.",
+      trend: "-2",
+      trendLabel:
+        locale === "ar"
+          ? "������ �� ������� ������"
+          : "Reduction in critical risks",
+      icon: AlertTriangle,
+      iconClass:
+        "bg-[var(--warning-background)] text-[var(--warning)]",
+    },
+    {
+      title:
+        locale === "ar"
+          ? "فرص التحسين"
+          : "Improvement Opportunities",
+      value: "11",
+      subtitle:
+        locale === "ar"
+          ? "فرص قابلة للتنفيذ خلال الثلاثين يومًا القادمة."
+          : "Opportunities actionable within the next 30 days.",
+      trend: "+4",
+      trendLabel:
+        locale === "ar"
+          ? "فرص جديدة قابلة للتنفيذ"
+          : "New actionable opportunities",
+      icon: Lightbulb,
+      iconClass:
+        "bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    },
+  ];
+
+  return (
+    <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      {kpis.map((kpi) => {
+        const Icon = kpi.icon;
+
+        return (
+          <article
+            key={kpi.title}
+            className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <span
+                className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${kpi.iconClass}`}
+              >
+                <Icon size={21} />
+              </span>
+
+              <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-black text-[var(--text-secondary)]">
+                {kpi.trend}
+              </span>
+            </div>
+
+            <div className="mt-6">
+              <p className="text-sm font-bold text-[var(--text-muted)]">
+                {kpi.title}
+              </p>
+
+              <h3 className="mt-3 text-4xl font-black tracking-tight text-[var(--text-primary)]">
+                {kpi.value}
+              </h3>
+
+              <p className="mt-4 text-sm leading-7 text-[var(--text-secondary)]">
+                {kpi.subtitle}
+              </p>
+            </div>
+
+            <div className="mt-6 rounded-2xl bg-[var(--surface-muted)] p-4">
+              <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">
+                {locale === "ar"
+                  ? "المؤشر التنفيذي"
+                  : "Executive Indicator"}
+              </p>
+
+              <p className="mt-2 text-xs font-black leading-6 text-[var(--text-secondary)]">
+                {kpi.trendLabel}
+              </p>
+            </div>
+          </article>
+        );
+      })}
+    </section>
+  );
+}
+
+============================================================
+FILE: components\workspace\dashboard\ExecutiveProgress.tsx
+============================================================
+
+type ExecutiveProgressProps = {
+  locale: "ar" | "en";
+  completed: number;
+  total: number;
+};
+
+export default function ExecutiveProgress({
+  locale,
+  completed,
+  total,
+}: ExecutiveProgressProps) {
+  const safeCompleted = Math.min(Math.max(completed, 0), total);
+  const percentage =
+    total > 0 ? Math.round((safeCompleted / total) * 100) : 0;
+
+  return (
+    <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)]">
+      <p className="text-xs font-black uppercase tracking-wider text-[var(--text-muted)]">
+        {locale === "ar"
+          ? "الرحلة التنفيذية"
+          : "Executive Journey"}
+      </p>
+
+      <div className="mt-4 flex items-end justify-between gap-4">
+        <div>
+          <h3 className="text-3xl font-black text-[var(--text-primary)]">
+            {safeCompleted} / {total}
+          </h3>
+
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            {locale === "ar"
+              ? "أسئلة الاستكشاف المكتملة."
+              : "Discovery questions completed."}
+          </p>
+        </div>
+
+        <p className="text-2xl font-black text-[var(--success)]">
+          {percentage}%
+        </p>
+      </div>
+
+      <div className="mt-6 h-3 overflow-hidden rounded-full bg-[var(--surface-muted)]">
+        <div
+          className="h-full rounded-full bg-[var(--success)] transition-all duration-500"
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+    </section>
+  );
+}
+
+============================================================
+FILE: components\workspace\actions\WorkspaceActions.tsx
+============================================================
+
+import Link from "next/link";
+import {
+  ArrowUpRight,
+  Bot,
+  Route,
+  Sparkles,
+} from "lucide-react";
+
+type WorkspaceActionsProps = {
+  locale?: "ar" | "en";
+};
+
+export default function WorkspaceActions({
+  locale = "en",
+}: WorkspaceActionsProps = {}) {
+
+  const actions = [
+    {
+      title:
+        locale === "ar"
+          ? "الرحلة التنفيذية"
+          : "Executive Journey",
+      description:
+        locale === "ar"
+          ? "استكمل رحلة الاستكشاف والتوصيات التنفيذية."
+          : "Continue executive discovery and recommendations.",
+      href: "/journey",
+      icon: Route,
+    },
+    {
+      title:
+        locale === "ar"
+          ? "����� ������ ���������"
+          : "AI Modules",
+      description:
+        locale === "ar"
+          ? "استعرض الوحدات الذكية المناسبة للمؤسسة."
+          : "Explore AI modules recommended for the organization.",
+      href: "/modules",
+      icon: Sparkles,
+    },
+    {
+      title:
+        locale === "ar"
+          ? "القوى العاملة الرقمية"
+          : "Digital Workforce",
+      description:
+        locale === "ar"
+          ? "استعرض الوكلاء الرقميين المقترحين للمؤسسة."
+          : "Review digital agents recommended for the organization.",
+      href: "/digital-workforce",
+      icon: Bot,
+    },
+  ];
+
+  return (
+    <section className="grid h-full gap-4 md:grid-cols-3">
+      {actions.map((action) => {
+        const Icon = action.icon;
+
+        return (
+          <Link
+            key={action.href}
+            href={action.href}
+            className="group rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                <Icon size={20} />
+              </span>
+
+              <ArrowUpRight
+                size={17}
+                className="text-[var(--text-muted)] transition group-hover:text-[var(--brand-primary)]"
+              />
+            </div>
+
+            <h3 className="mt-5 text-base font-black text-[var(--text-primary)]">
+              {action.title}
+            </h3>
+
+            <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
+              {action.description}
+            </p>
+          </Link>
+        );
+      })}
+    </section>
+  );
+}
+
+============================================================
+FILE: components\workspace\dashboard\Notifications.tsx
+============================================================
+
+import { Bell } from "lucide-react";
+
+type NotificationsProps = {
+  locale?: "ar" | "en";
+};
+
+export default function Notifications({
+  locale = "en",
+}: NotificationsProps = {}) {
+  
+  const notifications = [
+    {
+      title:
+        locale === "ar"
+          ? "����� ����� ��� ������"
+          : "Requests require review",
+      description:
+        locale === "ar"
+          ? "���� ����� ����� ������ ������� ���� �����."
+          : "Three employee requests are awaiting a management decision.",
+      level: locale === "ar" ? "عاجل" : "Urgent",
+      time: locale === "ar" ? "منذ 5 دقائق" : "5 minutes ago",
+      indicatorClass: "bg-[var(--warning)]",
+    },
+    {
+      title:
+        locale === "ar"
+          ? "تحديث مؤشر الجاهزية"
+          : "Readiness score updated",
+      description:
+        locale === "ar"
+          ? "تم تحديث مؤشر الجاهزية بعد تحليل بيانات الاستكشاف."
+          : "The readiness score was updated after analyzing discovery data.",
+      level: locale === "ar" ? "معلومة" : "Information",
+      time: locale === "ar" ? "منذ 20 دقيقة" : "20 minutes ago",
+      indicatorClass: "bg-[var(--brand-primary)]",
+    },
+    {
+      title:
+        locale === "ar"
+          ? "توصية ذكية جديدة"
+          : "New AI recommendation",
+      description:
+        locale === "ar"
+          ? "تقترح KAFU AI تحسين مسار الموافقات الداخلية."
+          : "KAFU AI recommends improving the internal approval workflow.",
+      level: "AI",
+      time: locale === "ar" ? "����" : "Now",
+      indicatorClass: "bg-[var(--success)]",
+    },
+  ];
+
+  return (
+    <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <Bell size={20} />
+          </span>
+
+          <div>
+            <h2 className="text-xl font-black text-[var(--text-primary)]">
+              {locale === "ar" ? "التنبيهات" : "Notifications"}
+            </h2>
+
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              {locale === "ar"
+                ? "��� ��������� ������ ������� ���������."
+                : "Latest important executive notifications."}
+            </p>
+          </div>
+        </div>
+
+        <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-black text-[var(--text-secondary)]">
+          {notifications.length}{" "}
+          {locale === "ar" ? "جديدة" : "New"}
+        </span>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {notifications.map((item) => (
+          <article
+            key={item.title}
+            className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-5 transition hover:border-[var(--brand-primary)]"
+          >
+            <div className="flex items-start gap-4">
+              <span
+                className={`mt-2 h-2.5 w-2.5 shrink-0 rounded-full ${item.indicatorClass}`}
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 className="font-black text-[var(--text-primary)]">
+                    {item.title}
+                  </h3>
+
+                  <span className="shrink-0 text-xs font-bold text-[var(--text-muted)]">
+                    {item.time}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
+                  {item.description}
+                </p>
+
+                <span className="mt-4 inline-flex rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-black text-[var(--text-secondary)]">
+                  {item.level}
+                </span>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+============================================================
+FILE: components\workspace\dashboard\UpcomingTasks.tsx
+============================================================
+
+import { CalendarCheck } from "lucide-react";
+
+type UpcomingTasksProps = {
+  locale?: "ar" | "en";
+};
+
+export default function UpcomingTasks({
+  locale = "en",
+}: UpcomingTasksProps = {}) {
+
+  const tasks = [
+    {
+      task:
+        locale === "ar"
+          ? "مراجعة تقرير الجاهزية"
+          : "Review readiness report",
+      due: locale === "ar" ? "اليوم" : "Today",
+      status: locale === "ar" ? "عاجل" : "Urgent",
+    },
+    {
+      task:
+        locale === "ar"
+          ? "اعتماد توصيات الموارد البشرية"
+          : "Approve HR recommendations",
+      due: locale === "ar" ? "غدًا" : "Tomorrow",
+      status: locale === "ar" ? "مراجعة" : "Review",
+    },
+    {
+      task:
+        locale === "ar"
+          ? "����� ��� �������"
+          : "Update risk plan",
+      due:
+        locale === "ar"
+          ? "هذا الأسبوع"
+          : "This week",
+      status: locale === "ar" ? "����" : "Planned",
+    },
+  ];
+
+  return (
+    <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)]">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <CalendarCheck size={20} />
+          </span>
+
+          <h2 className="text-xl font-black text-[var(--text-primary)]">
+            {locale === "ar"
+              ? "المهام القادمة"
+              : "Upcoming Tasks"}
+          </h2>
+        </div>
+
+        <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-bold text-[var(--text-secondary)]">
+          {locale === "ar" ? "هذا الأسبوع" : "This Week"}
+        </span>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {tasks.map((item) => (
+          <article
+            key={item.task}
+            className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4"
+          >
+            <div>
+              <p className="font-bold text-[var(--text-primary)]">
+                {item.task}
+              </p>
+
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                {item.due}
+              </p>
+            </div>
+
+            <span className="shrink-0 rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-bold text-[var(--text-secondary)]">
+              {item.status}
+            </span>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+============================================================
+WORKSPACE CSS
+============================================================
+
+
+------------------------------------------------------------
+CSS FILE: C:\Users\hp\Desktop\kafu-frontend\app\styles\enterprise-workspace.css
+------------------------------------------------------------
+
+
+  app\styles\enterprise-workspace.css:259:  margin: 7px 0 0;
+  app\styles\enterprise-workspace.css:260:  color: var(--text-secondary);
+  app\styles\enterprise-workspace.css:261:  font-size: 11px;
+  app\styles\enterprise-workspace.css:262:  line-height: 1.65;
+  app\styles\enterprise-workspace.css:263:}
+  app\styles\enterprise-workspace.css:264:
+> app\styles\enterprise-workspace.css:265:.workspace-page-header {
+  app\styles\enterprise-workspace.css:266:  position: relative;
+  app\styles\enterprise-workspace.css:267:  display: flex;
+  app\styles\enterprise-workspace.css:268:  min-height: 184px;
+  app\styles\enterprise-workspace.css:269:  align-items: center;
+  app\styles\enterprise-workspace.css:270:  justify-content: space-between;
+  app\styles\enterprise-workspace.css:271:  gap: 32px;
+  app\styles\enterprise-workspace.css:272:  overflow: hidden;
+  app\styles\enterprise-workspace.css:273:  border: 1px solid var(--border-default);
+  app\styles\enterprise-workspace.css:274:  border-radius: 28px;
+  app\styles\enterprise-workspace.css:275:  background:
+  app\styles\enterprise-workspace.css:276:    radial-gradient(
+  app\styles\enterprise-workspace.css:277:      circle at 8% 12%,
+  app\styles\enterprise-workspace.css:278:      color-mix(in srgb, var(--brand-primary) 8%, transparent) 0,
+  app\styles\enterprise-workspace.css:279:      transparent 34%
+  app\styles\enterprise-workspace.css:280:    ),
+  app\styles\enterprise-workspace.css:281:    linear-gradient(
+  app\styles\enterprise-workspace.css:282:      135deg,
+  app\styles\enterprise-workspace.css:283:      var(--surface) 0%,
+  app\styles\enterprise-workspace.css:284:      color-mix(in srgb, var(--brand-subtle) 28%, var(--surface)) 100%
+  app\styles\enterprise-workspace.css:285:    );
+  app\styles\enterprise-workspace.css:286:  padding: 32px 44px;
+  app\styles\enterprise-workspace.css:287:  box-shadow: var(--shadow-small);
+  app\styles\enterprise-workspace.css:288:}
+  app\styles\enterprise-workspace.css:289:
+> app\styles\enterprise-workspace.css:290:.workspace-page-header::before {
+  app\styles\enterprise-workspace.css:291:  content: "";
+  app\styles\enterprise-workspace.css:292:  position: absolute;
+  app\styles\enterprise-workspace.css:293:  inset-inline-start: -110px;
+  app\styles\enterprise-workspace.css:294:  top: -150px;
+  app\styles\enterprise-workspace.css:295:  width: 320px;
+  app\styles\enterprise-workspace.css:296:  height: 320px;
+  app\styles\enterprise-workspace.css:297:  border: 1px solid color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  app\styles\enterprise-workspace.css:298:  border-radius: 999px;
+  app\styles\enterprise-workspace.css:299:  pointer-events: none;
+  app\styles\enterprise-workspace.css:300:}
+  app\styles\enterprise-workspace.css:301:
+> app\styles\enterprise-workspace.css:302:.workspace-page-header__content {
+  app\styles\enterprise-workspace.css:303:  position: relative;
+  app\styles\enterprise-workspace.css:304:  z-index: 1;
+  app\styles\enterprise-workspace.css:305:  min-width: 0;
+  app\styles\enterprise-workspace.css:306:  max-width: 820px;
+  app\styles\enterprise-workspace.css:307:}
+  app\styles\enterprise-workspace.css:308:
+> app\styles\enterprise-workspace.css:309:.workspace-page-header__eyebrow {
+  app\styles\enterprise-workspace.css:310:  display: inline-flex;
+  app\styles\enterprise-workspace.css:311:  align-items: center;
+  app\styles\enterprise-workspace.css:312:  gap: 8px;
+  app\styles\enterprise-workspace.css:313:  color: var(--brand-primary);
+  app\styles\enterprise-workspace.css:314:  font-size: 13px;
+  app\styles\enterprise-workspace.css:315:  font-weight: 800;
+  app\styles\enterprise-workspace.css:316:  line-height: 1;
+  app\styles\enterprise-workspace.css:317:}
+  app\styles\enterprise-workspace.css:318:
+> app\styles\enterprise-workspace.css:319:.workspace-page-header__title {
+  app\styles\enterprise-workspace.css:320:  margin-top: 14px;
+  app\styles\enterprise-workspace.css:321:  color: var(--text-primary);
+  app\styles\enterprise-workspace.css:322:  font-size: clamp(34px, 4vw, 52px);
+  app\styles\enterprise-workspace.css:323:  font-weight: 900;
+  app\styles\enterprise-workspace.css:324:  letter-spacing: -0.035em;
+  app\styles\enterprise-workspace.css:325:  line-height: 1.08;
+  app\styles\enterprise-workspace.css:326:}
+  app\styles\enterprise-workspace.css:327:
+> app\styles\enterprise-workspace.css:328:.workspace-page-header__description {
+  app\styles\enterprise-workspace.css:329:  margin-top: 14px;
+  app\styles\enterprise-workspace.css:330:  max-width: 760px;
+  app\styles\enterprise-workspace.css:331:  color: var(--text-secondary);
+  app\styles\enterprise-workspace.css:332:  font-size: 16px;
+  app\styles\enterprise-workspace.css:333:  line-height: 1.8;
+  app\styles\enterprise-workspace.css:334:}
+  app\styles\enterprise-workspace.css:335:
+> app\styles\enterprise-workspace.css:336:.workspace-page-header__signals {
+  app\styles\enterprise-workspace.css:337:  position: relative;
+  app\styles\enterprise-workspace.css:338:  z-index: 1;
+  app\styles\enterprise-workspace.css:339:  display: flex;
+  app\styles\enterprise-workspace.css:340:  flex-wrap: wrap;
+  app\styles\enterprise-workspace.css:341:  justify-content: flex-end;
+  app\styles\enterprise-workspace.css:342:  gap: 10px;
+  app\styles\enterprise-workspace.css:343:  flex-shrink: 0;
+  app\styles\enterprise-workspace.css:344:}
+  app\styles\enterprise-workspace.css:345:
+> app\styles\enterprise-workspace.css:346:.workspace-page-header__signal {
+  app\styles\enterprise-workspace.css:347:  display: inline-flex;
+  app\styles\enterprise-workspace.css:348:  min-height: 44px;
+  app\styles\enterprise-workspace.css:349:  align-items: center;
+  app\styles\enterprise-workspace.css:350:  gap: 8px;
+  app\styles\enterprise-workspace.css:351:  border: 1px solid color-mix(in srgb, var(--success) 24%, var(--border-default));
+  app\styles\enterprise-workspace.css:352:  border-radius: 14px;
+  app\styles\enterprise-workspace.css:353:  background: color-mix(in srgb, var(--success) 8%, var(--surface));
+  app\styles\enterprise-workspace.css:354:  padding: 0 16px;
+  app\styles\enterprise-workspace.css:355:  color: var(--success);
+  app\styles\enterprise-workspace.css:356:  font-size: 14px;
+  app\styles\enterprise-workspace.css:357:  font-weight: 800;
+  app\styles\enterprise-workspace.css:358:  box-shadow: 0 6px 18px color-mix(in srgb, var(--text-primary) 5%, transparent);
+  app\styles\enterprise-workspace.css:359:}
+  app\styles\enterprise-workspace.css:360:
+> app\styles\enterprise-workspace.css:361:.workspace-page-header__signal--primary {
+  app\styles\enterprise-workspace.css:362:  border-color: color-mix(in srgb, var(--brand-primary) 24%, var(--border-default));
+  app\styles\enterprise-workspace.css:363:  background: color-mix(in srgb, var(--brand-primary) 7%, var(--surface));
+  app\styles\enterprise-workspace.css:364:  color: var(--brand-primary);
+  app\styles\enterprise-workspace.css:365:}
+  app\styles\enterprise-workspace.css:366:
+  app\styles\enterprise-workspace.css:367:@media (max-width: 1023px) {
+> app\styles\enterprise-workspace.css:368:  .workspace-page-header {
+  app\styles\enterprise-workspace.css:369:    min-height: auto;
+  app\styles\enterprise-workspace.css:370:    align-items: flex-start;
+  app\styles\enterprise-workspace.css:371:    padding: 28px 30px;
+  app\styles\enterprise-workspace.css:372:  }
+  app\styles\enterprise-workspace.css:373:
+> app\styles\enterprise-workspace.css:374:  .workspace-page-header__signals {
+  app\styles\enterprise-workspace.css:375:    max-width: 260px;
+  app\styles\enterprise-workspace.css:376:  }
+  app\styles\enterprise-workspace.css:377:}
+  app\styles\enterprise-workspace.css:378:
+  app\styles\enterprise-workspace.css:379:@media (max-width: 767px) {
+> app\styles\enterprise-workspace.css:380:  .workspace-page-header {
+  app\styles\enterprise-workspace.css:381:    flex-direction: column;
+  app\styles\enterprise-workspace.css:382:    gap: 22px;
+  app\styles\enterprise-workspace.css:383:    border-radius: 24px;
+  app\styles\enterprise-workspace.css:384:    padding: 24px;
+  app\styles\enterprise-workspace.css:385:  }
+  app\styles\enterprise-workspace.css:386:
+> app\styles\enterprise-workspace.css:387:  .workspace-page-header__title {
+  app\styles\enterprise-workspace.css:388:    margin-top: 12px;
+  app\styles\enterprise-workspace.css:389:    font-size: 34px;
+  app\styles\enterprise-workspace.css:390:  }
+  app\styles\enterprise-workspace.css:391:
+> app\styles\enterprise-workspace.css:392:  .workspace-page-header__description {
+  app\styles\enterprise-workspace.css:393:    margin-top: 12px;
+  app\styles\enterprise-workspace.css:394:    font-size: 15px;
+  app\styles\enterprise-workspace.css:395:  }
+  app\styles\enterprise-workspace.css:396:
+> app\styles\enterprise-workspace.css:397:  .workspace-page-header__signals {
+  app\styles\enterprise-workspace.css:398:    width: 100%;
+  app\styles\enterprise-workspace.css:399:    max-width: none;
+  app\styles\enterprise-workspace.css:400:    justify-content: flex-start;
+  app\styles\enterprise-workspace.css:401:  }
+  app\styles\enterprise-workspace.css:402:}
+  app\styles\enterprise-workspace.css:403:
+  app\styles\enterprise-workspace.css:404:
+  app\styles\enterprise-workspace.css:405:@media (max-width: 1180px) {
+  app\styles\enterprise-workspace.css:406:  .workspace-layout__container,
+  app\styles\enterprise-workspace.css:407:  html[dir="rtl"] .workspace-layout__container {
+  app\styles\enterprise-workspace.css:408:    grid-template-columns: 1fr;
+  app\styles\enterprise-workspace.css:409:  }
+  app\styles\enterprise-workspace.css:410:
+  app\styles\enterprise-workspace.css:411:  .workspace-sidebar,
+  app\styles\enterprise-workspace.css:412:  html[dir="rtl"] .workspace-sidebar {
+  app\styles\enterprise-workspace.css:413:    position: static;
+  app\styles\enterprise-workspace.css:414:    grid-column: auto;
+  app\styles\enterprise-workspace.css:415:    grid-row: auto;
+  app\styles\enterprise-workspace.css:416:    width: 100%;
+  app\styles\enterprise-workspace.css:417:    height: auto;
+  app\styles\enterprise-workspace.css:418:    min-height: 0;
+  app\styles\enterprise-workspace.css:419:  }
+  app\styles\enterprise-workspace.css:420:
+  app\styles\enterprise-workspace.css:421:  .workspace-layout__main,
+  app\styles\enterprise-workspace.css:451:  }
+  app\styles\enterprise-workspace.css:452:
+  app\styles\enterprise-workspace.css:453:  .workspace-sidebar__navigation {
+  app\styles\enterprise-workspace.css:454:    grid-template-columns: 1fr;
+  app\styles\enterprise-workspace.css:455:  }
+  app\styles\enterprise-workspace.css:456:
+> app\styles\enterprise-workspace.css:457:  .workspace-page-header {
+  app\styles\enterprise-workspace.css:458:    min-height: 0;
+  app\styles\enterprise-workspace.css:459:    align-items: flex-start;
+  app\styles\enterprise-workspace.css:460:    flex-direction: column;
+  app\styles\enterprise-workspace.css:461:    padding: 22px;
+  app\styles\enterprise-workspace.css:462:    border-radius: 20px;
+  app\styles\enterprise-workspace.css:463:  }
+  app\styles\enterprise-workspace.css:464:
+> app\styles\enterprise-workspace.css:465:  .workspace-page-header__signals {
+  app\styles\enterprise-workspace.css:466:    width: 100%;
+  app\styles\enterprise-workspace.css:467:    flex-wrap: wrap;
+  app\styles\enterprise-workspace.css:468:  }
+  app\styles\enterprise-workspace.css:469:}
+  app\styles\enterprise-workspace.css:470:
+  app\styles\enterprise-workspace.css:471:@media (max-width: 480px) {
+  app\styles\enterprise-workspace.css:472:  .workspace-layout {
+  app\styles\enterprise-workspace.css:473:    padding: 12px;
+  app\styles\enterprise-workspace.css:474:  }
+  app\styles\enterprise-workspace.css:475:
+> app\styles\enterprise-workspace.css:476:  .workspace-page-header__signals {
+  app\styles\enterprise-workspace.css:477:    display: grid;
+  app\styles\enterprise-workspace.css:478:    grid-template-columns: 1fr;
+  app\styles\enterprise-workspace.css:479:  }
+  app\styles\enterprise-workspace.css:480:
+> app\styles\enterprise-workspace.css:481:  .workspace-page-header__signal {
+  app\styles\enterprise-workspace.css:482:    justify-content: center;
+  app\styles\enterprise-workspace.css:483:  }
+  app\styles\enterprise-workspace.css:484:}
+  app\styles\enterprise-workspace.css:485:
+  app\styles\enterprise-workspace.css:486:@media (prefers-reduced-motion: no-preference) {
+  app\styles\enterprise-workspace.css:487:  .workspace-layout__content > *,
+> app\styles\enterprise-workspace.css:488:  .workspace-page-header,
+  app\styles\enterprise-workspace.css:489:  .workspace-sidebar {
+  app\styles\enterprise-workspace.css:490:    animation: fadeUp 220ms ease-out both;
+  app\styles\enterprise-workspace.css:491:  }
+  app\styles\enterprise-workspace.css:492:}
+  app\styles\enterprise-workspace.css:493:
+
+
+
+
+------------------------------------------------------------
+CSS FILE: C:\Users\hp\Desktop\kafu-frontend\app\globals.css
+------------------------------------------------------------
+
+
+  app\globals.css:739:  margin: 7px 0 0;
+  app\globals.css:740:  color: var(--text-secondary);
+  app\globals.css:741:  font-size: 11px;
+  app\globals.css:742:  line-height: 1.6;
+  app\globals.css:743:}
+  app\globals.css:744:
+> app\globals.css:745:.workspace-page-header {
+  app\globals.css:746:  position: relative;
+  app\globals.css:747:  display: grid;
+  app\globals.css:748:  grid-template-columns: minmax(0, 1fr) auto;
+  app\globals.css:749:  align-items: center;
+  app\globals.css:750:  gap: 32px;
+  app\globals.css:751:  min-height: 164px;
+  app\globals.css:752:  padding: 28px 30px;
+  app\globals.css:753:  overflow: hidden;
+  app\globals.css:754:  border: 1px solid
+  app\globals.css:755:    color-mix(in srgb, var(--border-default) 88%, transparent);
+  app\globals.css:756:  border-radius: var(--radius-container);
+  app\globals.css:757:  background:
+  app\globals.css:758:    linear-gradient(
+  app\globals.css:759:      135deg,
+  app\globals.css:760:      color-mix(in srgb, var(--surface) 98%, var(--brand-subtle)),
+  app\globals.css:761:      var(--surface)
+  app\globals.css:762:    );
+  app\globals.css:763:  box-shadow: var(--shadow-small);
+  app\globals.css:764:  isolation: isolate;
+  app\globals.css:765:}
+  app\globals.css:766:
+> app\globals.css:767:.workspace-page-header::before {
+  app\globals.css:768:  position: absolute;
+  app\globals.css:769:  inset-block: 0;
+  app\globals.css:770:  inset-inline-start: 0;
+  app\globals.css:771:  width: 4px;
+  app\globals.css:772:  background: linear-gradient(
+  app\globals.css:773:    180deg,
+  app\globals.css:774:    var(--brand-primary),
+  app\globals.css:775:    color-mix(in srgb, var(--brand-primary) 45%, transparent)
+  app\globals.css:776:  );
+  app\globals.css:777:  content: "";
+  app\globals.css:778:}
+  app\globals.css:779:
+> app\globals.css:780:.workspace-page-header::after {
+  app\globals.css:781:  position: absolute;
+  app\globals.css:782:  top: -90px;
+  app\globals.css:783:  inset-inline-end: -70px;
+  app\globals.css:784:  z-index: -1;
+  app\globals.css:785:  width: 230px;
+  app\globals.css:786:  height: 230px;
+  app\globals.css:787:  border-radius: 999px;
+  app\globals.css:788:  background: color-mix(
+  app\globals.css:789:    in srgb,
+  app\globals.css:790:    var(--brand-primary) 5%,
+  app\globals.css:791:    transparent
+  app\globals.css:792:  );
+  app\globals.css:793:  content: "";
+  app\globals.css:794:  pointer-events: none;
+  app\globals.css:795:}
+  app\globals.css:796:
+> app\globals.css:797:.workspace-page-header__content {
+  app\globals.css:798:  min-width: 0;
+  app\globals.css:799:  max-width: 780px;
+  app\globals.css:800:}
+  app\globals.css:801:
+> app\globals.css:802:.workspace-page-header__eyebrow {
+  app\globals.css:803:  display: inline-flex;
+  app\globals.css:804:  min-height: 28px;
+  app\globals.css:805:  align-items: center;
+  app\globals.css:806:  gap: 8px;
+  app\globals.css:807:  color: var(--brand-primary);
+  app\globals.css:808:  font-size: 11px;
+  app\globals.css:809:  font-weight: 800;
+  app\globals.css:810:  line-height: 1;
+  app\globals.css:811:  text-transform: uppercase;
+  app\globals.css:812:  letter-spacing: 0.08em;
+  app\globals.css:813:}
+  app\globals.css:814:
+> app\globals.css:815:.workspace-page-header__eyebrow-icon {
+  app\globals.css:816:  display: inline-flex;
+  app\globals.css:817:  width: 28px;
+  app\globals.css:818:  height: 28px;
+  app\globals.css:819:  align-items: center;
+  app\globals.css:820:  justify-content: center;
+  app\globals.css:821:  border: 1px solid
+  app\globals.css:822:    color-mix(in srgb, var(--brand-primary) 16%, transparent);
+  app\globals.css:823:  border-radius: 9px;
+  app\globals.css:824:  background: var(--brand-subtle);
+  app\globals.css:825:  color: var(--brand-primary);
+  app\globals.css:826:}
+  app\globals.css:827:
+> app\globals.css:828:.workspace-page-header__title {
+  app\globals.css:829:  margin: 12px 0 0;
+  app\globals.css:830:  color: var(--text-primary);
+  app\globals.css:831:  font-size: clamp(26px, 3vw, 34px);
+  app\globals.css:832:  font-weight: 800;
+  app\globals.css:833:  line-height: 1.2;
+  app\globals.css:834:  letter-spacing: -0.035em;
+  app\globals.css:835:}
+  app\globals.css:836:
+> app\globals.css:837:.workspace-page-header__description {
+  app\globals.css:838:  max-width: 720px;
+  app\globals.css:839:  margin: 9px 0 0;
+  app\globals.css:840:  color: var(--text-secondary);
+  app\globals.css:841:  font-size: 14px;
+  app\globals.css:842:  font-weight: 500;
+  app\globals.css:843:  line-height: 1.75;
+  app\globals.css:844:}
+  app\globals.css:845:
+> app\globals.css:846:.workspace-page-header__signals {
+  app\globals.css:847:  display: flex;
+  app\globals.css:848:  align-items: center;
+  app\globals.css:849:  justify-content: flex-end;
+  app\globals.css:850:  gap: 10px;
+  app\globals.css:851:  flex-shrink: 0;
+  app\globals.css:852:}
+  app\globals.css:853:
+> app\globals.css:854:.workspace-page-header__signal {
+  app\globals.css:855:  display: inline-flex;
+  app\globals.css:856:  min-height: 40px;
+  app\globals.css:857:  align-items: center;
+  app\globals.css:858:  gap: 8px;
+  app\globals.css:859:  padding: 0 13px;
+  app\globals.css:860:  border: 1px solid
+  app\globals.css:861:    color-mix(in srgb, var(--success) 18%, var(--border-default));
+  app\globals.css:862:  border-radius: 12px;
+  app\globals.css:863:  background: color-mix(
+  app\globals.css:864:    in srgb,
+  app\globals.css:865:    var(--success-background) 82%,
+  app\globals.css:866:    var(--surface)
+  app\globals.css:867:  );
+  app\globals.css:868:  color: var(--success);
+  app\globals.css:869:  font-size: 12px;
+  app\globals.css:870:  font-weight: 800;
+  app\globals.css:871:  line-height: 1;
+  app\globals.css:872:  white-space: nowrap;
+  app\globals.css:873:  box-shadow: var(--shadow-small);
+  app\globals.css:874:}
+  app\globals.css:875:
+> app\globals.css:876:.workspace-page-header__signal-icon {
+  app\globals.css:877:  display: inline-flex;
+  app\globals.css:878:  align-items: center;
+  app\globals.css:879:  justify-content: center;
+  app\globals.css:880:}
+  app\globals.css:881:
+> app\globals.css:882:.workspace-page-header__signal--primary {
+  app\globals.css:883:  border-color: color-mix(
+  app\globals.css:884:    in srgb,
+  app\globals.css:885:    var(--brand-primary) 18%,
+  app\globals.css:886:    var(--border-default)
+  app\globals.css:887:  );
+  app\globals.css:888:  background: color-mix(
+  app\globals.css:889:    in srgb,
+  app\globals.css:890:    var(--brand-subtle) 86%,
+  app\globals.css:891:    var(--surface)
+  app\globals.css:892:  );
+  app\globals.css:893:  color: var(--brand-primary);
+  app\globals.css:894:}
+  app\globals.css:895:
+  app\globals.css:896:@media (max-width: 1100px) {
+> app\globals.css:897:  .workspace-page-header {
+  app\globals.css:898:    gap: 24px;
+  app\globals.css:899:    min-height: 150px;
+  app\globals.css:900:    padding: 26px;
+  app\globals.css:901:  }
+  app\globals.css:902:
+> app\globals.css:903:  .workspace-page-header__signals {
+  app\globals.css:904:    flex-direction: column;
+  app\globals.css:905:    align-items: stretch;
+  app\globals.css:906:  }
+  app\globals.css:907:
+> app\globals.css:908:  .workspace-page-header__signal {
+  app\globals.css:909:    justify-content: center;
+  app\globals.css:910:  }
+  app\globals.css:911:}
+  app\globals.css:912:
+  app\globals.css:913:@media (max-width: 720px) {
+> app\globals.css:914:  .workspace-page-header {
+  app\globals.css:915:    grid-template-columns: 1fr;
+  app\globals.css:916:    align-items: flex-start;
+  app\globals.css:917:    gap: 22px;
+  app\globals.css:918:    min-height: 0;
+  app\globals.css:919:    padding: 22px 20px;
+  app\globals.css:920:  }
+  app\globals.css:921:
+> app\globals.css:922:  .workspace-page-header__title {
+  app\globals.css:923:    font-size: clamp(24px, 8vw, 30px);
+  app\globals.css:924:  }
+  app\globals.css:925:
+> app\globals.css:926:  .workspace-page-header__description {
+  app\globals.css:927:    font-size: 13px;
+  app\globals.css:928:    line-height: 1.7;
+  app\globals.css:929:  }
+  app\globals.css:930:
+> app\globals.css:931:  .workspace-page-header__signals {
+  app\globals.css:932:    width: 100%;
+  app\globals.css:933:    flex-direction: row;
+  app\globals.css:934:    justify-content: flex-start;
+  app\globals.css:935:    flex-wrap: wrap;
+  app\globals.css:936:  }
+  app\globals.css:937:
+> app\globals.css:938:  .workspace-page-header__signal {
+  app\globals.css:939:    flex: 0 1 auto;
+  app\globals.css:940:  }
+  app\globals.css:941:}
+  app\globals.css:942:
+  app\globals.css:943:@media (max-width: 1100px) {
+  app\globals.css:944:  .workspace-layout__container,
+  app\globals.css:945:  html[dir="rtl"] .workspace-layout__container {
+  app\globals.css:946:    grid-template-columns: 1fr;
+  app\globals.css:947:  }
+  app\globals.css:948:
+  app\globals.css:949:  .workspace-sidebar,
+  app\globals.css:950:  html[dir="rtl"] .workspace-sidebar {
+  app\globals.css:951:    position: static;
+  app\globals.css:952:    grid-column: auto;
+  app\globals.css:953:    grid-row: auto;
+  app\globals.css:954:    width: 100%;
+  app\globals.css:955:    height: auto;
+  app\globals.css:956:    min-height: 0;
+  app\globals.css:957:  }
+  app\globals.css:958:
+  app\globals.css:959:  .workspace-layout__main,
+  app\globals.css:960:  html[dir="rtl"] .workspace-layout__main {
+  app\globals.css:961:    grid-column: auto;
+  app\globals.css:962:    grid-row: auto;
+  app\globals.css:980:  }
+  app\globals.css:981:
+  app\globals.css:982:  .workspace-sidebar__navigation {
+  app\globals.css:983:    grid-template-columns: 1fr;
+  app\globals.css:984:  }
+  app\globals.css:985:
+> app\globals.css:986:  .workspace-page-header {
+  app\globals.css:987:    align-items: flex-start;
+  app\globals.css:988:    flex-direction: column;
+  app\globals.css:989:    padding: 20px;
+  app\globals.css:990:  }
+  app\globals.css:991:
+> app\globals.css:992:  .workspace-page-header__signals {
+  app\globals.css:993:    width: 100%;
+  app\globals.css:994:    flex-wrap: wrap;
+  app\globals.css:995:  }
+  app\globals.css:996:}
+  app\globals.css:997:
+  app\globals.css:998:@media (prefers-reduced-motion: no-preference) {
+  app\globals.css:999:  .enterprise-application-content > * {
+  app\globals.css:1000:    animation: fadeIn 180ms ease-out;
+  app\globals.css:1001:  }
+  app\globals.css:1002:
+  app\globals.css:1003:  .workspace-layout__content > *,
+> app\globals.css:1004:  .workspace-page-header,
+  app\globals.css:1005:  .workspace-sidebar {
+  app\globals.css:1006:    animation: fadeUp 220ms ease-out both;
+  app\globals.css:1007:  }
+  app\globals.css:1008:}
+  app\globals.css:1009:
+  app\globals.css:1010:@media (prefers-reduced-motion: reduce) {
+  app\globals.css:1011:  *,
+  app\globals.css:1012:  *::before,
+  app\globals.css:1013:  *::after {
+  app\globals.css:1014:    scroll-behavior: auto !important;
+  app\globals.css:1015:    animation-duration: 0.01ms !important;
+  app\globals.css:1016:    animation-iteration-count: 1 !important;
+  app\globals.css:1017:    transition-duration: 0.01ms !important;
+  app\globals.css:1018:  }
+  app\globals.css:1019:}
+  app\globals.css:1020:
+  app\globals.css:1021::focus-visible {
+  app\globals.css:1022:  outline: 3px solid
+  app\globals.css:1023:    color-mix(
+  app\globals.css:1024:      in srgb,
+  app\globals.css:1025:      var(--brand-primary) 55%,
+  app\globals.css:1026:      transparent
+  app\globals.css:1027:    );
+  app\globals.css:1028:  outline-offset: 3px;
+
+
+

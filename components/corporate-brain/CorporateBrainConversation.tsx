@@ -41,15 +41,15 @@ export default function CorporateBrainConversation({
       ];
 
   return (
-    <section className="flex min-h-[470px] flex-col overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+    <section className="flex min-h-[500px] flex-col overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
       <div className="flex items-center justify-between gap-4 border-b border-[var(--border-default)] px-5 py-4 md:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--text-primary)] text-[var(--surface)]">
-            <Bot size={20} />
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[var(--text-primary)] text-[var(--surface)]">
+            <Bot size={19} />
           </span>
 
           <div className="min-w-0">
-            <h2 className="truncate text-sm font-black text-[var(--text-primary)]">
+            <h2 className="truncate text-sm font-extrabold text-[var(--text-primary)]">
               {isArabic
                 ? "المساعد التنفيذي الذكي"
                 : "Executive AI Copilot"}
@@ -63,7 +63,7 @@ export default function CorporateBrainConversation({
           </div>
         </div>
 
-        <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[var(--success-background)] px-3 py-2 text-[11px] font-black text-[var(--success)]">
+        <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[var(--success-background)] px-3 py-2 text-[11px] font-extrabold text-[var(--success)]">
           <ShieldCheck size={14} />
           {isArabic ? "موثّق" : "Grounded"}
         </div>
@@ -90,7 +90,7 @@ export default function CorporateBrainConversation({
           <div className="max-w-[94%] rounded-2xl rounded-ss-sm border border-[var(--border-default)] bg-[var(--surface)] px-5 py-5 shadow-[var(--shadow-small)]">
             <p className="text-sm leading-8 text-[var(--text-secondary)]">
               {isArabic
-                ? `بناءً على بيانات ${companyName} ونتائج الاستكشاف الحالية، فإن الأولوية التنفيذية هي تحويل المعرفة المتفرقة إلى نظام موحّد يدعم اتخاذ القرار. ويحدد التحليل ثلاث أولويات رئيسية: استكمال مصادر المعرفة الداخلية، وتوثيق السياسات والإجراءات، وربط مؤشرات الأداء بمركز القيادة التنفيذي.`
+                ? `بناءً على بيانات ${companyName} ونتائج الاستكشاف الحالية، تتمثل الأولوية التنفيذية في تحويل المعرفة المتفرقة إلى نظام موحد يدعم اتخاذ القرار. ويحدد التحليل ثلاث أولويات رئيسية: استكمال مصادر المعرفة الداخلية، وتوثيق السياسات والإجراءات، وربط مؤشرات الأداء بمركز القيادة التنفيذي.`
                 : `Based on current ${companyName} data and discovery insights, the immediate executive priority is to transform fragmented knowledge into a unified decision system. The analysis identifies three priorities: completing internal knowledge sources, documenting policies and procedures, and connecting performance indicators to the executive command center.`}
             </p>
 
@@ -100,7 +100,7 @@ export default function CorporateBrainConversation({
                   key={item}
                   className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-4 py-3"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--surface)] text-[10px] font-black text-[var(--brand-primary)] shadow-sm">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--surface)] text-[10px] font-extrabold text-[var(--brand-primary)] shadow-sm">
                     {String(index + 1).padStart(2, "0")}
                   </span>
 

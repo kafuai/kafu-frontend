@@ -16,98 +16,86 @@ export default function CommandCenterKpis({
   companyName,
   discoveryAnswersCount,
 }: CommandCenterKpisProps) {
+  const isArabic = locale === "ar";
+
   const kpis = [
     {
       icon: Building2,
-      label:
-        locale === "ar"
-          ? "مساحة العمل النشطة"
-          : "Active Workspace",
+      label: isArabic ? "مساحة العمل النشطة" : "Active Workspace",
       value: companyName,
-      note:
-        locale === "ar"
-          ? "المؤسسة الحالية"
-          : "Current organization",
+      note: isArabic ? "المؤسسة الحالية" : "Current organization",
+      compact: true,
     },
     {
       icon: Bot,
-      label:
-        locale === "ar"
-          ? "الوكلاء المقترحون"
-          : "Recommended Agents",
+      label: isArabic ? "الوكلاء المقترحون" : "Recommended Agents",
       value: "6",
-      note:
-        locale === "ar"
-          ? "القوى العاملة الرقمية"
-          : "Digital workforce",
+      note: isArabic ? "القوى العاملة الرقمية" : "Digital workforce",
+      compact: false,
     },
     {
       icon: BrainCircuit,
-      label:
-        locale === "ar"
-          ? "إشارات الاستكشاف"
-          : "Discovery Signals",
+      label: isArabic ? "إشارات الاستكشاف" : "Discovery Signals",
       value: discoveryAnswersCount.toLocaleString(
-        locale === "ar" ? "ar-SA" : "en-US",
+        isArabic ? "ar-SA" : "en-US",
       ),
-      note:
-        locale === "ar"
-          ? "مدخلات تنفيذية"
-          : "Executive inputs",
+      note: isArabic ? "مدخلات تنفيذية" : "Executive inputs",
+      compact: false,
     },
     {
       icon: Gauge,
-      label:
-        locale === "ar"
-          ? "صحة المنصة"
-          : "Platform Health",
+      label: isArabic ? "صحة المنصة" : "Platform Health",
       value: "99%",
-      note:
-        locale === "ar"
-          ? "الأنظمة الأساسية تعمل"
-          : "Core systems operational",
+      note: isArabic
+        ? "الأنظمة الأساسية تعمل"
+        : "Core systems operational",
+      compact: false,
     },
   ];
 
   return (
-    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section
+      aria-label={isArabic ? "مؤشرات مركز القيادة" : "Command center metrics"}
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+    >
       {kpis.map((item) => {
         const Icon = item.icon;
 
         return (
           <article
             key={item.label}
-            className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]"
+            className="group rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-4 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
           >
-            <div className="flex items-center justify-between gap-4">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
-                <Icon size={20} />
+            <div className="flex items-start justify-between gap-4">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                <Icon size={18} />
               </span>
 
-              <span
-                className="h-2 w-2 rounded-full bg-[var(--success)]"
-                aria-label={
-                  locale === "ar"
-                    ? "النظام يعمل"
-                    : "System operational"
-                }
-              />
+              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[9px] font-black text-emerald-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                {isArabic ? "نشط" : "Live"}
+              </span>
             </div>
 
-            <p className="mt-5 text-xs font-bold text-[var(--text-muted)]">
+            <p className="mt-4 text-xs font-bold text-[var(--text-muted)]">
               {item.label}
             </p>
 
             <h2
-              className="mt-2 truncate text-3xl font-black text-[var(--text-primary)]"
+              className={`mt-1 truncate font-black tracking-tight text-[var(--text-primary)] ${
+                item.compact ? "text-lg" : "text-3xl"
+              }`}
               title={item.value}
+              dir={item.compact ? undefined : "ltr"}
             >
               {item.value}
             </h2>
 
-            <p className="mt-2 text-xs font-bold text-[var(--brand-primary)]">
-              {item.note}
-            </p>
+            <div className="mt-3 border-t border-[var(--border-default)] pt-3">
+              <p className="text-xs font-bold text-[var(--brand-primary)]">
+                {item.note}
+              </p>
+            </div>
           </article>
         );
       })}

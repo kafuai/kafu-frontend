@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -62,6 +62,7 @@ type PipelineItem = {
   sales_rep: string | null;
   opportunity_value: number | null;
   response_deadline: string | null;
+  is_overdue: boolean;
   companies?: {
     name: string | null;
     contact_name: string | null;
@@ -79,7 +80,7 @@ type DashboardData = {
 const CLOSED_PIPELINE_STATUSES = new Set(["Won", "Lost"]);
 
 function formatCurrency(value: number | null) {
-  return new Intl.NumberFormat("en-SA", {
+  return new Intl.NumberFormat("ar-SA", {
     style: "currency",
     currency: "SAR",
     maximumFractionDigits: 0,
@@ -89,40 +90,66 @@ function formatCurrency(value: number | null) {
 function getPipelineStatusClasses(status: string | null) {
   switch (status) {
     case "Won":
-      return "bg-emerald-50 text-emerald-700";
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "Lost":
-      return "bg-rose-50 text-rose-700";
+      return "border-rose-200 bg-rose-50 text-rose-700";
     case "Proposal":
-      return "bg-violet-50 text-violet-700";
+      return "border-violet-200 bg-violet-50 text-violet-700";
     case "Meeting":
-      return "bg-amber-50 text-amber-700";
+      return "border-amber-200 bg-amber-50 text-amber-700";
     case "Contacted":
-      return "bg-sky-50 text-sky-700";
+      return "border-sky-200 bg-sky-50 text-sky-700";
     default:
-      return "bg-blue-50 text-blue-700";
+      return "border-blue-200 bg-blue-50 text-blue-700";
+  }
+}
+
+function getPipelineStatusLabel(status: string | null) {
+  switch (status) {
+    case "Won":
+      return "مكتملة";
+    case "Lost":
+      return "مغلقة";
+    case "Proposal":
+      return "عرض مقدم";
+    case "Meeting":
+      return "اجتماع";
+    case "Contacted":
+      return "تم التواصل";
+    default:
+      return "فرصة جديدة";
   }
 }
 
 function DashboardLoadingState() {
   return (
     <section
-      className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/70 p-8"
+      className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white"
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="animate-pulse space-y-5">
-        <div className="h-6 w-48 rounded-full bg-slate-800" />
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="h-28 rounded-2xl bg-slate-800" />
-          <div className="h-28 rounded-2xl bg-slate-800" />
-          <div className="h-28 rounded-2xl bg-slate-800" />
-        </div>
-        <div className="h-52 rounded-2xl bg-slate-800" />
-      </div>
+      <div className="animate-pulse p-6 sm:p-6">
+        <div className="flex items-center items-center justify-between gap-4">
+          <div className="space-y-3">
+            <div className="h-3 w-28 rounded-full bg-slate-200" />
+            <div className="h-7 w-64 max-w-full rounded-lg bg-slate-200" />
+          </div>
 
-      <p className="mt-6 text-center font-semibold text-slate-300">
-        جاري تجهيز لوحة القيادة التنفيذية...
-      </p>
+          <div className="h-10 w-10 rounded-xl bg-slate-100" />
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="h-28 rounded-xl bg-slate-100" />
+          <div className="h-28 rounded-xl bg-slate-100" />
+          <div className="h-28 rounded-xl bg-slate-100" />
+        </div>
+
+        <div className="mt-5 h-48 rounded-xl bg-slate-100" />
+
+        <p className="mt-6 text-center text-sm font-semibold text-slate-500">
+          جارٍ تجهيز لوحة القيادة التنفيذية...
+        </p>
+      </div>
     </section>
   );
 }
@@ -130,28 +157,61 @@ function DashboardLoadingState() {
 function DashboardErrorState({ message }: { message: string }) {
   return (
     <section
-      className="mt-8 rounded-3xl border border-amber-400/30 bg-amber-400/10 p-8 text-center"
+      className="mt-6 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50"
       role="alert"
     >
-      <p className="text-sm font-bold uppercase tracking-[0.2em] text-amber-300">
-        يتطلب الإعداد
+      <div className="flex flex-col items-start gap-6 p-6 sm:p-6 lg:flex-row lg:items-center lg:items-center justify-between">
+        <div className="max-w-3xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5">
+            <span className="h-2 w-2 rounded-full bg-amber-500" />
+            <span className="text-xs font-bold text-amber-800">
+              يتطلب استكمال الإعداد
+            </span>
+          </div>
+
+          <h2 className="mt-4 text-xl font-bold text-slate-950 sm:text-2xl">
+            تعذر تحميل بيانات لوحة القيادة
+          </h2>
+
+          <p className="mt-3 leading-7 text-slate-600">{message}</p>
+        </div>
+
+        <Link
+          href="/assessment"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50"
+        >
+          الانتقال إلى التقييم
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+        {eyebrow}
       </p>
 
-      <h2 className="mt-3 text-2xl font-black text-white">
-        تعذر تحميل لوحة القيادة
+      <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+        {title}
       </h2>
 
-      <p className="mx-auto mt-4 max-w-2xl leading-8 text-slate-300">
-        {message}
-      </p>
-
-      <Link
-        href="/assessment"
-        className="mt-6 inline-flex rounded-2xl bg-white px-6 py-3 font-bold text-slate-950 transition hover:bg-slate-100"
-      >
-        الانتقال إلى التقييم
-      </Link>
-    </section>
+      {description && (
+        <p className="max-w-3xl text-sm leading-7 text-slate-600">
+          {description}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -245,26 +305,42 @@ export default function DashboardPage() {
 
         if (answersResult.error) {
           throw new Error(
-            `تعذر تحميل إجابات Discovery: ${answersResult.error.message}`,
+            `تعذر تحميل إجابات الاستكشاف: ${answersResult.error.message}`,
           );
         }
 
         if (!isMounted) {
           return;
         }
-        
+
+        const currentTimestamp = Date.now();
+
         const normalizedPipeline: PipelineItem[] = (
-  pipelineResult.data ?? []
-).map((item) => ({
-  id: item.id,
-  status: item.status,
-  sales_rep: item.sales_rep,
-  opportunity_value: item.opportunity_value,
-  response_deadline: item.response_deadline,
-  companies: Array.isArray(item.companies)
-    ? item.companies[0] ?? null
-    : item.companies ?? null,
-}));
+          pipelineResult.data ?? []
+        ).map((item) => {
+          const companyRecord = Array.isArray(item.companies)
+            ? item.companies[0] ?? null
+            : item.companies ?? null;
+
+          const deadlineTimestamp = item.response_deadline
+            ? new Date(item.response_deadline).getTime()
+            : null;
+
+          const isOverdue =
+            deadlineTimestamp !== null &&
+            !CLOSED_PIPELINE_STATUSES.has(item.status ?? "") &&
+            deadlineTimestamp < currentTimestamp;
+
+          return {
+            id: item.id,
+            status: item.status,
+            sales_rep: item.sales_rep,
+            opportunity_value: item.opportunity_value,
+            response_deadline: item.response_deadline,
+            is_overdue: isOverdue,
+            companies: companyRecord,
+          };
+        });
 
         const dashboardData: DashboardData = {
           company: companyResult.data,
@@ -408,57 +484,65 @@ export default function DashboardPage() {
 
   return (
     <main
-      className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8 lg:py-12"
+      className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 sm:px-5 lg:px-8 lg:py-8"
       dir="rtl"
     >
-      <div className="mx-auto max-w-7xl">
-        <ExecutiveHero />
+      <div className="mx-auto max-w-[1440px]">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <ExecutiveHero />
 
-        <div className="mt-8">
-          <ExecutiveKpiGrid />
-        </div>
+          <div className="border-t border-slate-200 px-4 py-5 sm:px-5 lg:px-8">
+            <ExecutiveKpiGrid />
+          </div>
+        </section>
 
-        <div className="mt-8 grid gap-6 xl:grid-cols-2">
+        <div className="mt-6 grid gap-6 xl:grid-cols-2">
           <ExecutiveInsights />
           <ExecutiveDecisionCenter />
         </div>
 
-        <div className="mt-8 grid gap-6 xl:grid-cols-2">
+        <div className="mt-6 grid gap-6 xl:grid-cols-2">
           <ExecutiveHealthOverview />
           <ExecutiveActivityFeed />
         </div>
 
-        <section className="mt-8 overflow-hidden rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-2xl backdrop-blur sm:p-8 lg:p-10">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="font-bold text-emerald-300">
-                KAFU Executive Dashboard
-              </p>
+        <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <div className="flex flex-col gap-5 px-5 py-6 sm:px-8 lg:flex-row lg:items-center lg:items-center justify-between">
+            <div className="max-w-4xl">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                  KAFU Executive Dashboard
+                </span>
 
-              <h1 className="mt-3 text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">
+                <span className="text-xs font-medium text-slate-400">
+                  آخر عرض تشغيلي موحد
+                </span>
+              </div>
+
+              <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
                 لوحة القيادة التنفيذية
               </h1>
 
-              <p className="mt-5 max-w-4xl text-base leading-8 text-slate-300 sm:text-lg">
-                رؤية موحدة لأداء الشركة، جاهزيتها المؤسسية، ذكائها التنفيذي،
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+                رؤية موحدة لأداء الشركة وجاهزيتها المؤسسية وذكائها التنفيذي
                 ومسار الفرص التجارية المبني على البيانات الفعلية.
               </p>
             </div>
 
             {company && (
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 lg:min-w-64">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+              <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 lg:min-w-72">
+                <p className="text-xs font-bold text-slate-500">
                   الشركة الحالية
                 </p>
 
-                <p className="mt-2 text-lg font-black text-white">
+                <p className="mt-2 truncate text-base font-bold text-slate-950">
                   {company.name || "شركة غير مسماة"}
                 </p>
 
-                <p className="mt-1 text-sm text-slate-400">
+                <p className="mt-1 truncate text-sm text-slate-500">
                   {[company.industry, company.country]
                     .filter(Boolean)
-                    .join(" · ") || "بيانات التعريف قيد الاستكمال"}
+                    .join(" • ") || "بيانات التعريف قيد الاستكمال"}
                 </p>
               </div>
             )}
@@ -471,77 +555,74 @@ export default function DashboardPage() {
 
         {!loading && !message && company && (
           <>
-            <ExecutiveCards cards={executiveCards} />
+            <div className="mt-6">
+              <ExecutiveCards cards={executiveCards} />
+            </div>
 
             {enterpriseIntelligence && (
-              <section className="mt-8 rounded-3xl border border-emerald-400/20 bg-white p-6 text-slate-950 shadow-xl sm:p-8">
-                <div className="flex flex-col gap-2 border-b border-slate-200 pb-5">
-                  <p className="text-sm font-bold uppercase tracking-[0.16em] text-emerald-700">
-                    Enterprise Intelligence
-                  </p>
-
-                  <h2 className="text-2xl font-black">
-                    التوجيه التنفيذي المقترح
-                  </h2>
+              <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <div className="border-b border-slate-200 px-5 py-5 sm:px-8">
+                  <SectionHeading
+                    eyebrow="Enterprise Intelligence"
+                    title="التوجيه التنفيذي المقترح"
+                    description="ملخص موحد للتحليل والقرار والتوصية المستخلصة من بيانات المؤسسة الحالية."
+                  />
                 </div>
 
-                <div className="mt-6 grid gap-4 lg:grid-cols-3">
-                  <div className="rounded-2xl bg-slate-50 p-5">
-                    <p className="text-sm font-semibold text-slate-500">
-                      التحليل
-                    </p>
-                    <p className="mt-2 font-bold leading-7">
+                <div className="grid gap-px bg-slate-200 lg:grid-cols-3">
+                  <article className="bg-white p-6 sm:p-7">
+                    <p className="text-xs font-bold text-slate-500">التحليل</p>
+                    <p className="mt-3 text-sm font-semibold leading-7 text-slate-800">
                       {enterpriseIntelligence.reasoningSummary}
                     </p>
-                  </div>
+                  </article>
 
-                  <div className="rounded-2xl bg-slate-50 p-5">
-                    <p className="text-sm font-semibold text-slate-500">
+                  <article className="bg-white p-6 sm:p-7">
+                    <p className="text-xs font-bold text-slate-500">
                       القرار التنفيذي
                     </p>
-                    <p className="mt-2 font-bold leading-7">
+                    <p className="mt-3 text-sm font-semibold leading-7 text-slate-800">
                       {enterpriseIntelligence.decisionTitle}
                     </p>
-                  </div>
+                  </article>
 
-                  <div className="rounded-2xl bg-emerald-50 p-5">
-                    <p className="text-sm font-semibold text-emerald-700">
+                  <article className="bg-emerald-50 p-6 sm:p-7">
+                    <p className="text-xs font-bold text-emerald-700">
                       التوصية
                     </p>
-                    <p className="mt-2 font-bold leading-7 text-emerald-950">
+                    <p className="mt-3 text-sm font-semibold leading-7 text-emerald-950">
                       {enterpriseIntelligence.recommendationSummary}
                     </p>
-                  </div>
+                  </article>
                 </div>
               </section>
             )}
 
-            <section className="mt-8 grid gap-6 lg:grid-cols-3">
+            <section className="mt-6 grid gap-6 lg:grid-cols-3">
               <ExecutiveSummaryCard summary={executiveSummary} />
               <ExecutiveSignals signals={signals} />
             </section>
 
-            <section className="mt-8 rounded-3xl border border-white/10 bg-white p-6 text-slate-950 shadow-xl sm:p-8">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.16em] text-slate-500">
-                  Executive Priorities
-                </p>
-                <h2 className="mt-2 text-2xl font-black sm:text-3xl">
-                  الأولويات التنفيذية
-                </h2>
+            <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-5 sm:px-8">
+                <SectionHeading
+                  eyebrow="Executive Priorities"
+                  title="الأولويات التنفيذية"
+                  description="المحاور الأعلى أولوية للحفاظ على تقدم المؤسسة وتقليل المخاطر التشغيلية."
+                />
               </div>
 
-              <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-px bg-slate-200 md:grid-cols-2 xl:grid-cols-4">
                 {priorities.map((item, index) => (
                   <article
                     key={`${item}-${index}`}
-                    className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                    className="flex min-h-40 flex-col bg-white p-6"
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 font-black text-white">
-                      {index + 1}
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm font-bold text-slate-700">
+                      {String(index + 1).padStart(2, "0")}
                     </div>
 
-                    <p className="mt-4 font-bold leading-7 text-slate-800">
+                    <p className="mt-5 text-sm font-semibold leading-7 text-slate-800">
                       {item}
                     </p>
                   </article>
@@ -549,7 +630,7 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            <section className="mt-8 grid gap-6 lg:grid-cols-3">
+            <section className="mt-6 grid gap-6 lg:grid-cols-3">
               <RiskWatch risks={risks} />
 
               <PipelineSnapshot
@@ -560,150 +641,158 @@ export default function DashboardPage() {
               />
             </section>
 
-            <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {stageCounts.map((stage) => (
-                <article
-                  key={stage.stage}
-                  className="rounded-3xl border border-white/10 bg-white p-5 text-center text-slate-950 shadow-lg"
-                >
-                  <p className="text-sm font-bold text-slate-500">
-                    {stage.stage}
-                  </p>
-                  <p className="mt-2 text-4xl font-black">{stage.count}</p>
-                </article>
-              ))}
+            <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-5 sm:px-8">
+                <SectionHeading
+                  eyebrow="Pipeline Distribution"
+                  title="توزيع مراحل الفرص"
+                />
+              </div>
+
+              <div className="grid gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-5">
+                {stageCounts.map((stage) => (
+                  <article
+                    key={stage.stage}
+                    className="flex items-center items-center justify-between gap-4 bg-white px-5 py-5"
+                  >
+                    <p className="text-sm font-semibold text-slate-600">
+                      {stage.stage}
+                    </p>
+
+                    <p className="text-2xl font-bold tracking-tight text-slate-950">
+                      {stage.count}
+                    </p>
+                  </article>
+                ))}
+              </div>
             </section>
 
-            <section className="mt-8 overflow-hidden rounded-3xl border border-white/10 bg-white text-slate-950 shadow-xl">
-              <div className="border-b border-slate-200 p-6 sm:p-8">
-                <p className="text-sm font-bold uppercase tracking-[0.16em] text-slate-500">
-                  Sales Pipeline
-                </p>
-
-                <h2 className="mt-2 text-2xl font-black">مسار المبيعات</h2>
-
-                <p className="mt-3 max-w-3xl leading-7 text-slate-600">
-                  متابعة الفرص من التسجيل والتواصل وحتى الاجتماع والعرض
-                  والإغلاق، مع مراقبة الالتزام بزمن الاستجابة.
-                </p>
+            <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="border-b border-slate-200 px-5 py-5 sm:px-8">
+                <SectionHeading
+                  eyebrow="Sales Pipeline"
+                  title="مسار المبيعات"
+                  description="متابعة الفرص من التسجيل والتواصل وحتى الاجتماع والعرض والإغلاق، مع مراقبة الالتزام بزمن الاستجابة."
+                />
               </div>
 
               {pipeline.length === 0 ? (
-                <div className="p-10 text-center">
-                  <h3 className="text-xl font-black">
+                <div className="px-5 py-16 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-slate-50">
+                    <span className="text-lg font-bold text-slate-400">0</span>
+                  </div>
+
+                  <h3 className="mt-5 text-lg font-bold text-slate-950">
                     لا توجد فرص مسجلة حاليًا
                   </h3>
 
-                  <p className="mt-3 text-slate-600">
-                    ستظهر بيانات مسار المبيعات هنا بمجرد تسجيل أول فرصة.
+                  <p className="mx-auto mt-2 max-w-xl text-sm leading-7 text-slate-600">
+                    ستظهر بيانات مسار المبيعات هنا بمجرد تسجيل أول فرصة
+                    تجارية.
                   </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-[1100px] w-full text-right">
+                  <table className="w-full min-w-[1100px] text-right">
                     <thead className="bg-slate-50">
-                      <tr className="text-sm text-slate-500">
-                        <th className="px-6 py-4 font-bold">الشركة</th>
-                        <th className="px-6 py-4 font-bold">المندوب</th>
-                        <th className="px-6 py-4 font-bold">الحالة</th>
-                        <th className="px-6 py-4 font-bold">تحديث الحالة</th>
-                        <th className="px-6 py-4 font-bold">قيمة الفرصة</th>
-                        <th className="px-6 py-4 font-bold">SLA</th>
-                        <th className="px-6 py-4 font-bold">جهة الاتصال</th>
-                        <th className="px-6 py-4 font-bold">الجوال</th>
+                      <tr className="border-b border-slate-200 text-xs text-slate-500">
+                        <th className="px-5 py-4 font-bold">الشركة</th>
+                        <th className="px-5 py-4 font-bold">المندوب</th>
+                        <th className="px-5 py-4 font-bold">الحالة</th>
+                        <th className="px-5 py-4 font-bold">تحديث الحالة</th>
+                        <th className="px-5 py-4 font-bold">قيمة الفرصة</th>
+                        <th className="px-5 py-4 font-bold">SLA</th>
+                        <th className="px-5 py-4 font-bold">جهة الاتصال</th>
+                        <th className="px-5 py-4 font-bold">الجوال</th>
                       </tr>
                     </thead>
 
                     <tbody className="divide-y divide-slate-200">
-                      {pipeline.map((item) => {
-                        const isOverdue =
-                          Boolean(item.response_deadline) &&
-                          !CLOSED_PIPELINE_STATUSES.has(item.status ?? "") &&
-                          new Date(item.response_deadline as string).getTime() <
-                            // eslint-disable-next-line react-hooks/purity
-                            Date.now();
+                      {pipeline.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="transition-colors hover:bg-slate-50"
+                        >
+                          <td className="px-5 py-5 text-sm font-bold text-slate-950">
+                            {item.companies?.name || "غير محدد"}
+                          </td>
 
-                        return (
-                          <tr
-                            key={item.id}
-                            className="transition hover:bg-slate-50"
+                          <td className="px-5 py-5 text-sm text-slate-600">
+                            {item.sales_rep || "غير معين"}
+                          </td>
+
+                          <td className="px-5 py-5">
+                            <span
+                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${getPipelineStatusClasses(
+                                item.status,
+                              )}`}
+                            >
+                              {getPipelineStatusLabel(item.status)}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-5">
+                            <LeadStageButtons pipelineId={item.id} />
+                          </td>
+
+                          <td className="px-5 py-5 text-sm font-semibold text-slate-700">
+                            {formatCurrency(item.opportunity_value)}
+                          </td>
+
+                          <td className="px-5 py-5">
+                            <span
+                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${
+                                item.is_overdue
+                                  ? "border-red-200 bg-red-50 text-red-700"
+                                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              }`}
+                            >
+                              {item.is_overdue ? "متأخر" : "ضمن المسار"}
+                            </span>
+                          </td>
+
+                          <td className="px-5 py-5 text-sm text-slate-600">
+                            {item.companies?.contact_name || "غير محدد"}
+                          </td>
+
+                          <td
+                            className="px-5 py-5 text-sm text-slate-600"
+                            dir="ltr"
                           >
-                            <td className="px-6 py-5 font-bold">
-                              {item.companies?.name || "غير محدد"}
-                            </td>
-
-                            <td className="px-6 py-5 text-slate-600">
-                              {item.sales_rep || "غير معين"}
-                            </td>
-
-                            <td className="px-6 py-5">
-                              <span
-                                className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ${getPipelineStatusClasses(
-                                  item.status,
-                                )}`}
-                              >
-                                {item.status || "New Lead"}
-                              </span>
-                            </td>
-
-                            <td className="px-6 py-5">
-                              <LeadStageButtons pipelineId={item.id} />
-                            </td>
-
-                            <td className="px-6 py-5 font-semibold text-slate-700">
-                              {formatCurrency(item.opportunity_value)}
-                            </td>
-
-                            <td className="px-6 py-5">
-                              <span
-                                className={`inline-flex rounded-full px-3 py-1 text-sm font-bold ${
-                                  isOverdue
-                                    ? "bg-red-50 text-red-700"
-                                    : "bg-emerald-50 text-emerald-700"
-                                }`}
-                              >
-                                {isOverdue ? "متأخر" : "ضمن المسار"}
-                              </span>
-                            </td>
-
-                            <td className="px-6 py-5 text-slate-600">
-                              {item.companies?.contact_name || "غير محدد"}
-                            </td>
-
-                            <td className="px-6 py-5 text-slate-600" dir="ltr">
-                              {item.companies?.contact_phone || "-"}
-                            </td>
-                          </tr>
-                        );
-                      })}
+                            {item.companies?.contact_phone || "-"}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
               )}
             </section>
 
-            <section className="mt-8 flex flex-col justify-between gap-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-6 sm:p-8 md:flex-row md:items-center">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.16em] text-emerald-300">
-                  Executive Intelligence
-                </p>
+            <section className="mt-6 overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50">
+              <div className="flex flex-col gap-6 px-5 py-6 sm:px-8 md:flex-row md:items-center md:items-center justify-between">
+                <div className="max-w-3xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">
+                    Executive Intelligence
+                  </p>
 
-                <h3 className="mt-2 text-2xl font-black sm:text-3xl">
-                  طبقة الذكاء التنفيذي جاهزة للعمل
-                </h3>
+                  <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+                    طبقة الذكاء التنفيذي جاهزة للعمل
+                  </h3>
 
-                <p className="mt-4 max-w-3xl leading-8 text-slate-300">
-                  تم تحويل بيانات الشركة إلى مؤشرات تنفيذية وقرارات وتوصيات
-                  قابلة للمراجعة ضمن رحلة مؤسسية موحدة.
-                </p>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    تم تحويل بيانات الشركة إلى مؤشرات تنفيذية وقرارات
+                    وتوصيات قابلة للمراجعة ضمن رحلة مؤسسية موحدة.
+                  </p>
+                </div>
+
+                <Link
+                  href="/journey"
+                  className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50"
+                >
+                  مراجعة الرحلة الكاملة
+                </Link>
               </div>
-
-              <Link
-                href="/journey"
-                className="shrink-0 rounded-2xl bg-emerald-500 px-7 py-4 text-center font-bold text-slate-950 transition hover:bg-emerald-400"
-              >
-                مراجعة الرحلة الكاملة
-              </Link>
             </section>
           </>
         )}
@@ -711,3 +800,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+

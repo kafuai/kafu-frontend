@@ -1,3 +1,5 @@
+﻿import { BarChart3 } from "lucide-react";
+
 type ExecutiveCard = {
   title: string;
   value: string;
@@ -12,24 +14,34 @@ export default function ExecutiveCards({
   cards,
 }: ExecutiveCardsProps) {
   return (
-    <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => (
-        <div
+        <article
           key={card.title}
-          className="rounded-3xl border border-slate-700 bg-white p-6 text-slate-900 shadow-xl"
+          className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)]"
         >
-          <p className="font-semibold text-slate-500">
-            {card.title}
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[var(--text-muted)]">
+                {card.title}
+              </p>
 
-          <h2 className="mt-3 text-4xl font-black">
-            {card.value}
-          </h2>
+              <p className="mt-3 text-3xl font-bold tracking-tight text-[var(--text-primary)]">
+                {card.value}
+              </p>
+            </div>
 
-          <p className="mt-3 text-sm font-bold text-emerald-700">
-            {card.note}
-          </p>
-        </div>
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+              <BarChart3 size={18} />
+            </span>
+          </div>
+
+          <div className="mt-5 border-t border-[var(--border-default)] pt-4">
+            <p className="text-xs font-semibold leading-6 text-[var(--success)]">
+              {card.note}
+            </p>
+          </div>
+        </article>
       ))}
     </section>
   );

@@ -1,0 +1,1579 @@
+============================================================
+FILE: app\command-center\page.tsx
+============================================================
+
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
+
+import AIRecommendations from "@/components/command-center/AIRecommendations";
+import CommandCenterFooter from "@/components/command-center/CommandCenterFooter";
+import CommandCenterHero from "@/components/command-center/CommandCenterHero";
+import CommandCenterKpis from "@/components/command-center/CommandCenterKpis";
+import DigitalWorkforceGrid, {
+  type CommandCenterAgent,
+} from "@/components/command-center/DigitalWorkforceGrid";
+import ExecutiveAlerts, {
+  type CommandCenterAlert,
+} from "@/components/command-center/ExecutiveAlerts";
+import LiveActivity, {
+  type CommandCenterActivity,
+} from "@/components/command-center/LiveActivity";
+import { useLocalization } from "@/components/localization/LocalizationContext";
+import { getCurrentCompanyId } from "@/lib/companySession";
+import { supabase } from "@/lib/supabase";
+
+type Company = {
+  id: string;
+  name: string | null;
+  industry: string | null;
+  country: string | null;
+  employee_count: number | null;
+};
+
+type DiscoveryAnswer = {
+  id: string;
+  question: string;
+  answer: string;
+  question_order: number;
+};
+
+export default function CommandCenterPage() {
+  const { locale } = useLocalization();
+
+  const [company, setCompany] = useState<Company | null>(null);
+  const [answers, setAnswers] = useState<DiscoveryAnswer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCommandCenter() {
+      setLoading(true);
+      setMessage("");
+
+      const companyId = getCurrentCompanyId();
+
+      if (!companyId) {
+        if (isMounted) {
+          setMessage(
+            locale === "ar"
+              ? "لم يتم العثور على بيانات المؤسسة. يرجى إكمال التقييم أولًا."
+              : "Company data was not found. Please complete the assessment first.",
+          );
+
+          setLoading(false);
+        }
+
+        return;
+      }
+
+      try {
+        const [
+          { data: companyData, error: companyError },
+          { data: answersData, error: answersError },
+        ] = await Promise.all([
+          supabase
+            .from("companies")
+            .select("id, name, industry, country, employee_count")
+            .eq("id", companyId)
+            .single(),
+          supabase
+            .from("discovery_answers")
+            .select("id, question, answer, question_order")
+            .eq("company_id", companyId)
+            .order("question_order", { ascending: true }),
+        ]);
+
+        if (companyError) {
+          throw new Error(companyError.message);
+        }
+
+        if (answersError) {
+          throw new Error(answersError.message);
+        }
+
+        if (isMounted) {
+          setCompany(companyData);
+          setAnswers(answersData ?? []);
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+
+        if (isMounted) {
+          setMessage(
+            locale === "ar"
+              ? `تعذر تحميل مركز القيادة: ${errorMessage}`
+              : `Failed to load the command center: ${errorMessage}`,
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadCommandCenter();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [locale]);
+
+  const companyName =
+    company?.name || (locale === "ar" ? "المؤسسة" : "Organization");
+
+  const agents = useMemo<CommandCenterAgent[]>(
+    () => [
+      {
+        id: "employee-experience-manager",
+        name: "Employee Experience Manager",
+        title:
+          locale === "ar"
+            ? "مدير تجربة الموظف الذكي"
+            : "Employee Experience Manager",
+        description:
+          locale === "ar"
+            ? "يعالج طلبات الموظفين اليومية والاستفسارات والخطابات والإجازات."
+            : "Handles daily employee requests, inquiries, letters, and leave workflows.",
+        status: locale === "ar" ? "متصل" : "Online",
+        load: 74,
+        priority: locale === "ar" ? "عالية" : "High",
+      },
+      {
+        id: "documents-policies-advisor",
+        name: "Documents & Policies Advisor",
+        title:
+          locale === "ar"
+            ? "مستشار الوثائق والسياسات"
+            : "Documents & Policies Advisor",
+        description:
+          locale === "ar"
+            ? "يربط الإجابات بالسياسات والوثائق والنماذج الداخلية المعتمدة."
+            : "Connects responses to verified policies, documents, and internal templates.",
+        status: locale === "ar" ? "متصل" : "Online",
+        load: 82,
+        priority: locale === "ar" ? "حرجة" : "Critical",
+      },
+      {
+        id: "executive-hr-advisor",
+        name: "Executive HR Advisor",
+        title:
+          locale === "ar"
+            ? "المستشار التنفيذي للموارد البشرية"
+            : "Executive HR Advisor",
+        description:
+          locale === "ar"
+            ? "ينتج الملخصات والتوصيات التنفيذية الموجهة للإدارة."
+            : "Produces executive summaries and management recommendations.",
+        status: locale === "ar" ? "متصل" : "Online",
+        load: 69,
+        priority: locale === "ar" ? "عالية" : "High",
+      },
+      {
+        id: "talent-acquisition-advisor",
+        name: "Talent Acquisition Advisor",
+        title:
+          locale === "ar"
+            ? "مستشار استقطاب المواهب"
+            : "Talent Acquisition Advisor",
+        description:
+          locale === "ar"
+            ? "يدعم فرز المرشحين وتحليل السير الذاتية وإعداد القوائم القصيرة."
+            : "Supports candidate screening, resume analysis, and shortlist preparation.",
+        status: locale === "ar" ? "وضع الاستعداد" : "Standby",
+        load: 42,
+        priority: locale === "ar" ? "متوسطة" : "Medium",
+      },
+      {
+        id: "compliance-intelligence-advisor",
+        name: "Compliance Intelligence Advisor",
+        title:
+          locale === "ar"
+            ? "مستشار الامتثال الذكي"
+            : "Compliance Intelligence Advisor",
+        description:
+          locale === "ar"
+            ? "يراقب الالتزام بالسياسات والمتطلبات التنظيمية المعتمدة."
+            : "Monitors compliance with policies and regulatory requirements.",
+        status: locale === "ar" ? "قيد المعالجة" : "Processing",
+        load: 58,
+        priority: locale === "ar" ? "متوسطة" : "Medium",
+      },
+      {
+        id: "localization-intelligence-advisor",
+        name: "Localization Intelligence Advisor",
+        title:
+          locale === "ar"
+            ? "مستشار التوطين الذكي"
+            : "Localization Intelligence Advisor",
+        description:
+          locale === "ar"
+            ? "يتابع مؤشرات التوطين والتنبيهات والمخاطر المرتبطة بها."
+            : "Tracks localization indicators, alerts, and associated risks.",
+        status: locale === "ar" ? "قيد المراقبة" : "Monitoring",
+        load: company?.country === "Saudi Arabia" ? 62 : 40,
+        priority:
+          company?.country === "Saudi Arabia"
+            ? locale === "ar"
+              ? "عالية"
+              : "High"
+            : locale === "ar"
+              ? "متوسطة"
+              : "Medium",
+      },
+    ],
+    [company?.country, locale],
+  );
+
+  const alerts = useMemo<CommandCenterAlert[]>(
+    () => [
+      {
+        id: "knowledge-sources",
+        title:
+          locale === "ar"
+            ? "مصادر المعرفة مطلوبة"
+            : "Knowledge sources required",
+        description:
+          locale === "ar"
+            ? "ارفع السياسات والإجراءات الداخلية لزيادة دقة العقل المؤسسي."
+            : "Upload internal policies and procedures to improve Corporate Brain accuracy.",
+        level: locale === "ar" ? "عالية" : "High",
+      },
+      {
+        id: "discovery-data",
+        title:
+          locale === "ar"
+            ? "بيانات الاستكشاف متاحة"
+            : "Discovery data available",
+        description:
+          locale === "ar"
+            ? "يمكن الآن استخدام إجابات الاستكشاف الحالية في التوصيات التنفيذية."
+            : "Current discovery answers can now be used in executive recommendations.",
+        level: locale === "ar" ? "متوسطة" : "Medium",
+      },
+      {
+        id: "simulation-mode",
+        title:
+          locale === "ar"
+            ? "تشغيل الوكلاء في وضع العرض"
+            : "Agent deployment is simulated",
+        description:
+          locale === "ar"
+            ? "الوكلاء معروضون حاليًا في وضع التوصية والعرض، وليس التنفيذ الفعلي."
+            : "Agents are currently presented in recommendation and demo mode, not live execution.",
+        level: locale === "ar" ? "متوسطة" : "Medium",
+      },
+    ],
+    [locale],
+  );
+
+  const activities = useMemo<CommandCenterActivity[]>(
+    () => [
+      {
+        id: "company-loaded",
+        title:
+          locale === "ar"
+            ? "تحميل بيانات المؤسسة"
+            : "Company data loaded",
+        description:
+          locale === "ar"
+            ? `تم ربط بيانات ${companyName} بمركز القيادة.`
+            : `${companyName} data was connected to the command center.`,
+        time: locale === "ar" ? "الآن" : "Now",
+      },
+      {
+        id: "signals-analyzed",
+        title:
+          locale === "ar"
+            ? "تحليل إشارات الاستكشاف"
+            : "Discovery signals analyzed",
+        description:
+          locale === "ar"
+            ? `تم تحليل ${answers.length} إجابة واستخراج الأولويات التنفيذية.`
+            : `${answers.length} discovery answers were analyzed for executive priorities.`,
+        time: locale === "ar" ? "قبل دقيقة" : "1 minute ago",
+      },
+      {
+        id: "workforce-mapped",
+        title:
+          locale === "ar"
+            ? "ربط القوى العاملة الرقمية"
+            : "Digital workforce mapped",
+        description:
+          locale === "ar"
+            ? "تم ربط الوكلاء بالحمض المؤسسي والعقل المؤسسي."
+            : "Digital agents were connected to Corporate DNA and Corporate Brain.",
+        time: locale === "ar" ? "قبل 3 دقائق" : "3 minutes ago",
+      },
+    ],
+    [answers.length, companyName, locale],
+  );
+
+  const recommendations = useMemo(
+    () => [
+      locale === "ar"
+        ? "ابدأ بتفعيل مدير تجربة الموظف كأول وكيل تشغيلي."
+        : "Activate the Employee Experience Manager as the first operational agent.",
+      locale === "ar"
+        ? "اربط مستشار السياسات بمصادر المعرفة الداخلية المعتمدة."
+        : "Connect the Policies Advisor to verified internal knowledge sources.",
+      locale === "ar"
+        ? "فعّل ملخصًا تنفيذيًا أسبوعيًا للإدارة العليا."
+        : "Enable a weekly executive brief for senior management.",
+    ],
+    [locale],
+  );
+
+  if (loading) {
+    return (
+      <main className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-6">
+        <div
+          className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-10 text-center shadow-[var(--shadow-medium)]"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="mx-auto block h-10 w-10 animate-spin rounded-full border-4 border-[var(--border-default)] border-t-[var(--brand-primary)]" />
+
+          <p className="mt-5 font-bold text-[var(--text-primary)]">
+            {locale === "ar"
+              ? "جارٍ تشغيل مركز القيادة..."
+              : "Initializing AI Command Center..."}
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (message) {
+    return (
+      <main className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-6">
+        <section
+          className="max-w-xl rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-10 text-center shadow-[var(--shadow-medium)]"
+          role="alert"
+        >
+          <AlertTriangle
+            className="mx-auto text-[var(--warning)]"
+            size={32}
+          />
+
+          <h1 className="mt-5 text-xl font-black text-[var(--text-primary)]">
+            {locale === "ar"
+              ? "تعذر فتح مركز القيادة"
+              : "Command Center Unavailable"}
+          </h1>
+
+          <p className="mt-3 break-words leading-8 text-[var(--text-secondary)]">
+            {message}
+          </p>
+
+          <Link
+            href="/assessment"
+            className="mt-7 inline-flex min-h-12 items-center justify-center rounded-xl bg-[var(--text-primary)] px-7 font-bold text-[var(--surface)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+          >
+            {locale === "ar" ? "العودة إلى التقييم" : "Go to Assessment"}
+          </Link>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main
+      className="min-h-[calc(100vh-76px)] bg-[var(--background)] px-5 py-7 md:px-8 lg:px-10"
+      dir={locale === "ar" ? "rtl" : "ltr"}
+    >
+      <div className="mx-auto max-w-[1580px] space-y-6">
+        <CommandCenterHero locale={locale} />
+
+        <CommandCenterKpis
+          locale={locale}
+          companyName={companyName}
+          discoveryAnswersCount={answers.length}
+        />
+
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <DigitalWorkforceGrid
+            locale={locale}
+            companyName={companyName}
+            agents={agents}
+          />
+
+          <ExecutiveAlerts locale={locale} alerts={alerts} />
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-2">
+          <LiveActivity locale={locale} activities={activities} />
+
+          <AIRecommendations
+            locale={locale}
+            recommendations={recommendations}
+          />
+        </section>
+
+        <CommandCenterFooter locale={locale} />
+      </div>
+    </main>
+  );
+}
+
+
+============================================================
+FILE: components\command-center\AIRecommendations.tsx
+============================================================
+
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Lightbulb,
+  Sparkles,
+} from "lucide-react";
+
+type AIRecommendationsProps = {
+  locale: "ar" | "en";
+  recommendations: string[];
+};
+
+export default function AIRecommendations({
+  locale,
+  recommendations,
+}: AIRecommendationsProps) {
+  const isArabic = locale === "ar";
+
+  return (
+    <section className="overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="flex items-center justify-between gap-4 border-b border-[var(--border-default)] px-6 py-5">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <Lightbulb size={20} />
+          </span>
+
+          <div>
+            <h2 className="text-lg font-black tracking-tight text-[var(--text-primary)] md:text-xl">
+              {isArabic
+                ? "توصيات KAFU AI"
+                : "KAFU AI Recommendations"}
+            </h2>
+
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              {isArabic
+                ? "الإجراءات المقترحة ذات الأولوية"
+                : "Recommended priority actions"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-full bg-[var(--brand-subtle)] px-3 py-1.5">
+          <Sparkles
+            size={12}
+            className="text-[var(--brand-primary)]"
+          />
+
+          <span className="text-[10px] font-black text-[var(--brand-primary)]">
+            {recommendations.length}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {recommendations.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-[var(--border-default)] bg-[var(--surface-muted)] px-6 py-12 text-center">
+            <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface)] text-[var(--text-muted)] shadow-sm">
+              <Lightbulb size={26} />
+            </span>
+
+            <h3 className="mt-5 text-sm font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "لا توجد توصيات حالية"
+                : "No Current Recommendations"}
+            </h3>
+
+            <p className="mt-2 text-sm leading-7 text-[var(--text-muted)]">
+              {isArabic
+                ? "ستظهر التوصيات ذات الأولوية هنا عند توفرها."
+                : "Priority recommendations will appear here when available."}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {recommendations.map((recommendation, index) => (
+              <article
+                key={`${recommendation}-${index}`}
+                className="group flex items-start gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4 transition hover:border-[var(--brand-primary)] hover:bg-[var(--surface)]"
+              >
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-sm font-black text-white shadow-sm">
+                  {index + 1}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-xs font-bold leading-6 text-[var(--text-secondary)]">
+                      {recommendation}
+                    </p>
+
+                    <CheckCircle2
+                      size={16}
+                      className="mt-1 shrink-0 text-[var(--success)]"
+                    />
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.06em] text-[var(--brand-primary)]">
+                    <Sparkles size={11} />
+
+                    <span>
+                      {isArabic
+                        ? "توصية مدعومة بالذكاء الاصطناعي"
+                        : "AI-supported recommendation"}
+                    </span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+
+============================================================
+FILE: components\command-center\CommandCenterFooter.tsx
+============================================================
+
+import Link from "next/link";
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
+
+type CommandCenterFooterProps = {
+  locale: "ar" | "en";
+};
+
+export default function CommandCenterFooter({
+  locale,
+}: CommandCenterFooterProps) {
+  const isArabic = locale === "ar";
+
+  return (
+    <section className="relative overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--brand-subtle)] px-6 py-6 shadow-[var(--shadow-small)] md:px-8 md:py-7">
+      <div className="pointer-events-none absolute -end-12 -top-16 h-48 w-48 rounded-full bg-[var(--surface)]/60 blur-3xl" />
+
+      <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 max-w-4xl">
+          <div className="flex items-start gap-4">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--surface)] text-[var(--brand-primary)] shadow-sm">
+              <ShieldCheck size={22} />
+            </span>
+
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-black tracking-tight text-[var(--text-primary)] md:text-2xl">
+                  {isArabic
+                    ? "المنصة جاهزة للمراجعة التنفيذية"
+                    : "Platform Ready for Executive Review"}
+                </h2>
+
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--success-background)] px-2.5 py-1 text-[9px] font-black text-[var(--success)]">
+                  <CheckCircle2 size={11} />
+
+                  <span>
+                    {isArabic ? "جاهز" : "Ready"}
+                  </span>
+                </span>
+              </div>
+
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--text-secondary)] md:text-[15px]">
+                {isArabic
+                  ? "استعرض أداء المؤسسة والتوصيات والقرارات من لوحة القيادة التنفيذية ضمن مساحة موحدة وآمنة."
+                  : "Review enterprise performance, recommendations, and decisions from one unified and secure executive workspace."}
+              </p>
+
+              <div className="mt-4 flex flex-wrap items-center gap-4 text-[11px] font-bold text-[var(--text-secondary)]">
+                <span className="inline-flex items-center gap-2">
+                  <Sparkles
+                    size={13}
+                    className="text-[var(--brand-primary)]"
+                  />
+
+                  {isArabic
+                    ? "رؤية تنفيذية موحدة"
+                    : "Unified executive visibility"}
+                </span>
+
+                <span className="inline-flex items-center gap-2">
+                  <ShieldCheck
+                    size={13}
+                    className="text-[var(--success)]"
+                  />
+
+                  {isArabic
+                    ? "بيئة موثوقة وآمنة"
+                    : "Trusted and secure environment"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Link
+          href="/dashboard"
+          className="inline-flex min-h-11 w-fit shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-5 text-sm font-black text-white shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+        >
+          <span>
+            {isArabic
+              ? "فتح لوحة القيادة"
+              : "Open Executive Dashboard"}
+          </span>
+
+          <ArrowUpRight
+            size={16}
+            className={isArabic ? "-scale-x-100" : ""}
+          />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+
+============================================================
+FILE: components\command-center\CommandCenterHero.tsx
+============================================================
+
+import Link from "next/link";
+import {
+  Activity,
+  ArrowUpRight,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
+
+type CommandCenterHeroProps = {
+  locale: "ar" | "en";
+};
+
+export default function CommandCenterHero({
+  locale,
+}: CommandCenterHeroProps) {
+  const isArabic = locale === "ar";
+
+  return (
+    <section className="relative overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-medium)]">
+      <div className="absolute inset-x-0 top-0 h-1 bg-[var(--brand-primary)]" />
+
+      <div className="pointer-events-none absolute -end-16 -top-20 h-56 w-56 rounded-full bg-[var(--brand-subtle)] blur-3xl" />
+
+      <div className="relative flex flex-col gap-7 px-6 py-7 md:px-8 md:py-8 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 max-w-4xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--brand-subtle)] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+            <Sparkles size={13} />
+            <span>AI Command Center</span>
+          </div>
+
+          <h1 className="mt-4 max-w-3xl text-2xl font-black tracking-tight text-[var(--text-primary)] md:text-[34px] md:leading-[1.2]">
+            {isArabic
+              ? "مركز قيادة المؤسسة الذكي"
+              : "Enterprise AI Command Center"}
+          </h1>
+
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--text-secondary)] md:text-[15px]">
+            {isArabic
+              ? "رؤية موحدة لمتابعة الوكلاء الرقميين والتنبيهات والأنشطة والتوصيات التنفيذية في الوقت الفعلي."
+              : "A unified real-time view of digital agents, executive alerts, operational activity, and AI recommendations."}
+          </p>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-5 text-sm font-black text-white shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+            >
+              <span>
+                {isArabic
+                  ? "فتح لوحة القيادة التنفيذية"
+                  : "Open Executive Dashboard"}
+              </span>
+
+              <ArrowUpRight
+                size={16}
+                className={isArabic ? "-scale-x-100" : ""}
+              />
+            </Link>
+
+            <div className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-4 text-xs font-bold text-[var(--text-secondary)]">
+              <Activity
+                size={15}
+                className="text-[var(--brand-primary)]"
+              />
+
+              <span>
+                {isArabic
+                  ? "مراقبة مباشرة للعمليات"
+                  : "Live operational monitoring"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full rounded-2xl border border-[var(--border-default)] bg-[var(--success-background)] p-4 lg:w-[260px] lg:shrink-0">
+          <div className="flex items-start gap-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--success)] shadow-sm">
+              <CheckCircle2 size={20} />
+            </span>
+
+            <div className="min-w-0">
+              <p className="text-sm font-black text-[var(--text-primary)]">
+                {isArabic
+                  ? "جميع الأنظمة تعمل"
+                  : "All Systems Operational"}
+              </p>
+
+              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                {isArabic
+                  ? "المنصة والخدمات الأساسية مستقرة"
+                  : "Platform and core services are stable"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between rounded-xl bg-[var(--surface)] px-3 py-2.5">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--success)] opacity-30" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--success)]" />
+              </span>
+
+              <span className="text-[11px] font-bold text-[var(--text-secondary)]">
+                {isArabic ? "صحة الأنظمة" : "System health"}
+              </span>
+            </div>
+
+            <span className="text-sm font-black text-[var(--success)]">
+              99%
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+============================================================
+FILE: components\command-center\CommandCenterKpis.tsx
+============================================================
+
+import {
+  Bot,
+  BrainCircuit,
+  Building2,
+  Gauge,
+} from "lucide-react";
+
+type CommandCenterKpisProps = {
+  locale: "ar" | "en";
+  companyName: string;
+  discoveryAnswersCount: number;
+};
+
+export default function CommandCenterKpis({
+  locale,
+  companyName,
+  discoveryAnswersCount,
+}: CommandCenterKpisProps) {
+  const isArabic = locale === "ar";
+
+  const kpis = [
+    {
+      icon: Building2,
+      label: isArabic ? "مساحة العمل النشطة" : "Active Workspace",
+      value: companyName,
+      note: isArabic ? "المؤسسة الحالية" : "Current organization",
+    },
+    {
+      icon: Bot,
+      label: isArabic ? "الوكلاء المقترحون" : "Recommended Agents",
+      value: "6",
+      note: isArabic ? "القوى العاملة الرقمية" : "Digital workforce",
+    },
+    {
+      icon: BrainCircuit,
+      label: isArabic ? "إشارات الاستكشاف" : "Discovery Signals",
+      value: discoveryAnswersCount.toLocaleString(
+        isArabic ? "ar-SA" : "en-US",
+      ),
+      note: isArabic ? "مدخلات تنفيذية" : "Executive inputs",
+    },
+    {
+      icon: Gauge,
+      label: isArabic ? "صحة المنصة" : "Platform Health",
+      value: "99%",
+      note: isArabic
+        ? "الأنظمة الأساسية تعمل"
+        : "Core systems operational",
+    },
+  ];
+
+  return (
+    <section
+      aria-label={isArabic ? "مؤشرات مركز القيادة" : "Command center metrics"}
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+    >
+      {kpis.map((item, index) => {
+        const Icon = item.icon;
+
+        return (
+          <article
+            key={item.label}
+            className="group relative overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
+          >
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--brand-primary)] opacity-0 transition group-hover:opacity-100" />
+
+            <div className="flex items-start justify-between gap-4">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)] transition group-hover:scale-105">
+                <Icon size={20} />
+              </span>
+
+              <div className="flex items-center gap-2 rounded-full bg-[var(--success-background)] px-2.5 py-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
+
+                <span className="text-[9px] font-black uppercase tracking-[0.08em] text-[var(--success)]">
+                  {isArabic ? "نشط" : "Live"}
+                </span>
+              </div>
+            </div>
+
+            <p className="mt-5 text-[11px] font-black uppercase tracking-[0.06em] text-[var(--text-muted)]">
+              {item.label}
+            </p>
+
+            <h2
+              className={`mt-2 truncate font-black tracking-tight text-[var(--text-primary)] ${
+                index === 0
+                  ? "text-xl"
+                  : "text-3xl"
+              }`}
+              title={item.value}
+            >
+              {item.value}
+            </h2>
+
+            <div className="mt-4 flex items-center gap-2 border-t border-[var(--border-default)] pt-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand-primary)]" />
+
+              <p className="text-[11px] font-bold text-[var(--text-secondary)]">
+                {item.note}
+              </p>
+            </div>
+          </article>
+        );
+      })}
+    </section>
+  );
+}
+
+
+============================================================
+FILE: components\command-center\DigitalWorkforceGrid.tsx
+============================================================
+
+import {
+  Activity,
+  Bot,
+  Gauge,
+  Sparkles,
+} from "lucide-react";
+
+export type CommandCenterAgent = {
+  id: string;
+  name: string;
+  title: string;
+  description: string;
+  status: string;
+  load: number;
+  priority: string;
+};
+
+type DigitalWorkforceGridProps = {
+  locale: "ar" | "en";
+  companyName: string;
+  agents: CommandCenterAgent[];
+};
+
+function getLoadWidth(load: number) {
+  return `${Math.min(Math.max(load, 0), 100)}%`;
+}
+
+function getStatusStyles(status: string) {
+  const normalizedStatus = status.toLowerCase();
+
+  if (
+    normalizedStatus.includes("online") ||
+    normalizedStatus.includes("متصل")
+  ) {
+    return "border-[var(--success)]/20 bg-[var(--success-background)] text-[var(--success)]";
+  }
+
+  if (
+    normalizedStatus.includes("processing") ||
+    normalizedStatus.includes("معالجة")
+  ) {
+    return "border-[var(--warning)]/20 bg-[var(--warning-background)] text-[var(--warning)]";
+  }
+
+  return "border-[var(--border-default)] bg-[var(--surface)] text-[var(--text-secondary)]";
+}
+
+export default function DigitalWorkforceGrid({
+  locale,
+  companyName,
+  agents,
+}: DigitalWorkforceGridProps) {
+  const isArabic = locale === "ar";
+
+  return (
+    <section className="overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="flex flex-col gap-4 border-b border-[var(--border-default)] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <Bot size={20} />
+          </span>
+
+          <div>
+            <h2 className="text-lg font-black tracking-tight text-[var(--text-primary)] md:text-xl">
+              {isArabic
+                ? "حالة القوى العاملة الرقمية"
+                : "Digital Workforce Status"}
+            </h2>
+
+            <p className="mt-1.5 text-xs leading-6 text-[var(--text-muted)]">
+              {isArabic
+                ? `مراقبة الوكلاء المقترحين لمؤسسة ${companyName}.`
+                : `Monitoring recommended agents for ${companyName}.`}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex w-fit items-center gap-2 rounded-full border border-[var(--success)]/20 bg-[var(--success-background)] px-3.5 py-2">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--success)] opacity-30" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--success)]" />
+          </span>
+
+          <span className="text-[11px] font-black text-[var(--success)]">
+            {agents.length} {isArabic ? "وكلاء" : "Agents"}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {agents.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-[var(--border-default)] bg-[var(--surface-muted)] px-6 py-12 text-center">
+            <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface)] text-[var(--text-muted)] shadow-sm">
+              <Bot size={26} />
+            </span>
+
+            <h3 className="mt-5 font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "لا يوجد وكلاء رقميون"
+                : "No digital agents available"}
+            </h3>
+
+            <p className="mx-auto mt-2 max-w-lg text-sm leading-7 text-[var(--text-muted)]">
+              {isArabic
+                ? "سيظهر الوكلاء المقترحون هنا عند توفر بيانات المؤسسة."
+                : "Recommended agents will appear when organization data is available."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {agents.map((agent) => (
+              <article
+                key={agent.id}
+                className="group relative overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:bg-[var(--surface)] hover:shadow-[var(--shadow-medium)]"
+              >
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-[var(--brand-primary)] opacity-0 transition group-hover:opacity-100" />
+
+                <div className="flex items-start justify-between gap-4">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--surface)] text-[var(--brand-primary)] shadow-sm">
+                    <Bot size={19} />
+                  </span>
+
+                  <span
+                    className={`rounded-full border px-3 py-1.5 text-[10px] font-black ${getStatusStyles(
+                      agent.status,
+                    )}`}
+                  >
+                    {agent.status}
+                  </span>
+                </div>
+
+                <div className="mt-4">
+                  <h3 className="text-sm font-black leading-6 text-[var(--text-primary)]">
+                    {agent.title}
+                  </h3>
+
+                  <p className="mt-1 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.06em] text-[var(--brand-primary)]">
+                    <Sparkles size={12} />
+                    <span>{agent.name}</span>
+                  </p>
+                </div>
+
+                <p className="mt-3 min-h-12 text-xs leading-6 text-[var(--text-muted)]">
+                  {agent.description}
+                </p>
+
+                <div className="mt-5 rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Gauge
+                        size={15}
+                        className="text-[var(--brand-primary)]"
+                      />
+
+                      <span className="text-xs font-bold text-[var(--text-secondary)]">
+                        {isArabic ? "الحمل الحالي" : "Current Load"}
+                      </span>
+                    </div>
+
+                    <span className="text-xs font-black text-[var(--text-primary)]">
+                      {agent.load}%
+                    </span>
+                  </div>
+
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--surface-muted)]">
+                    <div
+                      className="h-full rounded-full bg-[var(--brand-primary)] transition-all duration-500"
+                      style={{ width: getLoadWidth(agent.load) }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl bg-[var(--brand-subtle)] px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Activity
+                      size={14}
+                      className="text-[var(--brand-primary)]"
+                    />
+
+                    <span className="text-xs font-bold text-[var(--text-secondary)]">
+                      {isArabic ? "الأولوية" : "Priority"}
+                    </span>
+                  </div>
+
+                  <span className="text-xs font-black text-[var(--text-primary)]">
+                    {agent.priority}
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+
+============================================================
+FILE: components\command-center\ExecutiveAlerts.tsx
+============================================================
+
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ShieldCheck,
+} from "lucide-react";
+
+export type CommandCenterAlert = {
+  id: string;
+  title: string;
+  description: string;
+  level: string;
+};
+
+type ExecutiveAlertsProps = {
+  locale: "ar" | "en";
+  alerts: CommandCenterAlert[];
+};
+
+function getAlertLevelStyles(level: string) {
+  const normalizedLevel = level.toLowerCase();
+
+  if (
+    normalizedLevel.includes("critical") ||
+    normalizedLevel.includes("high") ||
+    normalizedLevel.includes("عالي") ||
+    normalizedLevel.includes("حرج")
+  ) {
+    return "border-[var(--danger)]/20 bg-[var(--danger-background)] text-[var(--danger)]";
+  }
+
+  return "border-[var(--warning)]/20 bg-[var(--warning-background)] text-[var(--warning)]";
+}
+
+export default function ExecutiveAlerts({
+  locale,
+  alerts,
+}: ExecutiveAlertsProps) {
+  const isArabic = locale === "ar";
+
+  return (
+    <aside className="overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="flex items-center justify-between gap-4 border-b border-[var(--border-default)] px-6 py-5">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--warning-background)] text-[var(--warning)]">
+            <AlertTriangle size={20} />
+          </span>
+
+          <div>
+            <h2 className="text-base font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "التنبيهات التنفيذية"
+                : "Executive Alerts"}
+            </h2>
+
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              {isArabic
+                ? "المخاطر والإشارات التي تتطلب الانتباه"
+                : "Risks and signals requiring attention"}
+            </p>
+          </div>
+        </div>
+
+        <span className="inline-flex min-w-8 items-center justify-center rounded-full bg-[var(--warning-background)] px-2.5 py-1.5 text-[10px] font-black text-[var(--warning)]">
+          {alerts.length}
+        </span>
+      </div>
+
+      <div className="p-6">
+        <div className="space-y-3">
+          {alerts.map((alert) => (
+            <article
+              key={alert.id}
+              className="group rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4 transition hover:border-[var(--warning)]/40 hover:bg-[var(--surface)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--warning-background)] text-[var(--warning)]">
+                    <AlertTriangle size={15} />
+                  </span>
+
+                  <h3 className="pt-1 text-xs font-black leading-5 text-[var(--text-primary)]">
+                    {alert.title}
+                  </h3>
+                </div>
+
+                <span
+                  className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-black ${getAlertLevelStyles(
+                    alert.level,
+                  )}`}
+                >
+                  {alert.level}
+                </span>
+              </div>
+
+              <p className="mt-3 ps-11 text-[11px] leading-5 text-[var(--text-secondary)]">
+                {alert.description}
+              </p>
+            </article>
+          ))}
+
+          {alerts.length === 0 && (
+            <div className="rounded-2xl border border-[var(--success)]/20 bg-[var(--success-background)] p-5">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--success)] shadow-sm">
+                  <ShieldCheck size={18} />
+                </span>
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xs font-black text-[var(--text-primary)]">
+                      {isArabic
+                        ? "الوضع التنفيذي مستقر"
+                        : "Executive Status Stable"}
+                    </h3>
+
+                    <CheckCircle2
+                      size={14}
+                      className="text-[var(--success)]"
+                    />
+                  </div>
+
+                  <p className="mt-1.5 text-xs leading-6 text-[var(--text-secondary)]">
+                    {isArabic
+                      ? "لا توجد تنبيهات تنفيذية نشطة حاليًا."
+                      : "No active executive alerts right now."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+
+============================================================
+FILE: components\command-center\LiveActivity.tsx
+============================================================
+
+import {
+  Activity,
+  CheckCircle2,
+  Clock3,
+} from "lucide-react";
+
+export type CommandCenterActivity = {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+};
+
+type LiveActivityProps = {
+  locale: "ar" | "en";
+  activities: CommandCenterActivity[];
+};
+
+export default function LiveActivity({
+  locale,
+  activities,
+}: LiveActivityProps) {
+  const isArabic = locale === "ar";
+
+  return (
+    <section className="overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="flex items-center justify-between gap-4 border-b border-[var(--border-default)] px-6 py-5">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <Activity size={20} />
+          </span>
+
+          <div>
+            <h2 className="text-lg font-black tracking-tight text-[var(--text-primary)] md:text-xl">
+              {isArabic
+                ? "النشاط المباشر"
+                : "Live Activity"}
+            </h2>
+
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              {isArabic
+                ? "أحدث العمليات داخل مركز القيادة"
+                : "Latest command center operations"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-full bg-[var(--success-background)] px-3 py-1.5">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--success)] opacity-30" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--success)]" />
+          </span>
+
+          <span className="text-[10px] font-black text-[var(--success)]">
+            {isArabic ? "مباشر" : "Live"}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {activities.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-[var(--border-default)] bg-[var(--surface-muted)] px-6 py-12 text-center">
+            <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface)] text-[var(--text-muted)] shadow-sm">
+              <Activity size={26} />
+            </span>
+
+            <h3 className="mt-5 text-sm font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "لا يوجد نشاط حديث"
+                : "No Recent Activity"}
+            </h3>
+
+            <p className="mt-2 text-sm text-[var(--text-muted)]">
+              {isArabic
+                ? "ستظهر آخر العمليات هنا عند توفرها."
+                : "Latest operations will appear here when available."}
+            </p>
+          </div>
+        ) : (
+          <div className="relative space-y-3">
+            <div className="absolute bottom-5 start-[17px] top-5 w-px bg-[var(--border-default)]" />
+
+            {activities.map((activity) => (
+              <article
+                key={activity.id}
+                className="group relative flex items-start gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4 transition hover:border-[var(--brand-primary)] hover:bg-[var(--surface)]"
+              >
+                <span className="relative z-10 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-4 border-[var(--surface)] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                  <CheckCircle2 size={14} />
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <h3 className="text-xs font-black leading-5 text-[var(--text-primary)]">
+                      {activity.title}
+                    </h3>
+
+                    <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full bg-[var(--surface)] px-2.5 py-1 text-[10px] font-bold text-[var(--text-muted)]">
+                      <Clock3 size={11} />
+                      {activity.time}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-xs leading-6 text-[var(--text-muted)]">
+                    {activity.description}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+
+============================================================
+FILE: components\localization\LocalizationContext.tsx
+============================================================
+
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+
+export type AppLocale = "ar" | "en";
+export type AppDirection = "rtl" | "ltr";
+
+type TranslationDictionary = Record<string, string>;
+
+interface LocalizationContextValue {
+  locale: AppLocale;
+  direction: AppDirection;
+  setLocale: (locale: AppLocale) => void;
+  toggleLocale: () => void;
+  t: (key: string) => string;
+}
+
+const translations: Record<AppLocale, TranslationDictionary> = {
+  ar: {
+    "brand.name": "كفو للذكاء الاصطناعي",
+    "brand.description": "نظام تشغيل ذكي للمؤسسات مدعوم بالذكاء الاصطناعي",
+
+    "common.active": "نشط",
+    "common.phase": "المرحلة الثانية",
+    "common.search": "بحث",
+    "common.notifications": "الإشعارات",
+    "common.settings": "الإعدادات",
+    "common.language": "اللغة",
+    "common.theme": "المظهر",
+
+    "navigation.home": "الرئيسية",
+    "navigation.workspace": "مساحة العمل",
+    "navigation.dashboard": "لوحة القيادة",
+    "navigation.modules": "الوحدات",
+    "navigation.corporateBrain": "العقل المؤسسي",
+    "navigation.corporateDNA": "الحمض المؤسسي",
+    "navigation.digitalWorkforce": "القوى العاملة الرقمية",
+    "navigation.commandCenter": "مركز القيادة",
+
+    "workspace.title": "مساحة قيادة الشركة",
+    "workspace.label": "مساحة العمل",
+    "workspace.activeCompany": "الشركة النشطة",
+    "workspace.companyName": "شركة الفراشة الزرقاء",
+    "workspace.companyDetails": "75 موظفًا • المملكة العربية السعودية",
+
+    "theme.light": "فاتح",
+    "theme.dark": "داكن",
+    "theme.system": "النظام",
+
+    "language.arabic": "العربية",
+    "language.english": "English",
+  },
+
+  en: {
+    "brand.name": "KAFU AI",
+    "brand.description": "Enterprise AI Operating System",
+
+    "common.active": "Active",
+    "common.phase": "Phase 2",
+    "common.search": "Search",
+    "common.notifications": "Notifications",
+    "common.settings": "Settings",
+    "common.language": "Language",
+    "common.theme": "Theme",
+
+    "navigation.home": "Home",
+    "navigation.workspace": "Workspace",
+    "navigation.dashboard": "Dashboard",
+    "navigation.modules": "Modules",
+    "navigation.corporateBrain": "Corporate Brain",
+    "navigation.corporateDNA": "Corporate DNA",
+    "navigation.digitalWorkforce": "Digital Workforce",
+    "navigation.commandCenter": "AI Command Center",
+
+    "workspace.title": "Company Command Workspace",
+    "workspace.label": "Workspace",
+    "workspace.activeCompany": "Active Company",
+    "workspace.companyName": "Blue Butterfly Company",
+    "workspace.companyDetails": "75 Employees • Saudi Arabia",
+
+    "theme.light": "Light",
+    "theme.dark": "Dark",
+    "theme.system": "System",
+
+    "language.arabic": "العربية",
+    "language.english": "English",
+  },
+};
+
+const LocalizationContext =
+  createContext<LocalizationContextValue | null>(null);
+
+const LOCALE_STORAGE_KEY = "kafu-ai-locale";
+
+function getStoredLocale(): AppLocale {
+  if (typeof window === "undefined") {
+    return "ar";
+  }
+
+  const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+
+  return storedLocale === "en" ? "en" : "ar";
+}
+
+export function LocalizationProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const [locale, setLocaleState] = useState<AppLocale>("ar");
+
+  const direction: AppDirection = locale === "ar" ? "rtl" : "ltr";
+
+  const applyLocale = useCallback((nextLocale: AppLocale) => {
+    const nextDirection = nextLocale === "ar" ? "rtl" : "ltr";
+
+    document.documentElement.lang = nextLocale;
+    document.documentElement.dir = nextDirection;
+    document.documentElement.dataset.locale = nextLocale;
+  }, []);
+
+  useEffect(() => {
+    const storedLocale = getStoredLocale();
+
+    const timeoutId = window.setTimeout(() => {
+      setLocaleState(storedLocale);
+      applyLocale(storedLocale);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [applyLocale]);
+
+  const setLocale = useCallback(
+    (nextLocale: AppLocale) => {
+      setLocaleState(nextLocale);
+      window.localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale);
+      applyLocale(nextLocale);
+    },
+    [applyLocale],
+  );
+
+  const toggleLocale = useCallback(() => {
+    setLocale(locale === "ar" ? "en" : "ar");
+  }, [locale, setLocale]);
+
+  const t = useCallback(
+    (key: string) => {
+      return translations[locale][key] ?? translations.en[key] ?? key;
+    },
+    [locale],
+  );
+
+  const value = useMemo(
+    () => ({
+      locale,
+      direction,
+      setLocale,
+      toggleLocale,
+      t,
+    }),
+    [direction, locale, setLocale, t, toggleLocale],
+  );
+
+  return (
+    <LocalizationContext.Provider value={value}>
+      {children}
+    </LocalizationContext.Provider>
+  );
+}
+
+export function useLocalization() {
+  const context = useContext(LocalizationContext);
+
+  if (!context) {
+    throw new Error(
+      "useLocalization must be used inside LocalizationProvider.",
+    );
+  }
+
+  return context;
+}
+
+
+============================================================
+FILE: lib\companySession.ts
+============================================================
+
+export const KAFU_COMPANY_ID_KEY = "kafu_company_id";
+
+export function saveCurrentCompanyId(companyId: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(KAFU_COMPANY_ID_KEY, companyId);
+}
+
+export function getCurrentCompanyId() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(KAFU_COMPANY_ID_KEY);
+}
+
+export function clearCurrentCompanyId() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(KAFU_COMPANY_ID_KEY);
+}
+
+============================================================
+FILE: lib\supabase.ts
+============================================================
+
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(
+  supabaseUrl,
+  supabaseAnonKey
+);
+

@@ -1,28 +1,34 @@
 import Link from "next/link";
-import { Bot, FileText, ShieldAlert, Users } from "lucide-react";
+import {
+  Bot,
+  ChevronLeft,
+  FileText,
+  ShieldAlert,
+  Users,
+} from "lucide-react";
 
 const actions = [
   {
     title: "إنشاء تقرير تنفيذي",
-    desc: "توليد ملخص جاهز للإدارة",
+    description: "توليد ملخص جاهز للإدارة",
     href: "/workspace/executive-report",
     icon: FileText,
   },
   {
     title: "مراجعة طلبات الموظفين",
-    desc: "طلبات بانتظار القرار",
+    description: "طلبات بانتظار القرار",
     href: "/journey",
     icon: Users,
   },
   {
     title: "تحليل المخاطر",
-    desc: "قراءة المخاطر التشغيلية",
+    description: "قراءة المخاطر التشغيلية",
     href: "/workspace/dashboard",
     icon: ShieldAlert,
   },
   {
     title: "عرض التوصيات",
-    desc: "اقتراحات KAFU AI",
+    description: "اقتراحات KAFU AI",
     href: "/modules",
     icon: Bot,
   },
@@ -30,16 +36,19 @@ const actions = [
 
 export default function QuickActions() {
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div>
-        <h2 className="text-2xl font-black text-slate-950">إجراءات سريعة</h2>
+    <section
+      dir="rtl"
+      className="rounded-3xl border border-slate-200 bg-white p-5 text-right shadow-sm"
+    >
+      <h2 className="text-xl font-black text-slate-950">
+        إجراءات سريعة
+      </h2>
 
-        <p className="mt-1 text-sm text-slate-500">
-          اختصارات تنفيذية للوصول إلى أهم العمليات.
-        </p>
-      </div>
+      <p className="mt-1 text-sm leading-6 text-slate-500">
+        وصول مباشر إلى أهم العمليات التنفيذية.
+      </p>
 
-      <div className="mt-6 grid gap-3">
+      <div className="mt-4 grid gap-2">
         {actions.map((action) => {
           const Icon = action.icon;
 
@@ -47,18 +56,26 @@ export default function QuickActions() {
             <Link
               key={action.title}
               href={action.href}
-              className="group flex items-center justify-between rounded-3xl border border-slate-200 bg-slate-50 p-4 text-right transition hover:-translate-y-1 hover:bg-white hover:shadow-md"
+              className="group flex min-h-[62px] items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 transition hover:border-blue-200 hover:bg-blue-50/60"
             >
-              <div>
-                <p className="font-black text-slate-950">{action.title}</p>
-                <p className="mt-1 text-xs font-bold text-slate-500">
-                  {action.desc}
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm transition group-hover:bg-blue-600 group-hover:text-white">
+                <Icon size={17} />
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-black text-slate-950">
+                  {action.title}
+                </p>
+
+                <p className="mt-0.5 truncate text-[11px] font-bold text-slate-500">
+                  {action.description}
                 </p>
               </div>
 
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-700 transition group-hover:bg-slate-950 group-hover:text-white">
-                <Icon size={20} />
-              </span>
+              <ChevronLeft
+                size={16}
+                className="shrink-0 text-slate-400 transition group-hover:-translate-x-0.5 group-hover:text-blue-600"
+              />
             </Link>
           );
         })}

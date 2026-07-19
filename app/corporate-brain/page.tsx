@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  AlertTriangle,
+  BrainCircuit,
+  Building2,
+  RefreshCw,
+} from "lucide-react";
 
 import {
   CorporateBrainLayout,
@@ -27,87 +33,148 @@ export default function CorporateBrainPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadCorporateBrain() {
+      if (isMounted) {
+        setLoading(true);
+        setMessage("");
+      }
+
       const companyId = getCurrentCompanyId();
 
       if (!companyId) {
-        setMessage(
-          isArabic
-            ? "لم يتم العثور على بيانات المؤسسة. يرجى إكمال التقييم أولًا."
-            : "Company data was not found. Please complete the assessment first.",
-        );
+        if (isMounted) {
+          setMessage(
+            isArabic
+              ? "لم يتم العثور على بيانات المؤسسة. يرجى إكمال التقييم أولًا."
+              : "Company data was not found. Please complete the assessment first.",
+          );
 
-        setLoading(false);
+          setLoading(false);
+        }
+
         return;
       }
 
-      const { data: companyData, error: companyError } = await supabase
-        .from("companies")
-        .select("id, name, industry, country, employee_count")
-        .eq("id", companyId)
-        .single();
+      try {
+        const [
+          { data: companyData, error: companyError },
+          { data: answersData, error: answersError },
+        ] = await Promise.all([
+          supabase
+            .from("companies")
+            .select("id, name, industry, country, employee_count")
+            .eq("id", companyId)
+            .single(),
 
-      if (companyError) {
-        setMessage(
-          isArabic
-            ? `حدث خطأ أثناء تحميل بيانات المؤسسة: ${companyError.message}`
-            : `Failed to load company data: ${companyError.message}`,
-        );
+          supabase
+            .from("discovery_answers")
+            .select("id, question, answer, question_order")
+            .eq("company_id", companyId)
+            .order("question_order", {
+              ascending: true,
+            }),
+        ]);
 
-        setLoading(false);
-        return;
+        if (companyError) {
+          throw new Error(
+            isArabic
+              ? `تعذر تحميل بيانات المؤسسة: ${companyError.message}`
+              : `Failed to load company data: ${companyError.message}`,
+          );
+        }
+
+        if (answersError) {
+          throw new Error(
+            isArabic
+              ? `تعذر تحميل بيانات الاستكشاف: ${answersError.message}`
+              : `Failed to load discovery data: ${answersError.message}`,
+          );
+        }
+
+        if (isMounted) {
+          setCompany(companyData);
+          setAnswers(answersData ?? []);
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : isArabic
+              ? "حدث خطأ غير متوقع أثناء تشغيل العقل المؤسسي."
+              : "An unexpected error occurred while initializing Corporate Brain.";
+
+        if (isMounted) {
+          setMessage(errorMessage);
+          setCompany(null);
+          setAnswers([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-
-      const { data: answersData, error: answersError } = await supabase
-        .from("discovery_answers")
-        .select("id, question, answer, question_order")
-        .eq("company_id", companyId)
-        .order("question_order", {
-          ascending: true,
-        });
-
-      if (answersError) {
-        setMessage(
-          isArabic
-            ? `حدث خطأ أثناء تحميل بيانات الاستكشاف: ${answersError.message}`
-            : `Failed to load discovery data: ${answersError.message}`,
-        );
-
-        setLoading(false);
-        return;
-      }
-
-      setCompany(companyData);
-      setAnswers(answersData ?? []);
-      setLoading(false);
     }
 
-    loadCorporateBrain();
+    void loadCorporateBrain();
+
+    return () => {
+      isMounted = false;
+    };
   }, [isArabic]);
 
   if (loading) {
     return (
       <main
-        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-8 md:px-8"
+        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-10 md:px-8"
         dir={isArabic ? "rtl" : "ltr"}
       >
-        <section className="w-full max-w-md overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-medium)]">
-          <div className="h-1 bg-[var(--brand-primary)]" />
+        <section
+          className="relative w-full max-w-md overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] px-8 py-10 text-center shadow-[var(--shadow-medium)]"
+          role="status"
+          aria-live="polite"
+        >
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-1 bg-[var(--brand-primary)]"
+          />
 
-          <div className="p-8 text-center">
-            <span className="mx-auto block h-10 w-10 animate-spin rounded-full border-4 border-[var(--border-default)] border-t-[var(--brand-primary)]" />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -start-20 -top-20 h-52 w-52 rounded-full bg-[color-mix(in_srgb,var(--brand-primary)_6%,transparent)]"
+          />
 
-            <h1 className="mt-5 text-xl font-black text-[var(--text-primary)]">
+          <div className="relative">
+            <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--brand-primary)_16%,var(--border-default))] bg-[var(--brand-subtle)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
+              <RefreshCw className="animate-spin" size={25} />
+            </span>
+
+            <p className="mt-5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              Corporate Brain
+            </p>
+
+            <h1 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-[var(--text-primary)]">
               {isArabic
-                ? "جاري تشغيل العقل المؤسسي"
+                ? "جارٍ تشغيل العقل المؤسسي"
                 : "Initializing Corporate Brain"}
             </h1>
 
-            <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-7 text-[var(--text-secondary)]">
               {isArabic
-                ? "يتم تحميل بيانات المؤسسة ومصادر المعرفة."
-                : "Loading company context and knowledge sources."}
+                ? "يتم تحميل بيانات المؤسسة ومصادر المعرفة وإشارات الاستكشاف."
+                : "Loading company context, enterprise knowledge, and discovery signals."}
             </p>
+
+            <div className="mt-7 flex items-center justify-center gap-2 text-xs font-bold text-[var(--text-muted)]">
+              <BrainCircuit size={15} />
+
+              <span>
+                {isArabic
+                  ? "تجهيز طبقة الذكاء التنفيذي"
+                  : "Preparing executive intelligence layer"}
+              </span>
+            </div>
           </div>
         </section>
       </main>
@@ -117,36 +184,58 @@ export default function CorporateBrainPage() {
   if (message || !company) {
     return (
       <main
-        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-8 md:px-8"
+        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-10 md:px-8"
         dir={isArabic ? "rtl" : "ltr"}
       >
-        <section className="w-full max-w-xl overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-medium)]">
-          <div className="h-1 bg-amber-500" />
+        <section
+          className="relative w-full max-w-xl overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] px-8 py-10 text-center shadow-[var(--shadow-medium)] md:px-10"
+          role="alert"
+        >
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-0 h-1 bg-[var(--warning)]"
+          />
 
-          <div className="p-8 text-center md:p-10">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-lg font-black text-amber-700">
-              !
-            </div>
+          <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--warning-background)] text-[var(--warning)]">
+            <AlertTriangle size={26} />
+          </span>
 
-            <p className="mt-5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-              Corporate Brain
-            </p>
+          <p className="mt-5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+            Corporate Brain
+          </p>
 
-            <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
-              {isArabic
-                ? "تعذر تشغيل العقل المؤسسي"
-                : "Corporate Brain Unavailable"}
-            </h1>
+          <h1 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-[var(--text-primary)]">
+            {isArabic
+              ? "تعذر تشغيل العقل المؤسسي"
+              : "Corporate Brain unavailable"}
+          </h1>
 
-            <p className="mt-4 leading-8 text-[var(--text-secondary)]">
-              {message}
-            </p>
+          <p className="mx-auto mt-4 max-w-lg break-words text-sm leading-7 text-[var(--text-secondary)]">
+            {message ||
+              (isArabic
+                ? "لم يتم العثور على بيانات المؤسسة المطلوبة."
+                : "Required company data was not found.")}
+          </p>
 
+          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/assessment"
-              className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--brand-primary)] px-6 text-sm font-black text-white shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-6 text-sm font-extrabold text-white shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
             >
-              {isArabic ? "العودة إلى التقييم" : "Go to Assessment"}
+              <Building2 size={17} />
+
+              {isArabic
+                ? "العودة إلى التقييم"
+                : "Go to assessment"}
+            </Link>
+
+            <Link
+              href="/company-workspace"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-6 text-sm font-extrabold text-[var(--text-secondary)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            >
+              {isArabic
+                ? "فتح مساحة العمل"
+                : "Open company workspace"}
             </Link>
           </div>
         </section>

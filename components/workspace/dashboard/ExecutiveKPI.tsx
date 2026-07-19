@@ -1,4 +1,4 @@
-import {
+﻿import {
   AlertTriangle,
   Lightbulb,
   TrendingUp,
@@ -37,17 +37,17 @@ export default function ExecutiveKPI({
     {
       title:
         locale === "ar"
-          ? "����� ��������"
+          ? "طلبات الموظفين"
           : "Employee Requests",
       value: "24",
       subtitle:
         locale === "ar"
-          ? "����� ������ ����� ��� ������ �������."
+          ? "طلبات مفتوحة تحتاج إلى متابعة تشغيلية."
           : "Open requests requiring operational follow-up.",
       trend: "+6",
       trendLabel:
         locale === "ar"
-          ? "����� ����� ��� �������"
+          ? "طلبات جديدة هذا الأسبوع"
           : "New requests this week",
       icon: Users,
       iconClass:
@@ -56,17 +56,17 @@ export default function ExecutiveKPI({
     {
       title:
         locale === "ar"
-          ? "������� ���������"
+          ? "المخاطر التشغيلية"
           : "Operational Risks",
       value: "6",
       subtitle:
         locale === "ar"
-          ? "����� ����� ��� ���� ����� �������."
+          ? "مخاطر تحتاج إلى قرارات ومتابعة إدارية."
           : "Risks requiring management decisions and follow-up.",
       trend: "-2",
       trendLabel:
         locale === "ar"
-          ? "������ �� ������� ������"
+          ? "انخفاض في المخاطر الحرجة"
           : "Reduction in critical risks",
       icon: AlertTriangle,
       iconClass:
@@ -94,49 +94,43 @@ export default function ExecutiveKPI({
   ];
 
   return (
-    <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
       {kpis.map((kpi) => {
         const Icon = kpi.icon;
 
         return (
           <article
             key={kpi.title}
-            className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]"
+            className="group flex min-h-[230px] flex-col rounded-[18px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--brand-primary)_20%,var(--border-default))] hover:shadow-[var(--shadow-medium)]"
           >
             <div className="flex items-start justify-between gap-4">
               <span
-                className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${kpi.iconClass}`}
+                className={`inline-flex h-11 w-11 items-center justify-center rounded-[13px] ${kpi.iconClass}`}
               >
-                <Icon size={21} />
+                <Icon size={19} />
               </span>
 
-              <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-black text-[var(--text-secondary)]">
+              <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--text-secondary)]">
                 {kpi.trend}
               </span>
             </div>
 
-            <div className="mt-6">
-              <p className="text-sm font-bold text-[var(--text-muted)]">
+            <div className="mt-5">
+              <p className="text-xs font-bold text-[var(--text-muted)]">
                 {kpi.title}
               </p>
 
-              <h3 className="mt-3 text-4xl font-black tracking-tight text-[var(--text-primary)]">
+              <h3 className="mt-2 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text-primary)]">
                 {kpi.value}
               </h3>
 
-              <p className="mt-4 text-sm leading-7 text-[var(--text-secondary)]">
+              <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
                 {kpi.subtitle}
               </p>
             </div>
 
-            <div className="mt-6 rounded-2xl bg-[var(--surface-muted)] p-4">
-              <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">
-                {locale === "ar"
-                  ? "المؤشر التنفيذي"
-                  : "Executive Indicator"}
-              </p>
-
-              <p className="mt-2 text-xs font-black leading-6 text-[var(--text-secondary)]">
+            <div className="mt-auto border-t border-[var(--border-default)] pt-4">
+              <p className="text-[11px] font-bold leading-5 text-[var(--text-muted)]">
                 {kpi.trendLabel}
               </p>
             </div>

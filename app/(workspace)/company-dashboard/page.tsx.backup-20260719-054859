@@ -1,0 +1,579 @@
+﻿"use client";
+
+import Link from "next/link";
+import {
+  Activity,
+  ArrowLeft,
+  ArrowRight,
+  Banknote,
+  Bot,
+  BrainCircuit,
+  Building2,
+  CheckCircle2,
+  CircleAlert,
+  Languages,
+  LineChart,
+  Target,
+  TrendingUp,
+  UsersRound,
+  Workflow,
+} from "lucide-react";
+import { useState } from "react";
+
+import {
+  ExecutiveButton,
+  StatusBadge,
+} from "../../../src/product/executive-design-system";
+
+type Language = "en" | "ar";
+
+const content = {
+  en: {
+    languageLabel: "العربية",
+    eyebrow: "Company Health",
+    title: "Your organization is healthy.",
+    subtitle:
+      "Financial performance remains strong. The main constraint is execution speed across approvals and strategic initiatives.",
+    scoreLabel: "Enterprise Health Score",
+    scoreValue: "86",
+    scoreStatus: "Healthy",
+    dimensionsTitle: "Health Dimensions",
+    dimensionsHelper:
+      "A consolidated view of financial, commercial, operational, people, and AI readiness.",
+    dimensions: [
+      {
+        title: "Financial Health",
+        score: 92,
+        status: "Excellent",
+        insight:
+          "Revenue, profitability, and cash position remain strong.",
+        metric: "Cash runway: 14.6 months",
+        icon: Banknote,
+        tone: "success",
+      },
+      {
+        title: "Commercial Health",
+        score: 78,
+        status: "Good",
+        insight:
+          "Pipeline remains healthy, but enterprise conversion has slowed.",
+        metric: "Pipeline at risk: $2.8M",
+        icon: TrendingUp,
+        tone: "attention",
+      },
+      {
+        title: "Operational Health",
+        score: 74,
+        status: "Needs Attention",
+        insight:
+          "Approval delays are reducing execution speed.",
+        metric: "Average approval cycle: 11 days",
+        icon: Workflow,
+        tone: "critical",
+      },
+      {
+        title: "People Health",
+        score: 91,
+        status: "Excellent",
+        insight:
+          "Engagement and productivity remain above target.",
+        metric: "Engagement: 94%",
+        icon: UsersRound,
+        tone: "success",
+      },
+      {
+        title: "AI Readiness",
+        score: 88,
+        status: "Strong",
+        insight:
+          "Data quality and AI adoption support further automation.",
+        metric: "AI adoption: 81%",
+        icon: BrainCircuit,
+        tone: "good",
+      },
+    ],
+    timelineTitle: "Executive Health Timeline",
+    timelineHelper: "Last 30 days",
+    timelineValues: [72, 75, 78, 80, 82, 84, 86],
+    timelineLabels: ["Day 1", "Day 5", "Day 10", "Day 15", "Day 20", "Day 25", "Today"],
+    summaryTitle: "Executive Summary",
+    summaries: [
+      {
+        title: "What’s Going Well",
+        text:
+          "Revenue is above the previous quarter, cash remains stable, and employee engagement is strong.",
+        tone: "success",
+        icon: CheckCircle2,
+      },
+      {
+        title: "Needs Attention",
+        text:
+          "Approval cycles and delayed strategic initiatives are limiting growth.",
+        tone: "attention",
+        icon: CircleAlert,
+      },
+      {
+        title: "Recommended Executive Action",
+        text:
+          "Automate proposal approvals and assign one executive owner to delayed initiatives.",
+        tone: "good",
+        icon: Target,
+      },
+    ],
+    aiTitle: "KAFU AI Recommendation",
+    aiText:
+      "Reducing manual approval steps can lower the average cycle from 11 days to about 7 days, improving sales velocity and forecast confidence.",
+    aiConfidence: "AI confidence: 96%",
+    impactLabel: "Estimated Impact",
+    impactValue: "+12%",
+    impactText: "Revenue velocity",
+    primaryAction: "Analyze Root Causes",
+    secondaryAction: "Back to Executive Briefing",
+    nextHref: "/corporate-brain",
+    backHref: "/executive-summary",
+  },
+  ar: {
+    languageLabel: "English",
+    eyebrow: "صحة المؤسسة",
+    title: "مؤسستك في وضع صحي جيد.",
+    subtitle:
+      "لا يزال الأداء المالي قويًا، بينما يتمثل التحدي الرئيسي في سرعة تنفيذ الاعتمادات والمبادرات الاستراتيجية.",
+    scoreLabel: "مؤشر صحة المؤسسة",
+    scoreValue: "86",
+    scoreStatus: "جيدة",
+    dimensionsTitle: "أبعاد صحة المؤسسة",
+    dimensionsHelper:
+      "رؤية موحدة للصحة المالية والتجارية والتشغيلية ورأس المال البشري والجاهزية للذكاء الاصطناعي.",
+    dimensions: [
+      {
+        title: "الصحة المالية",
+        score: 92,
+        status: "ممتازة",
+        insight:
+          "لا تزال الإيرادات والربحية والسيولة النقدية في وضع قوي.",
+        metric: "مدة التغطية النقدية: 14.6 شهرًا",
+        icon: Banknote,
+        tone: "success",
+      },
+      {
+        title: "الصحة التجارية",
+        score: 78,
+        status: "جيدة",
+        insight:
+          "مسار الفرص صحي، لكن تحويل فرص قطاع المؤسسات تباطأ.",
+        metric: "فرص معرضة للخطر: 2.8 مليون دولار",
+        icon: TrendingUp,
+        tone: "attention",
+      },
+      {
+        title: "الصحة التشغيلية",
+        score: 74,
+        status: "تحتاج إلى اهتمام",
+        insight:
+          "تأخر الاعتمادات يحد من سرعة التنفيذ.",
+        metric: "متوسط دورة الاعتماد: 11 يومًا",
+        icon: Workflow,
+        tone: "critical",
+      },
+      {
+        title: "صحة رأس المال البشري",
+        score: 91,
+        status: "ممتازة",
+        insight:
+          "مستويات التفاعل والإنتاجية أعلى من المستهدف.",
+        metric: "التفاعل الوظيفي: 94%",
+        icon: UsersRound,
+        tone: "success",
+      },
+      {
+        title: "الجاهزية للذكاء الاصطناعي",
+        score: 88,
+        status: "قوية",
+        insight:
+          "جودة البيانات ومستوى التبني يدعمان المزيد من الأتمتة.",
+        metric: "نسبة تبني الذكاء الاصطناعي: 81%",
+        icon: BrainCircuit,
+        tone: "good",
+      },
+    ],
+    timelineTitle: "المسار الزمني لصحة المؤسسة",
+    timelineHelper: "آخر 30 يومًا",
+    timelineValues: [72, 75, 78, 80, 82, 84, 86],
+    timelineLabels: [
+      "اليوم 1",
+      "اليوم 5",
+      "اليوم 10",
+      "اليوم 15",
+      "اليوم 20",
+      "اليوم 25",
+      "اليوم",
+    ],
+    summaryTitle: "الملخص التنفيذي",
+    summaries: [
+      {
+        title: "ما يسير بشكل جيد",
+        text:
+          "الإيرادات أعلى من الربع السابق، والسيولة مستقرة، وتفاعل الموظفين قوي.",
+        tone: "success",
+        icon: CheckCircle2,
+      },
+      {
+        title: "ما يحتاج إلى اهتمام",
+        text:
+          "دورات الاعتماد وتأخر المبادرات الاستراتيجية يحدان من النمو.",
+        tone: "attention",
+        icon: CircleAlert,
+      },
+      {
+        title: "الإجراء التنفيذي المقترح",
+        text:
+          "أتمتة اعتماد العروض وتعيين مسؤول تنفيذي واحد للمبادرات المتأخرة.",
+        tone: "good",
+        icon: Target,
+      },
+    ],
+    aiTitle: "توصية KAFU AI",
+    aiText:
+      "يمكن لتقليل خطوات الاعتماد اليدوية خفض متوسط الدورة من 11 يومًا إلى نحو 7 أيام، مما يحسن سرعة المبيعات ودقة التوقعات.",
+    aiConfidence: "درجة ثقة التحليل: 96%",
+    impactLabel: "الأثر المتوقع",
+    impactValue: "+12%",
+    impactText: "في سرعة الإيرادات",
+    primaryAction: "تحليل الأسباب الجذرية",
+    secondaryAction: "العودة إلى الإحاطة التنفيذية",
+    nextHref: "/corporate-brain",
+    backHref: "/executive-summary",
+  },
+} as const;
+
+const toneClasses = {
+  success: {
+    bar: "bg-emerald-400",
+    icon: "bg-emerald-400/10 text-emerald-300",
+    text: "text-emerald-300",
+    surface: "border-emerald-400/15 bg-emerald-400/[0.045]",
+  },
+  attention: {
+    bar: "bg-amber-400",
+    icon: "bg-amber-400/10 text-amber-300",
+    text: "text-amber-300",
+    surface: "border-amber-400/15 bg-amber-400/[0.045]",
+  },
+  critical: {
+    bar: "bg-rose-400",
+    icon: "bg-rose-400/10 text-rose-300",
+    text: "text-rose-300",
+    surface: "border-rose-400/15 bg-rose-400/[0.045]",
+  },
+  good: {
+    bar: "bg-blue-400",
+    icon: "bg-blue-400/10 text-blue-300",
+    text: "text-blue-300",
+    surface: "border-blue-400/15 bg-blue-400/[0.045]",
+  },
+} as const;
+
+export default function CompanyDashboardPage() {
+  const [language, setLanguage] = useState<Language>("en");
+
+  const copy = content[language];
+  const isArabic = language === "ar";
+  const DirectionIcon = isArabic ? ArrowLeft : ArrowRight;
+
+  return (
+    <main
+      dir={isArabic ? "rtl" : "ltr"}
+      className="relative min-h-screen overflow-hidden text-white"
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.12),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(14,165,233,0.07),transparent_28%)]"
+      />
+
+      <section className="relative mx-auto max-w-[1440px] px-5 py-8 sm:px-8 lg:px-10">
+        <div className="flex justify-end">
+          <ExecutiveButton
+            variant="ghost"
+            size="small"
+            onClick={() =>
+              setLanguage((current) =>
+                current === "en" ? "ar" : "en",
+              )
+            }
+            leftIcon={<Languages className="h-4 w-4" />}
+            className="border border-white/[0.08] bg-white/[0.03] text-slate-300 hover:bg-white/[0.07] hover:text-white"
+          >
+            {copy.languageLabel}
+          </ExecutiveButton>
+        </div>
+
+        <section className="mt-6 overflow-hidden rounded-[28px] border border-white/[0.08] bg-white/[0.035] shadow-[0_24px_80px_rgba(0,0,0,0.18)] backdrop-blur-xl">
+          <div className="grid gap-8 p-7 sm:p-9 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center lg:p-10">
+            <div>
+              <StatusBadge
+                status="healthy"
+                label={copy.eyebrow}
+                className="border-emerald-400/15 bg-emerald-400/[0.07] px-3 py-1.5 text-[11px] tracking-wide text-emerald-200"
+              />
+
+              <h1 className="mt-5 max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-white sm:text-5xl lg:text-[3.5rem] lg:leading-[1.08]">
+                {copy.title}
+              </h1>
+
+              <p className="mt-5 max-w-3xl text-base leading-8 text-slate-400 sm:text-lg">
+                {copy.subtitle}
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-emerald-400/15 bg-emerald-400/[0.055] p-6">
+              <p className="text-xs font-medium uppercase tracking-[0.13em] text-emerald-300/70">
+                {copy.scoreLabel}
+              </p>
+
+              <div className="mt-4 flex items-end gap-2">
+                <span className="text-6xl font-semibold tracking-[-0.06em]">
+                  {copy.scoreValue}
+                </span>
+
+                <span className="pb-2 text-base text-slate-500">
+                  / 100
+                </span>
+              </div>
+
+              <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+                <div className="h-full w-[86%] rounded-full bg-emerald-400" />
+              </div>
+
+              <div className="mt-4 flex items-center gap-2 text-sm font-medium text-emerald-300">
+                <CheckCircle2 className="h-4 w-4" />
+                {copy.scoreStatus}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <Building2 className="h-5 w-5 text-blue-300" />
+
+                <h2 className="text-lg font-semibold text-white">
+                  {copy.dimensionsTitle}
+                </h2>
+              </div>
+
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                {copy.dimensionsHelper}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+            {copy.dimensions.map((dimension) => {
+              const Icon = dimension.icon;
+              const tone = toneClasses[dimension.tone];
+
+              return (
+                <article
+                  key={dimension.title}
+                  className="group flex min-h-[290px] flex-col rounded-3xl border border-white/[0.075] bg-white/[0.035] p-5 transition duration-300 hover:-translate-y-1 hover:border-white/[0.13] hover:bg-white/[0.055]"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div
+                      className={`flex h-11 w-11 items-center justify-center rounded-2xl ${tone.icon}`}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+
+                    <span
+                      className={`text-xs font-semibold ${tone.text}`}
+                    >
+                      {dimension.status}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-5 min-h-14 text-lg font-semibold leading-7 text-white">
+                    {dimension.title}
+                  </h3>
+
+                  <div className="mt-3 flex items-end gap-2">
+                    <span className="text-3xl font-semibold tracking-[-0.04em]">
+                      {dimension.score}
+                    </span>
+
+                    <span className="pb-1 text-xs text-slate-600">
+                      / 100
+                    </span>
+                  </div>
+
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
+                    <div
+                      className={`h-full rounded-full ${tone.bar}`}
+                      style={{ width: `${dimension.score}%` }}
+                    />
+                  </div>
+
+                  <p className="mt-4 flex-1 text-sm leading-6 text-slate-400">
+                    {dimension.insight}
+                  </p>
+
+                  <p className="mt-5 border-t border-white/[0.06] pt-4 text-xs leading-5 text-slate-500">
+                    {dimension.metric}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mt-8 grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+          <article className="rounded-3xl border border-white/[0.075] bg-white/[0.035] p-6 sm:p-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <LineChart className="h-5 w-5 text-blue-300" />
+
+                <h2 className="text-lg font-semibold">
+                  {copy.timelineTitle}
+                </h2>
+              </div>
+
+              <span className="text-xs text-slate-500">
+                {copy.timelineHelper}
+              </span>
+            </div>
+
+            <div className="mt-8 flex h-56 items-end gap-2 sm:gap-4">
+              {copy.timelineValues.map((value, index) => (
+                <div
+                  key={`${value}-${index}`}
+                  className="flex h-full flex-1 flex-col justify-end gap-3"
+                >
+                  <div className="flex flex-1 items-end">
+                    <div
+                      className="relative w-full rounded-t-xl border border-blue-300/10 bg-gradient-to-t from-blue-600/75 to-cyan-400/85 transition hover:from-blue-500 hover:to-cyan-300"
+                      style={{ height: `${value}%` }}
+                    >
+                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[11px] font-semibold text-slate-400">
+                        {value}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span className="truncate text-center text-[10px] text-slate-600 sm:text-xs">
+                    {copy.timelineLabels[index]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="flex flex-col rounded-3xl border border-blue-400/15 bg-blue-500/[0.055] p-6 sm:p-8">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-400/10 text-blue-300">
+                <Bot className="h-5 w-5" />
+              </div>
+
+              <h2 className="text-lg font-semibold">
+                {copy.aiTitle}
+              </h2>
+            </div>
+
+            <p className="mt-5 flex-1 text-sm leading-7 text-slate-300">
+              {copy.aiText}
+            </p>
+
+            <div className="mt-5 text-xs font-medium text-blue-300">
+              {copy.aiConfidence}
+            </div>
+
+            <div className="mt-7 rounded-2xl border border-white/[0.07] bg-black/10 p-5">
+              <p className="text-xs uppercase tracking-[0.13em] text-slate-500">
+                {copy.impactLabel}
+              </p>
+
+              <div className="mt-2 flex items-end gap-3">
+                <span className="text-4xl font-semibold tracking-[-0.04em] text-emerald-300">
+                  {copy.impactValue}
+                </span>
+
+                <span className="pb-1 text-sm text-slate-400">
+                  {copy.impactText}
+                </span>
+              </div>
+            </div>
+
+            <Link href={copy.nextHref} className="mt-6">
+              <ExecutiveButton
+                size="large"
+                rightIcon={
+                  <DirectionIcon className="h-5 w-5" />
+                }
+                className="w-full border-0 bg-gradient-to-r from-blue-600 to-cyan-500 shadow-[0_12px_30px_rgba(37,99,235,0.22)] hover:from-blue-500 hover:to-cyan-400"
+              >
+                {copy.primaryAction}
+              </ExecutiveButton>
+            </Link>
+          </article>
+        </section>
+
+        <section className="mt-8">
+          <div className="mb-5 flex items-center gap-3">
+            <Activity className="h-5 w-5 text-blue-300" />
+
+            <h2 className="text-lg font-semibold">
+              {copy.summaryTitle}
+            </h2>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            {copy.summaries.map((item) => {
+              const Icon = item.icon;
+              const tone = toneClasses[item.tone];
+
+              return (
+                <article
+                  key={item.title}
+                  className={`rounded-3xl border p-6 ${tone.surface}`}
+                >
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ${tone.icon}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+
+                  <h3 className="mt-5 text-lg font-semibold">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-7 text-slate-300">
+                    {item.text}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <footer className="mt-8 flex flex-col gap-4 border-t border-white/[0.07] pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            href={copy.backHref}
+            className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
+          >
+            {isArabic ? (
+              <ArrowRight className="h-4 w-4" />
+            ) : (
+              <ArrowLeft className="h-4 w-4" />
+            )}
+
+            {copy.secondaryAction}
+          </Link>
+
+          <p className="text-xs text-slate-600">
+            KAFU AI · Enterprise Operating Intelligence
+          </p>
+        </footer>
+      </section>
+    </main>
+  );
+}

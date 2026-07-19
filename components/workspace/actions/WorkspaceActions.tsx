@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import {
   ArrowUpRight,
   Bot,
@@ -13,7 +13,6 @@ type WorkspaceActionsProps = {
 export default function WorkspaceActions({
   locale = "en",
 }: WorkspaceActionsProps = {}) {
-
   const actions = [
     {
       title:
@@ -30,11 +29,11 @@ export default function WorkspaceActions({
     {
       title:
         locale === "ar"
-          ? "����� ������ ���������"
+          ? "الوحدات الذكية"
           : "AI Modules",
       description:
         locale === "ar"
-          ? "استعرض الوحدات الذكية المناسبة للمؤسسة."
+          ? "استعرض الوحدات الذكية المناسبة لاحتياجات المؤسسة."
           : "Explore AI modules recommended for the organization.",
       href: "/modules",
       icon: Sparkles,
@@ -46,7 +45,7 @@ export default function WorkspaceActions({
           : "Digital Workforce",
       description:
         locale === "ar"
-          ? "استعرض الوكلاء الرقميين المقترحين للمؤسسة."
+          ? "راجع الوكلاء الرقميين المقترحين لدعم عمليات المؤسسة."
           : "Review digital agents recommended for the organization.",
       href: "/digital-workforce",
       icon: Bot,
@@ -62,26 +61,30 @@ export default function WorkspaceActions({
           <Link
             key={action.href}
             href={action.href}
-            className="group rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            className="group flex min-h-[190px] flex-col rounded-[18px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:border-[color-mix(in_srgb,var(--brand-primary)_28%,var(--border-default))] hover:shadow-[var(--shadow-medium)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
           >
             <div className="flex items-start justify-between gap-4">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
-                <Icon size={20} />
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-[13px] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                <Icon size={19} />
               </span>
 
               <ArrowUpRight
                 size={17}
-                className="text-[var(--text-muted)] transition group-hover:text-[var(--brand-primary)]"
+                className="text-[var(--text-muted)] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)] rtl:group-hover:-translate-x-0.5"
               />
             </div>
 
-            <h3 className="mt-5 text-base font-black text-[var(--text-primary)]">
+            <h3 className="mt-5 text-base font-extrabold text-[var(--text-primary)]">
               {action.title}
             </h3>
 
-            <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
+            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
               {action.description}
             </p>
+
+            <span className="mt-auto pt-4 text-xs font-extrabold text-[var(--brand-primary)]">
+              {locale === "ar" ? "فتح المسار" : "Open workspace"}
+            </span>
           </Link>
         );
       })}

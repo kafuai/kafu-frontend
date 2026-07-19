@@ -1,4 +1,4 @@
-import { CalendarCheck } from "lucide-react";
+﻿import { CalendarCheck, ChevronRight } from "lucide-react";
 
 type UpcomingTasksProps = {
   locale?: "ar" | "en";
@@ -7,7 +7,6 @@ type UpcomingTasksProps = {
 export default function UpcomingTasks({
   locale = "en",
 }: UpcomingTasksProps = {}) {
-
   const tasks = [
     {
       task:
@@ -28,54 +27,73 @@ export default function UpcomingTasks({
     {
       task:
         locale === "ar"
-          ? "����� ��� �������"
+          ? "تحديث خطة المخاطر"
           : "Update risk plan",
       due:
         locale === "ar"
           ? "هذا الأسبوع"
           : "This week",
-      status: locale === "ar" ? "����" : "Planned",
+      status: locale === "ar" ? "مخطط" : "Planned",
     },
   ];
 
   return (
-    <section className="rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)]">
-      <div className="flex items-center justify-between gap-4">
+    <section className="h-full rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] sm:p-6">
+      <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
-            <CalendarCheck size={20} />
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <CalendarCheck size={19} />
           </span>
 
-          <h2 className="text-xl font-black text-[var(--text-primary)]">
-            {locale === "ar"
-              ? "المهام القادمة"
-              : "Upcoming Tasks"}
-          </h2>
+          <div>
+            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
+              {locale === "ar"
+                ? "المهام القادمة"
+                : "Upcoming Tasks"}
+            </h2>
+
+            <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
+              {locale === "ar"
+                ? "الإجراءات المطلوب متابعتها خلال الفترة الحالية."
+                : "Actions requiring follow-up during the current period."}
+            </p>
+          </div>
         </div>
 
-        <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-bold text-[var(--text-secondary)]">
-          {locale === "ar" ? "هذا الأسبوع" : "This Week"}
+        <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-extrabold text-[var(--text-secondary)]">
+          {locale === "ar" ? "هذا الأسبوع" : "This week"}
         </span>
       </div>
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-5 divide-y divide-[var(--border-default)]">
         {tasks.map((item) => (
           <article
             key={item.task}
-            className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4"
+            className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
           >
-            <div>
-              <p className="font-bold text-[var(--text-primary)]">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-extrabold text-[var(--text-primary)]">
                 {item.task}
               </p>
 
-              <p className="mt-1 text-xs text-[var(--text-muted)]">
-                {item.due}
-              </p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-[var(--text-muted)]">
+                  {item.due}
+                </span>
+
+                <span className="h-1 w-1 rounded-full bg-[var(--border-strong)]" />
+
+                <span className="text-xs font-bold text-[var(--brand-primary)]">
+                  {item.status}
+                </span>
+              </div>
             </div>
 
-            <span className="shrink-0 rounded-full bg-[var(--surface)] px-3 py-1 text-xs font-bold text-[var(--text-secondary)]">
-              {item.status}
+            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface-muted)] text-[var(--text-muted)]">
+              <ChevronRight
+                size={15}
+                className="rtl:rotate-180"
+              />
             </span>
           </article>
         ))}

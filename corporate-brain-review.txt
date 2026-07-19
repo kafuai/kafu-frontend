@@ -1,0 +1,2561 @@
+﻿===== app\corporate-brain\page.tsx =====
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+
+import {
+  CorporateBrainLayout,
+  type CorporateBrainCompany,
+  type CorporateBrainDiscoveryAnswer,
+} from "@/components/corporate-brain";
+import { useLocalization } from "@/components/localization/LocalizationContext";
+import { getCurrentCompanyId } from "@/lib/companySession";
+import { supabase } from "@/lib/supabase";
+
+export default function CorporateBrainPage() {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const [company, setCompany] =
+    useState<CorporateBrainCompany | null>(null);
+
+  const [answers, setAnswers] = useState<
+    CorporateBrainDiscoveryAnswer[]
+  >([]);
+
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    async function loadCorporateBrain() {
+      const companyId = getCurrentCompanyId();
+
+      if (!companyId) {
+        setMessage(
+          isArabic
+            ? "ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¤ط³ط³ط©. ظٹط±ط¬ظ‰ ط¥ظƒظ…ط§ظ„ ط§ظ„طھظ‚ظٹظٹظ… ط£ظˆظ„ظ‹ط§."
+            : "Company data was not found. Please complete the assessment first.",
+        );
+
+        setLoading(false);
+        return;
+      }
+
+      const { data: companyData, error: companyError } = await supabase
+        .from("companies")
+        .select("id, name, industry, country, employee_count")
+        .eq("id", companyId)
+        .single();
+
+      if (companyError) {
+        setMessage(
+          isArabic
+            ? `ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¤ط³ط³ط©: ${companyError.message}`
+            : `Failed to load company data: ${companyError.message}`,
+        );
+
+        setLoading(false);
+        return;
+      }
+
+      const { data: answersData, error: answersError } = await supabase
+        .from("discovery_answers")
+        .select("id, question, answer, question_order")
+        .eq("company_id", companyId)
+        .order("question_order", {
+          ascending: true,
+        });
+
+      if (answersError) {
+        setMessage(
+          isArabic
+            ? `ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط³طھظƒط´ط§ظپ: ${answersError.message}`
+            : `Failed to load discovery data: ${answersError.message}`,
+        );
+
+        setLoading(false);
+        return;
+      }
+
+      setCompany(companyData);
+      setAnswers(answersData ?? []);
+      setLoading(false);
+    }
+
+    loadCorporateBrain();
+  }, [isArabic]);
+
+  if (loading) {
+    return (
+      <main
+        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-8 md:px-8"
+        dir={isArabic ? "rtl" : "ltr"}
+      >
+        <section className="w-full max-w-md overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-medium)]">
+          <div className="h-1 bg-[var(--brand-primary)]" />
+
+          <div className="p-8 text-center">
+            <span className="mx-auto block h-10 w-10 animate-spin rounded-full border-4 border-[var(--border-default)] border-t-[var(--brand-primary)]" />
+
+            <h1 className="mt-5 text-xl font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "ط¬ط§ط±ظٹ طھط´ط؛ظٹظ„ ط§ظ„ط¹ظ‚ظ„ ط§ظ„ظ…ط¤ط³ط³ظٹ"
+                : "Initializing Corporate Brain"}
+            </h1>
+
+            <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
+              {isArabic
+                ? "ظٹطھظ… طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¤ط³ط³ط© ظˆظ…طµط§ط¯ط± ط§ظ„ظ…ط¹ط±ظپط©."
+                : "Loading company context and knowledge sources."}
+            </p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (message || !company) {
+    return (
+      <main
+        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-8 md:px-8"
+        dir={isArabic ? "rtl" : "ltr"}
+      >
+        <section className="w-full max-w-xl overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-medium)]">
+          <div className="h-1 bg-amber-500" />
+
+          <div className="p-8 text-center md:p-10">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-lg font-black text-amber-700">
+              !
+            </div>
+
+            <p className="mt-5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              Corporate Brain
+            </p>
+
+            <h1 className="mt-2 text-2xl font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "طھط¹ط°ط± طھط´ط؛ظٹظ„ ط§ظ„ط¹ظ‚ظ„ ط§ظ„ظ…ط¤ط³ط³ظٹ"
+                : "Corporate Brain Unavailable"}
+            </h1>
+
+            <p className="mt-4 leading-8 text-[var(--text-secondary)]">
+              {message}
+            </p>
+
+            <Link
+              href="/assessment"
+              className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--brand-primary)] px-6 text-sm font-black text-white shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+            >
+              {isArabic ? "ط§ظ„ط¹ظˆط¯ط© ط¥ظ„ظ‰ ط§ظ„طھظ‚ظٹظٹظ…" : "Go to Assessment"}
+            </Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <CorporateBrainLayout
+      company={company}
+      answers={answers}
+    />
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainConversation.tsx =====
+
+"use client";
+
+import {
+  Bot,
+  CheckCircle2,
+  FileText,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+interface CorporateBrainConversationProps {
+  companyName: string;
+  userPrompt: string;
+}
+
+export default function CorporateBrainConversation({
+  companyName,
+  userPrompt,
+}: CorporateBrainConversationProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const displayedPrompt =
+    userPrompt ||
+    (isArabic
+      ? "ظ…ط§ ط£ظ‡ظ… ط§ظ„ط£ظˆظ„ظˆظٹط§طھ ط§ظ„طھظ†ظپظٹط°ظٹط© ط§ظ„طھظٹ ظٹط¬ط¨ ط§ظ„طھط±ظƒظٹط² ط¹ظ„ظٹظ‡ط§ ط§ظ„ط¢ظ†طں"
+      : "What are the most important executive priorities right now?");
+
+  const priorities = isArabic
+    ? [
+        "ط§ط³طھظƒظ…ط§ظ„ ظ…طµط§ط¯ط± ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ط¯ط§ط®ظ„ظٹط©",
+        "طھظˆط«ظٹظ‚ ط§ظ„ط³ظٹط§ط³ط§طھ ظˆط§ظ„ط¥ط¬ط±ط§ط،ط§طھ ط§ظ„ط­ط±ط¬ط©",
+        "ط±ط¨ط· ط§ظ„ظ‚ط±ط§ط±ط§طھ ط¨ظ…ط¤ط´ط±ط§طھ ط§ظ„ط£ط¯ط§ط،",
+      ]
+    : [
+        "Complete internal knowledge sources",
+        "Document critical policies and procedures",
+        "Connect decisions to performance indicators",
+      ];
+
+  return (
+    <section className="flex min-h-[470px] flex-col overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="flex items-center justify-between gap-4 border-b border-[var(--border-default)] px-5 py-4 md:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--text-primary)] text-[var(--surface)]">
+            <Bot size={20} />
+          </span>
+
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "ط§ظ„ظ…ط³ط§ط¹ط¯ ط§ظ„طھظ†ظپظٹط°ظٹ ط§ظ„ط°ظƒظٹ"
+                : "Executive AI Copilot"}
+            </h2>
+
+            <p className="mt-1 truncate text-xs text-[var(--text-muted)]">
+              {isArabic
+                ? "ط¥ط¬ط§ط¨ط§طھ ظ…ط¨ظ†ظٹط© ط¹ظ„ظ‰ ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ط©"
+                : "Answers grounded in enterprise knowledge"}
+            </p>
+          </div>
+        </div>
+
+        <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[var(--success-background)] px-3 py-2 text-[11px] font-black text-[var(--success)]">
+          <ShieldCheck size={14} />
+          {isArabic ? "ظ…ظˆط«ظ‘ظ‚" : "Grounded"}
+        </div>
+      </div>
+
+      <div className="flex-1 space-y-5 overflow-y-auto p-5 md:p-6">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-muted)] text-[var(--text-secondary)]">
+            <UserRound size={17} />
+          </span>
+
+          <div className="max-w-[86%] rounded-2xl rounded-ss-sm bg-[var(--surface-muted)] px-4 py-3.5">
+            <p className="text-sm font-semibold leading-7 text-[var(--text-primary)]">
+              {displayedPrompt}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <Bot size={18} />
+          </span>
+
+          <div className="max-w-[94%] rounded-2xl rounded-ss-sm border border-[var(--border-default)] bg-[var(--surface)] px-5 py-5 shadow-[var(--shadow-small)]">
+            <p className="text-sm leading-8 text-[var(--text-secondary)]">
+              {isArabic
+                ? `ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ط¨ظٹط§ظ†ط§طھ ${companyName} ظˆظ†طھط§ط¦ط¬ ط§ظ„ط§ط³طھظƒط´ط§ظپ ط§ظ„ط­ط§ظ„ظٹط©طŒ ظپط¥ظ† ط§ظ„ط£ظˆظ„ظˆظٹط© ط§ظ„طھظ†ظپظٹط°ظٹط© ظ‡ظٹ طھط­ظˆظٹظ„ ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ظ…طھظپط±ظ‚ط© ط¥ظ„ظ‰ ظ†ط¸ط§ظ… ظ…ظˆط­ظ‘ط¯ ظٹط¯ط¹ظ… ط§طھط®ط§ط° ط§ظ„ظ‚ط±ط§ط±. ظˆظٹط­ط¯ط¯ ط§ظ„طھط­ظ„ظٹظ„ ط«ظ„ط§ط« ط£ظˆظ„ظˆظٹط§طھ ط±ط¦ظٹط³ظٹط©: ط§ط³طھظƒظ…ط§ظ„ ظ…طµط§ط¯ط± ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ط¯ط§ط®ظ„ظٹط©طŒ ظˆطھظˆط«ظٹظ‚ ط§ظ„ط³ظٹط§ط³ط§طھ ظˆط§ظ„ط¥ط¬ط±ط§ط،ط§طھطŒ ظˆط±ط¨ط· ظ…ط¤ط´ط±ط§طھ ط§ظ„ط£ط¯ط§ط، ط¨ظ…ط±ظƒط² ط§ظ„ظ‚ظٹط§ط¯ط© ط§ظ„طھظ†ظپظٹط°ظٹ.`
+                : `Based on current ${companyName} data and discovery insights, the immediate executive priority is to transform fragmented knowledge into a unified decision system. The analysis identifies three priorities: completing internal knowledge sources, documenting policies and procedures, and connecting performance indicators to the executive command center.`}
+            </p>
+
+            <div className="mt-5 grid gap-3">
+              {priorities.map((item, index) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-4 py-3"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--surface)] text-[10px] font-black text-[var(--brand-primary)] shadow-sm">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+
+                  <CheckCircle2
+                    size={16}
+                    className="shrink-0 text-[var(--success)]"
+                  />
+
+                  <span className="text-xs font-bold leading-6 text-[var(--text-secondary)]">
+                    {item}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2 border-t border-[var(--border-default)] pt-4">
+              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-subtle)] px-3 py-2 text-[10px] font-extrabold text-[var(--brand-primary)]">
+                <FileText size={13} />
+
+                {isArabic
+                  ? "ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط³طھظƒط´ط§ظپ"
+                  : "Discovery Data"}
+              </span>
+
+              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--surface-muted)] px-3 py-2 text-[10px] font-extrabold text-[var(--text-muted)]">
+                {isArabic
+                  ? "ظ…ط³طھظˆظ‰ ط§ظ„ط«ظ‚ط© 92%"
+                  : "92% Confidence"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainDecisionPanel.tsx =====
+
+"use client";
+
+import {
+  BookOpenCheck,
+  Link2,
+  Target,
+  Workflow,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+import CorporateBrainExecutiveSummary from "./CorporateBrainExecutiveSummary";
+import CorporateBrainReasoning from "./CorporateBrainReasoning";
+import CorporateBrainRecommendationCard, {
+  type RecommendationPriority,
+} from "./CorporateBrainRecommendationCard";
+
+interface CorporateBrainDecisionPanelProps {
+  companyName: string;
+  discoveryAnswerCount: number;
+}
+
+export default function CorporateBrainDecisionPanel({
+  companyName,
+  discoveryAnswerCount,
+}: CorporateBrainDecisionPanelProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const recommendations = [
+    {
+      icon: BookOpenCheck,
+      title: isArabic
+        ? "ط§ط³طھظƒظ…ط§ظ„ ظ‚ط§ط¹ط¯ط© ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ط¯ط§ط®ظ„ظٹط©"
+        : "Complete the internal knowledge base",
+      description: isArabic
+        ? "ط±ظپط¹ ط§ظ„ط³ظٹط§ط³ط§طھ ظˆط§ظ„ط¥ط¬ط±ط§ط،ط§طھ ظˆط§ظ„ظ†ظ…ط§ط°ط¬ ط§ظ„ط£ظƒط«ط± ط§ط³طھط®ط¯ط§ظ…ظ‹ط§ ظˆط±ط¨ط·ظ‡ط§ ط¨ظ…طµط§ط¯ط± ظ…ظˆط«ظˆظ‚ط©."
+        : "Upload the most-used policies, procedures, and templates and connect them to verified sources.",
+      priority: "critical" as RecommendationPriority,
+      impact: isArabic
+        ? "طھظ‚ظ„ظٹظ„ ط§ظ„ط£ط®ط·ط§ط، ظˆطھظˆط­ظٹط¯ ط§ظ„ظ‚ط±ط§ط±ط§طھ"
+        : "Reduce errors and standardize decisions",
+      confidence: 94,
+      expectedOutcome: isArabic
+        ? "ط±ظپط¹ ط¬ط§ظ‡ط²ظٹط© ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ظٹط© ظˆطھط­ط³ظٹظ† ط¯ظ‚ط© ط¥ط¬ط§ط¨ط§طھ ط§ظ„ط°ظƒط§ط، ط§ظ„ط§طµط·ظ†ط§ط¹ظٹ."
+        : "Increase enterprise knowledge readiness and improve AI response accuracy.",
+    },
+    {
+      icon: Workflow,
+      title: isArabic
+        ? "ط±ط¨ط· ط§ظ„ظ‚ط±ط§ط±ط§طھ ط¨ظ…ط³ط¤ظˆظ„ظٹ ط§ظ„طھظ†ظپظٹط°"
+        : "Connect decisions to execution owners",
+      description: isArabic
+        ? "طھط­ظˆظٹظ„ ط§ظ„ط£ظˆظ„ظˆظٹط§طھ ط§ظ„طھظ†ظپظٹط°ظٹط© ط¥ظ„ظ‰ ظ…ظ‡ط§ظ… ظ…ط­ط¯ط¯ط© ط¨ظ…ط§ظ„ظƒ ظˆظ…ظˆط¹ط¯ ظ†ظ‡ط§ط¦ظٹ ظˆظ…ط¤ط´ط± ظ†ط¬ط§ط­."
+        : "Convert executive priorities into tasks with owners, deadlines, and success indicators.",
+      priority: "high" as RecommendationPriority,
+      impact: isArabic
+        ? "ط²ظٹط§ط¯ط© ط³ط±ط¹ط© ط§ظ„طھظ†ظپظٹط° ظˆط§ظ„ظ…ط³ط§ط،ظ„ط©"
+        : "Improve execution speed and accountability",
+      confidence: 91,
+      expectedOutcome: isArabic
+        ? "ط®ظپط¶ ط§ظ„ظ‚ط±ط§ط±ط§طھ ط§ظ„ظ…ط¹ظ„ظ‚ط© ظˆط²ظٹط§ط¯ط© ظˆط¶ظˆط­ ظ…ط³ط¤ظˆظ„ظٹط© ط§ظ„طھظ†ظپظٹط°."
+        : "Reduce stalled decisions and increase execution ownership clarity.",
+    },
+    {
+      icon: Link2,
+      title: isArabic
+        ? "طھظˆط­ظٹط¯ ظ…ط¤ط´ط±ط§طھ ط§ظ„ط£ط¯ط§ط،"
+        : "Unify performance indicators",
+      description: isArabic
+        ? "ط±ط¨ط· ظ…ط¤ط´ط±ط§طھ ط§ظ„ط£ط¯ط§ط، ط§ظ„طھط´ط؛ظٹظ„ظٹط© ظˆط§ظ„ظ…ط§ظ„ظٹط© ظˆط§ظ„ط§ط³طھط±ط§طھظٹط¬ظٹط© ط¨ظ…ط±ظƒط² ط§ظ„ظ‚ظٹط§ط¯ط©."
+        : "Connect operational, financial, and strategic indicators to the command center.",
+      priority: "medium" as RecommendationPriority,
+      impact: isArabic
+        ? "طھط­ط³ظٹظ† ط¬ظˆط¯ط© ط§ظ„ظ…طھط§ط¨ط¹ط© ط§ظ„طھظ†ظپظٹط°ظٹط©"
+        : "Improve executive performance visibility",
+      confidence: 87,
+      expectedOutcome: isArabic
+        ? "طھظƒظˆظٹظ† طµظˆط±ط© ظ…ظˆط­ط¯ط© ظ„ظ„ط£ط¯ط§ط، ظˆط±ط¨ط· ط§ظ„ظ†طھط§ط¦ط¬ ط¨ط§ظ„ظ‚ط±ط§ط±ط§طھ."
+        : "Create a unified performance view connected directly to decisions.",
+    },
+  ];
+
+  return (
+    <section className="space-y-6">
+      <CorporateBrainExecutiveSummary
+        companyName={companyName}
+        discoveryAnswerCount={discoveryAnswerCount}
+      />
+
+      <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+        <div className="border-b border-[var(--border-default)] px-5 py-5 md:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                <Target size={20} />
+              </span>
+
+              <div className="min-w-0">
+                <h2 className="text-base font-black text-[var(--text-primary)] md:text-lg">
+                  {isArabic
+                    ? "ط§ظ„طھظˆطµظٹط§طھ ط§ظ„طھظ†ظپظٹط°ظٹط© ط°ط§طھ ط§ظ„ط£ظˆظ„ظˆظٹط©"
+                    : "Priority Executive Recommendations"}
+                </h2>
+
+                <p className="mt-1 max-w-3xl text-xs leading-6 text-[var(--text-muted)]">
+                  {isArabic
+                    ? "ظ‚ط±ط§ط±ط§طھ ظ…ظ‚طھط±ط­ط© ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ط© ظˆط¥ط´ط§ط±ط§طھ ط§ظ„ط§ط³طھظƒط´ط§ظپ ظˆظ…ط³طھظˆظ‰ ط§ظ„ط£ط«ط±."
+                    : "Recommended decisions based on enterprise knowledge, discovery signals, and business impact."}
+                </p>
+              </div>
+            </div>
+
+            <span className="w-fit shrink-0 rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-subtle)] px-3 py-1.5 text-[11px] font-black text-[var(--brand-primary)]">
+              {recommendations.length}{" "}
+              {isArabic ? "طھظˆطµظٹط§طھ ظ†ط´ط·ط©" : "Active Recommendations"}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 p-5 md:p-6 xl:grid-cols-3">
+          {recommendations.map((recommendation) => (
+            <CorporateBrainRecommendationCard
+              key={recommendation.title}
+              icon={recommendation.icon}
+              title={recommendation.title}
+              description={recommendation.description}
+              priority={recommendation.priority}
+              impact={recommendation.impact}
+              confidence={recommendation.confidence}
+              expectedOutcome={recommendation.expectedOutcome}
+            />
+          ))}
+        </div>
+      </section>
+
+      <CorporateBrainReasoning />
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainEnterpriseSearch.tsx =====
+
+"use client";
+
+import { Search, SlidersHorizontal, X } from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+interface CorporateBrainEnterpriseSearchProps {
+  value: string;
+  onChange: (value: string) => void;
+  resultCount: number;
+}
+
+export default function CorporateBrainEnterpriseSearch({
+  value,
+  onChange,
+  resultCount,
+}: CorporateBrainEnterpriseSearchProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  return (
+    <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search
+            size={18}
+            className="pointer-events-none absolute inset-inline-start-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
+          />
+
+          <input
+            type="search"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder={
+              isArabic
+                ? "ط§ط¨ط­ط« ظپظٹ ط§ظ„ط³ظٹط§ط³ط§طھ ظˆط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆظ†طھط§ط¦ط¬ ط§ظ„ط§ط³طھظƒط´ط§ظپ..."
+                : "Search policies, company data, and discovery insights..."
+            }
+            aria-label={
+              isArabic
+                ? "ط§ظ„ط¨ط­ط« ظپظٹ ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ظٹط©"
+                : "Search enterprise knowledge"
+            }
+            className="h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface)] ps-11 pe-11 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:ring-2 focus:ring-[var(--brand-subtle)]"
+          />
+
+          {value.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="absolute inset-inline-end-2.5 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--text-muted)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              aria-label={isArabic ? "ظ…ط³ط­ ط§ظ„ط¨ط­ط«" : "Clear search"}
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-4 text-xs font-black text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+        >
+          <SlidersHorizontal size={16} />
+          {isArabic ? "طھطµظپظٹط©" : "Filter"}
+        </button>
+      </div>
+
+      <p
+        className="mt-2 px-1 text-[11px] font-semibold text-[var(--text-muted)]"
+        aria-live="polite"
+      >
+        {isArabic
+          ? `${resultCount} ظ†طھظٹط¬ط© ظ…ط¹ط±ظپظٹط© ظ…طھط§ط­ط©`
+          : `${resultCount} knowledge results available`}
+      </p>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainExecutiveSummary.tsx =====
+
+"use client";
+
+import {
+  Activity,
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+interface CorporateBrainExecutiveSummaryProps {
+  companyName: string;
+  discoveryAnswerCount: number;
+}
+
+export default function CorporateBrainExecutiveSummary({
+  companyName,
+  discoveryAnswerCount,
+}: CorporateBrainExecutiveSummaryProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const summaryItems = [
+    {
+      icon: CheckCircle2,
+      value: "3",
+      label: isArabic
+        ? "ط£ظˆظ„ظˆظٹط§طھ طھظ†ظپظٹط°ظٹط©"
+        : "Executive Priorities",
+      tone:
+        "border-[var(--success)]/20 bg-[var(--success-background)] text-[var(--success)]",
+    },
+    {
+      icon: AlertTriangle,
+      value: "2",
+      label: isArabic
+        ? "ظ…ط®ط§ط·ط± طھطھط·ظ„ط¨ طھط¯ط®ظ„ظ‹ط§"
+        : "Risks Requiring Action",
+      tone:
+        "border-[var(--warning)]/20 bg-[var(--warning-background)] text-[var(--warning)]",
+    },
+    {
+      icon: Activity,
+      value: `${discoveryAnswerCount}`,
+      label: isArabic
+        ? "ط¥ط´ط§ط±ط§طھ ط§ط³طھظƒط´ط§ظپظٹط©"
+        : "Discovery Signals",
+      tone:
+        "border-[var(--brand-primary)]/20 bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    },
+  ];
+
+  return (
+    <section className="relative overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[var(--brand-primary)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--brand-primary)_10%,transparent),transparent_42%)]" />
+
+      <div className="relative p-5 md:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-subtle)] px-3 py-1.5 text-[10px] font-black text-[var(--brand-primary)]">
+              <Sparkles size={14} />
+              {isArabic
+                ? "ط§ظ„ظ…ظ„ط®طµ ط§ظ„طھظ†ظپظٹط°ظٹ ط§ظ„ط°ظƒظٹ"
+                : "AI Executive Summary"}
+            </div>
+
+            <h2 className="mt-4 text-xl font-black tracking-tight text-[var(--text-primary)] md:text-2xl">
+              {isArabic
+                ? `ظ…ط§ ط§ظ„ط°ظٹ طھط­طھط§ط¬ظ‡ ${companyName} ط§ظ„ط¢ظ†طں`
+                : `What ${companyName} needs now`}
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
+              {isArabic
+                ? "ظٹط´ظٹط± ط§ظ„طھط­ظ„ظٹظ„ ط§ظ„ط­ط§ظ„ظٹ ط¥ظ„ظ‰ ط£ظ† ط£ظƒط¨ط± ظپط±طµط© ظ„ظ„طھط­ط³ظٹظ† طھطھظ…ط«ظ„ ظپظٹ طھظˆط­ظٹط¯ ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ظٹط© ظˆط±ط¨ط·ظ‡ط§ ط¨ظ‚ط±ط§ط±ط§طھ ظˆط§ط¶ط­ط©طŒ ظˆظ…ط³ط¤ظˆظ„ظٹ طھظ†ظپظٹط° ظ…ط­ط¯ط¯ظٹظ†طŒ ظˆظ…ط¤ط´ط±ط§طھ ط£ط¯ط§ط، ظ‚ط§ط¨ظ„ط© ظ„ظ„ظ‚ظٹط§ط³."
+                : "Current analysis indicates that the strongest improvement opportunity is to unify enterprise knowledge and connect it to clear decisions, accountable owners, and measurable performance indicators."}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-4 text-xs font-black text-[var(--surface)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+          >
+            {isArabic
+              ? "ظپطھط­ ط§ظ„طھظ‚ط±ظٹط± ط§ظ„طھظ†ظپظٹط°ظٹ"
+              : "Open executive report"}
+
+            <ArrowUpRight size={16} />
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          {summaryItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <div
+                key={item.label}
+                className="flex items-center gap-3 rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-4"
+              >
+                <span
+                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${item.tone}`}
+                >
+                  <Icon size={17} />
+                </span>
+
+                <div className="min-w-0">
+                  <p className="text-xl font-black text-[var(--text-primary)]">
+                    {item.value}
+                  </p>
+
+                  <p className="mt-0.5 text-[10px] font-bold leading-5 text-[var(--text-muted)]">
+                    {item.label}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainHero.tsx =====
+
+"use client";
+
+import {
+  BrainCircuit,
+  Database,
+  FileSearch,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+interface CorporateBrainHeroProps {
+  companyName: string;
+  knowledgeSources: number;
+  discoveryAnswers: number;
+}
+
+export default function CorporateBrainHero({
+  companyName,
+  knowledgeSources,
+  discoveryAnswers,
+}: CorporateBrainHeroProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const metrics = [
+    {
+      icon: Database,
+      value: knowledgeSources,
+      label: isArabic ? "ظ…طµط§ط¯ط± ط§ظ„ظ…ط¹ط±ظپط©" : "Knowledge Sources",
+    },
+    {
+      icon: FileSearch,
+      value: discoveryAnswers,
+      label: isArabic ? "ط¥ط¬ط§ط¨ط§طھ ط§ظ„ط§ط³طھظƒط´ط§ظپ" : "Discovery Answers",
+    },
+    {
+      icon: ShieldCheck,
+      value: "92%",
+      label: isArabic ? "ظ…ط³طھظˆظ‰ ط§ظ„ط«ظ‚ط©" : "Confidence Level",
+    },
+  ];
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="h-1 bg-[var(--brand-primary)]" />
+
+      <div className="relative px-6 py-7 md:px-8 lg:px-9">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--brand-primary)_12%,transparent),transparent_44%)]" />
+
+        <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+          <div className="min-w-0 max-w-4xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--brand-subtle)] px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+              <Sparkles size={14} />
+
+              {isArabic
+                ? "ط§ظ„ط°ظƒط§ط، ط§ظ„طھظ†ظپظٹط°ظٹ ظ„ظ„ظ…ط¤ط³ط³ط©"
+                : "Enterprise Executive Intelligence"}
+            </div>
+
+            <div className="mt-5 flex items-start gap-4">
+              <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--text-primary)] text-[var(--surface)] shadow-[var(--shadow-medium)]">
+                <BrainCircuit size={25} strokeWidth={2} />
+              </span>
+
+              <div className="min-w-0">
+                <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)] md:text-4xl">
+                  Corporate Brain
+                </h1>
+
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--text-secondary)] md:text-base">
+                  {isArabic
+                    ? `ط§ظ„ط¹ظ‚ظ„ ط§ظ„ظ…ط¤ط³ط³ظٹ ظ„ظ€ ${companyName}طŒ ظٹط¬ظ…ط¹ ط§ظ„ظ…ط¹ط±ظپط© ظˆط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆط§ظ„ظ‚ط±ط§ط±ط§طھ ظپظٹ ظ…ط³ط§ط­ط© ظ…ظˆط­ط¯ط© ظ„ظ„ط°ظƒط§ط، ط§ظ„طھظ†ظپظٹط°ظٹ.`
+                    : `The enterprise brain for ${companyName}, connecting organizational knowledge, data, and decisions in one executive intelligence workspace.`}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="inline-flex w-fit min-w-[250px] items-center gap-3 rounded-2xl border border-[var(--border-default)] bg-[var(--success-background)] px-4 py-3 text-[var(--success)]">
+            <span className="relative flex h-3 w-3 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-30" />
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-current" />
+            </span>
+
+            <div>
+              <p className="text-xs font-black">
+                {isArabic
+                  ? "ط§ظ„ط¹ظ‚ظ„ ط§ظ„ظ…ط¤ط³ط³ظٹ ظ…طھطµظ„"
+                  : "Corporate Brain Connected"}
+              </p>
+
+              <p className="mt-0.5 text-[11px] opacity-80">
+                {isArabic
+                  ? "ط¬ط§ظ‡ط² ظ„ظ„طھط­ظ„ظٹظ„ ظˆط§ظ„ط§ط³طھط¬ط§ط¨ط©"
+                  : "Ready to analyze and respond"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid border-t border-[var(--border-default)] md:grid-cols-3">
+        {metrics.map((metric, index) => {
+          const Icon = metric.icon;
+
+          return (
+            <article
+              key={metric.label}
+              className="flex items-center gap-4 border-b border-[var(--border-default)] px-6 py-4 last:border-b-0 md:border-b-0 md:border-e md:last:border-e-0"
+            >
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                <Icon size={18} />
+              </span>
+
+              <div className="min-w-0">
+                <div className="flex items-end gap-2">
+                  <p className="text-xl font-black text-[var(--text-primary)]">
+                    {metric.value}
+                  </p>
+
+                  <span className="pb-0.5 text-[10px] font-black text-[var(--text-muted)]">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                </div>
+
+                <p className="mt-0.5 truncate text-xs font-semibold text-[var(--text-muted)]">
+                  {metric.label}
+                </p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainKnowledgeGraph.tsx =====
+
+"use client";
+
+import {
+  BrainCircuit,
+  Building2,
+  FileText,
+  Network,
+  ShieldAlert,
+  Target,
+  UsersRound,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+interface CorporateBrainKnowledgeGraphProps {
+  companyName: string;
+}
+
+export default function CorporateBrainKnowledgeGraph({
+  companyName,
+}: CorporateBrainKnowledgeGraphProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const nodes = [
+    {
+      icon: Building2,
+      title: companyName,
+      subtitle: isArabic
+        ? "ط§ظ„ظ…ط¤ط³ط³ط©"
+        : "Organization",
+      className:
+        "bg-[var(--text-primary)] text-[var(--surface)]",
+    },
+    {
+      icon: FileText,
+      title: isArabic
+        ? "ط§ظ„ط³ظٹط§ط³ط§طھ"
+        : "Policies",
+      subtitle: isArabic
+        ? "10 ظ…طµط§ط¯ط±"
+        : "10 sources",
+      className:
+        "bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    },
+    {
+      icon: Target,
+      title: isArabic
+        ? "ط§ظ„ط£ظ‡ط¯ط§ظپ"
+        : "Objectives",
+      subtitle: isArabic
+        ? "6 ط£ظ‡ط¯ط§ظپ"
+        : "6 objectives",
+      className:
+        "bg-[var(--success-background)] text-[var(--success)]",
+    },
+    {
+      icon: ShieldAlert,
+      title: isArabic
+        ? "ط§ظ„ظ…ط®ط§ط·ط±"
+        : "Risks",
+      subtitle: isArabic
+        ? "4 ظ…ط®ط§ط·ط±"
+        : "4 risks",
+      className:
+        "bg-[var(--critical-background)] text-[var(--critical)]",
+    },
+    {
+      icon: UsersRound,
+      title: isArabic
+        ? "ظپط±ظ‚ ط§ظ„طھظ†ظپظٹط°"
+        : "Execution Teams",
+      subtitle: isArabic
+        ? "3 ظپط±ظ‚"
+        : "3 teams",
+      className:
+        "bg-[var(--warning-background)] text-[var(--warning)]",
+    },
+  ];
+
+  const positions = [
+    "start-3 top-3 md:start-14 md:top-8",
+    "end-3 top-3 md:end-14 md:top-8",
+    "start-3 bottom-3 md:start-14 md:bottom-8",
+    "end-3 bottom-3 md:end-14 md:bottom-8",
+  ];
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="border-b border-[var(--border-default)] px-5 py-5 md:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+              <Network size={20} />
+            </span>
+
+            <div className="min-w-0">
+              <h2 className="text-base font-black text-[var(--text-primary)]">
+                {isArabic
+                  ? "ط§ظ„ط±ط³ظ… ط§ظ„ظ…ط¹ط±ظپظٹ ظ„ظ„ظ…ط¤ط³ط³ط©"
+                  : "Enterprise Knowledge Graph"}
+              </h2>
+
+              <p className="mt-1 max-w-3xl text-xs leading-6 text-[var(--text-muted)]">
+                {isArabic
+                  ? "طھطµظˆط± ظ…ط¨ط³ط· ظ„ظ„ط¹ظ„ط§ظ‚ط§طھ ط¨ظٹظ† ط§ظ„ظ…ط¹ط±ظپط© ظˆط§ظ„ط£ظ‡ط¯ط§ظپ ظˆط§ظ„ظ…ط®ط§ط·ط± ظˆظپط±ظ‚ ط§ظ„طھظ†ظپظٹط°."
+                  : "A simplified map of relationships across knowledge, objectives, risks, and execution."}
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-subtle)] px-3 py-1.5 text-[10px] font-black text-[var(--brand-primary)]">
+            <BrainCircuit size={13} />
+            {isArabic
+              ? "18 ط¹ظ„ط§ظ‚ط©"
+              : "18 Connections"}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-5 md:p-6">
+        <div className="relative min-h-[340px] overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4 md:p-6">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,color-mix(in_srgb,var(--brand-primary)_10%,transparent),transparent_58%)]" />
+
+          <div className="relative grid min-h-[300px] place-items-center">
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-[230px] w-[230px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-[var(--border-strong)]" />
+
+            <div className="pointer-events-none absolute left-1/2 top-1/2 h-[150px] w-[150px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-[var(--border-default)]" />
+
+            <div className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+              <div
+                className={`flex h-28 w-28 flex-col items-center justify-center rounded-full p-4 text-center shadow-[var(--shadow-large)] ${nodes[0].className}`}
+              >
+                <Building2 size={24} />
+
+                <strong className="mt-2 max-w-20 truncate text-xs">
+                  {nodes[0].title}
+                </strong>
+
+                <span className="mt-1 text-[9px] opacity-75">
+                  {nodes[0].subtitle}
+                </span>
+              </div>
+            </div>
+
+            {nodes.slice(1).map((node, index) => {
+              const Icon = node.icon;
+
+              return (
+                <div
+                  key={node.title}
+                  className={`absolute ${positions[index]}`}
+                >
+                  <div
+                    className={`flex min-w-28 flex-col items-center rounded-2xl border border-[var(--border-default)] p-4 text-center shadow-[var(--shadow-small)] ${node.className}`}
+                  >
+                    <Icon size={19} />
+
+                    <strong className="mt-2 text-[11px] leading-5">
+                      {node.title}
+                    </strong>
+
+                    <span className="mt-1 text-[9px] opacity-75">
+                      {node.subtitle}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainKnowledgePanel.tsx =====
+
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  BookOpenCheck,
+  Building2,
+  Database,
+  FileSearch,
+  FileText,
+  Globe2,
+  Network,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+import CorporateBrainEnterpriseSearch from "./CorporateBrainEnterpriseSearch";
+import CorporateBrainKnowledgeSourceCard, {
+  type KnowledgeSourceStatus,
+} from "./CorporateBrainKnowledgeSourceCard";
+import type {
+  CorporateBrainCompany,
+  CorporateBrainDiscoveryAnswer,
+} from "./CorporateBrainLayout";
+
+interface CorporateBrainKnowledgePanelProps {
+  company: CorporateBrainCompany;
+  answers: CorporateBrainDiscoveryAnswer[];
+}
+
+export default function CorporateBrainKnowledgePanel({
+  company,
+  answers,
+}: CorporateBrainKnowledgePanelProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const knowledgeSources = useMemo(
+    () => [
+      {
+        id: "company",
+        icon: Building2,
+        title: isArabic ? "ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¤ط³ط³ط©" : "Company Profile",
+        description: isArabic
+          ? "ط¨ظٹط§ظ†ط§طھ ط§ظ„ط´ط±ظƒط© ط§ظ„ط£ط³ط§ط³ظٹط© ظˆط§ظ„ظ‚ط·ط§ط¹ ظˆط§ظ„ط¯ظˆظ„ط© ظˆط­ط¬ظ… ط§ظ„ظ‚ظˆظ‰ ط§ظ„ط¹ط§ظ…ظ„ط©."
+          : "Core company details, industry, country, and workforce size.",
+        sourceCount: 4,
+        readiness: 100,
+        status: "ready" as KnowledgeSourceStatus,
+        searchableText: `${company.name ?? ""} ${company.industry ?? ""} ${company.country ?? ""}`,
+      },
+      {
+        id: "discovery",
+        icon: FileSearch,
+        title: isArabic ? "ط°ظƒط§ط، ط§ظ„ط§ط³طھظƒط´ط§ظپ" : "Discovery Intelligence",
+        description: isArabic
+          ? "ط¥ط¬ط§ط¨ط§طھ ط§ظ„طھظ‚ظٹظٹظ… ظˆط§ظ„ط§ط³طھظƒط´ط§ظپ ظˆط§ظ„ط£ظˆظ„ظˆظٹط§طھ ط§ظ„طھظ†ظپظٹط°ظٹط© ط§ظ„ظ…ظƒطھط´ظپط©."
+          : "Assessment responses, discovery answers, and identified executive priorities.",
+        sourceCount: answers.length,
+        readiness: answers.length > 0 ? 85 : 30,
+        status:
+          answers.length > 0
+            ? ("ready" as KnowledgeSourceStatus)
+            : ("missing" as KnowledgeSourceStatus),
+        searchableText: answers
+          .map((item) => `${item.question} ${item.answer}`)
+          .join(" "),
+      },
+      {
+        id: "policies",
+        icon: BookOpenCheck,
+        title: isArabic ? "ط§ظ„ط³ظٹط§ط³ط§طھ ظˆط§ظ„ط¥ط¬ط±ط§ط،ط§طھ" : "Policies & Procedures",
+        description: isArabic
+          ? "ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ط¯ط§ط®ظ„ظٹط© ط§ظ„ظ…ط±طھط¨ط·ط© ط¨ط§ظ„ط³ظٹط§ط³ط§طھ ظˆط§ظ„ظ†ظ…ط§ط°ط¬ ظˆط¥ط¬ط±ط§ط،ط§طھ ط§ظ„ط¹ظ…ظ„."
+          : "Internal policies, operating procedures, templates, and process knowledge.",
+        sourceCount: 10,
+        readiness: 45,
+        status: "processing" as KnowledgeSourceStatus,
+        searchableText: isArabic
+          ? "ط§ظ„ط³ظٹط§ط³ط§طھ ط§ظ„ط¥ط¬ط±ط§ط،ط§طھ ط§ظ„ظ†ظ…ط§ط°ط¬ ط§ظ„ظ…ظˆط§ط±ط¯ ط§ظ„ط¨ط´ط±ظٹط©"
+          : "policies procedures templates human resources",
+      },
+      {
+        id: "regulatory",
+        icon: Globe2,
+        title: isArabic ? "ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„طھظ†ط¸ظٹظ…ظٹط©" : "Regulatory Knowledge",
+        description: isArabic
+          ? "ط§ظ„ط£ظ†ط¸ظ…ط© ظˆط§ظ„ظ„ظˆط§ط¦ط­ ط§ظ„ظ…ط±طھط¨ط·ط© ط¨ط¨ظٹط¦ط© ط¹ظ…ظ„ ط§ظ„ظ…ط¤ط³ط³ط©."
+          : "Regulations and legal frameworks connected to the operating environment.",
+        sourceCount: company.country ? 4 : 1,
+        readiness: company.country === "Saudi Arabia" ? 70 : 50,
+        status: "processing" as KnowledgeSourceStatus,
+        searchableText: `${company.country ?? ""} regulations compliance labor`,
+      },
+      {
+        id: "performance",
+        icon: Database,
+        title: isArabic ? "ط¨ظٹط§ظ†ط§طھ ط§ظ„ط£ط¯ط§ط،" : "Performance Data",
+        description: isArabic
+          ? "ظ…ط¤ط´ط±ط§طھ ط§ظ„ط£ط¯ط§ط، ظˆط§ظ„ظ†طھط§ط¦ط¬ ط§ظ„طھط´ط؛ظٹظ„ظٹط© ظˆط§ظ„ظ…ط§ظ„ظٹط© ظˆط§ظ„ط§ط³طھط±ط§طھظٹط¬ظٹط© ظ„ظ„ظ…ط¤ط³ط³ط©."
+          : "Operational, financial, and strategic performance indicators.",
+        sourceCount: 6,
+        readiness: 62,
+        status: "processing" as KnowledgeSourceStatus,
+        searchableText: isArabic
+          ? "ط§ظ„ط£ط¯ط§ط، ط§ظ„ظ…ط¤ط´ط±ط§طھ ط§ظ„ظ…ط§ظ„ظٹط© ط§ظ„طھط´ط؛ظٹظ„ظٹط© ط§ظ„ط§ط³طھط±ط§طھظٹط¬ظٹط©"
+          : "performance metrics financial operational",
+      },
+      {
+        id: "graph",
+        icon: Network,
+        title: isArabic ? "ط§ظ„ط±ط³ظ… ط§ظ„ظ…ط¹ط±ظپظٹ" : "Knowledge Graph",
+        description: isArabic
+          ? "ط§ظ„ط±ظˆط§ط¨ط· ط¨ظٹظ† ط§ظ„ظ…ط¹ط±ظپط© ظˆط§ظ„ظ‚ط±ط§ط±ط§طھ ظˆط§ظ„ظ…ط®ط§ط·ط± ظˆط§ظ„ط£ظ‡ط¯ط§ظپ ط§ظ„ظ…ط¤ط³ط³ظٹط©."
+          : "Connections across knowledge, decisions, risks, and enterprise objectives.",
+        sourceCount: 18,
+        readiness: 62,
+        status: "processing" as KnowledgeSourceStatus,
+        searchableText: isArabic
+          ? "ط§ظ„ط±ط³ظ… ط§ظ„ظ…ط¹ط±ظپظٹ ط§ظ„ط¹ظ„ط§ظ‚ط§طھ ط§ظ„ظ‚ط±ط§ط±ط§طھ ط§ظ„ظ…ط®ط§ط·ط± ط§ظ„ط£ظ‡ط¯ط§ظپ"
+          : "knowledge graph relationships decisions risks",
+      },
+    ],
+    [answers, company, isArabic],
+  );
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const filteredSources = useMemo(() => {
+    if (!normalizedQuery) {
+      return knowledgeSources;
+    }
+
+    return knowledgeSources.filter((source) =>
+      `${source.title} ${source.description} ${source.searchableText}`
+        .toLowerCase()
+        .includes(normalizedQuery),
+    );
+  }, [knowledgeSources, normalizedQuery]);
+
+  const totalSourceCount = knowledgeSources.reduce(
+    (total, source) => total + source.sourceCount,
+    0,
+  );
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="border-b border-[var(--border-default)] px-5 py-5 md:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+              <FileText size={20} />
+            </span>
+
+            <div className="min-w-0">
+              <h2 className="text-base font-black text-[var(--text-primary)] md:text-lg">
+                {isArabic
+                  ? "ط·ط¨ظ‚ط© ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ظٹط©"
+                  : "Enterprise Knowledge Layer"}
+              </h2>
+
+              <p className="mt-1 max-w-3xl text-xs leading-6 text-[var(--text-muted)]">
+                {isArabic
+                  ? "ظ…طµط§ط¯ط± ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„طھظٹ ظٹط³طھط®ط¯ظ…ظ‡ط§ Corporate Brain ظ„ظپظ‡ظ… ط§ظ„ظ…ط¤ط³ط³ط© ظˆط¥ظ†طھط§ط¬ ط¥ط¬ط§ط¨ط§طھ ظ…ظˆط«ظˆظ‚ط©."
+                  : "Knowledge sources used by Corporate Brain to understand the organization and generate grounded answers."}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-[11px] font-black text-[var(--text-secondary)]">
+              {totalSourceCount} {isArabic ? "ظ…طµط¯ط±ظ‹ط§" : "Sources"}
+            </span>
+
+            <span className="rounded-full border border-[var(--success)]/20 bg-[var(--success-background)] px-3 py-1.5 text-[11px] font-black text-[var(--success)]">
+              {isArabic ? "ط§ظ„ظ…ط¹ط±ظپط© ظ…طھطµظ„ط©" : "Knowledge Connected"}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <CorporateBrainEnterpriseSearch
+            value={searchQuery}
+            onChange={setSearchQuery}
+            resultCount={filteredSources.length}
+          />
+        </div>
+      </div>
+
+      <div className="p-5 md:p-6">
+        {filteredSources.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredSources.map((source) => (
+              <CorporateBrainKnowledgeSourceCard
+                key={source.id}
+                icon={source.icon}
+                title={source.title}
+                description={source.description}
+                sourceCount={source.sourceCount}
+                readiness={source.readiness}
+                status={source.status}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--surface-muted)] px-6 py-10 text-center">
+            <FileSearch
+              size={28}
+              className="mx-auto text-[var(--text-muted)]"
+            />
+
+            <h3 className="mt-4 text-sm font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "ظ„ط§ طھظˆط¬ط¯ ظ†طھط§ط¦ط¬ ظ…ط·ط§ط¨ظ‚ط©"
+                : "No matching knowledge found"}
+            </h3>
+
+            <p className="mt-2 text-xs text-[var(--text-muted)]">
+              {isArabic
+                ? "ط¬ط±ظ‘ط¨ ط§ط³طھط®ط¯ط§ظ… ظ…طµط·ظ„ط­ ط¨ط­ط« ظ…ط®طھظ„ظپ."
+                : "Try searching with a different term."}
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainKnowledgeSourceCard.tsx =====
+
+"use client";
+
+import {
+  CheckCircle2,
+  Clock3,
+  FileText,
+  type LucideIcon,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+export type KnowledgeSourceStatus =
+  | "ready"
+  | "processing"
+  | "missing";
+
+interface CorporateBrainKnowledgeSourceCardProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  sourceCount: number;
+  readiness: number;
+  status: KnowledgeSourceStatus;
+}
+
+export default function CorporateBrainKnowledgeSourceCard({
+  icon: Icon,
+  title,
+  description,
+  sourceCount,
+  readiness,
+  status,
+}: CorporateBrainKnowledgeSourceCardProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const statusConfig = {
+    ready: {
+      icon: CheckCircle2,
+      label: isArabic ? "ط¬ط§ظ‡ط²" : "Ready",
+      className:
+        "border-[var(--success)]/20 bg-[var(--success-background)] text-[var(--success)]",
+    },
+    processing: {
+      icon: Clock3,
+      label: isArabic ? "ظ‚ظٹط¯ ط§ظ„ظ…ط¹ط§ظ„ط¬ط©" : "Processing",
+      className:
+        "border-[var(--warning)]/20 bg-[var(--warning-background)] text-[var(--warning)]",
+    },
+    missing: {
+      icon: FileText,
+      label: isArabic ? "ظٹط­طھط§ط¬ ط¥ظ„ظ‰ ظ…طµط§ط¯ط±" : "Sources Needed",
+      className:
+        "border-[var(--critical)]/20 bg-[var(--critical-background)] text-[var(--critical)]",
+    },
+  } as const;
+
+  const currentStatus = statusConfig[status];
+  const StatusIcon = currentStatus.icon;
+  const safeReadiness = Math.min(100, Math.max(0, readiness));
+
+  return (
+    <article className="group flex min-h-[260px] flex-col rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-medium)]">
+      <div className="flex items-start justify-between gap-3">
+        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)] transition group-hover:scale-[1.03]">
+          <Icon size={20} />
+        </span>
+
+        <span
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[10px] font-black ${currentStatus.className}`}
+        >
+          <StatusIcon size={13} />
+          {currentStatus.label}
+        </span>
+      </div>
+
+      <div className="mt-5 flex-1">
+        <h3 className="text-sm font-black leading-6 text-[var(--text-primary)]">
+          {title}
+        </h3>
+
+        <p className="mt-2 text-xs leading-6 text-[var(--text-muted)]">
+          {description}
+        </p>
+      </div>
+
+      <div className="mt-5 border-t border-[var(--border-default)] pt-4">
+        <div className="flex items-center justify-between gap-3 text-xs">
+          <span className="font-bold text-[var(--text-secondary)]">
+            {sourceCount} {isArabic ? "ظ…طµط§ط¯ط±" : "sources"}
+          </span>
+
+          <strong className="font-black text-[var(--text-primary)]">
+            {safeReadiness}%
+          </strong>
+        </div>
+
+        <div
+          className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--surface-muted)]"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={safeReadiness}
+          aria-label={isArabic ? "ظ†ط³ط¨ط© ط¬ط§ظ‡ط²ظٹط© ط§ظ„ظ…طµط¯ط±" : "Source readiness"}
+        >
+          <div
+            className="h-full rounded-full bg-[var(--brand-primary)] transition-all duration-300"
+            style={{ width: `${safeReadiness}%` }}
+          />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainLayout.tsx =====
+
+"use client";
+
+import { useState } from "react";
+import {
+  BookOpenCheck,
+  Database,
+  FileText,
+  Network,
+  ShieldCheck,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+import CorporateBrainConversation from "./CorporateBrainConversation";
+import CorporateBrainDecisionPanel from "./CorporateBrainDecisionPanel";
+import CorporateBrainHero from "./CorporateBrainHero";
+import CorporateBrainKnowledgeGraph from "./CorporateBrainKnowledgeGraph";
+import CorporateBrainKnowledgePanel from "./CorporateBrainKnowledgePanel";
+import CorporateBrainMemory from "./CorporateBrainMemory";
+import CorporateBrainPromptComposer from "./CorporateBrainPromptComposer";
+import CorporateBrainRelatedInsights from "./CorporateBrainRelatedInsights";
+import CorporateBrainSuggestedActions from "./CorporateBrainSuggestedActions";
+import CorporateBrainTimeline from "./CorporateBrainTimeline";
+
+export interface CorporateBrainCompany {
+  id: string;
+  name: string | null;
+  industry: string | null;
+  country: string | null;
+  employee_count: number | null;
+}
+
+export interface CorporateBrainDiscoveryAnswer {
+  id: string;
+  question: string;
+  answer: string;
+  question_order: number;
+}
+
+interface CorporateBrainLayoutProps {
+  company: CorporateBrainCompany;
+  answers: CorporateBrainDiscoveryAnswer[];
+}
+
+export default function CorporateBrainLayout({
+  company,
+  answers,
+}: CorporateBrainLayoutProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const [prompt, setPrompt] = useState("");
+  const [submittedPrompt, setSubmittedPrompt] = useState("");
+
+  const companyName =
+    company.name || (isArabic ? "ط§ظ„ظ…ط¤ط³ط³ط©" : "The organization");
+
+  const knowledgeSources = 3 + answers.length;
+
+  function handleSubmit() {
+    const normalizedPrompt = prompt.trim();
+
+    if (!normalizedPrompt) {
+      return;
+    }
+
+    setSubmittedPrompt(normalizedPrompt);
+    setPrompt("");
+  }
+
+  const readinessItems = [
+    {
+      icon: Database,
+      title: isArabic ? "ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¤ط³ط³ط©" : "Company Data",
+      value: 100,
+    },
+    {
+      icon: FileText,
+      title: isArabic
+        ? "ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط³طھظƒط´ط§ظپ"
+        : "Discovery Intelligence",
+      value: answers.length > 0 ? 85 : 30,
+    },
+    {
+      icon: BookOpenCheck,
+      title: isArabic
+        ? "ط§ظ„ط³ظٹط§ط³ط§طھ ط§ظ„ط¯ط§ط®ظ„ظٹط©"
+        : "Internal Policies",
+      value: 45,
+    },
+    {
+      icon: Network,
+      title: isArabic
+        ? "ط§ظ„ط±ط³ظ… ط§ظ„ظ…ط¹ط±ظپظٹ"
+        : "Knowledge Graph",
+      value: 62,
+    },
+  ];
+
+  const overallReadiness = Math.round(
+    readinessItems.reduce((total, item) => total + item.value, 0) /
+      readinessItems.length,
+  );
+
+  return (
+    <main
+      className="min-h-[calc(100vh-76px)] bg-[var(--background)] px-5 py-6 md:px-8 lg:px-10"
+      dir={isArabic ? "rtl" : "ltr"}
+    >
+      <div className="mx-auto max-w-[1580px] space-y-6">
+        <CorporateBrainHero
+          companyName={companyName}
+          knowledgeSources={knowledgeSources}
+          discoveryAnswers={answers.length}
+        />
+
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="min-w-0 space-y-5">
+            <CorporateBrainConversation
+              companyName={companyName}
+              userPrompt={submittedPrompt}
+            />
+
+            <CorporateBrainPromptComposer
+              value={prompt}
+              onChange={setPrompt}
+              onSubmit={handleSubmit}
+            />
+          </div>
+
+          <aside className="space-y-5">
+            <CorporateBrainSuggestedActions onSelect={setPrompt} />
+
+            <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+              <div className="h-1 bg-[var(--brand-primary)]" />
+
+              <div className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                      Knowledge Readiness
+                    </p>
+
+                    <h2 className="mt-2 text-base font-black text-[var(--text-primary)]">
+                      {isArabic
+                        ? "ط¬ط§ظ‡ط²ظٹط© ط§ظ„ط¹ظ‚ظ„ ط§ظ„ظ…ط¤ط³ط³ظٹ"
+                        : "Corporate Brain Readiness"}
+                    </h2>
+
+                    <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">
+                      {isArabic
+                        ? "ط§ظ„ط­ط§ظ„ط© ط§ظ„ط­ط§ظ„ظٹط© ظ„ط·ط¨ظ‚ط§طھ ط§ظ„ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ظٹط©"
+                        : "Current status of enterprise knowledge layers"}
+                    </p>
+                  </div>
+
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--success-background)] text-[var(--success)]">
+                    <ShieldCheck size={20} />
+                  </span>
+                </div>
+
+                <div className="mt-5 flex items-end justify-between rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-4 py-3">
+                  <div>
+                    <p className="text-xs font-bold text-[var(--text-muted)]">
+                      {isArabic
+                        ? "ط§ظ„ط¬ط§ظ‡ط²ظٹط© ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹط©"
+                        : "Overall readiness"}
+                    </p>
+
+                    <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">
+                      {overallReadiness}%
+                    </p>
+                  </div>
+
+                  <span className="rounded-full bg-[var(--success-background)] px-3 py-1.5 text-[11px] font-black text-[var(--success)]">
+                    {isArabic ? "ظ‚ظٹط¯ ط§ظ„طھط·ظˆظٹط±" : "In progress"}
+                  </span>
+                </div>
+
+                <div className="mt-5 space-y-5">
+                  {readinessItems.map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <div key={item.title}>
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                              <Icon size={15} />
+                            </span>
+
+                            <span className="truncate text-xs font-bold text-[var(--text-secondary)]">
+                              {item.title}
+                            </span>
+                          </div>
+
+                          <span className="shrink-0 text-xs font-black text-[var(--text-primary)]">
+                            {item.value}%
+                          </span>
+                        </div>
+
+                        <div className="h-2 overflow-hidden rounded-full bg-[var(--surface-muted)]">
+                          <div
+                            className="h-full rounded-full bg-[var(--brand-primary)] transition-[width] duration-500"
+                            style={{ width: `${item.value}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          </aside>
+        </section>
+
+        <CorporateBrainKnowledgePanel
+          company={company}
+          answers={answers}
+        />
+
+        <CorporateBrainDecisionPanel
+          companyName={companyName}
+          discoveryAnswerCount={answers.length}
+        />
+
+        <CorporateBrainMemory
+          companyName={companyName}
+          discoveryAnswerCount={answers.length}
+        />
+
+        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
+          <CorporateBrainKnowledgeGraph companyName={companyName} />
+
+          <CorporateBrainRelatedInsights />
+        </section>
+
+        <CorporateBrainTimeline />
+      </div>
+    </main>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainMemory.tsx =====
+
+"use client";
+
+import {
+  BrainCircuit,
+  CheckCircle2,
+  Clock3,
+  Database,
+  ShieldCheck,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+interface CorporateBrainMemoryProps {
+  companyName: string;
+  discoveryAnswerCount: number;
+}
+
+export default function CorporateBrainMemory({
+  companyName,
+  discoveryAnswerCount,
+}: CorporateBrainMemoryProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const memoryItems = [
+    {
+      icon: Database,
+      title: isArabic
+        ? "ط³ظٹط§ظ‚ ط§ظ„ظ…ط¤ط³ط³ط©"
+        : "Enterprise Context",
+      description: isArabic
+        ? `ظٹطھط°ظƒط± Corporate Brain ط¨ظٹط§ظ†ط§طھ ${companyName} ظˆط§ظ„ظ‚ط·ط§ط¹ ظˆط§ظ„ط¯ظˆظ„ط© ظˆط­ط¬ظ… ط§ظ„ظ‚ظˆظ‰ ط§ظ„ط¹ط§ظ…ظ„ط©.`
+        : `Corporate Brain retains ${companyName} profile, industry, country, and workforce context.`,
+      status: isArabic
+        ? "ظ…طھطµظ„"
+        : "Connected",
+      tone:
+        "border-[var(--success)]/20 bg-[var(--success-background)] text-[var(--success)]",
+    },
+    {
+      icon: BrainCircuit,
+      title: isArabic
+        ? "ط°ط§ظƒط±ط© ط§ظ„ط§ط³طھظƒط´ط§ظپ"
+        : "Discovery Memory",
+      description: isArabic
+        ? `طھظ… ط­ظپط¸ ${discoveryAnswerCount} ط¥ط´ط§ط±ط© ط§ط³طھظƒط´ط§ظپظٹط© ظ„ط§ط³طھط®ط¯ط§ظ…ظ‡ط§ ظپظٹ ط§ظ„طھط­ظ„ظٹظ„ ظˆط¯ط¹ظ… ط§ظ„ظ‚ط±ط§ط±ط§طھ.`
+        : `${discoveryAnswerCount} discovery signals are retained for analysis and decision support.`,
+      status: isArabic
+        ? "ظ†ط´ط·ط©"
+        : "Active",
+      tone:
+        "border-[var(--brand-primary)]/20 bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    },
+    {
+      icon: Clock3,
+      title: isArabic
+        ? "ط°ط§ظƒط±ط© ط§ظ„ظ‚ط±ط§ط±ط§طھ"
+        : "Decision Memory",
+      description: isArabic
+        ? "ظٹط­طھظپط¸ ط§ظ„ظ†ط¸ط§ظ… ط¨ط§ظ„طھظˆطµظٹط§طھ ط§ظ„ط³ط§ط¨ظ‚ط© ظˆظ…ط³ط¤ظˆظ„ظٹ ط§ظ„طھظ†ظپظٹط° ظˆط§ظ„ظ†طھط§ط¦ط¬ ط§ظ„ظ…طھظˆظ‚ط¹ط©."
+        : "The system retains previous recommendations, execution owners, and expected outcomes.",
+      status: isArabic
+        ? "ظ‚ظٹط¯ ط§ظ„طھظˆط³ط¹"
+        : "Expanding",
+      tone:
+        "border-[var(--warning)]/20 bg-[var(--warning-background)] text-[var(--warning)]",
+    },
+  ];
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="border-b border-[var(--border-default)] px-5 py-5 md:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+              <BrainCircuit size={20} />
+            </span>
+
+            <div className="min-w-0">
+              <h2 className="text-base font-black text-[var(--text-primary)]">
+                {isArabic
+                  ? "ط°ط§ظƒط±ط© ط§ظ„ظ…ط¤ط³ط³ط© ط§ظ„ط°ظƒظٹط©"
+                  : "Enterprise AI Memory"}
+              </h2>
+
+              <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">
+                {isArabic
+                  ? "ط§ظ„ط³ظٹط§ظ‚ ط§ظ„ظ…ط¤ط³ط³ظٹ ط§ظ„ط°ظٹ ظٹط­طھظپط¸ ط¨ظ‡ Corporate Brain ط¹ط¨ط± ط§ظ„طھظپط§ط¹ظ„ط§طھ."
+                  : "Organizational context retained by Corporate Brain across interactions."}
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-[var(--success)]/20 bg-[var(--success-background)] px-3 py-1.5 text-[10px] font-black text-[var(--success)]">
+            <ShieldCheck size={13} />
+
+            {isArabic
+              ? "ط°ط§ظƒط±ط© ط¢ظ…ظ†ط©"
+              : "Secure Memory"}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid gap-3 p-5 md:p-6 lg:grid-cols-3">
+        {memoryItems.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <article
+              key={item.title}
+              className="flex min-h-[210px] flex-col rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-5"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
+                  <Icon size={18} />
+                </span>
+
+                <span
+                  className={`rounded-full border px-3 py-1.5 text-[10px] font-black ${item.tone}`}
+                >
+                  {item.status}
+                </span>
+              </div>
+
+              <h3 className="mt-4 text-sm font-black leading-6 text-[var(--text-primary)]">
+                {item.title}
+              </h3>
+
+              <p className="mt-2 text-xs leading-6 text-[var(--text-muted)]">
+                {item.description}
+              </p>
+
+              <div className="mt-auto flex items-center gap-2 border-t border-[var(--border-default)] pt-4 text-[10px] font-bold text-[var(--success)]">
+                <CheckCircle2 size={14} />
+
+                {isArabic
+                  ? "ظ…طھط§ط­ ظ„ظ„طھط­ظ„ظٹظ„"
+                  : "Available for analysis"}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainPromptComposer.tsx =====
+
+"use client";
+
+import {
+  ArrowUp,
+  Mic,
+  Paperclip,
+  Sparkles,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+interface CorporateBrainPromptComposerProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+}
+
+export default function CorporateBrainPromptComposer({
+  value,
+  onChange,
+  onSubmit,
+}: CorporateBrainPromptComposerProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+  const canSubmit = value.trim().length > 0;
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-medium)] transition focus-within:border-[var(--brand-primary)] focus-within:ring-2 focus-within:ring-[var(--brand-subtle)]">
+      <div className="px-4 pt-4 md:px-5">
+        <textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              onSubmit();
+            }
+          }}
+          rows={3}
+          placeholder={
+            isArabic
+              ? "ط§ط³ط£ظ„ Corporate Brain ط¹ظ† ط§ظ„ط£ط¯ط§ط، ط£ظˆ ط§ظ„ظ…ط®ط§ط·ط± ط£ظˆ ط§ظ„ظ‚ط±ط§ط±ط§طھ ط£ظˆ ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ط©..."
+              : "Ask Corporate Brain about performance, risks, decisions, or enterprise knowledge..."
+          }
+          aria-label={
+            isArabic
+              ? "ط§ظƒطھط¨ ط³ط¤ط§ظ„ظƒ ط¥ظ„ظ‰ ط§ظ„ط¹ظ‚ظ„ ط§ظ„ظ…ط¤ط³ط³ظٹ"
+              : "Enter your Corporate Brain question"
+          }
+          className="min-h-[96px] w-full resize-none border-0 bg-transparent px-1 py-2 text-sm leading-7 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-4 border-t border-[var(--border-default)] bg-[var(--surface-muted)] px-4 py-3 md:px-5">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            aria-label={isArabic ? "ط¥ط±ظپط§ظ‚ ظ…ظ„ظپ" : "Attach file"}
+          >
+            <Paperclip size={17} />
+          </button>
+
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            aria-label={isArabic ? "ط¥ط¯ط®ط§ظ„ طµظˆطھظٹ" : "Voice input"}
+          >
+            <Mic size={17} />
+          </button>
+
+          <span className="hidden min-w-0 items-center gap-2 text-[11px] font-semibold text-[var(--text-muted)] sm:inline-flex">
+            <Sparkles size={14} className="shrink-0" />
+
+            <span className="truncate">
+              {isArabic
+                ? "ظ…ط¯ط¹ظˆظ… ط¨ظ…ط¹ط±ظپط© ط§ظ„ظ…ط¤ط³ط³ط©"
+                : "Grounded in enterprise knowledge"}
+            </span>
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl bg-[var(--text-primary)] px-5 text-xs font-black text-[var(--surface)] shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {isArabic ? "طھط­ظ„ظٹظ„" : "Analyze"}
+          <ArrowUp size={16} />
+        </button>
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainReasoning.tsx =====
+
+"use client";
+
+import {
+  ArrowDown,
+  BrainCircuit,
+  Database,
+  FileSearch,
+  Lightbulb,
+  ShieldCheck,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+export default function CorporateBrainReasoning() {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const reasoningSteps = [
+    {
+      icon: Database,
+      title: isArabic
+        ? "ط¬ظ…ط¹ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¤ط³ط³ط©"
+        : "Collect enterprise data",
+      description: isArabic
+        ? "ط¨ظٹط§ظ†ط§طھ ط§ظ„ط´ط±ظƒط© ظˆط§ظ„ظ‚ط·ط§ط¹ ظˆط§ظ„ط¯ظˆظ„ط© ظˆط­ط¬ظ… ط§ظ„ظ‚ظˆظ‰ ط§ظ„ط¹ط§ظ…ظ„ط©."
+        : "Company profile, industry, country, and workforce data.",
+    },
+    {
+      icon: FileSearch,
+      title: isArabic
+        ? "طھط­ظ„ظٹظ„ ط¥ط´ط§ط±ط§طھ ط§ظ„ط§ط³طھظƒط´ط§ظپ"
+        : "Analyze discovery signals",
+      description: isArabic
+        ? "ط§ط³طھط®ط±ط§ط¬ ط§ظ„طھط­ط¯ظٹط§طھ ظˆط§ظ„ط£ظˆظ„ظˆظٹط§طھ ظˆط§ظ„ظپط¬ظˆط§طھ ط§ظ„ظ…طھظƒط±ط±ط©."
+        : "Extract recurring challenges, priorities, and knowledge gaps.",
+    },
+    {
+      icon: BrainCircuit,
+      title: isArabic
+        ? "ط±ط¨ط· ط§ظ„ظ…ط¹ط±ظپط© ط¨ط§ظ„ظ‚ط±ط§ط±"
+        : "Connect knowledge to decisions",
+      description: isArabic
+        ? "ظ…ظ‚ط§ط±ظ†ط© ط§ظ„ط£ط¯ظ„ط© ظˆطھط­ط¯ظٹط¯ ط§ظ„طھط£ط«ظٹط± ظˆط§ظ„ظ…ط®ط§ط·ط± ظˆط§ظ„ط£ظˆظ„ظˆظٹط©."
+        : "Compare evidence and assess impact, risk, and priority.",
+    },
+    {
+      icon: Lightbulb,
+      title: isArabic
+        ? "ط¥ظ†طھط§ط¬ ط§ظ„طھظˆطµظٹط© ط§ظ„طھظ†ظپظٹط°ظٹط©"
+        : "Generate executive recommendation",
+      description: isArabic
+        ? "طھظ‚ط¯ظٹظ… ظ‚ط±ط§ط± ظ‚ط§ط¨ظ„ ظ„ظ„طھظ†ظپظٹط° ظ…ط¹ ظ†طھظٹط¬ط© ظ…طھظˆظ‚ط¹ط© ظˆظ…ط³طھظˆظ‰ ط«ظ‚ط©."
+        : "Produce an actionable decision with expected outcome and confidence.",
+    },
+  ];
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="border-b border-[var(--border-default)] px-5 py-5 md:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+              <BrainCircuit size={20} />
+            </span>
+
+            <div className="min-w-0">
+              <h2 className="text-base font-black text-[var(--text-primary)]">
+                {isArabic
+                  ? "ظƒظٹظپ ظˆطµظ„ Corporate Brain ط¥ظ„ظ‰ ط§ظ„ظ‚ط±ط§ط±طں"
+                  : "How Corporate Brain reached the decision"}
+              </h2>
+
+              <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">
+                {isArabic
+                  ? "ظ…ط³ط§ط± ظ…ط¨ط³ط· ظٹظˆط¶ط­ ظ…طµط§ط¯ط± ط§ظ„طھط­ظ„ظٹظ„ ظˆظ…ظ†ط·ظ‚ ط§ظ„طھظˆطµظٹط©."
+                  : "A simplified reasoning path showing the evidence and recommendation logic."}
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-[var(--success)]/20 bg-[var(--success-background)] px-3 py-1.5 text-[10px] font-black text-[var(--success)]">
+            <ShieldCheck size={13} />
+            {isArabic ? "ظ‚ط§ط¨ظ„ ظ„ظ„طھطھط¨ط¹" : "Traceable"}
+          </span>
+        </div>
+      </div>
+
+      <div className="grid gap-3 p-5 md:p-6 lg:grid-cols-4">
+        {reasoningSteps.map((step, index) => {
+          const Icon = step.icon;
+          const isLast = index === reasoningSteps.length - 1;
+
+          return (
+            <div
+              key={step.title}
+              className="relative min-h-[178px] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
+                  <Icon size={17} />
+                </span>
+
+                <span className="text-[10px] font-black tracking-wider text-[var(--text-muted)]">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              </div>
+
+              <h3 className="mt-4 text-xs font-black leading-5 text-[var(--text-primary)]">
+                {step.title}
+              </h3>
+
+              <p className="mt-2 text-[11px] leading-5 text-[var(--text-muted)]">
+                {step.description}
+              </p>
+
+              {!isLast && (
+                <ArrowDown
+                  size={18}
+                  className="mx-auto mt-4 text-[var(--brand-primary)] lg:absolute lg:-inset-inline-end-[22px] lg:top-1/2 lg:mt-0 lg:-translate-y-1/2 lg:-rotate-90"
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainRecommendationCard.tsx =====
+
+"use client";
+
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  ShieldAlert,
+  Target,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+export type RecommendationPriority =
+  | "critical"
+  | "high"
+  | "medium";
+
+interface CorporateBrainRecommendationCardProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  priority: RecommendationPriority;
+  impact: string;
+  confidence: number;
+  expectedOutcome: string;
+}
+
+export default function CorporateBrainRecommendationCard({
+  icon: Icon,
+  title,
+  description,
+  priority,
+  impact,
+  confidence,
+  expectedOutcome,
+}: CorporateBrainRecommendationCardProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+  const safeConfidence = Math.min(100, Math.max(0, confidence));
+
+  const priorityConfig = {
+    critical: {
+      label: isArabic ? "ط­ط±ط¬ط©" : "Critical",
+      icon: ShieldAlert,
+      className:
+        "border-[var(--critical)]/20 bg-[var(--critical-background)] text-[var(--critical)]",
+    },
+    high: {
+      label: isArabic ? "ط¹ط§ظ„ظٹط©" : "High",
+      icon: TrendingUp,
+      className:
+        "border-[var(--warning)]/20 bg-[var(--warning-background)] text-[var(--warning)]",
+    },
+    medium: {
+      label: isArabic ? "ظ…طھظˆط³ط·ط©" : "Medium",
+      icon: Clock3,
+      className:
+        "border-[var(--brand-primary)]/20 bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    },
+  } as const;
+
+  const currentPriority = priorityConfig[priority];
+  const PriorityIcon = currentPriority.icon;
+
+  return (
+    <article className="group flex min-h-[480px] flex-col rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]">
+      <div className="flex items-start justify-between gap-3">
+        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)] transition group-hover:scale-[1.03]">
+          <Icon size={20} />
+        </span>
+
+        <span
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[10px] font-black ${currentPriority.className}`}
+        >
+          <PriorityIcon size={13} />
+          {currentPriority.label}
+        </span>
+      </div>
+
+      <div className="mt-5">
+        <h3 className="text-base font-black leading-7 text-[var(--text-primary)]">
+          {title}
+        </h3>
+
+        <p className="mt-2 text-xs leading-6 text-[var(--text-muted)]">
+          {description}
+        </p>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+          <div className="flex items-center gap-2 text-[var(--brand-primary)]">
+            <Target size={15} />
+
+            <span className="text-[10px] font-black uppercase tracking-wider">
+              {isArabic ? "ط§ظ„ط£ط«ط± ط§ظ„ظ…طھظˆظ‚ط¹" : "Business Impact"}
+            </span>
+          </div>
+
+          <p className="mt-2 text-xs font-bold leading-5 text-[var(--text-secondary)]">
+            {impact}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+          <div className="flex items-center gap-2 text-[var(--success)]">
+            <CheckCircle2 size={15} />
+
+            <span className="text-[10px] font-black uppercase tracking-wider">
+              {isArabic ? "ظ…ط³طھظˆظ‰ ط§ظ„ط«ظ‚ط©" : "Confidence"}
+            </span>
+          </div>
+
+          <div className="mt-2 flex items-end justify-between gap-3">
+            <p className="text-lg font-black text-[var(--text-primary)]">
+              {safeConfidence}%
+            </p>
+
+            <span className="text-[10px] font-bold text-[var(--text-muted)]">
+              {isArabic ? "ظ…ظˆط«ظˆظ‚ظٹط© ط§ظ„طھط­ظ„ظٹظ„" : "Analysis reliability"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex-1 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] p-4">
+        <p className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">
+          {isArabic ? "ط§ظ„ظ†طھظٹط¬ط© ط§ظ„ظ…طھظˆظ‚ط¹ط©" : "Expected Outcome"}
+        </p>
+
+        <p className="mt-2 text-xs font-semibold leading-6 text-[var(--text-secondary)]">
+          {expectedOutcome}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        className="mt-5 inline-flex w-fit items-center gap-2 rounded-lg text-xs font-black text-[var(--brand-primary)] transition hover:gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+      >
+        {isArabic ? "ط¹ط±ط¶ ط®ط·ط© ط§ظ„طھظ†ظپظٹط°" : "View execution plan"}
+        <ArrowUpRight size={15} />
+      </button>
+    </article>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainRelatedInsights.tsx =====
+
+"use client";
+
+import {
+  ArrowUpRight,
+  BarChart3,
+  FileCheck2,
+  Lightbulb,
+  ShieldAlert,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+export default function CorporateBrainRelatedInsights() {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const insights = [
+    {
+      icon: ShieldAlert,
+      category: isArabic
+        ? "ظ…ط®ط§ط·ط±"
+        : "Risk",
+      title: isArabic
+        ? "طھظƒط±ط§ط± ط§ظ„ط£ط®ط·ط§ط، ط¨ط³ط¨ط¨ ط¹ط¯ظ… طھظˆط­ظٹط¯ ط§ظ„ط³ظٹط§ط³ط§طھ"
+        : "Repeated errors caused by inconsistent policy execution",
+      description: isArabic
+        ? "ط¹ط¯ظ… ظˆط¬ظˆط¯ ظ…طµط¯ط± ظ…ظˆط­ط¯ ظ„ظ„ط³ظٹط§ط³ط§طھ ظٹط²ظٹط¯ ط§ط­طھظ…ط§ظ„ظٹط© ط§ط®طھظ„ط§ظپ ط§ظ„طھظ†ظپظٹط° ط¨ظٹظ† ط§ظ„ظپط±ظ‚."
+        : "The absence of a unified policy source increases inconsistent execution across teams.",
+      tone:
+        "border-[var(--critical)]/20 bg-[var(--critical-background)] text-[var(--critical)]",
+    },
+    {
+      icon: BarChart3,
+      category: isArabic
+        ? "ط£ط¯ط§ط،"
+        : "Performance",
+      title: isArabic
+        ? "ظپط±طµط© ظ„ط±ط¨ط· ط§ظ„ظ‚ط±ط§ط±ط§طھ ط¨ظ…ط¤ط´ط±ط§طھ ظ‚ط§ط¨ظ„ط© ظ„ظ„ظ‚ظٹط§ط³"
+        : "Opportunity to connect decisions to measurable indicators",
+      description: isArabic
+        ? "ط±ط¨ط· ط§ظ„طھظˆطµظٹط§طھ ط¨ظ…ط¤ط´ط±ط§طھ ط§ظ„ط£ط¯ط§ط، ط³ظٹط­ط³ظ† ط§ظ„ظ…طھط§ط¨ط¹ط© ظˆط§ظ„ظ…ط³ط§ط،ظ„ط© ط§ظ„طھظ†ظپظٹط°ظٹط©."
+        : "Connecting recommendations to KPIs will improve executive monitoring and accountability.",
+      tone:
+        "border-[var(--brand-primary)]/20 bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    },
+    {
+      icon: FileCheck2,
+      category: isArabic
+        ? "ظ…ط¹ط±ظپط©"
+        : "Knowledge",
+      title: isArabic
+        ? "ط§ظ„ط³ظٹط§ط³ط§طھ ط§ظ„ط£ظƒط«ط± ط§ط³طھط®ط¯ط§ظ…ظ‹ط§ ظٹط¬ط¨ ط£ظ† طھظƒظˆظ† ط£ظˆظ„ظˆظٹط©"
+        : "Frequently used policies should be prioritized",
+      description: isArabic
+        ? "ط±ظپط¹ ط£ظˆظ„ ط¹ط´ط± ط³ظٹط§ط³ط§طھ ط³ظٹط¹ط·ظٹ ط£ط³ط±ط¹ طھط­ط³ظ† ظپظٹ ط¬ط§ظ‡ط²ظٹط© Corporate Brain."
+        : "Uploading the ten most-used policies will produce the fastest readiness improvement.",
+      tone:
+        "border-[var(--success)]/20 bg-[var(--success-background)] text-[var(--success)]",
+    },
+  ];
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="border-b border-[var(--border-default)] px-5 py-5 md:px-6">
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <Lightbulb size={20} />
+          </span>
+
+          <div className="min-w-0">
+            <h2 className="text-base font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "ط±ط¤ظ‰ ظ…ط±طھط¨ط·ط©"
+                : "Related Enterprise Insights"}
+            </h2>
+
+            <p className="mt-1 max-w-3xl text-xs leading-6 text-[var(--text-muted)]">
+              {isArabic
+                ? "ط±ط¤ظ‰ ط¥ط¶ط§ظپظٹط© ط§ظƒطھط´ظپظ‡ط§ Corporate Brain ظ…ظ† ط§ظ„ط¹ظ„ط§ظ‚ط§طھ ط¨ظٹظ† ط§ظ„ط¨ظٹط§ظ†ط§طھ."
+                : "Additional insights discovered from relationships across enterprise data."}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 p-5 md:p-6">
+        {insights.map((insight, index) => {
+          const Icon = insight.icon;
+
+          return (
+            <article
+              key={insight.title}
+              className="group rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4 transition hover:border-[var(--brand-primary)] hover:bg-[var(--surface)]"
+            >
+              <div className="flex items-start gap-3">
+                <span
+                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${insight.tone}`}
+                >
+                  <Icon size={17} />
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">
+                      {insight.category}
+                    </span>
+
+                    <span className="text-[9px] font-black tracking-wider text-[var(--text-muted)]/70">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-1 text-xs font-black leading-5 text-[var(--text-primary)]">
+                    {insight.title}
+                  </h3>
+
+                  <p className="mt-2 text-[11px] leading-5 text-[var(--text-muted)]">
+                    {insight.description}
+                  </p>
+                </div>
+
+                <ArrowUpRight
+                  size={16}
+                  className="mt-1 shrink-0 text-[var(--text-muted)] transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)]"
+                  aria-hidden="true"
+                />
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainSuggestedActions.tsx =====
+
+"use client";
+
+import {
+  FileCheck2,
+  Lightbulb,
+  SearchCheck,
+  ShieldAlert,
+  TrendingUp,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+interface CorporateBrainSuggestedActionsProps {
+  onSelect: (prompt: string) => void;
+}
+
+export default function CorporateBrainSuggestedActions({
+  onSelect,
+}: CorporateBrainSuggestedActionsProps) {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const actions = [
+    {
+      icon: TrendingUp,
+      title: isArabic
+        ? "طھط­ظ„ظٹظ„ ط£ط¯ط§ط، ط§ظ„ظ…ط¤ط³ط³ط©"
+        : "Analyze company performance",
+      prompt: isArabic
+        ? "ط­ظ„ظ‘ظ„ ط£ط¯ط§ط، ط§ظ„ظ…ط¤ط³ط³ط© ظˆط­ط¯ط¯ ط£ظ‡ظ… ط«ظ„ط§ط« ظپط±طµ ظ„ظ„طھط­ط³ظٹظ†."
+        : "Analyze company performance and identify the top three improvement opportunities.",
+    },
+    {
+      icon: ShieldAlert,
+      title: isArabic
+        ? "ظ…ط±ط§ط¬ط¹ط© ظ…ط®ط§ط·ط± ط§ظ„ظ…ط¤ط³ط³ط©"
+        : "Review enterprise risks",
+      prompt: isArabic
+        ? "ظ…ط§ ط£ظ‡ظ… ط§ظ„ظ…ط®ط§ط·ط± ط§ظ„ظ…ط¤ط³ط³ظٹط© ط§ظ„طھظٹ طھطھط·ظ„ط¨ طھط¯ط®ظ„ظ‹ط§ طھظ†ظپظٹط°ظٹظ‹ط§طں"
+        : "What enterprise risks currently require executive intervention?",
+    },
+    {
+      icon: FileCheck2,
+      title: isArabic
+        ? "ظ…ط±ط§ط¬ط¹ط© ط§ظ„ط³ظٹط§ط³ط§طھ ط§ظ„ط¯ط§ط®ظ„ظٹط©"
+        : "Review internal policies",
+      prompt: isArabic
+        ? "ط±ط§ط¬ط¹ ط¬ط§ظ‡ط²ظٹط© ط§ظ„ط³ظٹط§ط³ط§طھ ط§ظ„ط¯ط§ط®ظ„ظٹط© ظˆط­ط¯ط¯ ط§ظ„ظپط¬ظˆط§طھ ط§ظ„ظ…ط¹ط±ظپظٹط©."
+        : "Review internal policy readiness and identify knowledge gaps.",
+    },
+    {
+      icon: Lightbulb,
+      title: isArabic
+        ? "ط§ظ‚طھط±ط§ط­ ظ‚ط±ط§ط± طھظ†ظپظٹط°ظٹ"
+        : "Recommend a decision",
+      prompt: isArabic
+        ? "ط§ظ‚طھط±ط­ ط§ظ„ظ‚ط±ط§ط± ط§ظ„طھظ†ظپظٹط°ظٹ ط§ظ„ط£ط¹ظ„ظ‰ ط£ظˆظ„ظˆظٹط© ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¤ط³ط³ط©."
+        : "Recommend the highest-priority executive decision based on enterprise data.",
+    },
+  ];
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="border-b border-[var(--border-default)] px-5 py-4">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+            <SearchCheck size={19} />
+          </span>
+
+          <div className="min-w-0">
+            <h2 className="text-sm font-black text-[var(--text-primary)]">
+              {isArabic
+                ? "ط§ط³طھظپط³ط§ط±ط§طھ طھظ†ظپظٹط°ظٹط© ظ…ظ‚طھط±ط­ط©"
+                : "Suggested Executive Queries"}
+            </h2>
+
+            <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">
+              {isArabic
+                ? "ط§ط¨ط¯ط£ ط¨طھط­ظ„ظٹظ„ ط¬ط§ظ‡ط² ط£ظˆ ط§ظƒطھط¨ ط³ط¤ط§ظ„ظƒ ط§ظ„ط®ط§طµ."
+                : "Start with a ready analysis or ask your own question."}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-1">
+        {actions.map((action, index) => {
+          const Icon = action.icon;
+
+          return (
+            <button
+              key={action.title}
+              type="button"
+              onClick={() => onSelect(action.prompt)}
+              className="group flex min-h-[72px] w-full items-center gap-3 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-3.5 text-start transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+            >
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
+                <Icon size={17} />
+              </span>
+
+              <span className="min-w-0 flex-1 text-xs font-extrabold leading-5 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">
+                {action.title}
+              </span>
+
+              <span className="shrink-0 text-[10px] font-black text-[var(--text-muted)]">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\CorporateBrainTimeline.tsx =====
+
+"use client";
+
+import {
+  BrainCircuit,
+  CheckCircle2,
+  Clock3,
+  FileSearch,
+  Lightbulb,
+  MessageSquareText,
+} from "lucide-react";
+
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+export default function CorporateBrainTimeline() {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+
+  const timelineItems = [
+    {
+      icon: FileSearch,
+      title: isArabic
+        ? "طھط­ظ„ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط³طھظƒط´ط§ظپ"
+        : "Discovery data analyzed",
+      description: isArabic
+        ? "طھظ… ط§ط³طھط®ط±ط§ط¬ ط§ظ„ط£ظˆظ„ظˆظٹط§طھ ظˆط§ظ„ظپط¬ظˆط§طھ ظˆط§ظ„ط¥ط´ط§ط±ط§طھ ط§ظ„طھظ†ظپظٹط°ظٹط©."
+        : "Executive priorities, gaps, and signals were extracted.",
+      time: isArabic
+        ? "ظ…ظ†ط° 5 ط¯ظ‚ط§ط¦ظ‚"
+        : "5 minutes ago",
+      tone:
+        "border-[var(--brand-primary)]/20 bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    },
+    {
+      icon: BrainCircuit,
+      title: isArabic
+        ? "طھط­ط¯ظٹط« ط§ظ„ط±ط³ظ… ط§ظ„ظ…ط¹ط±ظپظٹ"
+        : "Knowledge graph updated",
+      description: isArabic
+        ? "طھظ… ط±ط¨ط· ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¤ط³ط³ط© ط¨ط§ظ„ط³ظٹط§ط³ط§طھ ظˆط§ظ„ظ‚ط±ط§ط±ط§طھ ظˆط§ظ„ظ…ط®ط§ط·ط±."
+        : "Enterprise data was connected to policies, decisions, and risks.",
+      time: isArabic
+        ? "ظ…ظ†ط° 18 ط¯ظ‚ظٹظ‚ط©"
+        : "18 minutes ago",
+      tone:
+        "border-[var(--success)]/20 bg-[var(--success-background)] text-[var(--success)]",
+    },
+    {
+      icon: Lightbulb,
+      title: isArabic
+        ? "ط¥ظ†ط´ط§ط، طھظˆطµظٹط© طھظ†ظپظٹط°ظٹط©"
+        : "Executive recommendation generated",
+      description: isArabic
+        ? "طھظ… ط§ظ‚طھط±ط§ط­ ط§ط³طھظƒظ…ط§ظ„ ظ‚ط§ط¹ط¯ط© ط§ظ„ظ…ط¹ط±ظپط© ظˆط±ط¨ط· ط§ظ„ظ‚ط±ط§ط±ط§طھ ط¨ظ…ط³ط¤ظˆظ„ظٹ ط§ظ„طھظ†ظپظٹط°."
+        : "Recommended completing the knowledge base and assigning execution owners.",
+      time: isArabic
+        ? "ظ…ظ†ط° 32 ط¯ظ‚ظٹظ‚ط©"
+        : "32 minutes ago",
+      tone:
+        "border-[var(--warning)]/20 bg-[var(--warning-background)] text-[var(--warning)]",
+    },
+    {
+      icon: MessageSquareText,
+      title: isArabic
+        ? "طھط³ط¬ظٹظ„ ظ…ط­ط§ط¯ط«ط© طھظ†ظپظٹط°ظٹط©"
+        : "Executive conversation recorded",
+      description: isArabic
+        ? "طھظ… ط­ظپط¸ ط§ظ„ط³ط¤ط§ظ„ ظˆط§ظ„ط¥ط¬ط§ط¨ط© ظˆط§ظ„ظ…طµط§ط¯ط± ظˆظ…ط³طھظˆظ‰ ط§ظ„ط«ظ‚ط©."
+        : "The question, response, sources, and confidence were retained.",
+      time: isArabic
+        ? "ظ…ظ†ط° ط³ط§ط¹ط©"
+        : "1 hour ago",
+      tone:
+        "border-[var(--border-default)] bg-[var(--surface-muted)] text-[var(--text-secondary)]",
+    },
+  ];
+
+  return (
+    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+      <div className="border-b border-[var(--border-default)] px-5 py-5 md:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+              <Clock3 size={20} />
+            </span>
+
+            <div className="min-w-0">
+              <h2 className="text-base font-black text-[var(--text-primary)]">
+                {isArabic
+                  ? "ط³ط¬ظ„ ط§ظ„ط°ظƒط§ط، ظˆط§ظ„ظ‚ط±ط§ط±ط§طھ"
+                  : "Intelligence & Decision Timeline"}
+              </h2>
+
+              <p className="mt-1 max-w-3xl text-xs leading-6 text-[var(--text-muted)]">
+                {isArabic
+                  ? "ط£ط­ط¯ط« ط§ظ„ط£ظ†ط´ط·ط© ط§ظ„طھظٹ ظ†ظپط°ظ‡ط§ Corporate Brain ط¯ط§ط®ظ„ ط§ظ„ظ…ط¤ط³ط³ط©."
+                  : "Recent intelligence activities completed by Corporate Brain."}
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-[10px] font-black text-[var(--text-secondary)]">
+            <CheckCircle2 size={13} />
+            {isArabic
+              ? "ط¢ط®ط± 24 ط³ط§ط¹ط©"
+              : "Last 24 Hours"}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-5 md:p-6">
+        <div className="space-y-1">
+          {timelineItems.map((item, index) => {
+            const Icon = item.icon;
+            const isLast = index === timelineItems.length - 1;
+
+            return (
+              <div
+                key={item.title}
+                className="relative flex gap-4 pb-6 last:pb-0"
+              >
+                {!isLast && (
+                  <span className="absolute inset-inline-start-[19px] top-11 h-[calc(100%-28px)] w-px bg-[var(--border-default)]" />
+                )}
+
+                <span
+                  className={`relative z-10 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${item.tone}`}
+                >
+                  <Icon size={17} />
+                </span>
+
+                <div className="min-w-0 flex-1 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div className="min-w-0">
+                      <h3 className="text-xs font-black leading-5 text-[var(--text-primary)]">
+                        {item.title}
+                      </h3>
+
+                      <p className="mt-2 text-[11px] leading-5 text-[var(--text-muted)]">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    <span className="shrink-0 whitespace-nowrap text-[10px] font-bold text-[var(--text-muted)]">
+                      {item.time}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+===== C:\Users\hp\Desktop\kafu-frontend\components\corporate-brain\index.ts =====
+
+export { default as CorporateBrainConversation } from "./CorporateBrainConversation";
+export { default as CorporateBrainDecisionPanel } from "./CorporateBrainDecisionPanel";
+export { default as CorporateBrainEnterpriseSearch } from "./CorporateBrainEnterpriseSearch";
+export { default as CorporateBrainExecutiveSummary } from "./CorporateBrainExecutiveSummary";
+export { default as CorporateBrainHero } from "./CorporateBrainHero";
+export { default as CorporateBrainKnowledgeGraph } from "./CorporateBrainKnowledgeGraph";
+export { default as CorporateBrainKnowledgePanel } from "./CorporateBrainKnowledgePanel";
+export { default as CorporateBrainKnowledgeSourceCard } from "./CorporateBrainKnowledgeSourceCard";
+export { default as CorporateBrainLayout } from "./CorporateBrainLayout";
+export { default as CorporateBrainMemory } from "./CorporateBrainMemory";
+export { default as CorporateBrainPromptComposer } from "./CorporateBrainPromptComposer";
+export { default as CorporateBrainReasoning } from "./CorporateBrainReasoning";
+export { default as CorporateBrainRecommendationCard } from "./CorporateBrainRecommendationCard";
+export { default as CorporateBrainRelatedInsights } from "./CorporateBrainRelatedInsights";
+export { default as CorporateBrainSuggestedActions } from "./CorporateBrainSuggestedActions";
+export { default as CorporateBrainTimeline } from "./CorporateBrainTimeline";
+
+export type {
+  CorporateBrainCompany,
+  CorporateBrainDiscoveryAnswer,
+} from "./CorporateBrainLayout";
+
+export type {
+  KnowledgeSourceStatus,
+} from "./CorporateBrainKnowledgeSourceCard";
+
+export type {
+  RecommendationPriority,
+} from "./CorporateBrainRecommendationCard";

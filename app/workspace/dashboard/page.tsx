@@ -1,4 +1,4 @@
-﻿import AIRecommendationCard from "@/components/workspace/dashboard/AIRecommendationCard";
+import AIRecommendationCard from "@/components/workspace/dashboard/AIRecommendationCard";
 import AICommandCenter from "@/components/workspace/dashboard/AICommandCenter";
 import AIInsightsFeed from "@/components/workspace/dashboard/AIInsightsFeed";
 import CompanyHealthCard from "@/components/workspace/dashboard/CompanyHealthCard";
@@ -20,30 +20,39 @@ import SystemStatus from "@/components/workspace/dashboard/SystemStatus";
 
 export default function WorkspaceDashboardPage() {
   return (
-    <main className="min-h-screen bg-slate-100/80 py-6 lg:py-10" dir="rtl">
-      <div className="mx-auto w-full max-w-[1700px] space-y-8 px-4 sm:px-6 lg:px-8">
-        <section className="space-y-6">
+    <main
+      className="min-h-screen bg-slate-100/80 py-4 lg:py-6"
+      dir="rtl"
+    >
+      <div className="mx-auto w-full max-w-[1580px] space-y-5 px-4 sm:px-6 lg:px-8">
+        <section className="space-y-3.5">
           <DashboardHeader />
           <ExecutiveBrief />
         </section>
 
-        <section className="rounded-[2rem] border border-slate-200/80 bg-white/60 p-4 shadow-sm backdrop-blur sm:p-6">
-          <div className="grid gap-6 xl:grid-cols-12">
-            <div className="space-y-6 xl:col-span-8">
+        <section className="rounded-3xl border border-slate-200/80 bg-white/60 p-3.5 shadow-sm backdrop-blur sm:p-4">
+          <div className="grid items-start gap-3.5 xl:grid-cols-12">
+            <div className="xl:col-span-8">
               <AICommandCenter />
+            </div>
+
+            <div className="xl:col-span-4">
+              <ExecutiveProfile />
+            </div>
+
+            <div className="xl:col-span-12">
               <ExecutiveDecisionBar />
             </div>
 
-            <div className="space-y-6 xl:col-span-4">
-              <ExecutiveProfile />
+            <div className="xl:col-span-12">
               <SystemStatus />
             </div>
           </div>
         </section>
 
-        <section className="space-y-6">
+        <section className="space-y-5">
           <div className="px-1">
-            <p className="text-sm font-black text-emerald-600">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-600">
               Executive Performance
             </p>
 
@@ -51,9 +60,8 @@ export default function WorkspaceDashboardPage() {
               مؤشرات الأداء والجاهزية
             </h2>
 
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
-              قراءة تنفيذية موحدة لأهم مؤشرات الأداء، صحة الشركة، والجاهزية
-              الاستراتيجية.
+            <p className="mt-1.5 max-w-3xl text-sm leading-6 text-slate-600">
+              قراءة تنفيذية موحدة لأهم مؤشرات الأداء وصحة الشركة والجاهزية الاستراتيجية.
             </p>
           </div>
 
@@ -63,33 +71,32 @@ export default function WorkspaceDashboardPage() {
           <StrategicKPICards />
         </section>
 
-        <section className="rounded-[2rem] border border-slate-200/80 bg-white/60 p-4 shadow-sm backdrop-blur sm:p-6">
+        <section className="rounded-3xl border border-slate-200/80 bg-white/60 p-3.5 shadow-sm backdrop-blur sm:p-4">
           <RiskOpportunitiesRadar />
         </section>
 
-        <section className="space-y-6">
+        <section className="space-y-5">
           <div className="px-1">
-            <p className="text-sm font-black text-sky-600">
-              Intelligence & Actions
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-sky-600">
+              Intelligence &amp; Actions
             </p>
 
             <h2 className="mt-2 text-2xl font-black text-slate-950">
               الرؤى والتوصيات التنفيذية
             </h2>
 
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
-              توصيات وتنبيهات وإجراءات عملية تساعد الإدارة على الانتقال من
-              الرؤية إلى التنفيذ.
+            <p className="mt-1.5 max-w-3xl text-sm leading-6 text-slate-600">
+              توصيات وتنبيهات وإجراءات عملية تساعد الإدارة على الانتقال من الرؤية إلى التنفيذ.
             </p>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-12">
-            <div className="space-y-6 xl:col-span-8">
+          <div className="grid items-start gap-5 xl:grid-cols-12">
+            <div className="space-y-5 xl:col-span-8">
               <AIInsightsFeed />
               <Recommendations />
             </div>
 
-            <div className="space-y-6 xl:col-span-4">
+            <div className="space-y-5 xl:col-span-4">
               <PayrollReadinessCard />
               <AIRecommendationCard />
               <ExecutiveAlertPanel />

@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, MapPin, Users } from "lucide-react";
+﻿import { BriefcaseBusiness, MapPin, Users } from "lucide-react";
 
 type CompanyStatsProps = {
   locale: "ar" | "en";
@@ -15,11 +15,11 @@ export default function CompanyStats({
 }: CompanyStatsProps) {
   const stats = [
     {
-      label: locale === "ar" ? "��� ��������" : "Employees",
+      label: locale === "ar" ? "عدد الموظفين" : "Employees",
       value:
         employeeCount !== null
           ? employeeCount.toLocaleString(
-              locale === "ar" ? "ar-SA" : "en-US",
+              locale === "ar" ? "ar-BH" : "en-US",
             )
           : locale === "ar"
             ? "غير محدد"
@@ -34,7 +34,7 @@ export default function CompanyStats({
       icon: MapPin,
     },
     {
-      label: locale === "ar" ? "������" : "Industry",
+      label: locale === "ar" ? "القطاع" : "Industry",
       value:
         industry ||
         (locale === "ar" ? "غير محدد" : "Not specified"),
@@ -43,18 +43,18 @@ export default function CompanyStats({
   ];
 
   return (
-    <div className="mt-8 grid gap-4 md:grid-cols-3">
+    <div className="mt-6 grid gap-3 sm:grid-cols-3">
       {stats.map((stat) => {
         const Icon = stat.icon;
 
         return (
           <article
             key={stat.label}
-            className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-5"
+            className="group rounded-[16px] border border-[var(--border-default)] bg-[var(--surface-muted)] p-4 transition hover:border-[color-mix(in_srgb,var(--brand-primary)_24%,var(--border-default))] hover:bg-[var(--surface)]"
           >
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--brand-primary)]">
-                <Icon size={18} />
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
+                <Icon size={17} />
               </span>
 
               <p className="text-xs font-bold text-[var(--text-muted)]">
@@ -63,7 +63,7 @@ export default function CompanyStats({
             </div>
 
             <p
-              className="mt-4 truncate text-xl font-black text-[var(--text-primary)]"
+              className="mt-3 truncate text-base font-extrabold text-[var(--text-primary)] sm:text-lg"
               title={stat.value}
             >
               {stat.value}

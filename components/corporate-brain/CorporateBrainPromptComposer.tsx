@@ -25,8 +25,8 @@ export default function CorporateBrainPromptComposer({
   const canSubmit = value.trim().length > 0;
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-medium)] transition focus-within:border-[var(--brand-primary)] focus-within:ring-2 focus-within:ring-[var(--brand-subtle)]">
-      <div className="px-4 pt-4 md:px-5">
+    <section className="overflow-hidden rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)] transition focus-within:border-[var(--brand-primary)] focus-within:ring-2 focus-within:ring-[var(--brand-subtle)]">
+      <div className="px-4 pt-3 md:px-5">
         <textarea
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -36,7 +36,7 @@ export default function CorporateBrainPromptComposer({
               onSubmit();
             }
           }}
-          rows={3}
+          rows={2}
           placeholder={
             isArabic
               ? "اسأل Corporate Brain عن الأداء أو المخاطر أو القرارات أو معرفة المؤسسة..."
@@ -47,7 +47,7 @@ export default function CorporateBrainPromptComposer({
               ? "اكتب سؤالك إلى العقل المؤسسي"
               : "Enter your Corporate Brain question"
           }
-          className="min-h-[96px] w-full resize-none border-0 bg-transparent px-1 py-2 text-sm leading-7 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
+          className="min-h-[76px] w-full resize-none border-0 bg-transparent px-1 py-2 text-sm leading-7 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
         />
       </div>
 
@@ -84,7 +84,7 @@ export default function CorporateBrainPromptComposer({
           type="button"
           onClick={onSubmit}
           disabled={!canSubmit}
-          className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl bg-[var(--text-primary)] px-5 text-xs font-black text-[var(--surface)] shadow-sm transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex min-h-10 min-w-[112px] shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-5 text-xs font-extrabold text-[var(--surface)] shadow-sm transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)] disabled:opacity-100"
         >
           {isArabic ? "تحليل" : "Analyze"}
           <ArrowUp size={16} />
