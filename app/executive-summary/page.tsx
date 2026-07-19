@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   CircleAlert,
   Clock3,
-  Languages,
   LineChart,
   ShieldAlert,
   Sparkles,
@@ -18,14 +17,12 @@ import {
   TrendingUp,
   UsersRound,
 } from "lucide-react";
-import { useState } from "react";
 
 import {
   ExecutiveButton,
   StatusBadge,
 } from "../../src/product/executive-design-system";
-
-type Language = "en" | "ar";
+import { useLocalization } from "@/components/localization/LocalizationContext";
 
 const content = {
   en: {
@@ -187,8 +184,8 @@ const content = {
 } as const;
 
 export default function ExecutiveSummaryPage() {
-  const [language, setLanguage] = useState<Language>("en");
-
+  const { locale } = useLocalization();
+  const language = locale === "ar" ? "ar" : "en";
   const copy = content[language];
   const isArabic = language === "ar";
   const DirectionIcon = isArabic ? ArrowLeft : ArrowRight;
@@ -225,18 +222,6 @@ export default function ExecutiveSummaryPage() {
               </p>
             </div>
           </Link>
-
-          <ExecutiveButton
-            variant="ghost"
-            size="small"
-            onClick={() =>
-              setLanguage((current) => (current === "en" ? "ar" : "en"))
-            }
-            leftIcon={<Languages className="h-4 w-4" />}
-            className="border border-[var(--border-default)] bg-[var(--surface)] text-[var(--text-secondary)] shadow-[var(--shadow-small)] hover:border-[var(--brand-primary)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
-          >
-            {copy.languageLabel}
-          </ExecutiveButton>
         </header>
 
         <section className="overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
@@ -469,6 +454,7 @@ export default function ExecutiveSummaryPage() {
     </main>
   );
 }
+
 
 
 

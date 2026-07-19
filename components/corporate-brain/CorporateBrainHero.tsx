@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   BrainCircuit,
@@ -72,7 +72,7 @@ export default function CorporateBrainHero({
 
               <div className="min-w-0">
                 <h1 className="text-2xl font-extrabold tracking-[-0.035em] text-[var(--text-primary)] md:text-3xl">
-                  Corporate Brain
+                  {isArabic ? "العقل المؤسسي" : "Corporate Brain"}
                 </h1>
 
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--text-secondary)]">
