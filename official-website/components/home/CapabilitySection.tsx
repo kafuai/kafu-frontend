@@ -1,0 +1,96 @@
+﻿import {
+  BrainCircuit,
+  ChartNoAxesCombined,
+  DatabaseZap,
+  Network,
+  ShieldCheck,
+  UsersRound,
+} from "lucide-react";
+
+const capabilities = [
+  {
+    icon: BrainCircuit,
+    title: "Corporate Brain",
+    description:
+      "Transform institutional knowledge into a governed organizational memory that supports real executive decisions.",
+  },
+  {
+    icon: ChartNoAxesCombined,
+    title: "Decision Intelligence",
+    description:
+      "Convert fragmented business context into priorities, risks, recommendations and decision-ready executive views.",
+  },
+  {
+    icon: Network,
+    title: "Command Center",
+    description:
+      "Connect strategic priorities with actions, ownership, progress and leadership accountability.",
+  },
+  {
+    icon: UsersRound,
+    title: "Digital Workforce",
+    description:
+      "Coordinate AI-assisted work around approved organizational responsibilities and measurable outcomes.",
+  },
+  {
+    icon: DatabaseZap,
+    title: "Enterprise Context",
+    description:
+      "Bring together relevant knowledge, operating signals and organizational priorities across the enterprise.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Governed Adoption",
+    description:
+      "Introduce AI through controlled use cases, defined authority, access management and auditable execution.",
+  },
+];
+
+export default function CapabilitySection() {
+  return (
+    <section id="capabilities" className="section-spacing bg-white">
+      <div className="website-shell">
+        <div className="max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            Connected Enterprise Capabilities
+          </p>
+
+          <h2 className="text-balance mt-5 text-3xl font-semibold tracking-[-0.035em] text-[var(--text-primary)] sm:text-4xl lg:text-5xl">
+            One intelligence environment across knowledge, decisions and
+            execution.
+          </h2>
+
+          <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--text-secondary)]">
+            KAFU AI is designed as an integrated enterprise platform, not a
+            collection of disconnected AI tools.
+          </p>
+        </div>
+
+        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {capabilities.map((capability) => {
+            const Icon = capability.icon;
+
+            return (
+              <article
+                key={capability.title}
+                className="group rounded-[24px] border border-[var(--border-default)] bg-white p-7 shadow-[var(--shadow-sm)] transition duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)]"
+              >
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                  <Icon size={22} />
+                </div>
+
+                <h3 className="mt-6 text-lg font-semibold text-[var(--text-primary)]">
+                  {capability.title}
+                </h3>
+
+                <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
+                  {capability.description}
+                </p>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}

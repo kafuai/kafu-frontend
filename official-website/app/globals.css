@@ -1,0 +1,94 @@
+﻿@import "tailwindcss";
+
+:root {
+  --background: #f6f8fb;
+  --surface: #ffffff;
+  --surface-soft: #eef3f8;
+  --surface-dark: #071321;
+  --surface-dark-soft: #0d2033;
+
+  --text-primary: #102033;
+  --text-secondary: #506176;
+  --text-muted: #738196;
+  --text-inverse: #f7fbff;
+
+  --brand-primary: #006b77;
+  --brand-primary-strong: #00515b;
+  --brand-secondary: #c8953d;
+  --brand-subtle: #e3f3f4;
+
+  --border-default: #dbe3ec;
+  --border-strong: #bdc9d7;
+
+  --shadow-sm: 0 10px 30px rgba(16, 32, 51, 0.06);
+  --shadow-md: 0 22px 60px rgba(16, 32, 51, 0.1);
+  --shadow-lg: 0 32px 90px rgba(4, 20, 36, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(0, 107, 119, 0.08), transparent 28%),
+    var(--background);
+  color: var(--text-primary);
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(0, 107, 119, 0.18);
+}
+
+.website-shell {
+  width: min(1180px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.section-spacing {
+  padding-block: 104px;
+}
+
+.enterprise-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+
+.hero-glow {
+  background:
+    radial-gradient(circle at 72% 38%, rgba(24, 171, 181, 0.2), transparent 34%),
+    radial-gradient(circle at 18% 18%, rgba(200, 149, 61, 0.12), transparent 28%);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@media (max-width: 767px) {
+  .website-shell {
+    width: min(100% - 28px, 1180px);
+  }
+
+  .section-spacing {
+    padding-block: 72px;
+  }
+}
