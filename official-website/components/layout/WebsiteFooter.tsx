@@ -1,3 +1,4 @@
+﻿import Image from "next/image";
 import Link from "next/link";
 
 const platformLinks = [
@@ -17,13 +18,18 @@ export default function WebsiteFooter() {
     <footer className="website-footer">
       <div className="site-container website-footer__grid">
         <div className="website-footer__brand">
-          <Link className="website-brand website-brand--footer" href="/">
-            <span className="website-brand__mark">K</span>
-
-            <span className="website-brand__text">
-              <strong>KAFU AI</strong>
-              <small>Enterprise Intelligence</small>
-            </span>
+          <Link
+            className="website-brand website-brand--footer"
+            href="/"
+            aria-label="KAFU AI home"
+          >
+            <Image
+              src="/brand/kafu-logo-en-transparent.png"
+              alt="KAFU AI"
+              width={180}
+              height={64}
+              className="website-brand__logo website-brand__logo--footer"
+            />
           </Link>
 
           <p>
