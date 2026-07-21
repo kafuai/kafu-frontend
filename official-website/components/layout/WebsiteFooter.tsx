@@ -10,7 +10,7 @@ const platformLinks = [
 const companyLinks = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
-  { label: "Book a Demo", href: "/book-demo" },
+  { label: "Book a Demo", href: "/contact" },
 ];
 
 export default function WebsiteFooter() {
@@ -26,42 +26,51 @@ export default function WebsiteFooter() {
             <Image
               src="/brand/kafu-logo-en-transparent.png"
               alt="KAFU AI"
-              width={180}
-              height={64}
+              width={210}
+              height={74}
               className="website-brand__logo website-brand__logo--footer"
             />
           </Link>
 
           <p>
-            A connected enterprise intelligence platform for organizational
-            understanding, executive decision-making, and AI-enabled execution.
+            Enterprise intelligence that connects organizational knowledge,
+            executive decisions, and AI-enabled execution.
           </p>
         </div>
 
-        <div className="website-footer__column">
-          <h3>Platform</h3>
+        <nav className="website-footer__column" aria-label="Platform links">
+          <h2>Platform</h2>
 
-          {platformLinks.map((item) => (
-            <Link href={item.href} key={item.href}>
-              {item.label}
-            </Link>
-          ))}
-        </div>
+          <div className="website-footer__links">
+            {platformLinks.map((item) => (
+              <Link href={item.href} key={item.label}>
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
 
-        <div className="website-footer__column">
-          <h3>Company</h3>
+        <nav className="website-footer__column" aria-label="Company links">
+          <h2>Company</h2>
 
-          {companyLinks.map((item) => (
-            <Link href={item.href} key={item.href}>
-              {item.label}
-            </Link>
-          ))}
-        </div>
+          <div className="website-footer__links">
+            {companyLinks.map((item) => (
+              <Link href={item.href} key={item.label}>
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
 
-        <div className="website-footer__column">
-          <h3>Contact</h3>
+        <div className="website-footer__column website-footer__contact">
+          <h2>Contact</h2>
+
           <a href="mailto:hello@kafu.ai">hello@kafu.ai</a>
-          <span>Bahrain · GCC · Global</span>
+
+          <p>
+            Bahrain
+            <span>Serving the GCC and global enterprises</span>
+          </p>
         </div>
       </div>
 
@@ -72,3 +81,4 @@ export default function WebsiteFooter() {
     </footer>
   );
 }
+

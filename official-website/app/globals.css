@@ -404,3 +404,224 @@ a {
     outline-color: currentColor;
   }
 }
+
+/* KAFU AI FINAL FOOTER START */
+
+/* Final production vertical rhythm */
+.section-spacing {
+  padding-block: 88px;
+}
+
+/* Enterprise footer */
+.website-footer {
+  position: relative;
+  overflow: hidden;
+  padding-top: 72px;
+  color: rgba(247, 251, 255, 0.74);
+  background:
+    radial-gradient(
+      circle at 8% 0%,
+      rgba(0, 107, 119, 0.22),
+      transparent 30%
+    ),
+    #071321;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.website-footer::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.website-footer__grid,
+.website-footer__bottom {
+  position: relative;
+  z-index: 1;
+}
+
+.website-footer__grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 1.7fr) repeat(3, minmax(130px, 0.7fr));
+  gap: clamp(36px, 5vw, 72px);
+  align-items: start;
+  padding-bottom: 56px;
+}
+
+.website-footer__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 22px;
+}
+
+.website-brand--footer {
+  display: inline-flex;
+  width: fit-content;
+}
+
+.website-brand__logo--footer {
+  display: block;
+  width: auto;
+  height: 52px;
+  object-fit: contain;
+}
+
+.website-footer__brand > p {
+  max-width: 440px;
+  margin: 0;
+  color: rgba(247, 251, 255, 0.68);
+  font-size: 0.98rem;
+  line-height: 1.75;
+}
+
+.website-footer__column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 18px;
+}
+
+.website-footer__column h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.website-footer__links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.website-footer__column a {
+  color: rgba(247, 251, 255, 0.72);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.website-footer__column a:hover {
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.website-footer__contact > a {
+  color: #70d7dc;
+  font-weight: 650;
+}
+
+.website-footer__contact > p {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  color: rgba(247, 251, 255, 0.78);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.website-footer__contact > p span {
+  color: rgba(247, 251, 255, 0.54);
+  font-size: 0.86rem;
+}
+
+.website-footer__bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 24px 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(247, 251, 255, 0.5);
+  font-size: 0.79rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  .section-spacing {
+    padding-block: 72px;
+  }
+
+  .website-footer {
+    padding-top: 60px;
+  }
+
+  .website-footer__grid {
+    grid-template-columns: minmax(260px, 1.4fr) repeat(2, minmax(140px, 0.7fr));
+  }
+
+  .website-footer__contact {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 680px) {
+  .section-spacing {
+    padding-block: 56px;
+  }
+
+  .website-footer {
+    padding-top: 48px;
+  }
+
+  .website-footer__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 36px 28px;
+    padding-bottom: 40px;
+  }
+
+  .website-footer__brand {
+    grid-column: 1 / -1;
+    gap: 16px;
+  }
+
+  .website-brand__logo--footer {
+    height: 46px;
+  }
+
+  .website-footer__brand > p {
+    max-width: 520px;
+    font-size: 0.92rem;
+  }
+
+  .website-footer__contact {
+    grid-column: 1 / -1;
+  }
+
+  .website-footer__bottom {
+    flex-direction: column;
+    gap: 6px;
+    padding-block: 20px 24px;
+  }
+
+  .website-footer__bottom span:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .website-footer__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .website-footer__brand,
+  .website-footer__contact {
+    grid-column: auto;
+  }
+}
+
+/* KAFU AI FINAL FOOTER END */
