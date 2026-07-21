@@ -9,7 +9,7 @@ const platformLinks = [
 const companyLinks = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
-  { label: "Book a Demo", href: "/contact" },
+  { label: "Book a Demo", href: "/book-demo" },
 ];
 
 export default function WebsiteFooter() {

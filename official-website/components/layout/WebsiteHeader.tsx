@@ -28,7 +28,7 @@ export default function WebsiteHeader() {
           ))}
         </nav>
 
-        <Link className="website-header__cta" href="/contact">
+        <Link className="website-header__cta" href="/book-demo">
           Book a Demo
         </Link>
       </div>
