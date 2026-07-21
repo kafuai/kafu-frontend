@@ -28,10 +28,13 @@ export default function ExecutiveCTA() {
 
             <Link
               href="mailto:hello@kafu.ai?subject=KAFU%20AI%20Executive%20Demo"
-              className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-[var(--brand-primary-strong)] shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-100"
+              className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-100"
             >
-              Request Executive Demo
-              <ArrowRight size={17} />
+              <span className="text-[#071321]">
+                Request Executive Demo
+              </span>
+
+              <ArrowRight size={17} className="text-[#071321]" />
             </Link>
           </div>
         </div>

@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
   --background: #f6f8fb;
@@ -75,8 +75,9 @@ a {
 
 .hero-glow {
   background:
-    radial-gradient(circle at 72% 38%, rgba(24, 171, 181, 0.2), transparent 34%),
-    radial-gradient(circle at 18% 18%, rgba(200, 149, 61, 0.12), transparent 28%);
+    radial-gradient(circle at 72% 38%, rgba(24, 171, 181, 0.20), transparent 34%),
+    radial-gradient(circle at 18% 18%, rgba(200, 149, 61, 0.12), transparent 28%),
+    #071321;
 }
 
 .text-balance {
@@ -91,4 +92,122 @@ a {
   .section-spacing {
     padding-block: 72px;
   }
+}
+
+
+.site-container {
+  width: min(1180px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.website-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #071321;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.website-header__inner {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  min-height: 82px;
+  gap: 48px;
+}
+
+.website-brand {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+
+.website-brand__logo {
+  display: block;
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+}
+
+.website-brand__mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(0, 107, 119, 0.22);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #071321, #12314a);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  box-shadow: 0 10px 25px rgba(7, 19, 33, 0.14);
+}
+
+.website-brand__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1;
+}
+
+.website-brand__text strong {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+
+.website-brand__text small {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.website-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.website-navigation a {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.website-navigation a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.website-header__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #071321;
+  font-weight: 700;
+}
+
+
+
+/* KAFU Hero button contrast */
+.hero-glow a[href="#contact"] {
+  background-color: #ffffff !important;
+  color: #071321 !important;
+}
+
+.hero-glow a[href="#contact"] svg {
+  color: #071321 !important;
 }
