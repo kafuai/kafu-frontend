@@ -1,6 +1,8 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 
+import LanguageProvider from "@/components/localization/LanguageProvider";
+import WebsiteShell from "@/components/layout/WebsiteShell";
 import { siteConfig } from "@/config/site";
 
 import "./globals.css";
@@ -8,6 +10,7 @@ import "./globals.css";
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -42,6 +45,7 @@ export const metadata: Metadata = {
     url: "/",
     siteName: siteConfig.name,
     locale: siteConfig.locale,
+    alternateLocale: ["ar_BH"],
     type: "website",
     images: [
       {
@@ -116,9 +120,11 @@ export default function RootLayout({
   ]).replace(/</g, "\\u003c");
 
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        {children}
+    <html lang="en" dir="ltr" suppressHydrationWarning>
+      <body className={inter.variable}>
+        <LanguageProvider>
+          <WebsiteShell>{children}</WebsiteShell>
+        </LanguageProvider>
 
         <script
           type="application/ld+json"

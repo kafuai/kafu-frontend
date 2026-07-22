@@ -1,7 +1,29 @@
-﻿import Link from "next/link";
+﻿"use client";
+
+import Link from "next/link";
 import { ArrowRight, CalendarCheck2 } from "lucide-react";
 
+import { useWebsiteLanguage } from "@/components/localization";
+
+const content = {
+  en: {
+    title: "Identify the first high-value use case for your organization.",
+    description:
+      "Begin with an executive discovery session focused on your priorities, operating environment and measurable transformation outcomes.",
+    action: "Request Executive Demo",
+  },
+  ar: {
+    title: "حدد أول حالة استخدام عالية القيمة لمؤسستك.",
+    description:
+      "ابدأ بجلسة اكتشاف تنفيذية تركز على أولوياتك وبيئة التشغيل ونتائج التحول القابلة للقياس.",
+    action: "اطلب عرضًا تنفيذيًا",
+  },
+};
+
 export default function ExecutiveCTA() {
+  const { language, isArabic } = useWebsiteLanguage();
+  const copy = content[language];
+
   return (
     <section id="contact" className="section-spacing bg-white">
       <div className="website-shell">
@@ -16,25 +38,24 @@ export default function ExecutiveCTA() {
               </div>
 
               <h2 className="text-balance mt-6 max-w-3xl text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
-                Identify the first high-value use case for your organization.
+                {copy.title}
               </h2>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-white/80">
-                Begin with an executive discovery session focused on your
-                priorities, operating environment and measurable transformation
-                outcomes.
+                {copy.description}
               </p>
             </div>
 
             <Link
-              href="mailto:hello@kafu.ai?subject=KAFU%20AI%20Executive%20Demo"
+              href="/book-demo"
               className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-100"
             >
-              <span className="text-[#071321]">
-                Request Executive Demo
-              </span>
+              <span className="text-[#071321]">{copy.action}</span>
 
-              <ArrowRight size={17} className="text-[#071321]" />
+              <ArrowRight
+                size={17}
+                className={`text-[#071321] ${isArabic ? "rotate-180" : ""}`}
+              />
             </Link>
           </div>
         </div>
