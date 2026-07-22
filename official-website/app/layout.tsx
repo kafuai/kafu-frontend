@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "KAFU AI | Enterprise Intelligence Platform",
     description:
-      "Transform organizational knowledge into executive clarity and coordinated execution.",
+      "Connect organizational knowledge, executive context, and AI execution in one governed enterprise intelligence platform.",
     url: "/",
     siteName: siteConfig.name,
     locale: siteConfig.locale,
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "KAFU AI | Enterprise Intelligence Platform",
     description:
-      "Transform organizational knowledge into executive clarity and coordinated execution.",
+      "Connect organizational knowledge, executive context, and AI execution in one governed enterprise intelligence platform.",
     images: ["/opengraph-image"],
   },
   robots: {
@@ -134,3 +134,4 @@ export default function RootLayout({
     </html>
   );
 }
+
