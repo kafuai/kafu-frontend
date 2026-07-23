@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
@@ -56,18 +56,18 @@ export default function CorporateBrainEnterpriseSearch({
           )}
         </div>
 
-        <button
-          type="button"
-          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-4 text-xs font-black text-[var(--text-secondary)] transition hover:border-[var(--border-strong)] hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+        <div
+          className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-4 text-xs font-black text-[var(--text-secondary)]"
+          aria-live="polite"
         >
-          <SlidersHorizontal size={16} />
-          {isArabic ? "تصفية" : "Filter"}
-        </button>
+          {isArabic
+            ? `${resultCount} نتائج`
+            : `${resultCount} results`}
+        </div>
       </div>
 
       <p
         className="mt-2 px-1 text-[11px] font-semibold text-[var(--text-muted)]"
-        aria-live="polite"
       >
         {isArabic
           ? `${resultCount} نتيجة معرفية متاحة`

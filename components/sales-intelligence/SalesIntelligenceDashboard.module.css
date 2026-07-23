@@ -1,0 +1,847 @@
+﻿.page {
+  display: grid;
+  gap: 24px;
+  width: min(100%, 1500px);
+  margin: 0 auto;
+  padding: 28px;
+}
+
+.hero,
+.panel,
+.metricCard {
+  border: 1px solid var(--border-default);
+  background: var(--surface);
+  box-shadow: var(--shadow-small);
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 32px;
+  min-height: 184px;
+  padding: 30px 32px;
+  overflow: hidden;
+  border-radius: var(--radius-container);
+  isolation: isolate;
+}
+
+.hero::before {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  background: linear-gradient(
+    180deg,
+    var(--brand-primary),
+    color-mix(in srgb, var(--brand-primary) 38%, transparent)
+  );
+  content: "";
+}
+
+.hero::after {
+  position: absolute;
+  top: -130px;
+  inset-inline-end: -80px;
+  z-index: -1;
+  width: 330px;
+  height: 330px;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--brand-primary) 6%,
+    transparent
+  );
+  content: "";
+}
+
+.heroContent {
+  max-width: 820px;
+}
+
+.eyebrow,
+.sectionEyebrow {
+  color: var(--brand-primary);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.eyebrowIcon,
+.signalIcon,
+.aiIcon,
+.companyIcon,
+.activityIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.eyebrowIcon {
+  width: 30px;
+  height: 30px;
+  border: 1px solid
+    color-mix(in srgb, var(--brand-primary) 17%, transparent);
+  border-radius: 10px;
+  background: var(--brand-subtle);
+}
+
+.heroTitle {
+  max-width: 780px;
+  margin: 15px 0 0;
+  color: var(--text-primary);
+  font-size: clamp(28px, 3.3vw, 40px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+
+.heroDescription {
+  max-width: 760px;
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.85;
+}
+
+.heroSignals {
+  display: grid;
+  gap: 10px;
+  min-width: 230px;
+}
+
+.signal {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 62px;
+  padding: 11px 13px;
+  border: 1px solid
+    color-mix(in srgb, var(--success) 18%, var(--border-default));
+  border-radius: 15px;
+  background: color-mix(
+    in srgb,
+    var(--success-background) 82%,
+    var(--surface)
+  );
+  color: var(--success);
+}
+
+.signalPrimary {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-primary) 18%,
+    var(--border-default)
+  );
+  background: color-mix(
+    in srgb,
+    var(--brand-subtle) 82%,
+    var(--surface)
+  );
+  color: var(--brand-primary);
+}
+
+.signalIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.signal span:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.signal strong {
+  color: currentColor;
+  font-size: 12px;
+}
+
+.signal small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.metricCard {
+  padding: 20px;
+  border-radius: var(--radius-card);
+}
+
+.metricHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.trend[data-direction="up"] {
+  background: var(--success-background);
+  color: var(--success);
+}
+
+.trend[data-direction="down"] {
+  background: var(--brand-subtle);
+  color: var(--brand-primary);
+}
+
+.metricValue {
+  display: block;
+  margin-top: 17px;
+  color: var(--text-primary);
+  font-size: clamp(23px, 2.6vw, 31px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.metricDetail {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.primaryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(340px, 0.75fr);
+  gap: 20px;
+}
+
+.secondaryGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+  gap: 20px;
+}
+
+.panel {
+  min-width: 0;
+  padding: 24px;
+  border-radius: var(--radius-container);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.panelHeader h2,
+.aiPanelHeader h2 {
+  margin: 7px 0 0;
+  color: var(--text-primary);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+
+.panelHeader p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.panelHeaderValue {
+  display: grid;
+  flex-shrink: 0;
+  gap: 4px;
+  text-align: end;
+}
+
+.panelHeaderValue strong {
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.panelHeaderValue span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.pipeline {
+  display: grid;
+  gap: 18px;
+}
+
+.pipelineRow {
+  display: grid;
+  grid-template-columns: 100px minmax(120px, 1fr) 100px;
+  align-items: center;
+  gap: 16px;
+}
+
+.pipelineMeta {
+  display: grid;
+  gap: 3px;
+}
+
+.pipelineMeta span {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pipelineMeta small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.pipelineTrack,
+.probabilityTrack {
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.pipelineTrack {
+  height: 10px;
+}
+
+.pipelineTrack span,
+.probabilityTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--brand-primary),
+    color-mix(in srgb, var(--brand-primary) 55%, white)
+  );
+}
+
+.pipelineRow > strong {
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-align: end;
+}
+
+.aiPanel {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--brand-subtle) 38%, var(--surface)),
+      var(--surface)
+    );
+}
+
+.aiPanelHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.aiIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--text-primary);
+  color: var(--surface);
+  box-shadow: var(--shadow-small);
+}
+
+.recommendationList {
+  display: grid;
+  gap: 12px;
+}
+
+.recommendation {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  padding: 15px;
+  border: 1px solid var(--border-default);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.recommendation[data-priority="critical"] {
+  border-color: color-mix(
+    in srgb,
+    var(--critical) 28%,
+    var(--border-default)
+  );
+}
+
+.recommendationIndex {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--brand-subtle);
+  color: var(--brand-primary);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.recommendation h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.recommendation p {
+  margin: 7px 0 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.impact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--success);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.secondaryButton {
+  display: inline-flex;
+  min-height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 0 13px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.secondaryButton:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+}
+
+.opportunityTableWrapper {
+  overflow-x: auto;
+}
+
+.opportunityTable {
+  width: 100%;
+  min-width: 1120px;
+  border-collapse: collapse;
+}
+
+.opportunityTable th {
+  padding: 0 12px 12px;
+  border-bottom: 1px solid var(--border-default);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.opportunityTable td {
+  padding: 15px 12px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--border-default) 72%, transparent);
+  color: var(--text-secondary);
+  font-size: 11px;
+  vertical-align: middle;
+}
+
+.opportunityTable tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.opportunityTable tbody tr:hover {
+  background: color-mix(
+    in srgb,
+    var(--surface-muted) 55%,
+    transparent
+  );
+}
+
+.companyCell {
+  display: flex;
+  min-width: 210px;
+  align-items: center;
+  gap: 11px;
+}
+
+.companyIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--brand-subtle);
+  color: var(--brand-primary);
+}
+
+.companyCell > span:last-child,
+.actionCell {
+  display: grid;
+  gap: 4px;
+}
+
+.companyCell strong,
+.actionCell strong {
+  color: var(--text-primary);
+  font-size: 11px;
+}
+
+.companyCell small,
+.actionCell small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.stageBadge,
+.healthBadge,
+.dateCell,
+.actionCell small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stageBadge,
+.healthBadge {
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.stageBadge {
+  background: var(--brand-subtle);
+  color: var(--brand-primary);
+  font-weight: 800;
+}
+
+.healthBadge {
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.healthBadge[data-health="healthy"] {
+  background: var(--success-background);
+  color: var(--success);
+}
+
+.healthBadge[data-health="critical"] {
+  background: color-mix(in srgb, var(--critical) 9%, var(--surface));
+  color: var(--critical);
+}
+
+.valueCell {
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.probability {
+  display: flex;
+  min-width: 130px;
+  align-items: center;
+  gap: 9px;
+}
+
+.probabilityTrack {
+  width: 86px;
+  height: 7px;
+}
+
+.probability strong {
+  color: var(--text-primary);
+  font-size: 10px;
+}
+
+.dateCell {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.actionCell {
+  min-width: 190px;
+}
+
+.forecastList {
+  display: grid;
+  gap: 23px;
+}
+
+.forecastRow {
+  display: grid;
+  gap: 10px;
+}
+
+.forecastHeading,
+.forecastValues {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.forecastHeading strong {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.forecastHeading span,
+.forecastValues span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.forecastChart {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  min-height: 29px;
+}
+
+.targetMarker {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-inline-end: 2px dashed var(--border-strong);
+}
+
+.committedBar,
+.probableBar,
+.pipelineBar {
+  display: block;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.committedBar {
+  background: var(--success);
+}
+
+.probableBar {
+  background: var(--brand-primary);
+}
+
+.pipelineBar {
+  background: color-mix(
+    in srgb,
+    var(--brand-primary) 35%,
+    var(--border-default)
+  );
+}
+
+.forecastValues {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.forecastValues span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.forecastValues i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+}
+
+.forecastValues i[data-kind="committed"] {
+  background: var(--success);
+}
+
+.forecastValues i[data-kind="probable"] {
+  background: var(--brand-primary);
+}
+
+.forecastValues i[data-kind="pipeline"] {
+  background: color-mix(
+    in srgb,
+    var(--brand-primary) 35%,
+    var(--border-default)
+  );
+}
+
+.activityList {
+  display: grid;
+}
+
+.activityItem {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  padding: 0 0 19px;
+}
+
+.activityItem:not(:last-child)::after {
+  position: absolute;
+  top: 38px;
+  bottom: 0;
+  inset-inline-start: 18px;
+  width: 1px;
+  background: var(--border-default);
+  content: "";
+}
+
+.activityIcon {
+  z-index: 1;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--brand-primary);
+}
+
+.activityContent > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.activityContent h3 {
+  margin: 1px 0 0;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.activityContent time {
+  color: var(--text-muted);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.activityContent p {
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.activityContent > span {
+  display: block;
+  margin-top: 6px;
+  color: var(--brand-primary);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+@media (max-width: 1180px) {
+  .metricsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .primaryGrid,
+  .secondaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .page {
+    padding: 20px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 26px;
+  }
+
+  .heroSignals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+  }
+
+  .pipelineRow {
+    grid-template-columns: 86px minmax(100px, 1fr) 88px;
+    gap: 11px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .hero,
+  .panel {
+    padding: 20px;
+  }
+
+  .heroTitle {
+    font-size: 27px;
+  }
+
+  .heroSignals,
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .panelHeader {
+    flex-direction: column;
+  }
+
+  .panelHeaderValue {
+    text-align: start;
+  }
+
+  .pipelineRow {
+    grid-template-columns: 80px minmax(90px, 1fr);
+  }
+
+  .pipelineRow > strong {
+    grid-column: 2;
+    text-align: start;
+  }
+
+  .forecastValues {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

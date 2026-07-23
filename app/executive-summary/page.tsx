@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import {
@@ -335,13 +335,13 @@ export default function ExecutiveSummaryPage() {
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-black text-[var(--brand-primary)] transition hover:opacity-80"
-                  >
+                  <div className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-black text-[var(--brand-primary)]">
                     {priority.action}
-                    <DirectionIcon className="h-4 w-4" />
-                  </button>
+                    <DirectionIcon
+                      aria-hidden="true"
+                      className="h-4 w-4"
+                    />
+                  </div>
                 </article>
               );
             })}

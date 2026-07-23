@@ -147,7 +147,7 @@ export default function CorporateBrainPage() {
 
           <div className="relative">
             <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--brand-primary)_16%,var(--border-default))] bg-[var(--brand-subtle)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
-              <RefreshCw className="animate-spin" size={25} />
+              <RefreshCw aria-hidden="true" className="animate-spin" size={25} />
             </span>
 
             <p className="mt-5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
@@ -222,7 +222,7 @@ export default function CorporateBrainPage() {
               href="/assessment"
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-6 text-sm font-extrabold text-white shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
             >
-              <Building2 size={17} />
+              <Building2 aria-hidden="true" size={17} />
 
               {isArabic
                 ? "العودة إلى التقييم"
@@ -231,7 +231,7 @@ export default function CorporateBrainPage() {
 
             <Link
               href="/company-workspace"
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-6 text-sm font-extrabold text-[var(--text-secondary)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-6 text-sm font-extrabold text-[var(--text-secondary)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
             >
               {isArabic
                 ? "فتح مساحة العمل"

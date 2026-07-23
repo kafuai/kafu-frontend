@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import {
@@ -38,13 +38,13 @@ export default function ExecutiveHero() {
 
         <Link
           href="/command-center"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
         >
           {locale === "ar"
             ? "فتح مركز القيادة"
             : "Open Command Center"}
 
-          <DirectionIcon size={17} />
+          <DirectionIcon aria-hidden="true" size={17} />
         </Link>
       </div>
 

@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Search,
   Sparkles,
+  TrendingUp,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -58,6 +59,11 @@ const navigationItems = [
     key: "navigation.commandCenter",
     href: "/command-center",
     icon: Command,
+  },
+  {
+  key: "navigation.salesIntelligence",
+  href: "/sales-intelligence",
+  icon: TrendingUp,
   },
 ];
 

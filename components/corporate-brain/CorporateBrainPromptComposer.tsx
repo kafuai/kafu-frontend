@@ -31,7 +31,11 @@ export default function CorporateBrainPromptComposer({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
+            if (
+              event.key === "Enter" &&
+              !event.shiftKey &&
+              canSubmit
+            ) {
               event.preventDefault();
               onSubmit();
             }
@@ -55,18 +59,40 @@ export default function CorporateBrainPromptComposer({
         <div className="flex min-w-0 items-center gap-2">
           <button
             type="button"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-            aria-label={isArabic ? "إرفاق ملف" : "Attach file"}
+            disabled
+            aria-disabled="true"
+            title={
+              isArabic
+                ? "إرفاق الملفات غير متاح حاليًا"
+                : "File attachments are not currently available"
+            }
+            className="inline-flex h-9 w-9 shrink-0 cursor-not-allowed items-center justify-center rounded-xl text-[var(--text-muted)] opacity-50"
+            aria-label={
+              isArabic
+                ? "إرفاق الملفات غير متاح حاليًا"
+                : "File attachments are not currently available"
+            }
           >
-            <Paperclip size={17} />
+            <Paperclip aria-hidden="true" size={17} />
           </button>
 
           <button
             type="button"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[var(--text-muted)] transition hover:bg-[var(--surface)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-            aria-label={isArabic ? "إدخال صوتي" : "Voice input"}
+            disabled
+            aria-disabled="true"
+            title={
+              isArabic
+                ? "الإدخال الصوتي غير متاح حاليًا"
+                : "Voice input is not currently available"
+            }
+            className="inline-flex h-9 w-9 shrink-0 cursor-not-allowed items-center justify-center rounded-xl text-[var(--text-muted)] opacity-50"
+            aria-label={
+              isArabic
+                ? "الإدخال الصوتي غير متاح حاليًا"
+                : "Voice input is not currently available"
+            }
           >
-            <Mic size={17} />
+            <Mic aria-hidden="true" size={17} />
           </button>
 
           <span className="hidden min-w-0 items-center gap-2 text-[11px] font-semibold text-[var(--text-muted)] sm:inline-flex">
@@ -87,7 +113,7 @@ export default function CorporateBrainPromptComposer({
           className="inline-flex min-h-10 min-w-[112px] shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-5 text-xs font-extrabold text-[var(--surface)] shadow-sm transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)] disabled:opacity-100"
         >
           {isArabic ? "تحليل" : "Analyze"}
-          <ArrowUp size={16} />
+          <ArrowUp aria-hidden="true" size={16} />
         </button>
       </div>
     </section>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Activity,
   AlertTriangle,
@@ -80,16 +81,16 @@ export default function CorporateBrainExecutiveSummary({
             </p>
           </div>
 
-          <button
-            type="button"
-            className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 rounded-xl !bg-slate-900 px-4 text-xs font-black !text-white transition hover:!bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+          <Link
+            href="/workspace/executive-report"
+            className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-xs font-black text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
           >
             {isArabic
               ? "فتح التقرير التنفيذي"
               : "Open executive report"}
 
-            <ArrowUpRight size={16} />
-          </button>
+            <ArrowUpRight aria-hidden="true" size={16} />
+          </Link>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">

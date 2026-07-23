@@ -1,15 +1,240 @@
 .kafu-enterprise-shell {
+  display: flex;
   min-height: 100vh;
+  flex-direction: column;
   background: var(--background);
   color: var(--text-primary);
 }
 
 .kafu-enterprise-shell__content {
+  flex: 1;
   min-height: calc(100vh - 64px);
+}
+
+.kafu-enterprise-footer {
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  background:
+    radial-gradient(
+      circle at 8% 0%,
+      rgba(14, 165, 233, 0.08),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 92% 100%,
+      rgba(16, 185, 129, 0.07),
+      transparent 34%
+    ),
+    #050b14;
+  color: #ffffff;
+}
+
+.kafu-enterprise-footer::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.025),
+    transparent 38%,
+    rgba(255, 255, 255, 0.015)
+  );
+}
+
+.kafu-enterprise-footer__inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: min(100% - 48px, 1440px);
+  margin-inline: auto;
+  padding-block: 34px;
+  gap: 28px;
+  align-items: center;
+  grid-template-columns: minmax(320px, 1.2fr) auto minmax(250px, 0.7fr);
+}
+
+.kafu-enterprise-footer__brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 18px;
+}
+
+.kafu-enterprise-footer__logo-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  border-radius: 12px;
+  outline: none;
+}
+
+.kafu-enterprise-footer__logo-link:focus-visible {
+  box-shadow:
+    0 0 0 3px #050b14,
+    0 0 0 5px rgba(56, 189, 248, 0.82);
+}
+
+.kafu-enterprise-footer__logo {
+  width: auto;
+  height: 38px;
+  object-fit: contain;
+}
+
+.kafu-enterprise-footer__brand-copy {
+  min-width: 0;
+}
+
+.kafu-enterprise-footer__platform {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.kafu-enterprise-footer__description {
+  max-width: 490px;
+  margin: 6px 0 0;
+  color: #7f8ea3;
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+.kafu-enterprise-footer__navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.kafu-enterprise-footer__link {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.kafu-enterprise-footer__link:hover {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(255, 255, 255, 0.045);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.kafu-enterprise-footer__link:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.kafu-enterprise-footer__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  text-align: end;
+}
+
+.kafu-enterprise-footer__version {
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.kafu-enterprise-footer__copyright {
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .kafu-enterprise-footer__inner {
+    grid-template-columns: 1fr auto;
+  }
+
+  .kafu-enterprise-footer__navigation {
+    justify-content: flex-end;
+  }
+
+  .kafu-enterprise-footer__meta {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+    padding-top: 20px;
+  }
+}
+
+@media (max-width: 760px) {
+  .kafu-enterprise-footer__inner {
+    width: min(100% - 32px, 1440px);
+    padding-block: 30px;
+    grid-template-columns: 1fr;
+  }
+
+  .kafu-enterprise-footer__brand {
+    align-items: flex-start;
+  }
+
+  .kafu-enterprise-footer__navigation {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .kafu-enterprise-footer__meta {
+    grid-column: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    text-align: start;
+  }
+}
+
+@media (max-width: 480px) {
+  .kafu-enterprise-footer__brand {
+    flex-direction: column;
+  }
+
+  .kafu-enterprise-footer__navigation {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .kafu-enterprise-footer__link {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .kafu-enterprise-footer__copyright {
+    white-space: normal;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .kafu-enterprise-shell__content > * {
     animation: fadeIn 180ms ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kafu-enterprise-footer__link {
+    transition: none;
   }
 }

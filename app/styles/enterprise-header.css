@@ -521,3 +521,123 @@ html[dir="rtl"] .kafu-executive-user__identity {
     transition: none;
   }
 }
+/* === KAFU DARK ENTERPRISE HEADER START === */
+
+.kafu-executive-header {
+  border-bottom-color: rgba(255, 255, 255, 0.09);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(5, 7, 10, 0.99),
+      rgba(8, 11, 16, 0.98)
+    );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.025),
+    0 14px 36px rgba(2, 6, 23, 0.18);
+  color: #f8fafc;
+}
+
+.kafu-executive-brand {
+  background: transparent;
+}
+
+.kafu-executive-brand__logo {
+  opacity: 1;
+}
+
+.kafu-executive-header__divider {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.kafu-workspace-selector {
+  color: #cbd5e1;
+}
+
+.kafu-workspace-selector__chevron {
+  color: #94a3b8;
+}
+
+.kafu-workspace-selector:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+.kafu-executive-navigation__link {
+  color: #94a3b8;
+}
+
+.kafu-executive-navigation__link:hover {
+  border-color: rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+.kafu-executive-navigation__link[data-active="true"] {
+  border-color: rgba(59, 130, 246, 0.34);
+  background: rgba(37, 99, 235, 0.16);
+  color: #60a5fa;
+}
+
+.kafu-executive-navigation__link[data-active="true"]::after {
+  background: #3b82f6;
+}
+
+.kafu-executive-control,
+.kafu-ai-status {
+  color: #cbd5e1;
+}
+
+.kafu-executive-control:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+.kafu-ai-status {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(37, 99, 235, 0.15);
+  color: #60a5fa;
+}
+
+.kafu-ai-status__indicator {
+  border-color: #05070a;
+}
+
+.kafu-executive-notification__badge {
+  border-color: #05070a;
+}
+
+.kafu-executive-user {
+  color: #f8fafc;
+}
+
+.kafu-executive-user:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.kafu-executive-user__avatar {
+  border-color: rgba(59, 130, 246, 0.32);
+  background: rgba(37, 99, 235, 0.16);
+  color: #60a5fa;
+}
+
+.kafu-executive-user__identity small,
+.kafu-executive-user__chevron {
+  color: #94a3b8;
+}
+
+.kafu-executive-header .theme-switcher,
+.kafu-executive-header .language-switcher {
+  color: #cbd5e1;
+}
+
+.kafu-executive-header button:focus-visible,
+.kafu-executive-header a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.28);
+}
+
+/* === KAFU DARK ENTERPRISE HEADER END === */
+

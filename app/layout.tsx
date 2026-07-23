@@ -14,8 +14,23 @@ const ibmArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "KAFU AI",
-  description: "Enterprise AI Operating System",
+  metadataBase: new URL("https://kafuai.com"),
+  title: {
+    default: "KAFU AI",
+    template: "%s | KAFU AI",
+  },
+  description:
+    "Enterprise intelligence platform connecting organizational knowledge, executive decision-making, governance, and AI-enabled execution.",
+  applicationName: "KAFU AI",
+  keywords: [
+    "Enterprise AI",
+    "Executive Intelligence",
+    "Corporate Brain",
+    "AI Platform",
+    "Digital Workforce",
+    "Enterprise Transformation",
+    "Decision Intelligence",
+  ],
 };
 
 export default function RootLayout({
@@ -24,11 +39,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <body className={ibmArabic.className}>
         <AppShell>{children}</AppShell>
       </body>
     </html>
   );
 }
-

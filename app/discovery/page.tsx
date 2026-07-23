@@ -1,190 +1,445 @@
-"use client";
+﻿"use client";
 
+import {
+  ArrowLeft,
+  ArrowRight,
+  BrainCircuit,
+  CheckCircle2,
+  FileText,
+  LockKeyhole,
+  MessageSquareText,
+  Mic,
+  Paperclip,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+
+import DiscoveryResponseComposer, {
+  type DiscoveryLocalAttachment,
+} from "@/components/discovery/DiscoveryResponseComposer";
+import { persistDiscoveryCommunication } from "@/components/discovery/discoveryCommunicationPersistence";
 import { getCurrentCompanyId } from "@/lib/companySession";
+import { supabase } from "@/lib/supabase";
+
+const QUESTIONS = [
+  "ما أكثر ثلاثة تحديات تشغل الإدارة التنفيذية حالياً؟",
+  "ما أكثر عملية داخل المؤسسة تستهلك وقتاً وجهداً أكثر من اللازم؟",
+  "ما أكثر قرار تتمنى أن تحصل عليه الإدارة بشكل أسرع؟",
+  "ما أكبر فرصة للتحسين خلال الـ 12 شهراً القادمة؟",
+  "إذا نجحت مبادرة كفو بعد سنة، ما المؤشر الذي سيجعلك تقول إنها كانت ناجحة؟",
+];
 
 export default function DiscoveryPage() {
   const router = useRouter();
 
-  const questions = [
-    "ما أكثر ثلاثة تحديات تشغل الإدارة التنفيذية حالياً؟",
-    "ما أكثر عملية داخل المؤسسة تستهلك وقتاً وجهداً أكثر من اللازم؟",
-    "ما أكثر قرار تتمنى أن تحصل عليه الإدارة بشكل أسرع؟",
-    "ما أكبر فرصة للتحسين خلال الـ 12 شهراً القادمة؟",
-    "إذا نجحت مبادرة كفو بعد سنة، ما المؤشر الذي سيجعلك تقول إنها كانت ناجحة؟",
-  ];
+  const [currentQuestion, setCurrentQuestion] =
+    useState(0);
 
-  const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<string[]>(
-    Array(questions.length).fill("")
+    Array(QUESTIONS.length).fill("")
   );
+
+  const [attachmentsByQuestion, setAttachmentsByQuestion] =
+    useState<DiscoveryLocalAttachment[][]>(
+      Array.from(
+        { length: QUESTIONS.length },
+        () => []
+      )
+    );
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [hasError, setHasError] = useState(false);
 
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const progress =
+    ((currentQuestion + 1) / QUESTIONS.length) * 100;
 
-  function handleAnswer(value: string) {
-    const updated = [...answers];
-    updated[currentQuestion] = value;
-    setAnswers(updated);
+  const completedAnswers = answers.filter(
+    (answer) => answer.trim().length > 0
+  ).length;
+
+  const totalAttachments =
+    attachmentsByQuestion.reduce(
+      (total, items) => total + items.length,
+      0
+    );
+
+  function updateAnswer(value: string) {
+    setAnswers((current) =>
+      current.map((answer, index) =>
+        index === currentQuestion ? value : answer
+      )
+    );
+  }
+
+  function updateAttachments(
+    attachments: DiscoveryLocalAttachment[]
+  ) {
+    setAttachmentsByQuestion((current) =>
+      current.map((items, index) =>
+        index === currentQuestion
+          ? attachments
+          : items
+      )
+    );
+  }
+
+  function goToPreviousQuestion() {
+    setMessage("");
+    setHasError(false);
+
+    setCurrentQuestion((current) =>
+      Math.max(0, current - 1)
+    );
+  }
+
+  function goToNextQuestion() {
+    setMessage("");
+    setHasError(false);
+
+    setCurrentQuestion((current) =>
+      Math.min(QUESTIONS.length - 1, current + 1)
+    );
   }
 
   async function handleFinish() {
     setLoading(true);
-    setMessage("");
+    setMessage(
+      "جاري حفظ الإجابات ورفع الملفات والتسجيلات..."
+    );
+    setHasError(false);
 
     const companyId = getCurrentCompanyId();
 
     if (!companyId) {
       setLoading(false);
+      setHasError(true);
       setMessage(
         "لم يتم العثور على بيانات الشركة. يرجى الرجوع إلى صفحة Assessment وإدخال بيانات الشركة أولاً."
       );
+
       return;
     }
 
-    const rows = questions.map((question, index) => ({
-      company_id: companyId,
-      question,
-      answer: answers[index] || "",
-      question_order: index + 1,
-    }));
+    try {
+      const communicationResult =
+        await persistDiscoveryCommunication({
+          companyId,
+          questions: QUESTIONS,
+          answers,
+          attachmentsByQuestion,
+        });
 
-    const { error } = await supabase.from("discovery_answers").insert(rows);
+      const rows = QUESTIONS.map(
+        (question, index) => ({
+          company_id: companyId,
+          question,
+          answer: answers[index] || "",
+          question_order: index + 1,
+        })
+      );
 
-    if (error) {
+      const { error } = await supabase
+        .from("discovery_answers")
+        .insert(rows);
+
+      if (error) {
+        throw new Error(
+          `تعذر حفظ الإجابات النصية: ${error.message}`
+        );
+      }
+
+      setMessage(
+        `تم حفظ جلسة الاستكشاف بنجاح: ${communicationResult.messageCount} مدخلات و${communicationResult.attachmentCount} مرفقات.`
+      );
+
+      window.setTimeout(() => {
+        router.push("/executive-summary");
+      }, 1100);
+    } catch (error) {
       setLoading(false);
-      setMessage("حدث خطأ أثناء حفظ الإجابات: " + error.message);
-      return;
+      setHasError(true);
+      setMessage(
+        error instanceof Error
+          ? `حدث خطأ أثناء حفظ جلسة الاستكشاف: ${error.message}`
+          : "حدث خطأ غير متوقع أثناء حفظ جلسة الاستكشاف."
+      );
     }
-
-    setMessage("✅ تم حفظ إجابات جلسة الاستكشاف بنجاح.");
-
-    setTimeout(() => {
-      router.push("/executive-summary");
-    }, 1000);
   }
 
   return (
     <main
-      className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-6 py-12 text-white"
       dir="rtl"
+      className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]"
     >
-      <div className="mx-auto max-w-5xl">
-        <section className="rounded-3xl border border-slate-700 bg-slate-900/70 p-10 shadow-xl">
-          <p className="font-bold text-emerald-300">
-            Executive Discovery Session
-          </p>
+      <section className="relative overflow-hidden border-b border-slate-800 bg-slate-950">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.16),transparent_35%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.12),transparent_38%)]" />
 
-          <h1 className="mt-4 text-5xl font-black leading-tight">
-            جلسة الاستكشاف التنفيذية
-          </h1>
+        <div className="relative mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-14 lg:px-10">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-4xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-xs font-black text-emerald-300">
+                <Sparkles size={15} />
+                Executive Discovery Workspace
+              </div>
 
-          <p className="mt-6 max-w-4xl text-xl leading-9 text-slate-300">
-            الآن نبدأ بفهم واقع المؤسسة من منظور تنفيذي. الهدف ليس جمع
-            معلومات عامة، بل تحديد أين يمكن لكفو أن يصنع أثراً واضحاً وقابلاً
-            للقياس.
-          </p>
-        </section>
+              <h1 className="mt-5 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">
+                جلسة الاستكشاف التنفيذية
+              </h1>
 
-        <section className="mt-8 rounded-3xl border border-slate-700 bg-white p-10 text-slate-900 shadow-xl">
-          <div className="rounded-2xl bg-slate-100 p-8 text-lg leading-9 text-slate-700">
-            <p className="font-bold text-slate-900">أهلاً بك...</p>
+              <p className="mt-5 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg">
+                شارك المعرفة المؤسسية بالنص أو الملفات
+                أو التسجيلات الصوتية، ليحوّلها KAFU AI
+                إلى صورة تنفيذية وتوصيات قابلة للقياس.
+              </p>
+            </div>
 
-            <p className="mt-4">
-              لن أبدأ باقتراح حلول أو أنظمة قبل أن أفهم التحديات الحقيقية
-              داخل المؤسسة.
-            </p>
+            <div className="grid grid-cols-3 gap-3 lg:w-[420px]">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center backdrop-blur">
+                <MessageSquareText
+                  size={18}
+                  className="mx-auto text-emerald-300"
+                />
 
-            <p className="mt-4">
-              إجاباتك ستساعد كفو على بناء صورة تنفيذية أوضح، ثم تحويلها إلى
-              ملخص عملي وتوصيات قابلة للتنفيذ.
-            </p>
+                <p className="mt-2 text-2xl font-black text-white">
+                  {completedAnswers}
+                </p>
+
+                <p className="mt-1 text-[11px] font-bold text-slate-400">
+                  إجابات
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center backdrop-blur">
+                <Paperclip
+                  size={18}
+                  className="mx-auto text-blue-300"
+                />
+
+                <p className="mt-2 text-2xl font-black text-white">
+                  {totalAttachments}
+                </p>
+
+                <p className="mt-1 text-[11px] font-bold text-slate-400">
+                  مرفقات
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center backdrop-blur">
+                <ShieldCheck
+                  size={18}
+                  className="mx-auto text-violet-300"
+                />
+
+                <p className="mt-2 text-2xl font-black text-white">
+                  آمن
+                </p>
+
+                <p className="mt-1 text-[11px] font-bold text-slate-400">
+                  سياق مؤسسي
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto grid max-w-7xl gap-7 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_310px] lg:px-10 lg:py-10">
+        <section className="min-w-0 rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-medium)] sm:p-7 lg:p-9">
+          <div className="flex flex-col gap-5 border-b border-[var(--border-default)] pb-7 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                السؤال التنفيذي
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black text-[var(--text-primary)] sm:text-3xl">
+                {currentQuestion + 1}
+                <span className="mx-2 text-base text-[var(--text-muted)]">
+                  /
+                </span>
+                {QUESTIONS.length}
+              </h2>
+            </div>
+
+            <div className="w-full sm:max-w-[320px]">
+              <div className="mb-2 flex items-center justify-between text-xs font-black text-[var(--text-muted)]">
+                <span>تقدم الجلسة</span>
+                <span dir="ltr">
+                  {Math.round(progress)}%
+                </span>
+              </div>
+
+              <div
+                className="h-2.5 overflow-hidden rounded-full bg-[var(--surface-muted)]"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(progress)}
+              >
+                <div
+                  className="h-full rounded-full bg-emerald-600 transition-all duration-500"
+                  style={{
+                    width: `${progress}%`,
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="mt-10">
-            <div className="mb-3 flex justify-between font-bold text-slate-700">
-              <span>
-                السؤال {currentQuestion + 1} من {questions.length}
+          <div className="pt-8">
+            <div className="flex items-start gap-4">
+              <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                <BrainCircuit size={22} />
               </span>
 
-              <span>{Math.round(progress)}%</span>
+              <div>
+                <p className="text-xs font-black text-emerald-700">
+                  KAFU AI Discovery
+                </p>
+
+                <h3 className="mt-2 text-xl font-black leading-9 text-[var(--text-primary)] sm:text-2xl">
+                  {QUESTIONS[currentQuestion]}
+                </h3>
+
+                <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
+                  يمكنك الجمع بين الإجابة النصية
+                  والمستندات والتسجيل الصوتي في السؤال
+                  نفسه.
+                </p>
+              </div>
             </div>
 
-            <div className="h-3 overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full bg-emerald-600 transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="mt-12">
-            <h2 className="text-3xl font-bold leading-relaxed text-slate-900">
-              {questions[currentQuestion]}
-            </h2>
-
-            <textarea
-              value={answers[currentQuestion]}
-              onChange={(e) => handleAnswer(e.target.value)}
-              rows={8}
-              className="mt-8 w-full rounded-2xl border p-6 text-lg outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-              placeholder="اكتب إجابتك هنا..."
+            <DiscoveryResponseComposer
+              answer={answers[currentQuestion]}
+              attachments={
+                attachmentsByQuestion[currentQuestion]
+              }
+              disabled={loading}
+              onAnswerChange={updateAnswer}
+              onAttachmentsChange={updateAttachments}
             />
           </div>
 
-          <div className="mt-10 flex justify-between gap-4">
+          <div className="mt-8 flex flex-col-reverse gap-3 border-t border-[var(--border-default)] pt-7 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
-              disabled={currentQuestion === 0 || loading}
-              onClick={() => setCurrentQuestion((prev) => prev - 1)}
-              className="cursor-pointer rounded-xl border px-8 py-4 font-bold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={
+                currentQuestion === 0 || loading
+              }
+              onClick={goToPreviousQuestion}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 text-sm font-black text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
+              <ArrowRight size={17} />
               السابق
             </button>
 
-            {currentQuestion < questions.length - 1 ? (
+            {currentQuestion <
+            QUESTIONS.length - 1 ? (
               <button
                 type="button"
                 disabled={loading}
-                onClick={() => setCurrentQuestion((prev) => prev + 1)}
-                className="cursor-pointer rounded-xl bg-emerald-600 px-8 py-4 font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={goToNextQuestion}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-7 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 التالي
+                <ArrowLeft size={17} />
               </button>
             ) : (
               <button
                 type="button"
                 disabled={loading}
                 onClick={handleFinish}
-                className="cursor-pointer rounded-xl bg-slate-900 px-8 py-4 font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-emerald-700 bg-emerald-700 px-7 text-sm font-black text-white shadow-lg shadow-emerald-900/10 transition hover:border-emerald-800 hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
               >
-                {loading ? "جاري حفظ الإجابات..." : "حفظ ومراجعة الملخص التنفيذي"}
+                <CheckCircle2 size={18} />
+
+                {loading
+                  ? "جاري حفظ الإجابات..."
+                  : "حفظ ومراجعة الملخص التنفيذي"}
               </button>
             )}
           </div>
 
           {message && (
-            <p className="mt-6 text-center font-bold text-emerald-700">
+            <div
+              className={`mt-6 rounded-xl border px-5 py-4 text-center text-sm font-black ${
+                hasError
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-800"
+              }`}
+            >
               {message}
-            </p>
+            </div>
           )}
         </section>
 
-        <section className="mt-10 rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-8 text-center">
-          <h3 className="text-2xl font-bold text-emerald-300">
-            لماذا هذه الأسئلة؟
-          </h3>
+        <aside className="space-y-5">
+          <section className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)]">
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                <FileText size={18} />
+              </span>
 
-          <p className="mx-auto mt-4 max-w-4xl text-lg leading-8 text-slate-300">
-            لأن كفو لا يبني توصياته على افتراضات عامة. كل إجابة تساعد على
-            تكوين Corporate DNA أدق للمؤسسة، ثم تحويله إلى قرارات وتوصيات
-            تنفيذية أوضح.
-          </p>
-        </section>
+              <h2 className="font-black text-[var(--text-primary)]">
+                إرشادات الإجابة
+              </h2>
+            </div>
+
+            <div className="mt-5 space-y-4 text-sm leading-7 text-[var(--text-secondary)]">
+              <p>
+                ركّز على الواقع الحالي والأثر التنفيذي
+                وليس الوصف العام.
+              </p>
+
+              <p>
+                أرفق التقارير أو السياسات أو البيانات
+                التي تدعم إجابتك.
+              </p>
+
+              <p>
+                يمكنك تسجيل إجابة صوتية عندما تكون
+                التفاصيل أسرع في الشرح.
+              </p>
+            </div>
+          </section>
+
+          <section className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-6">
+            <div className="flex items-center gap-3 text-emerald-900">
+              <Mic size={18} />
+              <h2 className="font-black">
+                مدخلات متعددة
+              </h2>
+            </div>
+
+            <p className="mt-4 text-sm leading-7 text-emerald-900/75">
+              النص والملفات والصوت ستكوّن معًا سياقًا
+              مؤسسيًا أكثر دقة للتحليل التنفيذي.
+            </p>
+          </section>
+
+          <section className="rounded-[24px] border border-slate-200 bg-slate-950 p-6 text-white">
+            <div className="flex items-center gap-3">
+              <LockKeyhole
+                size={18}
+                className="text-emerald-300"
+              />
+
+              <h2 className="font-black">
+                خصوصية مؤسسية
+              </h2>
+            </div>
+
+            <p className="mt-4 text-sm leading-7 text-slate-300">
+              يتم ربط كل مدخل بسياق الشركة والسؤال
+              التنفيذي لضمان التتبع والاستخدام الصحيح
+              داخل KAFU AI.
+            </p>
+          </section>
+        </aside>
       </div>
     </main>
   );
 }
+

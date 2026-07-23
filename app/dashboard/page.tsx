@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -129,7 +129,7 @@ function DashboardLoadingState() {
       aria-busy="true"
     >
       <div className="animate-pulse p-6 sm:p-6">
-        <div className="flex items-center items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="space-y-3">
             <div className="h-3 w-28 rounded-full bg-slate-200" />
             <div className="h-7 w-64 max-w-full rounded-lg bg-slate-200" />
@@ -160,7 +160,7 @@ function DashboardErrorState({ message }: { message: string }) {
       className="mt-6 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50"
       role="alert"
     >
-      <div className="flex flex-col items-start gap-6 p-6 sm:p-6 lg:flex-row lg:items-center lg:items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-6 p-6 sm:p-6 lg:flex-row lg:items-center">
         <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5">
             <span className="h-2 w-2 rounded-full bg-amber-500" />
@@ -178,7 +178,7 @@ function DashboardErrorState({ message }: { message: string }) {
 
         <Link
           href="/assessment"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
         >
           الانتقال إلى التقييم
         </Link>
@@ -507,7 +507,7 @@ export default function DashboardPage() {
         </div>
 
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="flex flex-col gap-5 px-5 py-6 sm:px-8 lg:flex-row lg:items-center lg:items-center justify-between">
+          <div className="flex flex-col justify-between gap-5 px-5 py-6 sm:px-8 lg:flex-row lg:items-center">
             <div className="max-w-4xl">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
@@ -653,7 +653,7 @@ export default function DashboardPage() {
                 {stageCounts.map((stage) => (
                   <article
                     key={stage.stage}
-                    className="flex items-center items-center justify-between gap-4 bg-white px-5 py-5"
+                    className="flex items-center justify-between gap-4 bg-white px-5 py-5"
                   >
                     <p className="text-sm font-semibold text-slate-600">
                       {stage.stage}
@@ -770,7 +770,7 @@ export default function DashboardPage() {
             </section>
 
             <section className="mt-6 overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50">
-              <div className="flex flex-col gap-6 px-5 py-6 sm:px-8 md:flex-row md:items-center md:items-center justify-between">
+              <div className="flex flex-col justify-between gap-6 px-5 py-6 sm:px-8 md:flex-row md:items-center">
                 <div className="max-w-3xl">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">
                     Executive Intelligence
@@ -788,7 +788,7 @@ export default function DashboardPage() {
 
                 <Link
                   href="/journey"
-                  className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50"
+                  className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
                 >
                   مراجعة الرحلة الكاملة
                 </Link>

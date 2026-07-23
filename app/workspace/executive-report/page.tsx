@@ -157,37 +157,37 @@ export default function ExecutiveReportPage() {
             <div className="flex flex-wrap items-center gap-2 print:hidden xl:flex-nowrap xl:justify-end xl:pt-1">
               <Link
                 href="/workspace/dashboard"
-                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3.5 text-sm font-extrabold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3.5 text-sm font-extrabold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
               >
-                <ArrowRight size={16} />
+                <ArrowRight aria-hidden="true" size={16} />
                 العودة للوحة
               </Link>
 
               <button
                 type="button"
                 onClick={handlePrint}
-                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3.5 text-sm font-extrabold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3.5 text-sm font-extrabold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
               >
-                <Printer size={16} />
+                <Printer aria-hidden="true" size={16} />
                 طباعة
               </button>
 
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3.5 text-sm font-extrabold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)]"
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3.5 text-sm font-extrabold text-[var(--text-secondary)] transition hover:bg-[var(--surface-muted)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
               >
-                <Share2 size={16} />
+                <Share2 aria-hidden="true" size={16} />
                 مشاركة
               </button>
 
               <button
                 type="button"
                 onClick={handlePrint}
-                className="inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-xl border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3.5 text-sm font-extrabold text-white shadow-[var(--shadow-small)] transition hover:opacity-90"
+                className="inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded-xl border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3.5 text-sm font-extrabold text-white shadow-[var(--shadow-small)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
               >
-                <Download size={16} />
-                تنزيل PDF
+                <Download aria-hidden="true" size={16} />
+                حفظ PDF
               </button>
             </div>
           </div>

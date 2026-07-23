@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
+import EnterpriseFooter from "@/components/enterprise-shell/EnterpriseFooter";
 import EnterpriseHeader from "@/components/enterprise-shell/EnterpriseHeader";
 
 import AppProviders from "./AppProviders";
@@ -21,6 +22,8 @@ function StandardApplicationShell({
       <main className="kafu-enterprise-shell__content">
         {children}
       </main>
+
+      <EnterpriseFooter />
     </div>
   );
 }
