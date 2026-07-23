@@ -1,7 +1,9 @@
-"use client";
+﻿"use client";
 
-import { FormEvent, useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+
+import { useWebsiteTranslations } from "@/components/localization";
 
 type FormState = {
   fullName: string;
@@ -29,6 +31,8 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function DemoRequestForm() {
   const router = useRouter();
+  const { translations, direction } = useWebsiteTranslations();
+  const content = translations.form;
 
   const [form, setForm] = useState<FormState>(initialFormState);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -53,27 +57,27 @@ export default function DemoRequestForm() {
     const nextErrors: FormErrors = {};
 
     if (form.fullName.trim().length < 2) {
-      nextErrors.fullName = "Please enter your full name.";
+      nextErrors.fullName = content.validation.fullName;
     }
 
     if (!emailPattern.test(form.workEmail.trim())) {
-      nextErrors.workEmail = "Please enter a valid work email address.";
+      nextErrors.workEmail = content.validation.workEmail;
     }
 
     if (form.organization.trim().length < 2) {
-      nextErrors.organization = "Please enter your organization name.";
+      nextErrors.organization = content.validation.organization;
     }
 
     if (form.role.trim().length < 2) {
-      nextErrors.role = "Please enter your role or job title.";
+      nextErrors.role = content.validation.role;
     }
 
     if (!form.companySize) {
-      nextErrors.companySize = "Please select your organization size.";
+      nextErrors.companySize = content.validation.companySize;
     }
 
     if (!form.interest) {
-      nextErrors.interest = "Please select a conversation type.";
+      nextErrors.interest = content.validation.interest;
     }
 
     setErrors(nextErrors);
@@ -102,33 +106,30 @@ export default function DemoRequestForm() {
 
       const result = (await response.json()) as {
         success?: boolean;
-        message?: string;
       };
 
       if (!response.ok || !result.success) {
-        throw new Error(
-          result.message ||
-            "We could not submit your request. Please try again."
-        );
+        throw new Error(content.submission.errorMessage);
       }
 
       router.push("/thank-you");
-    } catch (error) {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "We could not submit your request. Please try again."
-      );
+    } catch {
+      setSubmitError(content.submission.errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <form className="demo-form" onSubmit={handleSubmit} noValidate>
+    <form
+      className="demo-form"
+      onSubmit={handleSubmit}
+      noValidate
+      dir={direction}
+    >
       <div className="demo-form__grid">
         <div className="form-field">
-          <label htmlFor="fullName">Full name</label>
+          <label htmlFor="fullName">{content.fields.fullName}</label>
 
           <input
             id="fullName"
@@ -153,7 +154,7 @@ export default function DemoRequestForm() {
         </div>
 
         <div className="form-field">
-          <label htmlFor="workEmail">Work email</label>
+          <label htmlFor="workEmail">{content.fields.workEmail}</label>
 
           <input
             id="workEmail"
@@ -178,7 +179,9 @@ export default function DemoRequestForm() {
         </div>
 
         <div className="form-field">
-          <label htmlFor="organization">Organization</label>
+          <label htmlFor="organization">
+            {content.fields.organization}
+          </label>
 
           <input
             id="organization"
@@ -206,7 +209,7 @@ export default function DemoRequestForm() {
         </div>
 
         <div className="form-field">
-          <label htmlFor="role">Role or job title</label>
+          <label htmlFor="role">{content.fields.role}</label>
 
           <input
             id="role"
@@ -229,7 +232,9 @@ export default function DemoRequestForm() {
         </div>
 
         <div className="form-field">
-          <label htmlFor="companySize">Organization size</label>
+          <label htmlFor="companySize">
+            {content.fields.companySize}
+          </label>
 
           <select
             id="companySize"
@@ -243,12 +248,15 @@ export default function DemoRequestForm() {
               errors.companySize ? "companySize-error" : undefined
             }
           >
-            <option value="">Select organization size</option>
-            <option value="1-49">1–49 employees</option>
-            <option value="50-249">50–249 employees</option>
-            <option value="250-999">250–999 employees</option>
-            <option value="1000-4999">1,000–4,999 employees</option>
-            <option value="5000+">5,000+ employees</option>
+            <option value="">
+              {content.companySizes.placeholder}
+            </option>
+
+            <option value="1-49">{content.companySizes.size1}</option>
+            <option value="50-249">{content.companySizes.size2}</option>
+            <option value="250-999">{content.companySizes.size3}</option>
+            <option value="1000-4999">{content.companySizes.size4}</option>
+            <option value="5000+">{content.companySizes.size5}</option>
           </select>
 
           {errors.companySize && (
@@ -262,7 +270,7 @@ export default function DemoRequestForm() {
         </div>
 
         <div className="form-field">
-          <label htmlFor="interest">Conversation type</label>
+          <label htmlFor="interest">{content.fields.interest}</label>
 
           <select
             id="interest"
@@ -276,15 +284,20 @@ export default function DemoRequestForm() {
               errors.interest ? "interest-error" : undefined
             }
           >
-            <option value="">Select conversation type</option>
+            <option value="">
+              {content.interests.placeholder}
+            </option>
+
             <option value="executive-discovery">
-              Executive Discovery
+              {content.interests.executiveDiscovery}
             </option>
+
             <option value="enterprise-readiness">
-              Enterprise AI Readiness
+              {content.interests.enterpriseReadiness}
             </option>
+
             <option value="strategic-partnership">
-              Strategic Partnership
+              {content.interests.strategicPartnership}
             </option>
           </select>
 
@@ -297,8 +310,8 @@ export default function DemoRequestForm() {
 
         <div className="form-field form-field--full">
           <label htmlFor="message">
-            What would you like to discuss?
-            <span> Optional</span>
+            {content.fields.message}
+            <span> {content.fields.optional}</span>
           </label>
 
           <textarea
@@ -309,26 +322,28 @@ export default function DemoRequestForm() {
             onChange={(event) =>
               updateField("message", event.target.value)
             }
-            placeholder="Tell us about your priorities, current challenges, governance requirements, or the outcomes you want to achieve."
+            placeholder={content.placeholders.message}
           />
         </div>
       </div>
 
       {submitError && (
-        <div className="demo-form__alert" role="alert">
-          <strong>We could not submit your request</strong>
+        <div
+          className="demo-form__alert"
+          role="alert"
+          aria-live="polite"
+        >
+          <strong>{content.submission.errorTitle}</strong>
           <span>{submitError}</span>
+
           <a href="mailto:hello@kafu.ai">
-            Contact hello@kafu.ai directly
+            {content.submission.directContact}
           </a>
         </div>
       )}
 
       <div className="demo-form__footer">
-        <p>
-          By submitting this form, you agree that KAFU AI may contact
-          you regarding your request.
-        </p>
+        <p>{content.submission.consent}</p>
 
         <button
           className="website-button website-button--primary"
@@ -336,8 +351,8 @@ export default function DemoRequestForm() {
           disabled={isSubmitting}
         >
           {isSubmitting
-            ? "Submitting request..."
-            : "Request Executive Discovery"}
+            ? content.submission.submitting
+            : content.submission.submit}
         </button>
       </div>
     </form>

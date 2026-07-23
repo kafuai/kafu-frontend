@@ -1407,3 +1407,571 @@ html[dir="ltr"] .website-language-menu__option {
 }
 
 /* KAFU AI FINAL LANGUAGE MENU + HERO POLISH END */
+
+/* KAFU AI CONTACT PAGE START */
+
+.contact-section,
+.demo-request-section,
+.contact-next-step {
+  padding: 96px 0;
+}
+
+.contact-section {
+  background: #f4f7fa;
+}
+
+.contact-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 28px;
+  align-items: stretch;
+}
+
+.contact-panel,
+.contact-option,
+.demo-form {
+  border: 1px solid rgba(9, 34, 57, 0.1);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 18px 50px rgba(8, 29, 50, 0.08);
+}
+
+.contact-panel {
+  padding: 44px;
+}
+
+.contact-panel h2,
+.contact-next-step h2,
+.demo-request-section h2 {
+  margin: 14px 0 16px;
+  color: #08192a;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.contact-panel p,
+.contact-option p,
+.demo-request-section .section-heading p,
+.contact-next-step p {
+  color: #566575;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.contact-panel__note {
+  margin-top: 18px;
+  font-size: 0.9rem !important;
+}
+
+.contact-options {
+  display: grid;
+  gap: 18px;
+}
+
+.contact-option {
+  padding: 28px;
+}
+
+.contact-option h3 {
+  margin: 0 0 10px;
+  color: #0a2034;
+  font-size: 1.18rem;
+}
+
+.demo-request-section {
+  background: #ffffff;
+}
+
+.demo-request-section .section-heading {
+  max-width: 760px;
+  margin: 0 auto 42px;
+}
+
+.demo-form {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 36px;
+}
+
+.demo-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.form-field--full {
+  grid-column: 1 / -1;
+}
+
+.form-field label {
+  color: #10283e;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.form-field label span {
+  color: #8794a1;
+  font-weight: 500;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  border: 1px solid rgba(9, 34, 57, 0.16);
+  border-radius: 13px;
+  padding: 14px 16px;
+  color: #0b2033;
+  background: #fbfcfd;
+  font: inherit;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.form-field input,
+.form-field select {
+  min-height: 52px;
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 150px;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: rgba(38, 156, 165, 0.78);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(57, 176, 184, 0.12);
+}
+
+.form-field input[aria-invalid="true"],
+.form-field select[aria-invalid="true"] {
+  border-color: #c94949;
+}
+
+.form-field__error {
+  color: #b42318;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.demo-form__alert {
+  display: grid;
+  gap: 5px;
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid rgba(180, 35, 24, 0.22);
+  border-radius: 14px;
+  color: #8f1f17;
+  background: #fff4f2;
+}
+
+.demo-form__alert a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.demo-form__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-top: 30px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(9, 34, 57, 0.09);
+}
+
+.demo-form__footer p {
+  max-width: 520px;
+  margin: 0;
+  color: #6b7885;
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.contact-next-step {
+  background: #eef3f7;
+}
+
+.contact-next-step__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 36px;
+}
+
+.contact-next-step__inner h2 {
+  max-width: 660px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .contact-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-next-step__inner,
+  .demo-form__footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .contact-section,
+  .demo-request-section,
+  .contact-next-step {
+    padding: 68px 0;
+  }
+
+  .contact-panel,
+  .contact-option,
+  .demo-form {
+    border-radius: 18px;
+  }
+
+  .contact-panel,
+  .demo-form {
+    padding: 24px;
+  }
+
+  .contact-option {
+    padding: 22px;
+  }
+
+  .demo-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-field--full {
+    grid-column: auto;
+  }
+
+  .demo-form__footer .website-button {
+    width: 100%;
+  }
+}
+
+/* KAFU AI CONTACT PAGE END */
+
+
+/* KAFU AI SECTION HERO START */
+
+.section-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 88px 0 96px;
+  color: #f7fbff;
+  background:
+    radial-gradient(circle at 82% 16%, rgba(105, 209, 213, 0.18), transparent 30%),
+    radial-gradient(circle at 12% 8%, rgba(200, 149, 61, 0.12), transparent 26%),
+    linear-gradient(135deg, #071321 0%, #0b2135 58%, #0d2a3f 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.section-hero::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent 92%);
+}
+
+.section-hero__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+}
+
+.section-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 7px 12px;
+  border: 1px solid rgba(105, 209, 213, 0.22);
+  border-radius: 999px;
+  color: #8ee1e4;
+  background: rgba(105, 209, 213, 0.08);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.section-hero h1 {
+  max-width: 860px;
+  margin: 22px 0 20px;
+  color: #ffffff;
+  font-size: clamp(2.8rem, 6vw, 5.2rem);
+  font-weight: 700;
+  letter-spacing: -0.052em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.section-hero p {
+  max-width: 820px;
+  margin: 0;
+  color: rgba(247, 251, 255, 0.72);
+  font-size: clamp(1.04rem, 1.7vw, 1.22rem);
+  line-height: 1.75;
+}
+
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.section-hero .website-button--secondary {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.section-hero .website-button--secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+html[dir="rtl"] .section-hero__inner {
+  text-align: right;
+}
+
+html[dir="rtl"] .section-actions {
+  justify-content: flex-start;
+}
+
+@media (max-width: 820px) {
+  .section-hero {
+    padding: 72px 0 78px;
+  }
+
+  .section-hero h1 {
+    font-size: clamp(2.5rem, 9vw, 4rem);
+  }
+}
+
+@media (max-width: 520px) {
+  .section-hero {
+    padding: 58px 0 64px;
+  }
+
+  .section-eyebrow {
+    font-size: 0.68rem;
+  }
+
+  .section-hero h1 {
+    margin-top: 18px;
+    font-size: clamp(2.25rem, 12vw, 3.25rem);
+  }
+
+  .section-actions {
+    flex-direction: column;
+  }
+
+  .section-actions .website-button {
+    width: 100%;
+  }
+}
+
+/* KAFU AI SECTION HERO END */
+
+
+/* KAFU AI WEBSITE BUTTON SYSTEM START */
+
+.website-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 13px 22px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 750;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease;
+}
+
+.website-button:hover {
+  transform: translateY(-2px);
+}
+
+.website-button:active {
+  transform: translateY(0);
+}
+
+.website-button:focus-visible {
+  outline: 3px solid rgba(47, 128, 237, 0.34);
+  outline-offset: 3px;
+}
+
+.website-button--primary {
+  color: #ffffff;
+  background: linear-gradient(135deg, #006b77 0%, #008592 100%);
+  border-color: rgba(0, 107, 119, 0.28);
+  box-shadow:
+    0 12px 28px rgba(0, 107, 119, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.website-button--primary:hover {
+  color: #ffffff;
+  background: linear-gradient(135deg, #005d68 0%, #007984 100%);
+  box-shadow:
+    0 16px 34px rgba(0, 107, 119, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+.website-button--secondary {
+  color: #102033;
+  background: rgba(255, 255, 255, 0.84);
+  border-color: rgba(9, 34, 57, 0.15);
+  box-shadow: 0 8px 22px rgba(8, 29, 50, 0.08);
+}
+
+.website-button--secondary:hover {
+  color: #071321;
+  background: #ffffff;
+  border-color: rgba(0, 107, 119, 0.3);
+  box-shadow: 0 12px 28px rgba(8, 29, 50, 0.12);
+}
+
+.website-button:disabled,
+.website-button[aria-disabled="true"] {
+  opacity: 0.58;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.demo-form__footer .website-button {
+  flex-shrink: 0;
+  min-width: 250px;
+}
+
+.contact-next-step .section-actions {
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+.contact-next-step .website-button {
+  min-width: 170px;
+}
+
+.section-hero .website-button--secondary {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
+.section-hero .website-button--secondary:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+@media (max-width: 900px) {
+  .contact-next-step .section-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .website-button {
+    width: 100%;
+  }
+
+  .demo-form__footer .website-button,
+  .contact-next-step .website-button {
+    min-width: 0;
+  }
+}
+
+/* KAFU AI WEBSITE BUTTON SYSTEM END */
+
+
+/* KAFU AI RTL LOCALIZATION START */
+
+html[dir="rtl"] body {
+  text-align: right;
+}
+
+html[dir="rtl"] .section-hero__inner,
+html[dir="rtl"] .section-heading,
+html[dir="rtl"] .contact-panel,
+html[dir="rtl"] .contact-option,
+html[dir="rtl"] .thank-you-card {
+  text-align: right;
+}
+
+html[dir="rtl"] .section-heading--centered {
+  text-align: center;
+}
+
+html[dir="rtl"] .contact-next-step__inner {
+  direction: rtl;
+}
+
+html[dir="rtl"] .section-actions {
+  flex-direction: row;
+}
+
+html[dir="rtl"] .form-field {
+  text-align: right;
+}
+
+html[dir="rtl"] .form-field input,
+html[dir="rtl"] .form-field select,
+html[dir="rtl"] .form-field textarea {
+  text-align: right;
+}
+
+html[dir="rtl"] .demo-form__footer {
+  direction: rtl;
+}
+
+html[dir="rtl"] input[type="email"] {
+  direction: ltr;
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  html[dir="rtl"] .section-actions {
+    align-items: stretch;
+  }
+}
+
+/* KAFU AI RTL LOCALIZATION END */
+
