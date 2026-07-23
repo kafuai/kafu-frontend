@@ -4,40 +4,38 @@ import DemoRequestForm from "@/components/forms/DemoRequestForm";
 import SectionHero from "@/components/shared/SectionHero";
 
 export const metadata: Metadata = {
-  title: "Book an Executive Demo | KAFU AI",
+  title: "Book an Executive Discovery | KAFU AI",
   description:
-    "Request an executive demonstration of the KAFU AI enterprise intelligence platform.",
+    "Book a focused executive discovery session to explore how KAFU AI can support your organization’s priorities, decisions, governance, and AI adoption.",
 };
 
 const briefingPoints = [
-  "A guided view of the complete KAFU AI enterprise journey.",
-  "Discussion focused on your strategic and operational priorities.",
-  "Review of enterprise readiness, governance, and adoption options.",
-  "Clear next steps based on your organizational context.",
+  "A focused discussion around your organization’s priorities and operating context.",
+  "A guided view of how KAFU AI connects knowledge, decisions, and execution.",
+  "An initial review of readiness, governance, and high-value use cases.",
+  "Clear next steps based on your objectives and organizational maturity.",
 ];
 
 export default function BookDemoPage() {
   return (
     <>
       <SectionHero
-        eyebrow="Executive Demo"
-        title="See how KAFU AI turns organizational complexity into executive clarity."
-        description="Request a focused conversation tailored to your organization, leadership priorities, and AI transformation objectives."
+        eyebrow="Executive Discovery"
+        title="Start with one focused conversation about your organization."
+        description="Book a tailored executive session to explore where KAFU AI can create the greatest value across organizational knowledge, decision-making, governance, and execution."
       />
 
       <section className="demo-request-section">
         <div className="site-container demo-request-layout">
           <aside className="demo-briefing">
-            <span className="section-eyebrow">
-              What to Expect
-            </span>
+            <span className="section-eyebrow">What to Expect</span>
 
-            <h2>A business-focused executive briefing.</h2>
+            <h2>A practical executive discovery session.</h2>
 
             <p>
-              The session is designed for executives, transformation
-              leaders, and enterprise decision-makers evaluating practical
-              AI adoption.
+              This session is designed for executives, transformation leaders,
+              and enterprise decision-makers exploring a practical and governed
+              approach to AI adoption.
             </p>
 
             <div className="demo-briefing__list">
@@ -58,14 +56,14 @@ export default function BookDemoPage() {
           <div className="demo-form-panel">
             <div className="demo-form-panel__heading">
               <span className="section-eyebrow">
-                Request Your Session
+                Request Your Executive Session
               </span>
 
-              <h2>Tell us about your organization.</h2>
+              <h2>Tell us about your organization and priorities.</h2>
 
               <p>
-                We will use this information to prepare a more relevant
-                executive conversation.
+                We will use this information to prepare a more relevant and
+                focused executive conversation.
               </p>
             </div>
 

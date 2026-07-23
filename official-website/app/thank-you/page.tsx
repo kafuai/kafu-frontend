@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Request Received | KAFU AI",
   description:
-    "Your KAFU AI executive demo request has been received.",
+    "Your KAFU AI executive discovery request has been received.",
   robots: {
     index: false,
     follow: false,
@@ -24,9 +24,10 @@ export default function ThankYouPage() {
         <h1>Thank you for contacting KAFU AI.</h1>
 
         <p>
-          Your request has been received. Our team will review your
-          information and follow up regarding the appropriate executive
-          conversation.
+          Your executive discovery request has been received. Our team
+          will review your organization, priorities, and preferred
+          conversation type before following up with the appropriate next
+          step.
         </p>
 
         <div className="section-actions">
@@ -41,7 +42,7 @@ export default function ThankYouPage() {
             className="website-button website-button--secondary"
             href="/platform"
           >
-            Explore Platform
+            Explore the Platform
           </Link>
         </div>
       </div>

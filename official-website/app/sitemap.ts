@@ -15,10 +15,20 @@ const routes = [
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
 
-  return routes.map((route, index) => ({
+  return routes.map((route) => ({
     url: `${siteConfig.url}${route}`,
     lastModified,
-    changeFrequency: index === 0 ? "weekly" : "monthly",
-    priority: index === 0 ? 1 : route === "/book-demo" ? 0.9 : 0.8,
+    changeFrequency:
+      route === ""
+        ? "weekly"
+        : route === "/book-demo"
+        ? "weekly"
+        : "monthly",
+    priority:
+      route === ""
+        ? 1
+        : route === "/book-demo"
+        ? 0.9
+        : 0.8,
   }));
 }

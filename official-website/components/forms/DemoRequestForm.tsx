@@ -35,10 +35,7 @@ export default function DemoRequestForm() {
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function updateField(
-    field: keyof FormState,
-    value: string
-  ) {
+  function updateField(field: keyof FormState, value: string) {
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -60,15 +57,15 @@ export default function DemoRequestForm() {
     }
 
     if (!emailPattern.test(form.workEmail.trim())) {
-      nextErrors.workEmail = "Please enter a valid work email.";
+      nextErrors.workEmail = "Please enter a valid work email address.";
     }
 
     if (form.organization.trim().length < 2) {
-      nextErrors.organization = "Please enter your organization.";
+      nextErrors.organization = "Please enter your organization name.";
     }
 
     if (form.role.trim().length < 2) {
-      nextErrors.role = "Please enter your role.";
+      nextErrors.role = "Please enter your role or job title.";
     }
 
     if (!form.companySize) {
@@ -76,7 +73,7 @@ export default function DemoRequestForm() {
     }
 
     if (!form.interest) {
-      nextErrors.interest = "Please select the primary conversation type.";
+      nextErrors.interest = "Please select a conversation type.";
     }
 
     setErrors(nextErrors);
@@ -209,7 +206,7 @@ export default function DemoRequestForm() {
         </div>
 
         <div className="form-field">
-          <label htmlFor="role">Role</label>
+          <label htmlFor="role">Role or job title</label>
 
           <input
             id="role"
@@ -246,7 +243,7 @@ export default function DemoRequestForm() {
               errors.companySize ? "companySize-error" : undefined
             }
           >
-            <option value="">Select size</option>
+            <option value="">Select organization size</option>
             <option value="1-49">1–49 employees</option>
             <option value="50-249">50–249 employees</option>
             <option value="250-999">250–999 employees</option>
@@ -279,10 +276,12 @@ export default function DemoRequestForm() {
               errors.interest ? "interest-error" : undefined
             }
           >
-            <option value="">Select conversation</option>
-            <option value="executive-demo">Executive Demo</option>
-            <option value="enterprise-briefing">
-              Enterprise Briefing
+            <option value="">Select conversation type</option>
+            <option value="executive-discovery">
+              Executive Discovery
+            </option>
+            <option value="enterprise-readiness">
+              Enterprise AI Readiness
             </option>
             <option value="strategic-partnership">
               Strategic Partnership
@@ -310,14 +309,14 @@ export default function DemoRequestForm() {
             onChange={(event) =>
               updateField("message", event.target.value)
             }
-            placeholder="Tell us about your strategic priorities, operational challenges, or AI transformation objectives."
+            placeholder="Tell us about your priorities, current challenges, governance requirements, or the outcomes you want to achieve."
           />
         </div>
       </div>
 
       {submitError && (
         <div className="demo-form__alert" role="alert">
-          <strong>Submission unavailable</strong>
+          <strong>We could not submit your request</strong>
           <span>{submitError}</span>
           <a href="mailto:hello@kafu.ai">
             Contact hello@kafu.ai directly
@@ -336,7 +335,9 @@ export default function DemoRequestForm() {
           type="submit"
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Submitting request..." : "Request Executive Demo"}
+          {isSubmitting
+            ? "Submitting request..."
+            : "Request Executive Discovery"}
         </button>
       </div>
     </form>

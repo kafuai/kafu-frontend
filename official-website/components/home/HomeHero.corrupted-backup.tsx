@@ -129,7 +129,7 @@ export default function HomeHero() {
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/book-demo"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold !text-[#071321] shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-100"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-semibold text-[#071321] shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-100"
             >
               {copy.primaryAction}
               <ArrowRight

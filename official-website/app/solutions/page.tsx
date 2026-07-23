@@ -6,9 +6,9 @@ import SectionCTA from "@/components/shared/SectionCTA";
 import SectionHero from "@/components/shared/SectionHero";
 
 export const metadata: Metadata = {
-  title: "Solutions | KAFU AI",
+  title: "Enterprise AI Solutions | KAFU AI",
   description:
-    "Discover KAFU AI solutions for executives, transformation leaders, operations, and enterprise teams.",
+    "Explore KAFU AI solutions that help executives, transformation leaders and enterprise teams make better decisions and execute with confidence.",
 };
 
 const executiveSolutions = [
@@ -16,19 +16,19 @@ const executiveSolutions = [
     label: "Leadership",
     title: "Executive Decision Intelligence",
     description:
-      "Provide leaders with concise, evidence-based visibility into performance, priorities, risks, and recommended decisions.",
+      "Provide executives with clear visibility into priorities, risks, opportunities and recommended actions through one connected decision environment.",
   },
   {
     label: "Transformation",
     title: "Enterprise Transformation Management",
     description:
-      "Create a connected view of transformation initiatives, dependencies, readiness, execution progress, and organizational impact.",
+      "Coordinate transformation initiatives, dependencies, ownership and measurable progress from a single executive view.",
   },
   {
     label: "Knowledge",
     title: "Corporate Knowledge Intelligence",
     description:
-      "Organize scattered organizational knowledge into a structured corporate brain that can be searched, interpreted, and applied.",
+      "Transform institutional knowledge into an enterprise asset that can be searched, understood and applied with confidence.",
   },
 ];
 
@@ -37,19 +37,19 @@ const operationalSolutions = [
     label: "Operations",
     title: "Operational Visibility",
     description:
-      "Bring activities, responsibilities, issues, deadlines, and performance signals into a unified management environment.",
+      "Connect operational activities, ownership, deadlines and performance into one coordinated operating environment.",
   },
   {
     label: "Workforce",
     title: "AI-Augmented Teams",
     description:
-      "Support employees with AI capabilities designed around business roles, workflows, governance, and real organizational context.",
+      "Support employees with AI capabilities aligned to business roles, governance, workflows and organizational context.",
   },
   {
     label: "Growth",
     title: "Commercial Intelligence",
     description:
-      "Connect market opportunities, customer context, executive priorities, and commercial execution into one decision-support flow.",
+      "Connect customer opportunities, executive priorities and commercial execution to support sustainable business growth.",
   },
 ];
 
@@ -58,18 +58,18 @@ export default function SolutionsPage() {
     <>
       <SectionHero
         eyebrow="Enterprise Solutions"
-        title="AI solutions designed around business outcomes—not isolated tools."
-        description="KAFU AI supports leaders and teams with connected solutions for executive decision-making, transformation, operations, organizational knowledge, and AI-enabled work."
-        primaryLabel="Discuss Your Priorities"
-        primaryHref="/contact"
+        title="Enterprise AI solutions focused on measurable business outcomes."
+        description="KAFU AI helps organizations improve executive decision-making, enterprise transformation, operational coordination and organizational intelligence through one connected platform."
+        primaryLabel="Book an Executive Discovery"
+        primaryHref="/book-demo"
         secondaryLabel="Explore the Platform"
         secondaryHref="/platform"
       />
 
       <ContentSection
-        eyebrow="Executive and Strategic Solutions"
-        title="Strengthen leadership visibility and enterprise decision-making."
-        description="KAFU AI helps organizations turn complex strategic and operational information into clear executive direction."
+        eyebrow="Executive & Strategic Solutions"
+        title="Support better leadership decisions across the enterprise."
+        description="Transform fragmented information into executive clarity with solutions designed for leadership, transformation and organizational knowledge."
         tone="muted"
       >
         <FeatureGrid items={executiveSolutions} columns={3} />
@@ -77,19 +77,19 @@ export default function SolutionsPage() {
 
       <ContentSection
         eyebrow="Operational Solutions"
-        title="Connect enterprise intelligence to the work that moves the organization forward."
-        description="Extend intelligence beyond reporting by supporting operational coordination, team execution, and commercial performance."
+        title="Turn enterprise intelligence into coordinated execution."
+        description="Extend intelligence beyond reporting by improving operational coordination, workforce effectiveness and commercial performance."
       >
         <FeatureGrid items={operationalSolutions} columns={3} />
       </ContentSection>
 
       <SectionCTA
-        eyebrow="Solution Discovery"
-        title="Start with the business challenge that matters most."
-        description="We align the KAFU AI experience with your organizational priorities, operating context, and transformation objectives."
-        primaryLabel="Start a Conversation"
-        primaryHref="/contact"
-        secondaryLabel="Enterprise Capabilities"
+        eyebrow="Executive Discovery"
+        title="Identify the solution that creates the greatest value for your organization."
+        description="Work with our team to evaluate your priorities, operating environment and transformation objectives before defining the right implementation approach."
+        primaryLabel="Book Executive Discovery"
+        primaryHref="/book-demo"
+        secondaryLabel="Enterprise Readiness"
         secondaryHref="/enterprise"
       />
     </>

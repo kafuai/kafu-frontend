@@ -6,9 +6,9 @@ import SectionCTA from "@/components/shared/SectionCTA";
 import SectionHero from "@/components/shared/SectionHero";
 
 export const metadata: Metadata = {
-  title: "Platform | KAFU AI",
+  title: "Enterprise AI Platform | KAFU AI",
   description:
-    "Explore the KAFU AI enterprise intelligence platform for organizational discovery, executive insight, and AI-powered execution.",
+    "Explore the KAFU AI enterprise intelligence platform for organizational knowledge, executive decisions, governed AI adoption, and coordinated execution.",
 };
 
 const platformCapabilities = [
@@ -16,37 +16,37 @@ const platformCapabilities = [
     label: "01",
     title: "Organizational Discovery",
     description:
-      "Build a structured understanding of the company, its operating model, strategic priorities, processes, and challenges.",
+      "Build a structured understanding of the organization, its operating model, priorities, processes, challenges, and transformation opportunities.",
   },
   {
     label: "02",
     title: "Corporate Intelligence",
     description:
-      "Transform organizational knowledge into an enterprise intelligence layer that supports faster and better-informed decisions.",
+      "Turn institutional knowledge and business context into a connected intelligence environment that supports clearer decisions.",
   },
   {
     label: "03",
     title: "Executive Command",
     description:
-      "Give leadership a unified view of performance, priorities, risks, decisions, and transformation progress.",
+      "Give leadership one view of strategic priorities, risks, decisions, responsible owners, and measurable progress.",
   },
   {
     label: "04",
     title: "AI Digital Workforce",
     description:
-      "Deploy role-based AI capabilities that support teams with analysis, coordination, recommendations, and execution.",
+      "Coordinate role-based AI capabilities around approved responsibilities, defined workflows, and measurable business outcomes.",
   },
   {
     label: "05",
-    title: "Decision Support",
+    title: "Decision Intelligence",
     description:
-      "Connect evidence, strategic context, operational signals, and recommendations into clear executive decision briefs.",
+      "Connect evidence, organizational context, operational signals, risks, and recommendations into decision-ready executive views.",
   },
   {
     label: "06",
     title: "Continuous Transformation",
     description:
-      "Maintain a living transformation environment that evolves as the business, its data, and its priorities change.",
+      "Maintain a living transformation environment that evolves as the organization, its knowledge, and its priorities change.",
   },
 ];
 
@@ -54,17 +54,17 @@ const platformLayers = [
   {
     title: "Enterprise Context",
     description:
-      "The foundation that captures the company profile, corporate DNA, operating model, goals, and strategic environment.",
+      "Captures the organization’s identity, operating model, strategic priorities, challenges, and decision environment.",
   },
   {
     title: "Corporate Brain",
     description:
-      "A connected intelligence layer that organizes knowledge, surfaces relationships, and supports enterprise reasoning.",
+      "Organizes institutional knowledge, connects relationships, preserves context, and supports enterprise reasoning.",
   },
   {
     title: "Executive Experience",
     description:
-      "A leadership interface for reports, priorities, risks, recommendations, decisions, and enterprise visibility.",
+      "Provides leadership with clear priorities, risks, recommendations, decisions, ownership, and visible progress.",
   },
 ];
 
@@ -73,18 +73,18 @@ export default function PlatformPage() {
     <>
       <SectionHero
         eyebrow="The KAFU AI Platform"
-        title="Enterprise intelligence built around how your organization actually operates."
-        description="KAFU AI brings organizational understanding, executive insight, corporate knowledge, and AI-enabled execution into one connected enterprise platform."
+        title="One enterprise intelligence platform from knowledge to execution."
+        description="KAFU AI connects organizational context, institutional knowledge, executive decisions, and coordinated execution in one governed operating environment."
         primaryLabel="Book an Executive Demo"
-        primaryHref="/contact"
+        primaryHref="/book-demo"
         secondaryLabel="Explore Solutions"
         secondaryHref="/solutions"
       />
 
       <ContentSection
         eyebrow="Platform Capabilities"
-        title="From fragmented information to connected enterprise intelligence."
-        description="The platform creates a structured operating environment where leadership and teams can understand the organization, identify priorities, and move from insight to coordinated action."
+        title="Turn fragmented organizational information into executive clarity."
+        description="KAFU AI creates a connected environment where leadership can understand the organization, identify what requires attention, make informed decisions, and coordinate execution."
         tone="muted"
       >
         <FeatureGrid items={platformCapabilities} columns={3} />
@@ -93,18 +93,18 @@ export default function PlatformPage() {
       <ContentSection
         eyebrow="Platform Architecture"
         title="Three connected layers. One enterprise operating experience."
-        description="Each layer contributes to a continuously improving understanding of the company and its transformation priorities."
+        description="Each layer strengthens the organization’s ability to preserve knowledge, understand context, support decisions, and turn priorities into measurable action."
       >
         <FeatureGrid items={platformLayers} columns={3} />
       </ContentSection>
 
       <SectionCTA
         eyebrow="See the Platform in Context"
-        title="Experience how KAFU AI turns enterprise complexity into executive clarity."
-        description="Our executive demo follows a real organizational journey from discovery and assessment to intelligence, decision support, and execution."
-        primaryLabel="Request a Demo"
-        primaryHref="/contact"
-        secondaryLabel="Enterprise Readiness"
+        title="Discover where KAFU AI can create the greatest value in your organization."
+        description="Our executive demo follows a practical organizational journey from discovery and institutional knowledge to decision intelligence and governed execution."
+        primaryLabel="Book an Executive Demo"
+        primaryHref="/book-demo"
+        secondaryLabel="Explore Enterprise Readiness"
         secondaryHref="/enterprise"
       />
     </>

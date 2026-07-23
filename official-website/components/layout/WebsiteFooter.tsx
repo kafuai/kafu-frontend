@@ -9,14 +9,14 @@ const footerContent = {
   en: {
     homeLabel: "KAFU AI home",
     description:
-      "Enterprise intelligence that connects organizational knowledge, executive decisions, and AI-enabled execution.",
+      "Enterprise intelligence that connects organizational knowledge, executive decisions, and governed AI-enabled execution.",
     platformTitle: "Platform",
     companyTitle: "Company",
     contactTitle: "Contact",
     platformNavigationLabel: "Platform links",
     companyNavigationLabel: "Company links",
     location: "Bahrain",
-    serviceArea: "Serving the GCC and global enterprises",
+    serviceArea: "Serving GCC and global enterprises",
     copyright: "All rights reserved.",
     statement:
       "Enterprise intelligence for the AI-enabled organization.",
@@ -28,13 +28,13 @@ const footerContent = {
     companyLinks: [
       { label: "About", href: "/about" },
       { label: "Contact", href: "/contact" },
-      { label: "Book a Demo", href: "/book-demo" },
+      { label: "Executive Discovery", href: "/book-demo" },
     ],
   },
   ar: {
     homeLabel: "الصفحة الرئيسية لكفو للذكاء الاصطناعي",
     description:
-      "ذكاء مؤسسي يربط المعرفة التنظيمية والقرارات التنفيذية والتنفيذ المدعوم بالذكاء الاصطناعي.",
+      "ذكاء مؤسسي يربط المعرفة التنظيمية والقرارات التنفيذية والتنفيذ المحكوم والمدعوم بالذكاء الاصطناعي.",
     platformTitle: "المنصة",
     companyTitle: "الشركة",
     contactTitle: "التواصل",
@@ -53,7 +53,7 @@ const footerContent = {
     companyLinks: [
       { label: "عن كفو", href: "/about" },
       { label: "تواصل معنا", href: "/contact" },
-      { label: "احجز عرضًا", href: "/book-demo" },
+      { label: "اكتشاف تنفيذي", href: "/book-demo" },
     ],
   },
 };

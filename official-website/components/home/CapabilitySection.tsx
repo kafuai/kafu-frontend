@@ -15,89 +15,89 @@ const content = {
   en: {
     eyebrow: "Connected Enterprise Capabilities",
     title:
-      "One intelligence environment across knowledge, decisions and execution.",
+      "One intelligence environment for clearer decisions and coordinated execution.",
     description:
-      "KAFU AI is designed as an integrated enterprise platform, not a collection of disconnected AI tools.",
+      "KAFU AI connects organizational knowledge, executive priorities and operational progress in one governed enterprise platform.",
     items: [
       {
         icon: BrainCircuit,
         title: "Corporate Brain",
         description:
-          "Transform institutional knowledge into a governed organizational memory that supports real executive decisions.",
+          "Preserve institutional knowledge and make it available in the context leaders need to understand the organization and make informed decisions.",
       },
       {
         icon: ChartNoAxesCombined,
         title: "Decision Intelligence",
         description:
-          "Convert fragmented business context into priorities, risks, recommendations and decision-ready executive views.",
+          "Turn fragmented business information into clear priorities, risks, implications and recommendations ready for executive review.",
       },
       {
         icon: Network,
         title: "Command Center",
         description:
-          "Connect strategic priorities with actions, ownership, progress and leadership accountability.",
+          "Give leadership one view of strategic priorities, responsible owners, required actions and measurable progress.",
       },
       {
         icon: UsersRound,
         title: "Digital Workforce",
         description:
-          "Coordinate AI-assisted work around approved organizational responsibilities and measurable outcomes.",
+          "Coordinate AI-assisted work around approved responsibilities, defined workflows and outcomes that can be monitored.",
       },
       {
         icon: DatabaseZap,
         title: "Enterprise Context",
         description:
-          "Bring together relevant knowledge, operating signals and organizational priorities across the enterprise.",
+          "Connect relevant knowledge, operational signals and organizational priorities so every insight reflects the wider business context.",
       },
       {
         icon: ShieldCheck,
         title: "Governed Adoption",
         description:
-          "Introduce AI through controlled use cases, defined authority, access management and auditable execution.",
+          "Introduce AI through controlled use cases, clear authority, managed access and execution that remains visible and auditable.",
       },
     ],
   },
   ar: {
     eyebrow: "قدرات مؤسسية مترابطة",
-    title: "بيئة ذكاء واحدة للمعرفة والقرارات والتنفيذ.",
+    title: "بيئة ذكاء واحدة لقرارات أوضح وتنفيذ أكثر تنسيقًا.",
     description:
-      "صُممت كفو كمنصة مؤسسية متكاملة، وليست مجموعة من أدوات الذكاء الاصطناعي المنفصلة.",
+      "تربط KAFU AI المعرفة التنظيمية والأولويات التنفيذية والتقدم التشغيلي ضمن منصة مؤسسية واحدة ومحكومة.",
     items: [
       {
         icon: BrainCircuit,
         title: "العقل المؤسسي",
         description:
-          "حوّل المعرفة المؤسسية إلى ذاكرة تنظيمية محكومة تدعم القرارات التنفيذية الحقيقية.",
+          "احفظ المعرفة المؤسسية واجعلها متاحة ضمن السياق الذي تحتاجه القيادة لفهم المؤسسة واتخاذ قرارات مدروسة.",
       },
       {
         icon: ChartNoAxesCombined,
         title: "ذكاء القرار",
         description:
-          "حوّل السياق المتفرق إلى أولويات ومخاطر وتوصيات ورؤى جاهزة لاتخاذ القرار.",
+          "حوّل المعلومات المتفرقة إلى أولويات ومخاطر وآثار وتوصيات واضحة وجاهزة للمراجعة التنفيذية.",
       },
       {
         icon: Network,
         title: "مركز القيادة",
         description:
-          "اربط الأولويات الاستراتيجية بالإجراءات والمسؤوليات والتقدم والمساءلة القيادية.",
+          "امنح القيادة رؤية واحدة للأولويات الاستراتيجية والمسؤولين والإجراءات المطلوبة والتقدم القابل للقياس.",
       },
       {
         icon: UsersRound,
         title: "القوى العاملة الرقمية",
         description:
-          "نسّق العمل المدعوم بالذكاء الاصطناعي حول المسؤوليات المعتمدة والنتائج القابلة للقياس.",
+          "نسّق العمل المدعوم بالذكاء الاصطناعي حول مسؤوليات معتمدة ومسارات واضحة ونتائج يمكن متابعتها.",
       },
       {
         icon: DatabaseZap,
         title: "السياق المؤسسي",
         description:
-          "اجمع المعرفة وإشارات التشغيل والأولويات التنظيمية ذات الصلة عبر المؤسسة.",
+          "اربط المعرفة وإشارات التشغيل والأولويات التنظيمية حتى تعكس كل رؤية السياق الأشمل للمؤسسة.",
       },
       {
         icon: ShieldCheck,
         title: "تبنٍ محكوم",
         description:
-          "أدخل الذكاء الاصطناعي عبر حالات استخدام مضبوطة وصلاحيات محددة وتنفيذ قابل للتدقيق.",
+          "أدخل الذكاء الاصطناعي عبر حالات استخدام مضبوطة وصلاحيات واضحة ووصول مُدار وتنفيذ ظاهر وقابل للتدقيق.",
       },
     ],
   },

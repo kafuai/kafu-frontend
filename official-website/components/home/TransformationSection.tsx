@@ -7,14 +7,14 @@ import { useWebsiteLanguage } from "@/components/localization";
 const content = {
   en: {
     eyebrow: "Enterprise Transformation Journey",
-    title: "Move from organizational understanding to governed execution.",
+    title: "Move from executive priorities to governed execution.",
     description:
-      "KAFU AI creates one connected journey from executive discovery to institutional intelligence, decisions and measurable action.",
-    adoptionTitle: "Designed for controlled enterprise adoption",
+      "KAFU AI provides a structured path for understanding the organization, clarifying decisions and turning approved priorities into measurable progress.",
+    adoptionTitle: "A controlled path to enterprise value",
     adoptionPoints: [
-      "Start with one high-value use case",
-      "Define governance and measurable outcomes",
-      "Expand according to demonstrated value",
+      "Begin with one high-value business priority",
+      "Define ownership, governance and measurable outcomes",
+      "Expand only after value has been demonstrated",
     ],
     followedBy: "Followed by",
     steps: [
@@ -22,44 +22,44 @@ const content = {
         number: "01",
         title: "Discover",
         description:
-          "Capture executive priorities, operating challenges and organizational context.",
+          "Capture executive priorities, operating challenges and the organizational context behind them.",
       },
       {
         number: "02",
         title: "Understand",
         description:
-          "Structure enterprise knowledge and identify the highest-value decision areas.",
+          "Structure relevant knowledge and identify the decision areas with the greatest business impact.",
       },
       {
         number: "03",
         title: "Decide",
         description:
-          "Translate context into recommendations, risks, priorities and clear executive choices.",
+          "Turn business context into clear priorities, risks, recommendations and executive choices.",
       },
       {
         number: "04",
         title: "Execute",
         description:
-          "Connect approved priorities with responsible teams, workflows and digital workers.",
+          "Connect approved decisions with accountable owners, required actions and visible progress.",
       },
       {
         number: "05",
         title: "Govern",
         description:
-          "Maintain visibility, accountability and continuous executive reporting.",
+          "Maintain oversight, accountability and continuous reporting as adoption expands.",
       },
     ],
   },
   ar: {
     eyebrow: "رحلة التحول المؤسسي",
-    title: "انتقل من فهم المؤسسة إلى تنفيذ محكوم.",
+    title: "انتقل من الأولويات التنفيذية إلى تنفيذ محكوم.",
     description:
-      "تنشئ كفو رحلة مترابطة تبدأ بالاكتشاف التنفيذي، ثم الذكاء المؤسسي والقرارات، وصولًا إلى إجراءات قابلة للقياس.",
-    adoptionTitle: "مصممة لتبنٍ مؤسسي مضبوط",
+      "توفر KAFU AI مسارًا منظمًا لفهم المؤسسة وتوضيح القرارات وتحويل الأولويات المعتمدة إلى تقدم قابل للقياس.",
+    adoptionTitle: "مسار مضبوط لتحقيق قيمة مؤسسية",
     adoptionPoints: [
-      "ابدأ بحالة استخدام واحدة عالية القيمة",
-      "حدد الحوكمة والنتائج القابلة للقياس",
-      "توسع وفقًا للقيمة المثبتة",
+      "ابدأ بأولوية أعمال واحدة عالية القيمة",
+      "حدد المسؤوليات والحوكمة والنتائج القابلة للقياس",
+      "توسع فقط بعد إثبات القيمة",
     ],
     followedBy: "تليها",
     steps: [
@@ -67,31 +67,31 @@ const content = {
         number: "01",
         title: "الاكتشاف",
         description:
-          "حدد الأولويات التنفيذية والتحديات التشغيلية والسياق التنظيمي.",
+          "حدد الأولويات التنفيذية والتحديات التشغيلية والسياق التنظيمي المرتبط بها.",
       },
       {
         number: "02",
         title: "الفهم",
         description:
-          "نظّم المعرفة المؤسسية وحدد مجالات القرار الأعلى قيمة.",
+          "نظّم المعرفة ذات الصلة وحدد مجالات القرار ذات الأثر الأكبر على الأعمال.",
       },
       {
         number: "03",
         title: "اتخاذ القرار",
         description:
-          "حوّل السياق إلى توصيات ومخاطر وأولويات وخيارات تنفيذية واضحة.",
+          "حوّل سياق الأعمال إلى أولويات ومخاطر وتوصيات وخيارات تنفيذية واضحة.",
       },
       {
         number: "04",
         title: "التنفيذ",
         description:
-          "اربط الأولويات المعتمدة بالفرق المسؤولة ومسارات العمل والقوى العاملة الرقمية.",
+          "اربط القرارات المعتمدة بالمسؤولين والإجراءات المطلوبة والتقدم القابل للمتابعة.",
       },
       {
         number: "05",
         title: "الحوكمة",
         description:
-          "حافظ على الرؤية والمساءلة والتقارير التنفيذية المستمرة.",
+          "حافظ على الإشراف والمساءلة والتقارير المستمرة مع توسع الاستخدام.",
       },
     ],
   },

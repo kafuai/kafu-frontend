@@ -7,16 +7,16 @@ import { useWebsiteLanguage } from "@/components/localization";
 
 const content = {
   en: {
-    title: "Identify the first high-value use case for your organization.",
+    title: "Start with one executive conversation—not a large transformation project.",
     description:
-      "Begin with an executive discovery session focused on your priorities, operating environment and measurable transformation outcomes.",
-    action: "Request Executive Demo",
+      "Book an Executive Discovery Session to identify your highest-value opportunity, align business priorities and define a practical roadmap for enterprise AI adoption.",
+    action: "Book Executive Discovery",
   },
   ar: {
-    title: "حدد أول حالة استخدام عالية القيمة لمؤسستك.",
+    title: "ابدأ بجلسة تنفيذية واحدة، وليس بمشروع تحول ضخم.",
     description:
-      "ابدأ بجلسة اكتشاف تنفيذية تركز على أولوياتك وبيئة التشغيل ونتائج التحول القابلة للقياس.",
-    action: "اطلب عرضًا تنفيذيًا",
+      "احجز جلسة اكتشاف تنفيذية لتحديد أعلى فرص القيمة في مؤسستك، ومواءمة أولويات الأعمال، ووضع خارطة طريق عملية لتبني الذكاء الاصطناعي المؤسسي.",
+    action: "احجز جلسة اكتشاف تنفيذية",
   },
 };
 
@@ -50,7 +50,9 @@ export default function ExecutiveCTA() {
               href="/book-demo"
               className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-100"
             >
-              <span className="text-[#071321]">{copy.action}</span>
+              <span className="text-[#071321]">
+                {copy.action}
+              </span>
 
               <ArrowRight
                 size={17}

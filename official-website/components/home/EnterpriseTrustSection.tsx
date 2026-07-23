@@ -12,65 +12,65 @@ import { useWebsiteLanguage } from "@/components/localization";
 const content = {
   en: {
     eyebrow: "Enterprise Trust",
-    title: "Enterprise AI requires more than intelligence.",
+    title: "Enterprise AI must be trusted before it can scale.",
     description:
-      "It requires governance, access control, accountability and a controlled path from experimentation to organizational adoption.",
+      "KAFU AI is designed around governance, accountability and controlled adoption so organizations can introduce AI with confidence.",
     items: [
       {
         icon: ShieldCheck,
         title: "Governed by Design",
         description:
-          "AI use remains aligned with approved organizational authority, policies and responsibilities.",
+          "AI operates within approved policies, organizational authority and defined business responsibilities.",
       },
       {
         icon: KeyRound,
         title: "Controlled Access",
         description:
-          "Enterprise knowledge and capabilities are made available according to defined access boundaries.",
+          "Knowledge, capabilities and data remain available only to the right people through managed access controls.",
       },
       {
         icon: Scale,
-        title: "Human Accountability",
+        title: "Executive Accountability",
         description:
-          "KAFU AI supports leadership judgment while executive authority remains with the organization.",
+          "AI supports decision-making, while executive authority and accountability always remain with the organization.",
       },
       {
         icon: BadgeCheck,
         title: "Measured Adoption",
         description:
-          "Each implementation begins with a focused outcome and expands according to validated value.",
+          "Every deployment begins with clear business objectives and expands only after measurable value has been demonstrated.",
       },
     ],
   },
   ar: {
     eyebrow: "الثقة المؤسسية",
-    title: "الذكاء الاصطناعي المؤسسي يتطلب أكثر من الذكاء.",
+    title: "يجب أن يكون الذكاء الاصطناعي محل ثقة قبل أن يتوسع داخل المؤسسة.",
     description:
-      "إنه يتطلب الحوكمة والتحكم في الوصول والمساءلة ومسارًا مضبوطًا من التجربة إلى التبني المؤسسي.",
+      "صُممت KAFU AI حول الحوكمة والمساءلة والتبني المنضبط، لتتمكن المؤسسات من اعتماد الذكاء الاصطناعي بثقة.",
     items: [
       {
         icon: ShieldCheck,
         title: "حوكمة منذ التصميم",
         description:
-          "يظل استخدام الذكاء الاصطناعي متوافقًا مع الصلاحيات والسياسات والمسؤوليات التنظيمية المعتمدة.",
+          "يعمل الذكاء الاصطناعي ضمن السياسات المعتمدة والصلاحيات التنظيمية والمسؤوليات المحددة.",
       },
       {
         icon: KeyRound,
         title: "وصول محكوم",
         description:
-          "تتاح المعرفة والقدرات المؤسسية وفق حدود وصول محددة وواضحة.",
+          "تبقى المعرفة والقدرات والبيانات متاحة فقط للأشخاص المخولين عبر ضوابط وصول مُدارة.",
       },
       {
         icon: Scale,
-        title: "مساءلة بشرية",
+        title: "المساءلة التنفيذية",
         description:
-          "تدعم كفو تقدير القيادة، بينما تبقى السلطة التنفيذية والمسؤولية لدى المؤسسة.",
+          "يدعم الذكاء الاصطناعي عملية اتخاذ القرار، بينما تبقى السلطة التنفيذية والمسؤولية الكاملة بيد المؤسسة.",
       },
       {
         icon: BadgeCheck,
         title: "تبنٍ قابل للقياس",
         description:
-          "يبدأ كل تطبيق بنتيجة محددة ثم يتوسع وفقًا للقيمة المثبتة.",
+          "يبدأ كل تطبيق بأهداف أعمال واضحة، ولا يتوسع إلا بعد إثبات قيمة قابلة للقياس.",
       },
     ],
   },

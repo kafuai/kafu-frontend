@@ -26,14 +26,14 @@ const headerContent = {
   en: {
     homeLabel: "KAFU AI home",
     navigationLabel: "Primary navigation",
-    demoLabel: "Book a Demo",
+    demoLabel: "Executive Discovery",
     languageMenuLabel: "Select website language",
     languageButtonLabel: "Open language selector",
   },
   ar: {
     homeLabel: "الصفحة الرئيسية لكفو للذكاء الاصطناعي",
     navigationLabel: "التنقل الرئيسي",
-    demoLabel: "احجز عرضًا",
+    demoLabel: "اكتشاف تنفيذي",
     languageMenuLabel: "اختر لغة الموقع",
     languageButtonLabel: "فتح قائمة اختيار اللغة",
   },

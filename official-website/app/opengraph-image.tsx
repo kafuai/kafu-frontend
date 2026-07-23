@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "KAFU AI Enterprise Intelligence Platform";
+export const alt =
+  "KAFU AI — Enterprise Intelligence for Better Decisions and Governed Execution";
 
 export const size = {
   width: 1200,
@@ -37,7 +38,12 @@ export default function OpenGraphImage() {
           KAFU AI
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <div
             style={{
               color: "#69d1d5",
@@ -53,14 +59,14 @@ export default function OpenGraphImage() {
 
           <div
             style={{
-              fontSize: 66,
+              fontSize: 62,
               fontWeight: 700,
               letterSpacing: "-0.045em",
               lineHeight: 1.06,
-              maxWidth: 900,
+              maxWidth: 960,
             }}
           >
-            Turn organizational knowledge into executive clarity.
+            Connect Knowledge. Improve Decisions. Execute with Confidence.
           </div>
 
           <div
@@ -69,15 +75,29 @@ export default function OpenGraphImage() {
               fontSize: 25,
               lineHeight: 1.45,
               marginTop: 30,
-              maxWidth: 850,
+              maxWidth: 920,
             }}
           >
-            Knowledge, decision intelligence and coordinated AI execution in one
-            governed enterprise environment.
+            A unified enterprise platform connecting organizational knowledge,
+            executive decision-making, governance, and AI-enabled execution.
           </div>
+        </div>
+
+        <div
+          style={{
+            alignItems: "center",
+            color: "rgba(255, 255, 255, 0.72)",
+            display: "flex",
+            fontSize: 20,
+            fontWeight: 500,
+            justifyContent: "flex-end",
+            letterSpacing: "0.04em",
+          }}
+        >
+          kafuai.com
         </div>
       </div>
     ),
-    size,
+    size
   );
 }

@@ -6,41 +6,41 @@ import SectionCTA from "@/components/shared/SectionCTA";
 import SectionHero from "@/components/shared/SectionHero";
 
 export const metadata: Metadata = {
-  title: "Enterprise | KAFU AI",
+  title: "Enterprise AI Readiness | KAFU AI",
   description:
-    "Learn how KAFU AI supports enterprise governance, security, scalability, and responsible AI adoption.",
+    "Discover how KAFU AI enables governed enterprise AI adoption through organizational context, executive oversight, security and scalable transformation.",
 };
 
 const enterprisePrinciples = [
   {
     title: "Enterprise Governance",
     description:
-      "Clear ownership, controlled access, defined responsibilities, and structured oversight across the AI operating environment.",
+      "Establish clear ownership, defined responsibilities, controlled access and executive oversight across the AI operating environment.",
   },
   {
     title: "Responsible AI Adoption",
     description:
-      "AI capabilities are introduced within business context, human accountability, review processes, and organizational controls.",
+      "Introduce AI through business priorities, human accountability, governance processes and measurable organizational outcomes.",
   },
   {
     title: "Security by Design",
     description:
-      "The platform architecture is designed to support secure data handling, controlled environments, and enterprise-grade operating practices.",
+      "Protect enterprise knowledge through secure architecture, managed environments and enterprise-grade operating practices.",
   },
   {
     title: "Organizational Context",
     description:
-      "Recommendations and intelligence are grounded in the company’s priorities, structure, operating model, and approved knowledge.",
+      "Ensure every recommendation reflects the organization’s priorities, operating model, approved knowledge and business objectives.",
   },
   {
-    title: "Scalable Architecture",
+    title: "Scalable Enterprise Architecture",
     description:
-      "A modular platform foundation supports expansion across functions, business units, use cases, and organizational maturity levels.",
+      "Expand AI adoption progressively across departments, business units and use cases without losing governance or operational consistency.",
   },
   {
     title: "Human-Centered Execution",
     description:
-      "KAFU AI augments leadership and employees while keeping critical decisions, approvals, and accountability with people.",
+      "Support leadership and employees with AI while executive authority, approvals and accountability always remain with people.",
   },
 ];
 
@@ -49,19 +49,19 @@ const adoptionModel = [
     label: "Stage 1",
     title: "Discover",
     description:
-      "Establish the organizational context, strategic priorities, operational realities, and transformation objectives.",
+      "Understand executive priorities, organizational context, operating challenges and transformation objectives.",
   },
   {
     label: "Stage 2",
     title: "Activate",
     description:
-      "Configure the relevant platform capabilities, executive experiences, knowledge sources, and role-based AI support.",
+      "Deploy the platform with the right knowledge sources, governance model, executive experiences and AI capabilities.",
   },
   {
     label: "Stage 3",
     title: "Scale",
     description:
-      "Expand adoption across workflows, teams, and business units through measurable and governed implementation.",
+      "Expand confidently across teams and business units using measurable outcomes and controlled governance.",
   },
 ];
 
@@ -70,37 +70,37 @@ export default function EnterprisePage() {
     <>
       <SectionHero
         eyebrow="Enterprise Readiness"
-        title="Built for responsible adoption across complex organizations."
-        description="KAFU AI is designed as an enterprise operating platform with governance, organizational context, human accountability, and scalable adoption at its core."
-        primaryLabel="Schedule an Enterprise Briefing"
-        primaryHref="/contact"
-        secondaryLabel="View the Platform"
+        title="Enterprise AI built for governance, trust and long-term adoption."
+        description="KAFU AI combines organizational context, executive oversight, secure governance and scalable adoption into one enterprise operating platform."
+        primaryLabel="Book an Executive Discovery"
+        primaryHref="/book-demo"
+        secondaryLabel="Explore the Platform"
         secondaryHref="/platform"
       />
 
       <ContentSection
         eyebrow="Enterprise Principles"
-        title="A controlled foundation for AI-enabled transformation."
-        description="Enterprise AI requires more than technical capability. It requires governance, trust, context, accountability, and a clear operating model."
+        title="The foundation for responsible enterprise AI."
+        description="Long-term AI success depends on governance, organizational context, executive accountability and a disciplined operating model—not technology alone."
         tone="muted"
       >
         <FeatureGrid items={enterprisePrinciples} columns={3} />
       </ContentSection>
 
       <ContentSection
-        eyebrow="Adoption Model"
-        title="Move from executive alignment to measurable enterprise adoption."
-        description="KAFU AI supports a staged journey that reduces implementation risk while building long-term organizational capability."
+        eyebrow="Adoption Journey"
+        title="From executive alignment to enterprise-wide adoption."
+        description="KAFU AI supports a phased implementation approach that reduces risk while creating measurable business value."
       >
         <FeatureGrid items={adoptionModel} columns={3} />
       </ContentSection>
 
       <SectionCTA
-        eyebrow="Enterprise Engagement"
-        title="Define a practical AI adoption path for your organization."
-        description="Begin with an executive briefing focused on your priorities, readiness, governance requirements, and transformation objectives."
-        primaryLabel="Request an Enterprise Briefing"
-        primaryHref="/contact"
+        eyebrow="Executive Discovery"
+        title="Plan a practical AI adoption roadmap for your organization."
+        description="Meet with our team to evaluate your priorities, governance requirements and highest-value opportunities before expanding AI across the enterprise."
+        primaryLabel="Book Executive Discovery"
+        primaryHref="/book-demo"
         secondaryLabel="Explore Solutions"
         secondaryHref="/solutions"
       />

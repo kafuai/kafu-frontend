@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   BrainCircuit,
@@ -10,60 +10,60 @@ import { useWebsiteLanguage } from "@/components/localization";
 
 const content = {
   en: {
-    eyebrow: "From Knowledge to Execution",
-    title: "One connected path from information to action.",
+    eyebrow: "The KAFU AI Platform",
+    title: "Intelligence built around the enterprise.",
     description:
-      "KAFU AI brings organizational knowledge, executive priorities and coordinated execution into one clear operating view.",
+      "KAFU AI begins with organizational context and connects it to leadership decisions and coordinated execution.",
     items: [
       {
         icon: BrainCircuit,
-        metric: "01 · Knowledge",
-        title: "See the organization in context",
+        metric: "Knowledge",
+        title: "Understand the organization",
         description:
-          "Bring institutional knowledge, business priorities and relevant context into one connected environment instead of searching across teams, files and systems.",
+          "Bring relevant context, institutional knowledge and executive priorities into one intelligence environment.",
       },
       {
         icon: ChartNoAxesCombined,
-        metric: "02 · Decisions",
-        title: "Focus on what needs leadership attention",
+        metric: "Decisions",
+        title: "Clarify what matters",
         description:
-          "Surface the priorities, risks and implications that matter so executives can spend less time assembling information and more time deciding.",
+          "Highlight strategic implications, risks, recommendations and the decisions requiring leadership attention.",
       },
       {
         icon: CircleCheckBig,
-        metric: "03 · Execution",
-        title: "Turn decisions into visible progress",
+        metric: "Execution",
+        title: "Coordinate what happens next",
         description:
-          "Connect approved priorities with ownership, actions and progress so the organization can move forward with clearer accountability.",
+          "Connect approved priorities with ownership, action, progress and AI-assisted enterprise workflows.",
       },
     ],
   },
   ar: {
-    eyebrow: "من المعرفة إلى التنفيذ",
-    title: "مسار واحد يربط المعلومة بالقرار والتنفيذ.",
+    eyebrow: "منصة كفو للذكاء الاصطناعي",
+    title: "ذكاء مبني حول المؤسسة.",
     description:
-      "تجمع KAFU AI المعرفة التنظيمية والأولويات التنفيذية والتنسيق التشغيلي في رؤية واحدة واضحة.",
+      "تبدأ كفو بالسياق التنظيمي وتربطه بالقرارات القيادية والتنفيذ المنسق.",
     items: [
       {
         icon: BrainCircuit,
-        metric: "01 · المعرفة",
-        title: "شاهد المؤسسة ضمن سياقها الكامل",
+        metric: "المعرفة",
+        title: "افهم المؤسسة",
         description:
-          "اجمع المعرفة المؤسسية وأولويات الأعمال والسياق الملائم في بيئة مترابطة، بدلًا من البحث بين الإدارات والملفات والأنظمة.",
+          "اجمع السياق الملائم والمعرفة المؤسسية والأولويات التنفيذية ضمن بيئة ذكاء واحدة.",
       },
       {
         icon: ChartNoAxesCombined,
-        metric: "02 · القرارات",
-        title: "ركّز على ما يحتاج إلى انتباه القيادة",
+        metric: "القرارات",
+        title: "وضّح ما يهم",
         description:
-          "أظهر الأولويات والمخاطر والآثار المهمة، لتقضي الإدارة وقتًا أقل في جمع المعلومات ووقتًا أكبر في اتخاذ القرار.",
+          "أبرز الآثار الاستراتيجية والمخاطر والتوصيات والقرارات التي تتطلب اهتمام القيادة.",
       },
       {
         icon: CircleCheckBig,
-        metric: "03 · التنفيذ",
-        title: "حوّل القرار إلى تقدم واضح",
+        metric: "التنفيذ",
+        title: "نسّق الخطوات التالية",
         description:
-          "اربط الأولويات المعتمدة بالمسؤوليات والإجراءات والتقدم، لتتحرك المؤسسة بتنسيق أوضح ومساءلة قابلة للمتابعة.",
+          "اربط الأولويات المعتمدة بالمسؤوليات والإجراءات والتقدم ومسارات العمل المؤسسية المدعومة بالذكاء الاصطناعي.",
       },
     ],
   },

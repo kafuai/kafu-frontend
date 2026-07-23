@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   createContext,
@@ -29,16 +29,6 @@ function isSupportedLanguage(value: string | null): value is WebsiteLanguage {
   return value === "en" || value === "ar";
 }
 
-function getInitialLanguage(): WebsiteLanguage {
-  if (typeof window === "undefined") {
-    return "en";
-  }
-
-  const storedLanguage = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-
-  return isSupportedLanguage(storedLanguage) ? storedLanguage : "en";
-}
-
 function applyDocumentLanguage(language: WebsiteLanguage) {
   const direction: WebsiteDirection = language === "ar" ? "rtl" : "ltr";
 
@@ -53,8 +43,22 @@ export default function LanguageProvider({
 }: Readonly<{
   children: ReactNode;
 }>) {
+  /*
+   * Keep the server render and the first client render identical.
+   * The saved browser preference is restored only after hydration.
+   */
   const [language, setLanguageState] =
-    useState<WebsiteLanguage>(getInitialLanguage);
+    useState<WebsiteLanguage>("en");
+
+  useEffect(() => {
+    const storedLanguage = window.localStorage.getItem(
+      LANGUAGE_STORAGE_KEY,
+    );
+
+    if (isSupportedLanguage(storedLanguage)) {
+      setLanguageState(storedLanguage);
+    }
+  }, []);
 
   useEffect(() => {
     applyDocumentLanguage(language);
@@ -62,7 +66,10 @@ export default function LanguageProvider({
 
   const setLanguage = useCallback((nextLanguage: WebsiteLanguage) => {
     setLanguageState(nextLanguage);
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+    window.localStorage.setItem(
+      LANGUAGE_STORAGE_KEY,
+      nextLanguage,
+    );
   }, []);
 
   const toggleLanguage = useCallback(() => {
