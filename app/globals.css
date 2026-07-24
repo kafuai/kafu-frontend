@@ -1114,3 +1114,48 @@ html[data-theme="dark"] .enterprise-header {
   }
 }
 
+
+/* =========================================================
+   KAFU AI — Bidirectional Typography Utilities
+   ========================================================= */
+
+[dir="rtl"] .kafu-text-start {
+  text-align: right;
+}
+
+[dir="ltr"] .kafu-text-start {
+  text-align: left;
+}
+
+[dir="rtl"] .kafu-text-end {
+  text-align: left;
+}
+
+[dir="ltr"] .kafu-text-end {
+  text-align: right;
+}
+
+.kafu-bidi-isolate {
+  unicode-bidi: isolate;
+}
+
+.kafu-ltr-value {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+}
+
+.kafu-rtl-value {
+  direction: rtl;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+.kafu-numeric-value {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+

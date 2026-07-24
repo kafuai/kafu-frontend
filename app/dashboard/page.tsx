@@ -631,15 +631,28 @@ export default function DashboardPage() {
             </section>
 
             <section className="mt-6 grid gap-6 lg:grid-cols-3">
-              <RiskWatch risks={risks} />
+  <RiskWatch risks={risks} />
 
-              <PipelineSnapshot
-                totalCompanies={pipelineMetrics.totalCompanies}
-                totalLeads={pipelineMetrics.totalLeads}
-                pipelineValue={pipelineMetrics.pipelineValue}
-                conversionRate={pipelineMetrics.conversionRate}
-              />
-            </section>
+  <Link
+    href="/sales-intelligence"
+    aria-label="فتح مركز ذكاء المبيعات"
+    className="group block rounded-2xl outline-none transition duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 lg:col-span-2"
+  >
+    <div className="h-full rounded-2xl transition duration-200 group-hover:shadow-lg">
+      <PipelineSnapshot
+        totalCompanies={pipelineMetrics.totalCompanies}
+        totalLeads={pipelineMetrics.totalLeads}
+        pipelineValue={pipelineMetrics.pipelineValue}
+        conversionRate={pipelineMetrics.conversionRate}
+      />
+    </div>
+
+    <div className="pointer-events-none mt-3 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 transition group-hover:border-blue-300 group-hover:bg-blue-100">
+      <span>عرض التحليل الكامل والتوقعات والتوصيات</span>
+      <span dir="ltr">Open Sales Intelligence →</span>
+    </div>
+  </Link>
+</section>
 
             <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
               <div className="border-b border-slate-200 px-5 py-5 sm:px-8">
