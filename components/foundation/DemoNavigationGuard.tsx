@@ -63,10 +63,7 @@ export default function DemoNavigationGuard({
           return;
         }
 
-        if (
-          result.status === "redirect" ||
-          result.status === "no-session"
-        ) {
+        if (result.status === "redirect") {
           router.replace(
             result.redirectRoute ??
               "/demo-experience",
@@ -119,3 +116,4 @@ export default function DemoNavigationGuard({
 
   return children;
 }
+

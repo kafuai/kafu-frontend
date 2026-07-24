@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react";
-import { getCurrentCompanyId } from "@/lib/companySession";
+﻿"use client";
+
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import { useWorkspaceScope } from "@/hooks/useWorkspaceScope";
 import { supabase } from "@/lib/supabase";
 import {
   DiscoveryAnswer,
@@ -7,57 +13,155 @@ import {
 } from "@/types/executiveSummary";
 
 export function useExecutiveSummary() {
-  const [company, setCompany] = useState<ExecutiveSummaryCompany | null>(null);
-  const [answers, setAnswers] = useState<DiscoveryAnswer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
+  const {
+    activeCompanyId,
+    isLoading: isScopeLoading,
+    error: scopeError,
+  } = useWorkspaceScope();
+
+  const [company, setCompany] =
+    useState<ExecutiveSummaryCompany | null>(
+      null,
+    );
+
+  const [answers, setAnswers] =
+    useState<DiscoveryAnswer[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [message, setMessage] =
+    useState("");
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadSummaryData() {
-      const companyId = getCurrentCompanyId();
-
-      if (!companyId) {
-        setMessage("لم يتم العثور على بيانات الشركة. يرجى الرجوع إلى صفحة Assessment.");
-        setLoading(false);
+      if (isScopeLoading) {
         return;
       }
 
-      const { data: companyData, error: companyError } = await supabase
-        .from("companies")
-        .select("id, name, industry, country, employee_count, contact_name, contact_title")
-        .eq("id", companyId)
-        .single();
+      setLoading(true);
+      setMessage("");
 
-      if (companyError) {
-        setMessage("حدث خطأ أثناء تحميل بيانات الشركة: " + companyError.message);
-        setLoading(false);
+      if (scopeError) {
+        if (isMounted) {
+          setCompany(null);
+          setAnswers([]);
+          setMessage(
+            `تعذر التحقق من مساحة العمل: ${scopeError}`,
+          );
+          setLoading(false);
+        }
+
         return;
       }
 
-      const { data: answersData, error: answersError } = await supabase
-        .from("discovery_answers")
-        .select("id, question, answer, question_order")
-        .eq("company_id", companyId)
-        .order("question_order", { ascending: true });
+      if (!activeCompanyId) {
+        if (isMounted) {
+          setCompany(null);
+          setAnswers([]);
+          setMessage(
+            "لم يتم اختيار شركة نشطة. اختر شركة من محدد مساحة العمل.",
+          );
+          setLoading(false);
+        }
 
-      if (answersError) {
-        setMessage("حدث خطأ أثناء تحميل إجابات الاستكشاف: " + answersError.message);
-        setLoading(false);
         return;
       }
 
-      setCompany(companyData);
-      setAnswers(answersData || []);
-      setLoading(false);
+      try {
+        const [
+          {
+            data: companyData,
+            error: companyError,
+          },
+          {
+            data: answersData,
+            error: answersError,
+          },
+        ] = await Promise.all([
+          supabase
+            .from("companies")
+            .select(
+              "id, name, industry, country, employee_count, contact_name, contact_title",
+            )
+            .eq("id", activeCompanyId)
+            .single(),
+
+          supabase
+            .from("discovery_answers")
+            .select(
+              "id, question, answer, question_order",
+            )
+            .eq(
+              "company_id",
+              activeCompanyId,
+            )
+            .order(
+              "question_order",
+              {
+                ascending: true,
+              },
+            ),
+        ]);
+
+        if (companyError) {
+          throw new Error(
+            companyError.message,
+          );
+        }
+
+        if (answersError) {
+          throw new Error(
+            answersError.message,
+          );
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCompany(companyData);
+        setAnswers(
+          answersData ?? [],
+        );
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Unknown error";
+
+        if (isMounted) {
+          setCompany(null);
+          setAnswers([]);
+          setMessage(
+            `تعذر تحميل الملخص التنفيذي: ${errorMessage}`,
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     }
 
-    loadSummaryData();
-  }, []);
+    void loadSummaryData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    activeCompanyId,
+    isScopeLoading,
+    scopeError,
+  ]);
 
   return {
     company,
     answers,
-    loading,
+    loading:
+      loading || isScopeLoading,
     message,
   };
 }

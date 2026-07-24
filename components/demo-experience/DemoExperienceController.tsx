@@ -5,6 +5,9 @@ import {
   useMemo,
   useState,
 } from "react";
+import {
+  useRouter,
+} from "next/navigation";
 
 import {
   getBrowserAuthenticationService,
@@ -30,6 +33,8 @@ function createSessionId(): string {
 export default function DemoExperienceController({
   experience,
 }: DemoExperienceControllerProps) {
+  const router = useRouter();
+
   const authenticationService = useMemo(
     () => getBrowserAuthenticationService(),
     [],
@@ -124,9 +129,13 @@ export default function DemoExperienceController({
         await authenticationService.getIdentity();
 
       if (!identity) {
-        throw new Error(
-          "يجب تسجيل الدخول لبدء العرض التجريبي.",
+        router.push(
+          `/register?next=${encodeURIComponent(
+            "/demo-experience",
+          )}`,
         );
+
+        return;
       }
 
       const createdSession =
@@ -219,7 +228,7 @@ export default function DemoExperienceController({
             type="button"
             onClick={startDemoExperience}
             disabled={isStarting}
-            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-slate-950 px-6 text-sm font-black text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-600 px-6 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-emerald-600 disabled:text-white disabled:opacity-60"
           >
             {isStarting
               ? "جارٍ بدء الرحلة..."
@@ -246,4 +255,6 @@ export default function DemoExperienceController({
     </div>
   );
 }
+
+
 

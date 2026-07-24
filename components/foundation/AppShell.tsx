@@ -11,6 +11,7 @@ import EnterpriseFooter from "@/components/enterprise-shell/EnterpriseFooter";
 import EnterpriseHeader from "@/components/enterprise-shell/EnterpriseHeader";
 
 import AppProviders from "./AppProviders";
+import DemoExperienceNavigationBar from "./DemoExperienceNavigationBar";
 import DemoNavigationGuard from "./DemoNavigationGuard";
 
 interface AppShellProps {
@@ -45,12 +46,15 @@ export default function AppShell({
   children,
 }: AppShellProps) {
   const pathname = usePathname();
+
   const isImmersivePage =
     immersiveRoutes.has(pathname);
 
   return (
     <AppProviders>
       <DemoNavigationGuard>
+        <DemoExperienceNavigationBar />
+
         {isImmersivePage ? (
           children
         ) : (

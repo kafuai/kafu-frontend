@@ -1,4 +1,8 @@
-﻿import AuthenticationShell from "../../components/authentication/AuthenticationShell";
+﻿import {
+  Suspense,
+} from "react";
+
+import AuthenticationShell from "../../components/authentication/AuthenticationShell";
 import RegistrationForm from "../../components/authentication/RegistrationForm";
 
 export default function RegisterPage() {
@@ -8,7 +12,15 @@ export default function RegisterPage() {
       title="أسّس مساحة عمل مؤسستك على KAFU AI"
       description="أنشئ حسابًا مؤسسيًا موحدًا يمهّد لإدارة المستخدمين والمعرفة والتواصل والعمليات ضمن بيئة آمنة وقابلة للتوسع."
     >
-      <RegistrationForm />
+      <Suspense
+        fallback={
+          <div className="py-16 text-center text-sm text-slate-500">
+            جارٍ تجهيز إنشاء الحساب...
+          </div>
+        }
+      >
+        <RegistrationForm />
+      </Suspense>
     </AuthenticationShell>
   );
 }

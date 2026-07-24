@@ -1,24 +1,14 @@
 ﻿import type { DiscoveryLocalAttachment } from "./DiscoveryResponseComposer";
 
-import { CommunicationAttachmentService } from "@/src/enterprise/communication-layer/communicationAttachmentService";
 import type {
-  CommunicationAttachmentType,
-  CommunicationMessageType,
-} from "@/src/enterprise/communication-layer/communicationModels";
-import { CommunicationService } from "@/src/enterprise/communication-layer/communicationService";
-import { communicationStorageService } from "@/src/enterprise/communication-layer/communicationStorageService";
-import { communicationAttachmentRepository } from "@/src/enterprise/communication-layer/supabaseCommunicationAttachmentRepository";
-import { communicationRepository } from "@/src/enterprise/communication-layer/supabaseCommunicationRepository";
-
-const communicationService = new CommunicationService(
-  communicationRepository
-);
-
-const communicationAttachmentService =
-  new CommunicationAttachmentService(
-    communicationStorageService,
-    communicationAttachmentRepository
-  );
+  CommunicationMessage,
+} from "@/src/enterprise/communicationLayer/communicationTypes";
+import {
+  communicationRuntime,
+} from "@/src/enterprise/communicationLayer/communicationRuntime";
+import {
+  communicationUploadService,
+} from "@/src/enterprise/communicationLayer/storage/communicationStorageRuntime";
 
 type PersistDiscoveryCommunicationInput = {
   companyId: string;
@@ -33,56 +23,19 @@ export type PersistDiscoveryCommunicationResult = {
   attachmentCount: number;
 };
 
-function resolveAttachmentType(
-  attachment: DiscoveryLocalAttachment
-): CommunicationAttachmentType {
-  if (
-    attachment.kind === "voice" ||
-    attachment.mimeType.startsWith("audio/")
-  ) {
-    return "audio";
-  }
-
-  if (attachment.mimeType.startsWith("image/")) {
-    return "image";
-  }
-
-  if (attachment.mimeType.startsWith("video/")) {
-    return "video";
-  }
-
-  if (
-    attachment.mimeType.includes("zip") ||
-    attachment.mimeType.includes("rar") ||
-    attachment.mimeType.includes("compressed")
-  ) {
-    return "archive";
-  }
-
-  if (
-    attachment.mimeType.includes("pdf") ||
-    attachment.mimeType.includes("document") ||
-    attachment.mimeType.includes("sheet") ||
-    attachment.mimeType.includes("presentation") ||
-    attachment.mimeType.startsWith("text/")
-  ) {
-    return "document";
-  }
-
-  return "other";
-}
-
 function resolveMessageType(
   answer: string,
-  attachments: DiscoveryLocalAttachment[]
-): CommunicationMessageType {
+  attachments: DiscoveryLocalAttachment[],
+): CommunicationMessage["type"] {
   if (answer.trim()) {
     return "text";
   }
 
   if (
     attachments.some(
-      (attachment) => attachment.kind === "voice"
+      (attachment) =>
+        attachment.kind === "voice" ||
+        attachment.mimeType.startsWith("audio/"),
     )
   ) {
     return "voice";
@@ -90,13 +43,37 @@ function resolveMessageType(
 
   if (
     attachments.some((attachment) =>
-      attachment.mimeType.startsWith("image/")
+      attachment.mimeType.startsWith("image/"),
     )
   ) {
     return "image";
   }
 
-  return "file";
+  return "document";
+}
+
+function createMessageContent(
+  question: string,
+  answer: string,
+  attachments: DiscoveryLocalAttachment[],
+): string {
+  const normalizedQuestion = question.trim();
+  const normalizedAnswer = answer.trim();
+
+  if (normalizedAnswer) {
+    return normalizedQuestion
+      ? `${normalizedQuestion}\n\n${normalizedAnswer}`
+      : normalizedAnswer;
+  }
+
+  const attachmentLabel =
+    attachments.length === 1
+      ? "Attachment response"
+      : `${attachments.length} attachment responses`;
+
+  return normalizedQuestion
+    ? `${normalizedQuestion}\n\n${attachmentLabel}`
+    : attachmentLabel;
 }
 
 export async function persistDiscoveryCommunication({
@@ -105,67 +82,78 @@ export async function persistDiscoveryCommunication({
   answers,
   attachmentsByQuestion,
 }: PersistDiscoveryCommunicationInput): Promise<PersistDiscoveryCommunicationResult> {
+  const conversationId = crypto.randomUUID();
+  const senderId = "executive-user";
+
   const conversation =
-    await communicationService.createConversation({
+    await communicationRuntime.service.createConversation({
+      id: conversationId,
       companyId,
-      conversationType: "corporate_brain",
-      channel: "platform",
-      title: "Executive Discovery Session",
-      createdByName: "Executive User",
-      metadata: {
-        source: "discovery",
-        module: "executive-discovery",
-        questionCount: questions.length,
-        startedAt: new Date().toISOString(),
-      },
+      tenantId: companyId,
+      organizationId: companyId,
+      createdBy: senderId,
+      channel: "web",
+      subject: "Executive Discovery Session",
+      priority: "normal",
+      tags: [
+        "discovery",
+        "executive-discovery",
+        "corporate-brain",
+      ],
     });
 
   let messageCount = 0;
   let attachmentCount = 0;
 
-  for (let index = 0; index < questions.length; index += 1) {
+  for (
+    let index = 0;
+    index < questions.length;
+    index += 1
+  ) {
+    const question = questions[index] ?? "";
     const answer = answers[index]?.trim() ?? "";
-    const attachments = attachmentsByQuestion[index] ?? [];
+    const attachments =
+      attachmentsByQuestion[index] ?? [];
 
     if (!answer && attachments.length === 0) {
       continue;
     }
 
-    const messageType = resolveMessageType(
-      answer,
-      attachments
-    );
+    const messageId = crypto.randomUUID();
 
-    const message = await communicationService.sendMessage({
+    await communicationRuntime.service.createQueuedMessage({
+      id: messageId,
       companyId,
       conversationId: conversation.id,
-      senderType: "user",
-      senderName: "Executive User",
-      messageType,
-      content: answer || undefined,
-      metadata: {
-        source: "discovery",
-        module: "executive-discovery",
-        question: questions[index],
-        questionOrder: index + 1,
-        hasTextAnswer: Boolean(answer),
-        attachmentCount: attachments.length,
-      },
+      senderId,
+      direction: "outbound",
+      type: resolveMessageType(answer, attachments),
+      content: createMessageContent(
+        question,
+        answer,
+        attachments,
+      ),
     });
 
     messageCount += 1;
 
     for (const attachment of attachments) {
-      await communicationAttachmentService.uploadAndRegister({
+      await communicationUploadService.uploadAttachment({
+        attachmentId: crypto.randomUUID(),
         companyId,
         conversationId: conversation.id,
-        messageId: message.id,
-        file: attachment.file,
-        fileName: attachment.name,
-        attachmentType:
-          resolveAttachmentType(attachment),
-        durationSeconds: attachment.durationSeconds,
-        uploadedByName: "Executive User",
+        messageId,
+        createdBy: senderId,
+        file: {
+          name: attachment.name,
+          type:
+            attachment.mimeType ||
+            "application/octet-stream",
+          size: attachment.sizeBytes,
+          data: attachment.file,
+        },
+        durationSeconds:
+          attachment.durationSeconds,
       });
 
       attachmentCount += 1;
@@ -178,3 +166,8 @@ export async function persistDiscoveryCommunication({
     attachmentCount,
   };
 }
+
+
+
+
+

@@ -1,4 +1,10 @@
-﻿interface SignOutButtonProps {
+﻿"use client";
+
+import {
+  clearCurrentCompanyId,
+} from "@/lib/companySession";
+
+interface SignOutButtonProps {
   readonly className?: string;
   readonly label?: string;
 }
@@ -11,6 +17,9 @@ export default function SignOutButton({
     <form
       action="/auth/sign-out"
       method="post"
+      onSubmit={() => {
+        clearCurrentCompanyId();
+      }}
     >
       <button
         type="submit"

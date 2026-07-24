@@ -36,7 +36,8 @@ import {
 import LanguageSwitcher from "@/components/localization/LanguageSwitcher";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
-import { clearCurrentCompanyId } from "@/lib/companySession";
+import WorkspaceScopeSwitcher from "@/components/enterprise-shell/WorkspaceScopeSwitcher";
+import { clearWorkspaceSession } from "@/lib/companySession";
 import { supabase } from "@/lib/supabase";
 import { resolveWorkspaceIdentity } from "@/lib/workspace-identity/tenantResolver";
 
@@ -380,7 +381,7 @@ export default function EnterpriseHeader() {
     setIsSigningOut(true);
 
     try {
-      clearCurrentCompanyId();
+      clearWorkspaceSession();
 
       const { error } =
         await supabase.auth.signOut();
@@ -429,30 +430,7 @@ export default function EnterpriseHeader() {
             className="kafu-executive-header__divider"
             aria-hidden="true"
           />
-
-          <Link
-            href="/company-workspace"
-            className="kafu-workspace-selector"
-            aria-label={`${t(
-              "workspace.activeCompany",
-            )}: ${activeCompanyName}`}
-            title={activeCompanyName}
-          >
-            <Building2
-              size={17}
-              strokeWidth={1.8}
-            />
-
-            <span className="kafu-workspace-selector__name">
-              {activeCompanyName}
-            </span>
-
-            <ChevronDown
-              size={13}
-              strokeWidth={2}
-              className="kafu-workspace-selector__chevron"
-            />
-          </Link>
+          <WorkspaceScopeSwitcher />
         </div>
 
         <nav
@@ -746,5 +724,7 @@ export default function EnterpriseHeader() {
     </header>
   );
 }
+
+
 
 

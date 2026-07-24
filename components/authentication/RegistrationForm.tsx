@@ -7,6 +7,7 @@ import {
 import Link from "next/link";
 import {
   useRouter,
+  useSearchParams,
 } from "next/navigation";
 import {
   Eye,
@@ -18,8 +19,26 @@ import {
 } from "../../src/enterprise/authentication/authenticationRuntime";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 
+function resolveSafeDestination(
+  requestedPath: string | null,
+): string {
+  if (
+    requestedPath?.startsWith("/") &&
+    !requestedPath.startsWith("//")
+  ) {
+    return requestedPath;
+  }
+
+  return "/company-dashboard";
+}
+
 export default function RegistrationForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const destination = resolveSafeDestination(
+    searchParams.get("next"),
+  );
 
   const [fullName, setFullName] =
     useState("");
@@ -52,25 +71,32 @@ export default function RegistrationForm() {
     setIsSubmitting(true);
 
     try {
+      const normalizedEmail = email.trim();
+
       const result =
         await getBrowserAuthenticationService().signUp({
           fullName: fullName.trim(),
           companyName: companyName.trim(),
-          email: email.trim(),
+          email: normalizedEmail,
           password,
         });
 
       if (result.requiresEmailConfirmation) {
+        const loginParameters =
+          new URLSearchParams({
+            registration: "confirmation",
+            email: normalizedEmail,
+            next: destination,
+          });
+
         router.push(
-          `/login?registration=confirmation&email=${encodeURIComponent(
-            email.trim(),
-          )}`,
+          `/login?${loginParameters.toString()}`,
         );
 
         return;
       }
 
-      router.replace("/company-dashboard");
+      router.replace(destination);
       router.refresh();
     } catch (error) {
       setErrorMessage(
@@ -82,6 +108,11 @@ export default function RegistrationForm() {
       setIsSubmitting(false);
     }
   }
+
+  const loginParameters =
+    new URLSearchParams({
+      next: destination,
+    });
 
   return (
     <div className="mx-auto max-w-md">
@@ -239,7 +270,7 @@ export default function RegistrationForm() {
       <p className="mt-7 text-center text-sm text-slate-500">
         لديك حساب بالفعل؟{" "}
         <Link
-          href="/login"
+          href={`/login?${loginParameters.toString()}`}
           className="font-bold text-emerald-700 hover:text-emerald-800"
         >
           تسجيل الدخول

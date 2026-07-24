@@ -2,6 +2,13 @@
   SupabaseClient,
 } from "@supabase/supabase-js";
 
+import {
+  clearCurrentCompanyId,
+} from "../../../lib/companySession";
+import {
+  resolveWorkspaceIdentity,
+} from "../../../lib/workspace-identity/tenantResolver";
+
 import type {
   AuthenticationService,
 } from "./authenticationService";
@@ -21,6 +28,8 @@ export class SupabaseAuthenticationService
   async signIn(
     credentials: AuthenticationCredentials,
   ): Promise<AuthenticationIdentity> {
+    clearCurrentCompanyId();
+
     const { data, error } =
       await this.client.auth.signInWithPassword({
         email: credentials.email,
@@ -37,6 +46,15 @@ export class SupabaseAuthenticationService
       );
     }
 
+    try {
+      await resolveWorkspaceIdentity(this.client);
+    } catch (workspaceError) {
+      await this.client.auth.signOut();
+      clearCurrentCompanyId();
+
+      throw workspaceError;
+    }
+
     return {
       user: data.user,
       session: data.session,
@@ -46,6 +64,8 @@ export class SupabaseAuthenticationService
   async signUp(
     input: AuthenticationRegistrationInput,
   ): Promise<AuthenticationResult> {
+    clearCurrentCompanyId();
+
     const { data, error } =
       await this.client.auth.signUp({
         email: input.email,
@@ -69,6 +89,17 @@ export class SupabaseAuthenticationService
             session: data.session,
           }
         : null;
+
+    if (identity) {
+      try {
+        await resolveWorkspaceIdentity(this.client);
+      } catch (workspaceError) {
+        await this.client.auth.signOut();
+        clearCurrentCompanyId();
+
+        throw workspaceError;
+      }
+    }
 
     return {
       identity,
@@ -96,6 +127,8 @@ export class SupabaseAuthenticationService
   }
 
   async signOut(): Promise<void> {
+    clearCurrentCompanyId();
+
     const { error } =
       await this.client.auth.signOut();
 
@@ -111,6 +144,7 @@ export class SupabaseAuthenticationService
     } = await this.client.auth.getUser();
 
     if (userError || !userData.user) {
+      clearCurrentCompanyId();
       return null;
     }
 
@@ -123,6 +157,7 @@ export class SupabaseAuthenticationService
       sessionError ||
       !sessionData.session
     ) {
+      clearCurrentCompanyId();
       return null;
     }
 

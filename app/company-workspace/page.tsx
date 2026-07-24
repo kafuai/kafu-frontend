@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Building2, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  Building2,
+  RefreshCw,
+} from "lucide-react";
 
 import CompanyHero from "@/components/workspace/hero/CompanyHero";
 import WorkspaceActions from "@/components/workspace/actions/WorkspaceActions";
@@ -12,7 +16,8 @@ import ExecutiveKPIs from "@/components/workspace/dashboard/ExecutiveKPI";
 import Notifications from "@/components/workspace/dashboard/Notifications";
 import UpcomingTasks from "@/components/workspace/dashboard/UpcomingTasks";
 import { useLocalization } from "@/components/localization/LocalizationContext";
-import { getCurrentCompanyId } from "@/lib/companySession";
+import WorkspaceScopeBoundary from "@/components/enterprise-shell/WorkspaceScopeBoundary";
+import { useWorkspaceScope } from "@/hooks/useWorkspaceScope";
 import { supabase } from "@/lib/supabase";
 
 type Company = {
@@ -25,16 +30,33 @@ type Company = {
 
 const TOTAL_DISCOVERY_QUESTIONS = 44;
 
-export default function CompanyWorkspacePage() {
+function CompanyWorkspaceContent() {
   const { locale } = useLocalization();
 
-  const [company, setCompany] = useState<Company | null>(null);
-  const [completedAnswers, setCompletedAnswers] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const {
+    activeCompanyId,
+    isLoading: isScopeLoading,
+    error: scopeError,
+  } = useWorkspaceScope();
+
+  const [company, setCompany] =
+    useState<Company | null>(null);
+
+  const [completedAnswers, setCompletedAnswers] =
+    useState(0);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
   const readinessScore = Math.min(
-    Math.round((completedAnswers / TOTAL_DISCOVERY_QUESTIONS) * 100),
+    Math.round(
+      (completedAnswers /
+        TOTAL_DISCOVERY_QUESTIONS) *
+        100,
+    ),
     100,
   );
 
@@ -42,17 +64,36 @@ export default function CompanyWorkspacePage() {
     let isMounted = true;
 
     async function loadWorkspace() {
+      if (isScopeLoading) {
+        return;
+      }
+
       setLoading(true);
       setErrorMessage("");
 
-      const companyId = getCurrentCompanyId();
-
-      if (!companyId) {
+      if (scopeError) {
         if (isMounted) {
+          setCompany(null);
+          setCompletedAnswers(0);
           setErrorMessage(
             locale === "ar"
-              ? "لم يتم العثور على مؤسسة نشطة. يرجى إكمال التقييم أولًا."
-              : "No active organization was found. Please complete the assessment first.",
+              ? `تعذر التحقق من مساحة العمل: ${scopeError}`
+              : `Unable to verify workspace access: ${scopeError}`,
+          );
+          setLoading(false);
+        }
+
+        return;
+      }
+
+      if (!activeCompanyId) {
+        if (isMounted) {
+          setCompany(null);
+          setCompletedAnswers(0);
+          setErrorMessage(
+            locale === "ar"
+              ? "لم يتم اختيار مؤسسة نشطة."
+              : "No active organization is selected.",
           );
           setLoading(false);
         }
@@ -62,40 +103,62 @@ export default function CompanyWorkspacePage() {
 
       try {
         const [
-          { data: companyData, error: companyError },
-          { count, error: answersError },
+          {
+            data: companyData,
+            error: companyError,
+          },
+          {
+            count,
+            error: answersError,
+          },
         ] = await Promise.all([
           supabase
             .from("companies")
-            .select("id, name, industry, country, employee_count")
-            .eq("id", companyId)
+            .select(
+              "id, name, industry, country, employee_count",
+            )
+            .eq("id", activeCompanyId)
             .single(),
+
           supabase
             .from("discovery_answers")
             .select("id", {
               count: "exact",
               head: true,
             })
-            .eq("company_id", companyId),
+            .eq(
+              "company_id",
+              activeCompanyId,
+            ),
         ]);
 
         if (companyError) {
-          throw new Error(companyError.message);
+          throw new Error(
+            companyError.message,
+          );
         }
 
         if (answersError) {
-          throw new Error(answersError.message);
+          throw new Error(
+            answersError.message,
+          );
         }
 
-        if (isMounted) {
-          setCompany(companyData);
-          setCompletedAnswers(count ?? 0);
+        if (!isMounted) {
+          return;
         }
+
+        setCompany(companyData);
+        setCompletedAnswers(count ?? 0);
       } catch (error) {
         const message =
-          error instanceof Error ? error.message : "Unknown error";
+          error instanceof Error
+            ? error.message
+            : "Unknown error";
 
         if (isMounted) {
+          setCompany(null);
+          setCompletedAnswers(0);
           setErrorMessage(
             locale === "ar"
               ? `تعذر تحميل مساحة عمل المؤسسة: ${message}`
@@ -114,13 +177,22 @@ export default function CompanyWorkspacePage() {
     return () => {
       isMounted = false;
     };
-  }, [locale]);
+  }, [
+    activeCompanyId,
+    isScopeLoading,
+    locale,
+    scopeError,
+  ]);
 
-  if (loading) {
+  if (isScopeLoading || loading) {
     return (
       <main
         className="company-workspace-page flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-10 md:px-8"
-        dir={locale === "ar" ? "rtl" : "ltr"}
+        dir={
+          locale === "ar"
+            ? "rtl"
+            : "ltr"
+        }
       >
         <section
           className="w-full max-w-md rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] px-8 py-10 text-center shadow-[var(--shadow-small)]"
@@ -128,7 +200,10 @@ export default function CompanyWorkspacePage() {
           aria-live="polite"
         >
           <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
-            <RefreshCw className="animate-spin" size={23} />
+            <RefreshCw
+              className="animate-spin"
+              size={23}
+            />
           </span>
 
           <h1 className="mt-5 text-xl font-extrabold tracking-tight text-[var(--text-primary)]">
@@ -147,11 +222,18 @@ export default function CompanyWorkspacePage() {
     );
   }
 
-  if (errorMessage || !company) {
+  if (
+    errorMessage ||
+    !company
+  ) {
     return (
       <main
         className="company-workspace-page flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-10 md:px-8"
-        dir={locale === "ar" ? "rtl" : "ltr"}
+        dir={
+          locale === "ar"
+            ? "rtl"
+            : "ltr"
+        }
       >
         <section
           className="w-full max-w-xl rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] px-8 py-10 text-center shadow-[var(--shadow-small)] md:px-10"
@@ -190,7 +272,11 @@ export default function CompanyWorkspacePage() {
   return (
     <main
       className="company-workspace-page min-h-screen bg-[var(--background)] px-4 py-6 sm:px-6 md:px-8 md:py-7 lg:px-10"
-      dir={locale === "ar" ? "rtl" : "ltr"}
+      dir={
+        locale === "ar"
+          ? "rtl"
+          : "ltr"
+      }
     >
       <div className="mx-auto max-w-[1500px] space-y-5 md:space-y-6">
         <CompanyHero
@@ -203,7 +289,9 @@ export default function CompanyWorkspacePage() {
           }
           industry={company.industry}
           country={company.country}
-          employees={company.employee_count}
+          employees={
+            company.employee_count
+          }
         />
 
         <section
@@ -221,7 +309,9 @@ export default function CompanyWorkspacePage() {
 
           <ExecutiveKPIs
             locale={locale}
-            readinessScore={readinessScore}
+            readinessScore={
+              readinessScore
+            }
           />
         </section>
 
@@ -235,11 +325,17 @@ export default function CompanyWorkspacePage() {
         >
           <ExecutiveProgress
             locale={locale}
-            completed={completedAnswers}
-            total={TOTAL_DISCOVERY_QUESTIONS}
+            completed={
+              completedAnswers
+            }
+            total={
+              TOTAL_DISCOVERY_QUESTIONS
+            }
           />
 
-          <WorkspaceActions locale={locale} />
+          <WorkspaceActions
+            locale={locale}
+          />
         </section>
 
         <section
@@ -250,8 +346,13 @@ export default function CompanyWorkspacePage() {
               : "Notifications and upcoming tasks"
           }
         >
-          <Notifications locale={locale} />
-          <UpcomingTasks locale={locale} />
+          <Notifications
+            locale={locale}
+          />
+
+          <UpcomingTasks
+            locale={locale}
+          />
         </section>
 
         <footer className="flex flex-col gap-2 border-t border-[var(--border-default)] px-1 pt-5 text-xs font-medium text-[var(--text-muted)] sm:flex-row sm:items-center sm:justify-between">
@@ -271,3 +372,13 @@ export default function CompanyWorkspacePage() {
   );
 }
 
+export default function CompanyWorkspacePage() {
+  return (
+    <WorkspaceScopeBoundary
+      companyOnly
+      loadingLabel="جارٍ التحقق من مساحة العمل"
+    >
+      <CompanyWorkspaceContent />
+    </WorkspaceScopeBoundary>
+  );
+}

@@ -1,4 +1,4 @@
-﻿import { getCurrentCompanyId } from "@/lib/companySession";
+import { resolveCurrentCompanyId } from "@/lib/workspace-identity/tenantResolver";
 import { supabase } from "@/lib/supabase";
 
 import type {
@@ -12,7 +12,6 @@ import type {
 } from "./salesIntelligenceTypes";
 
 import type {
-  NextActionPriority,
   SalesActivityChannel,
   SalesActivityType,
   SalesPipelineStatus,
@@ -30,34 +29,21 @@ type PipelineRecord = {
   status: string | null;
   sales_rep: string | null;
   opportunity_value: number | null;
+  next_followup: string | null;
+  next_followup_date: string | null;
   response_deadline: string | null;
+  notes: string | null;
   created_at: string | null;
   companies: PipelineCompanyRecord | PipelineCompanyRecord[] | null;
 };
 
-type NextActionRecord = {
-  id: string;
-  pipeline_id: string;
-  action_type: string;
-  title: string;
-  description: string | null;
-  due_at: string;
-  owner_name: string | null;
-  priority: string;
-  status: string;
-  is_primary: boolean;
-};
-
 type ActivityRecord = {
   id: string;
-  pipeline_id: string;
+  sales_pipeline_id: string;
   activity_type: string;
-  channel: string | null;
-  subject: string | null;
   description: string | null;
-  outcome: string | null;
-  performed_by_name: string | null;
-  occurred_at: string;
+  created_by: string | null;
+  created_at: string;
 };
 
 const ACTIVE_STATUSES = new Set<SalesPipelineStatus>([
@@ -100,31 +86,23 @@ function normalizeStatus(value: string | null): SalesPipelineStatus {
   switch (normalized) {
     case "contacted":
       return "contacted";
-
     case "qualified":
       return "qualified";
-
     case "meeting":
     case "demo_scheduled":
       return "demo_scheduled";
-
     case "demo":
     case "demo_completed":
       return "demo_completed";
-
     case "proposal":
     case "proposal_sent":
       return "proposal_sent";
-
     case "negotiation":
       return "negotiation";
-
     case "won":
       return "won";
-
     case "lost":
       return "lost";
-
     default:
       return "new";
   }
@@ -141,6 +119,8 @@ function normalizeCompany(
 }
 
 function normalizeActivityType(value: string): SalesActivityType {
+  const normalized = value.trim().toLowerCase().replaceAll(" ", "_");
+
   const supported: SalesActivityType[] = [
     "lead_created",
     "assignment",
@@ -156,41 +136,58 @@ function normalizeActivityType(value: string): SalesActivityType {
     "follow_up",
   ];
 
-  return supported.includes(value as SalesActivityType)
-    ? (value as SalesActivityType)
+  return supported.includes(normalized as SalesActivityType)
+    ? (normalized as SalesActivityType)
     : "note";
 }
 
-function normalizeChannel(value: string | null): SalesActivityChannel | null {
-  if (!value) {
-    return null;
+function inferChannel(value: string): SalesActivityChannel | null {
+  const normalized = value.trim().toLowerCase().replaceAll(" ", "_");
+
+  switch (normalized) {
+    case "call":
+      return "phone";
+    case "email":
+      return "email";
+    case "whatsapp":
+      return "whatsapp";
+    case "meeting":
+      return "in_person";
+    case "demo":
+      return "video";
+    case "lead_created":
+    case "assignment":
+    case "status_change":
+    case "task_completed":
+      return "system";
+    case "follow_up":
+    case "note":
+    case "proposal":
+      return "platform";
+    default:
+      return null;
   }
-
-  const supported: SalesActivityChannel[] = [
-    "system",
-    "phone",
-    "email",
-    "whatsapp",
-    "video",
-    "in_person",
-    "platform",
-  ];
-
-  return supported.includes(value as SalesActivityChannel)
-    ? (value as SalesActivityChannel)
-    : null;
 }
 
-function normalizePriority(value: string): NextActionPriority {
-  switch (value) {
-    case "low":
-    case "high":
-    case "critical":
-      return value;
+function getActivityTitle(value: string): string {
+  const normalized = normalizeActivityType(value);
 
-    default:
-      return "medium";
-  }
+  const titles: Record<SalesActivityType, string> = {
+    lead_created: "إنشاء فرصة مبيعات",
+    assignment: "تعيين مسؤول المبيعات",
+    status_change: "تحديث مرحلة الفرصة",
+    call: "مكالمة مع العميل",
+    email: "رسالة بريد إلكتروني",
+    whatsapp: "محادثة واتساب",
+    meeting: "اجتماع مع العميل",
+    demo: "عرض توضيحي",
+    proposal: "إرسال عرض",
+    note: "ملاحظة مبيعات",
+    task_completed: "إكمال مهمة متابعة",
+    follow_up: "متابعة العميل",
+  };
+
+  return titles[normalized];
 }
 
 function formatMetricCurrency(value: number): string {
@@ -211,8 +208,13 @@ function getOpportunityHealth(
     return "healthy";
   }
 
-  const remainingTime = new Date(deadline).getTime() - Date.now();
-  const remainingDays = remainingTime / 86_400_000;
+  const deadlineTime = new Date(deadline).getTime();
+
+  if (Number.isNaN(deadlineTime)) {
+    return "healthy";
+  }
+
+  const remainingDays = (deadlineTime - Date.now()) / 86_400_000;
 
   if (remainingDays < 0) {
     return "critical";
@@ -225,34 +227,34 @@ function getOpportunityHealth(
   return "healthy";
 }
 
-function buildOpportunities(
-  pipeline: PipelineRecord[],
-  actions: NextActionRecord[],
-): SalesOpportunity[] {
-  const actionsByPipeline = new Map<string, NextActionRecord>();
+function getPipelineDeadline(item: PipelineRecord): string | null {
+  return (
+    item.next_followup_date ??
+    item.response_deadline ??
+    item.created_at ??
+    null
+  );
+}
 
-  for (const action of actions) {
-    const existing = actionsByPipeline.get(action.pipeline_id);
+function getNextAction(item: PipelineRecord): string {
+  const explicitAction = item.next_followup?.trim();
 
-    if (
-      !existing ||
-      action.is_primary ||
-      new Date(action.due_at).getTime() <
-        new Date(existing.due_at).getTime()
-    ) {
-      actionsByPipeline.set(action.pipeline_id, action);
-    }
+  if (explicitAction) {
+    return explicitAction;
   }
 
+  if (item.response_deadline || item.next_followup_date) {
+    return "متابعة استجابة العميل";
+  }
+
+  return "تحديد الخطوة التالية";
+}
+
+function buildOpportunities(pipeline: PipelineRecord[]): SalesOpportunity[] {
   return pipeline.map((item) => {
     const status = normalizeStatus(item.status);
     const company = normalizeCompany(item.companies);
-    const nextAction = actionsByPipeline.get(item.id);
-    const fallbackDate =
-      item.response_deadline ??
-      item.created_at ??
-      new Date().toISOString();
-
+    const fallbackDate = getPipelineDeadline(item) ?? new Date().toISOString();
     const companyName = company?.name?.trim() || "عميل غير محدد";
 
     return {
@@ -264,18 +266,17 @@ function buildOpportunities(
       statusLabel: STAGE_LABELS[status],
       value: item.opportunity_value ?? 0,
       probability: STATUS_PROBABILITY[status],
-      health: getOpportunityHealth(status, item.response_deadline),
+      health: getOpportunityHealth(status, getPipelineDeadline(item)),
       expectedCloseDate: fallbackDate,
-      nextAction:
-        nextAction?.title ||
-        (item.response_deadline ? "متابعة استجابة العميل" : "تحديد الخطوة التالية"),
-      nextActionDueAt: nextAction?.due_at ?? fallbackDate,
+      nextAction: getNextAction(item),
+      nextActionDueAt: fallbackDate,
       aiInsight:
         status === "lost"
           ? "الفرصة مغلقة وتحتاج مراجعة أسباب الخسارة."
           : status === "won"
             ? "تم إغلاق الفرصة بنجاح."
-            : "ترتيب الأولوية محسوب من قيمة الفرصة ومرحلتها وموعد المتابعة.",
+            : item.notes?.trim() ||
+              "ترتيب الأولوية محسوب من قيمة الفرصة ومرحلتها وموعد المتابعة.",
     };
   });
 }
@@ -317,7 +318,9 @@ function buildPipelineStages(
       opportunities: stageOpportunities.length,
       value,
       percentage:
-        totalValue > 0 ? Math.max(2, Math.round((value / totalValue) * 100)) : 0,
+        totalValue > 0
+          ? Math.max(2, Math.round((value / totalValue) * 100))
+          : 0,
     };
   });
 }
@@ -414,6 +417,7 @@ function buildForecast(
       const closeDate = new Date(opportunity.expectedCloseDate);
 
       return (
+        !Number.isNaN(closeDate.getTime()) &&
         closeDate.getFullYear() === year &&
         closeDate.getMonth() === month
       );
@@ -453,7 +457,6 @@ function buildForecast(
 
 function buildRecommendations(
   opportunities: SalesOpportunity[],
-  actions: NextActionRecord[],
 ): SalesIntelligenceRecommendation[] {
   const recommendations: SalesIntelligenceRecommendation[] = [];
 
@@ -480,27 +483,6 @@ function buildRecommendations(
     });
   }
 
-  const overdueActions = actions
-    .filter(
-      (action) =>
-        action.status !== "completed" &&
-        action.status !== "cancelled" &&
-        new Date(action.due_at).getTime() < Date.now(),
-    )
-    .slice(0, 3 - recommendations.length);
-
-  for (const action of overdueActions) {
-    recommendations.push({
-      id: `action-${action.id}`,
-      title: action.title,
-      description:
-        action.description || "خطوة متابعة متأخرة وتحتاج إلى تنفيذ.",
-      priority: normalizePriority(action.priority),
-      impact: "تقليل تأخر المتابعة",
-      opportunityId: action.pipeline_id,
-    });
-  }
-
   if (recommendations.length === 0) {
     recommendations.push({
       id: "pipeline-stable",
@@ -522,19 +504,18 @@ function buildActivities(
   return activities.map((activity) => ({
     id: activity.id,
     type: normalizeActivityType(activity.activity_type),
-    channel: normalizeChannel(activity.channel),
-    title: activity.subject?.trim() || "نشاط مبيعات",
+    channel: inferChannel(activity.activity_type),
+    title: getActivityTitle(activity.activity_type),
     description:
       activity.description?.trim() ||
-      activity.outcome?.trim() ||
       "تم تسجيل نشاط جديد ضمن مسار المبيعات.",
-    actorName: activity.performed_by_name?.trim() || "فريق KAFU AI",
-    occurredAt: activity.occurred_at,
+    actorName: "فريق KAFU AI",
+    occurredAt: activity.created_at,
   }));
 }
 
 export async function getSalesIntelligenceSnapshot(): Promise<SalesIntelligenceSnapshot> {
-  const companyId = getCurrentCompanyId();
+  const companyId = await resolveCurrentCompanyId();
 
   if (!companyId) {
     throw new Error(
@@ -542,70 +523,50 @@ export async function getSalesIntelligenceSnapshot(): Promise<SalesIntelligenceS
     );
   }
 
-  const [pipelineResult, actionsResult, activitiesResult] =
-    await Promise.all([
-      supabase
-        .from("sales_pipeline")
-        .select(`
-          id,
-          company_id,
-          status,
-          sales_rep,
-          opportunity_value,
-          response_deadline,
-          created_at,
-          companies (
-            name,
-            contact_name,
-            contact_phone
-          )
-        `)
-        .eq("company_id", companyId)
-        .order("created_at", { ascending: false }),
+  const [pipelineResult, activitiesResult] = await Promise.all([
+    supabase
+      .from("sales_pipeline")
+      .select(`
+        id,
+        company_id,
+        status,
+        sales_rep,
+        opportunity_value,
+        next_followup,
+        next_followup_date,
+        response_deadline,
+        notes,
+        created_at,
+        companies (
+          name,
+          contact_name,
+          contact_phone
+        )
+      `)
+      .eq("company_id", companyId)
+      .order("created_at", { ascending: false }),
 
-      supabase
-        .from("sales_pipeline_next_actions")
-        .select(`
-          id,
-          pipeline_id,
-          action_type,
-          title,
-          description,
-          due_at,
-          owner_name,
-          priority,
-          status,
-          is_primary
-        `)
-        .in("status", ["open", "in_progress"])
-        .order("due_at", { ascending: true }),
-
-      supabase
-        .from("sales_pipeline_activities")
-        .select(`
-          id,
-          pipeline_id,
-          activity_type,
-          channel,
-          subject,
-          description,
-          outcome,
-          performed_by_name,
-          occurred_at
-        `)
-        .order("occurred_at", { ascending: false })
-        .limit(8),
-    ]);
+    supabase
+      .from("sales_activities")
+      .select(`
+        id,
+        sales_pipeline_id,
+        activity_type,
+        description,
+        created_by,
+        created_at,
+        sales_pipeline!inner (
+          company_id
+        )
+      `)
+      .eq("sales_pipeline.company_id", companyId)
+      .order("created_at", { ascending: false })
+      .limit(8),
+  ]);
 
   if (pipelineResult.error) {
     throw new Error(
       `تعذر تحميل فرص المبيعات: ${pipelineResult.error.message}`,
-    );
-  }
-
-  if (actionsResult.error) {
-    throw new Error(
-      `تعذر تحميل خطوات المتابعة: ${actionsResult.error.message}`,
     );
   }
 
@@ -616,10 +577,8 @@ export async function getSalesIntelligenceSnapshot(): Promise<SalesIntelligenceS
   }
 
   const pipeline = (pipelineResult.data ?? []) as PipelineRecord[];
-  const actions = (actionsResult.data ?? []) as NextActionRecord[];
   const activities = (activitiesResult.data ?? []) as ActivityRecord[];
-
-  const opportunities = buildOpportunities(pipeline, actions);
+  const opportunities = buildOpportunities(pipeline);
 
   return {
     generatedAt: new Date().toISOString(),
@@ -628,7 +587,7 @@ export async function getSalesIntelligenceSnapshot(): Promise<SalesIntelligenceS
     pipelineStages: buildPipelineStages(opportunities),
     opportunities,
     forecast: buildForecast(opportunities),
-    recommendations: buildRecommendations(opportunities, actions),
+    recommendations: buildRecommendations(opportunities),
     activities: buildActivities(activities),
   };
 }

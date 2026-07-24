@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { supabase } from "@/lib/supabase";
-import { getCurrentCompanyId } from "@/lib/companySession";
+import WorkspaceScopeBoundary from "@/components/enterprise-shell/WorkspaceScopeBoundary";
+import { useWorkspaceScope } from "@/hooks/useWorkspaceScope";
 
 import ExecutiveHero from "@/components/executive-dashboard/ExecutiveHero";
 import ExecutiveKpiGrid from "@/components/executive-dashboard/ExecutiveKpiGrid";
@@ -215,7 +216,12 @@ function SectionHeading({
   );
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
+  const {
+    activeCompanyId,
+    isLoading: isScopeLoading,
+    error: scopeError,
+  } = useWorkspaceScope();
   const [company, setCompany] = useState<Company | null>(null);
   const [answers, setAnswers] = useState<DiscoveryAnswer[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -227,11 +233,19 @@ export default function DashboardPage() {
     let isMounted = true;
 
     async function loadDashboard() {
+      if (isScopeLoading) {
+        return;
+      }
+
       setLoading(true);
       setMessage("");
 
       try {
-        const companyId = getCurrentCompanyId();
+        if (scopeError) {
+          throw new Error(`تعذر التحقق من مساحة العمل: ${scopeError}`);
+        }
+
+        const companyId = activeCompanyId;
 
         if (!companyId) {
           throw new Error(
@@ -375,7 +389,7 @@ export default function DashboardPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [activeCompanyId, isScopeLoading, scopeError]);
 
   const pipelineMetrics = useMemo(
     () => calculatePipelineMetrics(companies, pipeline),
@@ -649,7 +663,7 @@ export default function DashboardPage() {
 
     <div className="pointer-events-none mt-3 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 transition group-hover:border-blue-300 group-hover:bg-blue-100">
       <span>عرض التحليل الكامل والتوقعات والتوصيات</span>
-      <span dir="ltr">Open Sales Intelligence →</span>
+      <span>فتح مركز ذكاء المبيعات ←</span>
     </div>
   </Link>
 </section>
@@ -662,17 +676,17 @@ export default function DashboardPage() {
                 />
               </div>
 
-              <div className="grid gap-px bg-slate-200 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-5">
                 {stageCounts.map((stage) => (
                   <article
-                    key={stage.stage}
-                    className="flex items-center justify-between gap-4 bg-white px-5 py-5"
+                    key={getPipelineStatusLabel(stage.stage)}
+                    className="flex min-w-0 items-center justify-between gap-3 bg-white px-5 py-5 sm:px-6"
                   >
-                    <p className="text-sm font-semibold text-slate-600">
-                      {stage.stage}
+                    <p className="min-w-0 flex-1 break-words text-sm font-semibold leading-6 text-slate-600">
+                      {getPipelineStatusLabel(stage.stage)}
                     </p>
 
-                    <p className="text-2xl font-bold tracking-tight text-slate-950">
+                    <p className="shrink-0 text-2xl font-bold tabular-nums tracking-tight text-slate-950">
                       {stage.count}
                     </p>
                   </article>
@@ -814,4 +828,13 @@ export default function DashboardPage() {
   );
 }
 
-
+export default function DashboardPage() {
+  return (
+    <WorkspaceScopeBoundary
+      companyOnly
+      loadingLabel="جارٍ التحقق من مساحة العمل"
+    >
+      <DashboardContent />
+    </WorkspaceScopeBoundary>
+  );
+}
