@@ -1,4 +1,6 @@
-﻿import {
+﻿"use client";
+
+import {
   Activity,
   ArrowDown,
   ArrowUp,
@@ -20,10 +22,7 @@
   Video,
 } from "lucide-react";
 
-import {
-  getPriorityOpportunities,
-  salesIntelligenceSnapshot,
-} from "@/data/sales-intelligence/salesIntelligenceDemoData";
+import { useSalesIntelligence } from "./useSalesIntelligence";
 
 import type { SalesActivityChannel } from "@/src/enterprise/sales-intelligence/salesIntelligenceConstants";
 import type {
@@ -94,6 +93,47 @@ function getChannelIcon(channel: SalesActivityChannel | null) {
 }
 
 export default function SalesIntelligenceDashboard() {
+  const { snapshot, loading, error } = useSalesIntelligence();
+
+  if (loading) {
+    return (
+      <div className={styles.page}>
+        <section className={styles.panel} aria-live="polite">
+          <div className={styles.panelHeader}>
+            <div>
+              <span className={styles.sectionEyebrow}>
+                Sales Intelligence
+              </span>
+              <h2>جارٍ تحميل ذكاء المبيعات</h2>
+              <p>
+                يتم الآن تحليل فرص المبيعات والأنشطة وخطوات المتابعة
+                الخاصة بالشركة الحالية.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (error || !snapshot) {
+    return (
+      <div className={styles.page}>
+        <section className={styles.panel} role="alert">
+          <div className={styles.panelHeader}>
+            <div>
+              <span className={styles.sectionEyebrow}>
+                Sales Intelligence
+              </span>
+              <h2>تعذر تحميل ذكاء المبيعات</h2>
+              <p>{error || "لم تتوفر بيانات المبيعات المطلوبة."}</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   const {
     metrics,
     pipelineStages,
@@ -101,11 +141,34 @@ export default function SalesIntelligenceDashboard() {
     recommendations,
     activities,
     generatedAt,
-  } = salesIntelligenceSnapshot;
+  } = snapshot;
 
-  const opportunities = getPriorityOpportunities();
+  const opportunities = [...snapshot.opportunities].sort(
+    (first, second) =>
+      second.probability * second.value -
+      first.probability * first.value,
+  );
+
+  const activeOpportunities = opportunities.filter(
+    (opportunity) =>
+      opportunity.status !== "won" &&
+      opportunity.status !== "lost",
+  );
+
+  const highPriorityOpportunities = activeOpportunities.filter(
+    (opportunity) =>
+      opportunity.health === "critical" ||
+      opportunity.health === "attention",
+  );
+
+  const totalPipelineValue = pipelineStages.reduce(
+    (sum, stage) => sum + stage.value,
+    0,
+  );
+
   const maxForecastValue = Math.max(
-    ...forecast.map((period) => period.target)
+    1,
+    ...forecast.map((period) => period.target),
   );
 
   return (
@@ -146,8 +209,8 @@ export default function SalesIntelligenceDashboard() {
               <Target size={16} aria-hidden="true" />
             </span>
             <span>
-              <strong>27 فرصة نشطة</strong>
-              <small>3 فرص ذات أولوية عالية</small>
+              <strong>{activeOpportunities.length} فرصة نشطة</strong>
+              <small>{highPriorityOpportunities.length} فرص ذات أولوية عالية</small>
             </span>
           </div>
         </div>
@@ -185,7 +248,7 @@ export default function SalesIntelligenceDashboard() {
             </div>
 
             <div className={styles.panelHeaderValue}>
-              <strong>248,500 د.ب</strong>
+              <strong>{formatCurrency(totalPipelineValue)}</strong>
               <span>القيمة الإجمالية</span>
             </div>
           </div>
@@ -492,4 +555,5 @@ export default function SalesIntelligenceDashboard() {
     </div>
   );
 }
+
 
