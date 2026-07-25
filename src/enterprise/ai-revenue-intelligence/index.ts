@@ -6,3 +6,4 @@ export * from "./deal-risk-detection";
 export * from "./next-best-action";
 export * from "./sales-forecast";
 export * from "./revenue-intelligence-orchestrator";
+export * from "./sales-coaching";
