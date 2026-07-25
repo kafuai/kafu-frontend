@@ -845,3 +845,65 @@
     flex-direction: column;
   }
 }
+
+.communicationNotice {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border: 1px solid rgba(16, 185, 129, 0.24);
+  border-radius: 12px;
+  background: rgba(236, 253, 245, 0.9);
+  color: #065f46;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.communicationNotice[data-status="error"] {
+  border-color: rgba(220, 38, 38, 0.2);
+  background: rgba(254, 242, 242, 0.94);
+  color: #991b1b;
+}
+
+.communicationButton {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+  border: 1px solid rgba(5, 150, 105, 0.22);
+  border-radius: 10px;
+  background: rgba(236, 253, 245, 0.78);
+  padding: 8px 12px;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.communicationButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(5, 150, 105, 0.42);
+  background: #ecfdf5;
+  color: #065f46;
+  box-shadow: 0 8px 18px rgba(5, 150, 105, 0.1);
+}
+
+.communicationButton:focus-visible {
+  outline: 3px solid rgba(16, 185, 129, 0.22);
+  outline-offset: 2px;
+}
+
+.communicationButton:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}

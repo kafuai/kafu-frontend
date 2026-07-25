@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
@@ -24,6 +24,7 @@ import {
   Home,
   LayoutDashboard,
   LoaderCircle,
+  MessagesSquare,
   LogOut,
   Search,
   Settings,
@@ -81,6 +82,11 @@ const navigationItems = [
     key: "navigation.salesIntelligence",
     href: "/sales-intelligence",
     icon: TrendingUp,
+  },
+  {
+    key: "navigation.communication",
+    href: "/communication",
+    icon: MessagesSquare,
   },
 ] as const;
 
@@ -724,7 +730,3 @@ export default function EnterpriseHeader() {
     </header>
   );
 }
-
-
-
-

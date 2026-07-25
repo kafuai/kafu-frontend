@@ -2,57 +2,165 @@
   CommunicationChannelRegistry,
   type CommunicationChannelAdapter,
 } from "./communicationChannelAdapter";
-import { CommunicationService } from "./communicationService";
+
+import {
+  CommunicationService,
+  type SendCommunicationMessageInput,
+} from "./communicationService";
+
 import {
   communicationRepository,
 } from "./supabaseCommunicationRepository";
+
+import {
+  communicationAuditWriter,
+} from "./supabaseCommunicationAuditWriter";
+
 import type {
   CommunicationChannel,
   CommunicationMessage,
 } from "./communicationTypes";
+
 import type {
-  SendCommunicationMessageInput,
-} from "./communicationService";
+  CommunicationPermissionContext,
+} from "./domain/permissionModels";
+
+import {
+  AuditCommunicationDomainEventPublisher,
+} from "./application/auditCommunicationDomainEventPublisher";
+
+import {
+  CommunicationApplicationService,
+} from "./application/communicationApplicationService";
+
+import {
+  CommunicationAuthorizationService,
+} from "./application/communicationAuthorizationService";
+
+import type {
+  CommunicationDomainEventPublisher,
+} from "./application/communicationDomainEventPublisher";
+
+export interface CommunicationRuntimeAuthorization {
+  readonly permissionContext:
+    CommunicationPermissionContext;
+  readonly isResourceOwner?: boolean;
+}
+
+export interface CommunicationRuntimeOptions {
+  readonly service?: CommunicationService;
+  readonly applicationService?:
+    CommunicationApplicationService;
+  readonly authorizationService?:
+    CommunicationAuthorizationService;
+  readonly eventPublisher?:
+    CommunicationDomainEventPublisher;
+  readonly adapters?:
+    readonly CommunicationChannelAdapter[];
+}
 
 export class CommunicationRuntime {
   readonly channels: CommunicationChannelRegistry;
   readonly service: CommunicationService;
+  readonly authorization:
+    CommunicationAuthorizationService;
+  readonly application:
+    CommunicationApplicationService;
 
-  constructor(input?: {
-    readonly service?: CommunicationService;
-    readonly adapters?: readonly CommunicationChannelAdapter[];
-  }) {
+  constructor(
+    input: CommunicationRuntimeOptions = {},
+  ) {
     this.service =
-      input?.service ??
-      new CommunicationService(communicationRepository);
+      input.service ??
+      new CommunicationService(
+        communicationRepository,
+      );
 
-    this.channels = new CommunicationChannelRegistry();
+    this.authorization =
+      input.authorizationService ??
+      new CommunicationAuthorizationService();
 
-    for (const adapter of input?.adapters ?? []) {
+    const eventPublisher =
+      input.eventPublisher ??
+      new AuditCommunicationDomainEventPublisher(
+        communicationAuditWriter,
+      );
+
+    this.application =
+      input.applicationService ??
+      new CommunicationApplicationService(
+        this.service,
+        eventPublisher,
+        undefined,
+        this.authorization,
+      );
+
+    this.channels =
+      new CommunicationChannelRegistry();
+
+    for (const adapter of input.adapters ?? []) {
       this.channels.register(adapter);
     }
   }
 
-  registerChannel(adapter: CommunicationChannelAdapter): void {
+  registerChannel(
+    adapter: CommunicationChannelAdapter,
+  ): void {
     this.channels.register(adapter);
   }
 
-  supportsChannel(channel: CommunicationChannel): boolean {
+  supportsChannel(
+    channel: CommunicationChannel,
+  ): boolean {
     return this.channels.has(channel);
   }
 
   async send(
     input: SendCommunicationMessageInput,
   ): Promise<CommunicationMessage> {
-    const conversation = await this.service.getConversation(
-      input.companyId,
-      input.conversationId,
+    const conversation =
+      await this.application.getConversation(
+        input.companyId,
+        input.conversationId,
+      );
+
+    const adapter =
+      this.channels.get(conversation.channel);
+
+    return this.application.dispatchMessage(
+      input,
+      adapter,
     );
+  }
 
-    const adapter = this.channels.get(conversation.channel);
+  async sendAuthorized(
+    input: SendCommunicationMessageInput,
+    authorization:
+      CommunicationRuntimeAuthorization,
+  ): Promise<CommunicationMessage> {
+    const conversation =
+      await this.application.getAuthorizedConversation(
+        input.companyId,
+        input.conversationId,
+        authorization,
+      );
 
-    return this.service.dispatchMessage(input, adapter);
+    const adapter =
+      this.channels.get(conversation.channel);
+
+    return this.application.dispatchAuthorizedMessage(
+      input,
+      adapter,
+      authorization,
+    );
   }
 }
 
-export const communicationRuntime = new CommunicationRuntime();
+export function createCommunicationRuntime(
+  options: CommunicationRuntimeOptions = {},
+): CommunicationRuntime {
+  return new CommunicationRuntime(options);
+}
+
+export const communicationRuntime =
+  createCommunicationRuntime();

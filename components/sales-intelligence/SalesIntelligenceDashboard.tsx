@@ -1,4 +1,7 @@
-﻿"use client";
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   Activity,
@@ -21,6 +24,10 @@ import {
   UserRound,
   Video,
 } from "lucide-react";
+
+import {
+  openSalesOpportunityConversation,
+} from "@/app/actions/sales";
 
 import { useSalesIntelligence } from "./useSalesIntelligence";
 
@@ -93,7 +100,59 @@ function getChannelIcon(channel: SalesActivityChannel | null) {
 }
 
 export default function SalesIntelligenceDashboard() {
-  const { snapshot, loading, error } = useSalesIntelligence();
+
+  const router = useRouter();
+const { snapshot, loading, error } = useSalesIntelligence();
+
+  const [isCommunicationPending, startCommunicationTransition] =
+    useTransition();
+
+  const [
+    activeCommunicationOpportunityId,
+    setActiveCommunicationOpportunityId,
+  ] = useState<string | null>(null);
+
+  const [communicationMessage, setCommunicationMessage] =
+    useState<string | null>(null);
+
+  const [communicationError, setCommunicationError] =
+    useState<string | null>(null);
+
+  function handleOpenCommunication(
+    opportunityId: string,
+    companyName: string,
+  ): void {
+    setActiveCommunicationOpportunityId(opportunityId);
+    setCommunicationMessage(null);
+    setCommunicationError(null);
+
+    startCommunicationTransition(async () => {
+      try {
+        const result =
+          await openSalesOpportunityConversation(opportunityId);
+
+        setCommunicationMessage(
+          result.created
+            ? `تم إنشاء مساحة التواصل الخاصة بفرصة ${companyName}.`
+            : `تم استرجاع مساحة التواصل الحالية لفرصة ${companyName}.`,
+        );
+
+        router.push(
+          `/communication?conversation=${encodeURIComponent(
+            result.conversationId,
+          )}`,
+        );
+      } catch (actionError) {
+        setCommunicationError(
+          actionError instanceof Error
+            ? actionError.message
+            : "تعذر فتح مساحة التواصل الخاصة بالفرصة.",
+        );
+      } finally {
+        setActiveCommunicationOpportunityId(null);
+      }
+    });
+  }
 
   if (loading) {
     return (
@@ -333,6 +392,17 @@ export default function SalesIntelligenceDashboard() {
           </button>
         </div>
 
+        {(communicationMessage || communicationError) && (
+          <div
+            className={styles.communicationNotice}
+            data-status={communicationError ? "error" : "success"}
+            role={communicationError ? "alert" : "status"}
+            aria-live="polite"
+          >
+            {communicationError || communicationMessage}
+          </div>
+        )}
+
         <div className={styles.opportunityTableWrapper}>
           <table className={styles.opportunityTable}>
             <thead>
@@ -343,7 +413,7 @@ export default function SalesIntelligenceDashboard() {
                 <th>احتمالية الإغلاق</th>
                 <th>صحة الفرصة</th>
                 <th>الإغلاق المتوقع</th>
-                <th>الخطوة التالية</th>
+                <th>الخطوة التالية</th>                <th>التواصل</th>
               </tr>
             </thead>
 
@@ -427,6 +497,28 @@ export default function SalesIntelligenceDashboard() {
                         )}
                       </small>
                     </div>
+                  </td>
+
+                  <td>
+                    <button
+                      className={styles.communicationButton}
+                      type="button"
+                      disabled={isCommunicationPending}
+                      aria-label={`فتح التواصل مع ${opportunity.companyName}`}
+                      onClick={() =>
+                        handleOpenCommunication(
+                          opportunity.id,
+                          opportunity.companyName,
+                        )
+                      }
+                    >
+                      <MessageCircle size={15} aria-hidden="true" />
+                      {isCommunicationPending &&
+                      activeCommunicationOpportunityId ===
+                        opportunity.id
+                        ? "جارٍ الفتح..."
+                        : "فتح التواصل"}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -555,5 +647,3 @@ export default function SalesIntelligenceDashboard() {
     </div>
   );
 }
-
-

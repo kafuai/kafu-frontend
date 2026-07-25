@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   createContext,
@@ -45,6 +45,7 @@ const translations: Record<AppLocale, TranslationDictionary> = {
     "navigation.digitalWorkforce": "القوى العاملة الرقمية",
     "navigation.commandCenter": "مركز القيادة",
     "navigation.salesIntelligence": "ذكاء المبيعات",
+    "navigation.communication": "مركز التواصل",
     "workspace.title": "مساحة قيادة الشركة",
     "workspace.label": "مساحة العمل",
     "workspace.activeCompany": "الشركة النشطة",
@@ -80,7 +81,8 @@ const translations: Record<AppLocale, TranslationDictionary> = {
     "navigation.digitalWorkforce": "Digital Workforce",
     "navigation.commandCenter": "AI Command Center",
     "navigation.salesIntelligence": "Sales Intelligence",
-    
+    "navigation.communication": "Communication",
+
     "workspace.title": "Company Command Workspace",
     "workspace.label": "Workspace",
     "workspace.activeCompany": "Active Company",

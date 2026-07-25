@@ -18,7 +18,28 @@ export interface EmailTransport {
   }>;
 }
 
-export class EmailAdapter implements CommunicationChannelAdapter {
+function normalizeEmailRecipients(
+  context: CommunicationSendContext,
+): readonly string[] {
+  return [
+    ...new Set(
+      context.conversation.participants
+        .map((participant) =>
+          participant.email
+            ?.trim()
+            .toLowerCase(),
+        )
+        .filter(
+          (email): email is string =>
+            Boolean(email),
+        ),
+    ),
+  ];
+}
+
+export class EmailAdapter
+  implements CommunicationChannelAdapter
+{
   readonly channel = "email" as const;
 
   constructor(
@@ -26,7 +47,8 @@ export class EmailAdapter implements CommunicationChannelAdapter {
   ) {}
 
   validateConversation(
-    conversation: CommunicationSendContext["conversation"],
+    conversation:
+      CommunicationSendContext["conversation"],
   ): void {
     if (conversation.channel !== this.channel) {
       throw new Error(
@@ -34,9 +56,12 @@ export class EmailAdapter implements CommunicationChannelAdapter {
       );
     }
 
-    const recipients = conversation.participants.filter(
-      (participant) => participant.email,
-    );
+    const recipients =
+      conversation.participants
+        .map((participant) =>
+          participant.email?.trim(),
+        )
+        .filter(Boolean);
 
     if (recipients.length === 0) {
       throw new Error(
@@ -48,24 +73,34 @@ export class EmailAdapter implements CommunicationChannelAdapter {
   async send(
     context: CommunicationSendContext,
   ): Promise<CommunicationSendResult> {
-    const recipients = context.conversation.participants
-      .map((participant) => participant.email)
-      .filter((email): email is string => Boolean(email));
+    this.validateConversation(
+      context.conversation,
+    );
 
-    const result = await this.transport.send({
-      companyId: context.companyId,
-      conversationId: context.conversation.id,
-      messageId: context.message.id,
-      subject: context.conversation.subject,
-      content: context.message.content,
-      recipients,
-    });
+    const recipients =
+      normalizeEmailRecipients(context);
+
+    const result =
+      await this.transport.send({
+        companyId: context.companyId,
+        conversationId:
+          context.conversation.id,
+        messageId: context.message.id,
+        subject:
+          context.conversation.subject,
+        content: context.message.content,
+        recipients,
+      });
 
     return {
-      externalMessageId: result.externalMessageId,
-      deliveredAt: result.acceptedAt,
+      externalMessageId:
+        result.externalMessageId,
       metadata: {
         transport: "email",
+        provider: "resend",
+        acceptedAt:
+          result.acceptedAt ??
+          new Date().toISOString(),
       },
     };
   }

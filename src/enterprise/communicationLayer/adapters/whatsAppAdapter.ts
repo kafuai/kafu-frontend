@@ -13,8 +13,28 @@ export interface WhatsAppTransport {
     readonly recipients: readonly string[];
   }): Promise<{
     readonly externalMessageId: string;
+    readonly externalMessageIds?: readonly string[];
     readonly acceptedAt?: string;
   }>;
+}
+
+function normalizeWhatsAppRecipients(
+  context: CommunicationSendContext,
+): readonly string[] {
+  return [
+    ...new Set(
+      context.conversation.participants
+        .map((participant) =>
+          participant.phone
+            ?.trim()
+            .replace(/[^\d]/g, ""),
+        )
+        .filter(
+          (phone): phone is string =>
+            Boolean(phone),
+        ),
+    ),
+  ];
 }
 
 export class WhatsAppAdapter
@@ -23,11 +43,13 @@ export class WhatsAppAdapter
   readonly channel = "whatsapp" as const;
 
   constructor(
-    private readonly transport: WhatsAppTransport,
+    private readonly transport:
+      WhatsAppTransport,
   ) {}
 
   validateConversation(
-    conversation: CommunicationSendContext["conversation"],
+    conversation:
+      CommunicationSendContext["conversation"],
   ): void {
     if (conversation.channel !== this.channel) {
       throw new Error(
@@ -35,9 +57,12 @@ export class WhatsAppAdapter
       );
     }
 
-    const recipients = conversation.participants.filter(
-      (participant) => participant.phone,
-    );
+    const recipients =
+      conversation.participants
+        .map((participant) =>
+          participant.phone?.trim(),
+        )
+        .filter(Boolean);
 
     if (recipients.length === 0) {
       throw new Error(
@@ -49,23 +74,43 @@ export class WhatsAppAdapter
   async send(
     context: CommunicationSendContext,
   ): Promise<CommunicationSendResult> {
-    const recipients = context.conversation.participants
-      .map((participant) => participant.phone)
-      .filter((phone): phone is string => Boolean(phone));
+    this.validateConversation(
+      context.conversation,
+    );
 
-    const result = await this.transport.send({
-      companyId: context.companyId,
-      conversationId: context.conversation.id,
-      messageId: context.message.id,
-      content: context.message.content,
-      recipients,
-    });
+    const recipients =
+      normalizeWhatsAppRecipients(context);
+
+    const result =
+      await this.transport.send({
+        companyId: context.companyId,
+        conversationId:
+          context.conversation.id,
+        messageId: context.message.id,
+        content: context.message.content,
+        recipients,
+      });
+
+    const acceptedAt =
+      result.acceptedAt ??
+      new Date().toISOString();
 
     return {
-      externalMessageId: result.externalMessageId,
-      deliveredAt: result.acceptedAt,
+      externalMessageId:
+        result.externalMessageId,
+      deliveredAt: acceptedAt,
       metadata: {
         transport: "whatsapp",
+        provider: "meta-cloud-api",
+        acceptedAt,
+        recipientCount:
+          recipients.length.toString(),
+        providerMessageIds:
+          JSON.stringify(
+            result.externalMessageIds ?? [
+              result.externalMessageId,
+            ],
+          ),
       },
     };
   }

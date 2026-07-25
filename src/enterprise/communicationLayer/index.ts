@@ -18,3 +18,25 @@ export * from "./supabaseCommunicationRepository";
 export * from "./adapters";
 export * from "./storage";
 export * from "./voice";
+export * from "./notificationDispatcher";
+export * from "./notificationRepository";
+export * from "./notificationRuntime";
+export * from "./presenceModels";
+export * from "./presenceRepository";
+export * from "./presenceRuntime";
+export * from "./conversationHistoryModels";
+export * from "./conversationHistoryRepository";
+export * from "./conversationHistoryRuntime";
+export * from "./domainEventHistoryMapper";
+export * from "./historyCommunicationDomainEventPublisher";
+export * from "./domainEventRealtimeMapper";
+export * from "./inMemoryRealtimeTransport";
+export * from "./realtimeCommunicationDomainEventPublisher";
+export * from "./realtimeSequenceRepository";
+export * from "./realtimeSynchronizationModels";
+export * from "./realtimeSynchronizationRuntime";
+export * from "./realtimeSynchronizationTransport";
+
+export * from "./omnichannel";
+
+export * from "./whatsappWebhook";
