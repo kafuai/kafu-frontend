@@ -906,20 +906,20 @@ const revenueExposureSignal:
       const realizationRatio =
         context.dealValue <= 0
           ? 0
-          : prediction.predictedRevenue
+          : prediction.expectedRevenue
             / context.dealValue;
 
       const predictionRisk =
-        prediction.riskLevel === "critical"
+        prediction.risks.some((risk) => risk.level === "critical")
           ? 40
-          : prediction.riskLevel === "high"
+          : prediction.risks.some((risk) => risk.level === "high")
             ? 25
-            : prediction.riskLevel === "moderate"
+            : prediction.risks.some((risk) => risk.level === "medium")
               ? 10
               : 0;
 
       const confidenceRisk =
-        100 - prediction.confidence;
+        100 - prediction.confidenceScore;
 
       const realizationRisk =
         100
@@ -940,15 +940,15 @@ const revenueExposureSignal:
         this.label,
         riskScore,
         weight,
-        prediction.confidence,
+        prediction.confidenceScore,
         riskScore >= 60
           ? "A material portion of the opportunity value is unlikely to be realized."
           : "Expected revenue realization remains acceptable.",
         [
           `Deal value: ${context.dealValue}`,
-          `Predicted revenue: ${prediction.predictedRevenue}`,
-          `Revenue confidence: ${prediction.confidence}`,
-          `Revenue risk: ${prediction.riskLevel}`,
+          `Predicted revenue: ${prediction.expectedRevenue}`,
+          `Revenue confidence: ${prediction.confidenceScore}`,
+          `Revenue risk: ${prediction.risks[0]?.level ?? "low"}`,
         ],
         riskScore >= 60
           ? "Revalidate the expected revenue, commercial timing, and recovery assumptions."
@@ -1065,3 +1065,5 @@ export const createDealRiskSignals = (
       weightOverrides[signal.key]
       ?? signal.defaultWeight,
   }));
+
+

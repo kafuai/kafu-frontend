@@ -607,7 +607,7 @@ export class NextBestActionEngine {
 
         predictedRevenue:
           context.revenuePrediction
-            ?.predictedRevenue,
+            ?.expectedRevenue,
       },
     };
   }
@@ -697,3 +697,4 @@ export const createNextBestActionEngine = (
   new NextBestActionEngine(
     configuration,
   );
+

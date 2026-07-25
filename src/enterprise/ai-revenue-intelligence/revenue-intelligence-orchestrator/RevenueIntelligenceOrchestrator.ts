@@ -8,7 +8,7 @@ import type {
   OpportunityScore,
 } from "../opportunity-scoring";
 import type {
-  RevenuePrediction,
+  RevenuePredictionForecast,
 } from "../revenue-prediction";
 import type {
   SalesForecast,
@@ -50,7 +50,7 @@ export interface RevenueIntelligenceRevenuePredictionExecutor {
     context: ReturnType<
       RevenueIntelligenceOpportunitySource["revenuePredictionContext"]
     >,
-  ): Promise<RevenuePrediction>;
+  ): Promise<RevenuePredictionForecast>;
 }
 
 export interface RevenueIntelligenceDealRiskExecutor {
@@ -132,14 +132,14 @@ const round = (
 };
 
 const calculateRevenueAtRisk = (
-  revenuePrediction: RevenuePrediction,
+  revenuePrediction: RevenuePredictionForecast,
   dealRisk: DealRiskAssessment,
 ): number => {
   const riskFactor =
     clamp(dealRisk.riskScore) / 100;
 
   return round(
-    revenuePrediction.predictedRevenue
+    revenuePrediction.expectedRevenue
     * riskFactor,
   );
 };
@@ -147,7 +147,7 @@ const calculateRevenueAtRisk = (
 const calculateSnapshotConfidence = (
   opportunityScore: OpportunityScore,
   winProbability: WinProbabilityPrediction,
-  revenuePrediction: RevenuePrediction,
+  revenuePrediction: RevenuePredictionForecast,
   dealRisk: DealRiskAssessment,
 ): number =>
   round(
@@ -155,7 +155,7 @@ const calculateSnapshotConfidence = (
       (
         opportunityScore.confidence
         + winProbability.confidence
-        + revenuePrediction.confidence
+        + revenuePrediction.confidenceScore
         + dealRisk.confidence
       ) / 4,
     ),
@@ -379,7 +379,7 @@ export class RevenueIntelligenceOrchestrator {
 
     const expectedRevenue =
       round(
-        revenuePrediction.predictedRevenue,
+        revenuePrediction.expectedRevenue,
       );
 
     const revenueAtRisk =
@@ -797,3 +797,5 @@ export class RevenueIntelligenceOrchestrator {
     };
   }
 }
+
+

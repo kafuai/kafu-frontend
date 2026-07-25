@@ -10,7 +10,7 @@ import type {
   OpportunityScoringContext,
 } from "../opportunity-scoring";
 import type {
-  RevenuePrediction,
+  RevenuePredictionForecast,
   RevenuePredictionContext,
 } from "../revenue-prediction";
 import type {
@@ -44,13 +44,13 @@ export interface RevenueIntelligenceOpportunitySource {
   dealRiskContext(input: {
     opportunityScore: OpportunityScore;
     winProbability: WinProbabilityPrediction;
-    revenuePrediction: RevenuePrediction;
+    revenuePrediction: RevenuePredictionForecast;
   }): DealRiskContext;
 
   nextBestActionContext(input: {
     opportunityScore: OpportunityScore;
     winProbability: WinProbabilityPrediction;
-    revenuePrediction: RevenuePrediction;
+    revenuePrediction: RevenuePredictionForecast;
     dealRisk: DealRiskAssessment;
   }): NextBestActionContext;
 }
@@ -139,3 +139,4 @@ export const assertOpportunitySource = (
 
   return source;
 };
+

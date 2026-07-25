@@ -6,8 +6,8 @@ import type {
   OpportunityScore,
 } from "../opportunity-scoring";
 import type {
-  RevenuePrediction,
-  RevenuePredictionRisk,
+  RevenuePredictionForecast,
+  RevenuePredictionRiskLevel,
 } from "../revenue-prediction";
 import type {
   WinProbabilityPrediction,
@@ -79,7 +79,7 @@ export interface SalesForecastOpportunityInput {
 
   opportunityScore: OpportunityScore;
   winProbability: WinProbabilityPrediction;
-  revenuePrediction: RevenuePrediction;
+  revenuePrediction: RevenuePredictionForecast;
   dealRisk?: DealRiskAssessment | null;
 
   metadata?: Readonly<Record<string, unknown>>;
@@ -137,7 +137,7 @@ export interface SalesForecastOpportunityResult {
   confidence: number;
 
   forecastCategory: SalesForecastCategory;
-  riskLevel: DealRiskLevel | RevenuePredictionRisk;
+  riskLevel: DealRiskLevel | RevenuePredictionRiskLevel;
 
   expectedCloseDate?: string;
 
@@ -361,3 +361,5 @@ export interface SalesForecastClock {
 export interface SalesForecastIdGenerator {
   next(): string;
 }
+
+

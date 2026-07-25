@@ -476,7 +476,7 @@ export class DealRiskEngine {
 
       sourceRevenuePredictionCalculatedAt:
         context.revenuePrediction
-          ?.calculatedAt,
+          ?.generatedAt,
 
       metadata: {
         accountId:
@@ -499,7 +499,7 @@ export class DealRiskEngine {
 
         revenuePrediction:
           context.revenuePrediction
-            ?.predictedRevenue,
+            ?.expectedRevenue,
       },
     };
   }
@@ -561,9 +561,13 @@ export class DealRiskEngine {
       && (
         context.revenuePrediction.tenantId
           !== context.tenantId
-        || context.revenuePrediction
-          .opportunityId
-          !== context.opportunityId
+        || !context.revenuePrediction
+          .contributions
+          .some(
+            (contribution) =>
+              contribution.opportunityId
+              === context.opportunityId,
+          )
       )
     ) {
       throw new Error(
@@ -581,3 +585,6 @@ export const createDealRiskEngine = (
   new DealRiskEngine(
     configuration,
   );
+
+
+

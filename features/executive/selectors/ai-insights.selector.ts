@@ -157,17 +157,17 @@ function selectOpportunityInsights(
       description:
         snapshot.revenuePrediction
           .explanation
-          .summary,
+          .narrative,
 
       recommendation:
         snapshot.revenuePrediction
           .explanation
-          .recommendedActions[0]
+          .recommendation
         ?? "Protect the expected revenue by addressing the identified prediction risks.",
 
       confidence:
         snapshot.revenuePrediction
-          .confidence,
+          .confidenceScore,
 
       opportunityId:
         snapshot.opportunityId,
@@ -351,3 +351,7 @@ export function selectAiInsights(
       - left.confidence,
   );
 }
+
+
+
+

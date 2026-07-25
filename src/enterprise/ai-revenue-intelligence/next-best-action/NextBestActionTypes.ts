@@ -8,7 +8,7 @@ import type {
   OpportunityScore,
 } from "../opportunity-scoring";
 import type {
-  RevenuePrediction,
+  RevenuePredictionForecast,
 } from "../revenue-prediction";
 import type {
   WinProbabilityPrediction,
@@ -113,7 +113,7 @@ export interface NextBestActionContext {
 
   opportunityScore: OpportunityScore;
   winProbability: WinProbabilityPrediction;
-  revenuePrediction?: RevenuePrediction | null;
+  revenuePrediction?: RevenuePredictionForecast | null;
   dealRisk: DealRiskAssessment;
 
   existingOpenActionTypes?:
@@ -355,3 +355,4 @@ export interface NextBestActionClock {
 export interface NextBestActionIdGenerator {
   next(): string;
 }
+

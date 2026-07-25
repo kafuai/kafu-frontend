@@ -1,8 +1,33 @@
 ﻿import type {
   PipelineHealthContext,
-  PipelineHealthSignalKey,
-  PipelineHealthSignalResult,
+  PipelineHealthOpportunityInput,
 } from "./PipelineHealthTypes";
+
+export type PipelineHealthSignalKey =
+  | "coverage"
+  | "conversionQuality"
+  | "revenueConfidence"
+  | "stageDistribution"
+  | "pipelineVelocity"
+  | "activityHealth"
+  | "closeDateStability"
+  | "riskConcentration"
+  | "dealConcentration"
+  | "forecastAccuracy";
+
+export interface PipelineHealthSignalResult {
+  key: PipelineHealthSignalKey;
+  label: string;
+
+  score: number;
+  weight: number;
+  weightedScore: number;
+  confidence: number;
+
+  available: boolean;
+  reason: string;
+  evidence: readonly string[];
+}
 
 export interface PipelineHealthSignalDefinition {
   key: PipelineHealthSignalKey;
@@ -20,26 +45,37 @@ const clamp = (
   minimum = 0,
   maximum = 100,
 ): number =>
-  Math.min(maximum, Math.max(minimum, value));
+  Math.min(
+    maximum,
+    Math.max(minimum, value),
+  );
 
 const round = (
   value: number,
-  precision = 2,
-): number => {
-  const multiplier = 10 ** precision;
+): number =>
+  Math.round(
+    (value + Number.EPSILON) * 100,
+  ) / 100;
 
-  return (
-    Math.round(value * multiplier)
-    / multiplier
-  );
+const average = (
+  values: readonly number[],
+): number | null => {
+  if (values.length === 0) {
+    return null;
+  }
+
+  return values.reduce(
+    (total, value) =>
+      total + value,
+    0,
+  ) / values.length;
 };
 
 const normalizePercent = (
-  value: number | null | undefined,
+  value: number | undefined,
 ): number | null => {
   if (
-    value === null
-    || value === undefined
+    value === undefined
     || !Number.isFinite(value)
   ) {
     return null;
@@ -52,7 +88,42 @@ const normalizePercent = (
   );
 };
 
-const createUnavailableSignal = (
+const openOpportunities = (
+  context: PipelineHealthContext,
+): readonly PipelineHealthOpportunityInput[] =>
+  context.opportunities.filter(
+    (opportunity) =>
+      opportunity.isOpen,
+  );
+
+const weightedAmount = (
+  opportunity: PipelineHealthOpportunityInput,
+): number => {
+  if (
+    opportunity.weightedAmount !== undefined
+    && Number.isFinite(
+      opportunity.weightedAmount,
+    )
+  ) {
+    return Math.max(
+      0,
+      opportunity.weightedAmount,
+    );
+  }
+
+  const probability =
+    normalizePercent(
+      opportunity.winProbability
+      ?? opportunity.stageProbability,
+    ) ?? 0;
+
+  return Math.max(
+    0,
+    opportunity.amount,
+  ) * probability / 100;
+};
+
+const unavailable = (
   key: PipelineHealthSignalKey,
   label: string,
   weight: number,
@@ -60,16 +131,18 @@ const createUnavailableSignal = (
 ): PipelineHealthSignalResult => ({
   key,
   label,
+
   score: 0,
   weight,
   weightedScore: 0,
   confidence: 0,
+
   available: false,
   reason,
   evidence: [],
 });
 
-const createSignal = (
+const result = (
   key: PipelineHealthSignalKey,
   label: string,
   score: number,
@@ -78,97 +151,87 @@ const createSignal = (
   reason: string,
   evidence: readonly string[],
 ): PipelineHealthSignalResult => {
-  const normalizedScore = clamp(score);
+  const normalizedScore =
+    clamp(score);
 
   return {
     key,
     label,
-    score: round(normalizedScore),
+
+    score:
+      round(normalizedScore),
+
     weight,
+
     weightedScore:
-      round(normalizedScore * weight, 4),
-    confidence: round(
-      clamp(confidence),
-    ),
+      round(
+        normalizedScore * weight,
+      ),
+
+    confidence:
+      round(
+        clamp(confidence),
+      ),
+
     available: true,
     reason,
     evidence,
   };
 };
 
-const calculateTotalValue = (
-  context: PipelineHealthContext,
-): number =>
-  context.opportunities.reduce(
-    (total, opportunity) =>
-      total
-      + (
-        Number.isFinite(opportunity.dealValue)
-          ? Math.max(
-              0,
-              opportunity.dealValue,
-            )
-          : 0
-      ),
-    0,
-  );
-
 const coverageSignal:
   PipelineHealthSignalDefinition = {
     key: "coverage",
-    label: "Revenue Coverage",
-    defaultWeight: 1.25,
+    label: "Pipeline Coverage",
+    defaultWeight: 0.15,
 
     evaluate(context, weight) {
-      const targetRevenue =
-        context.targetRevenue;
-
       if (
-        targetRevenue === null
-        || targetRevenue === undefined
-        || !Number.isFinite(targetRevenue)
-        || targetRevenue <= 0
+        context.revenueTarget === undefined
+        || context.revenueTarget <= 0
       ) {
-        return createUnavailableSignal(
+        return unavailable(
           this.key,
           this.label,
           weight,
-          "A valid revenue target is unavailable.",
+          "Revenue target is unavailable.",
         );
       }
 
-      const totalValue =
-        calculateTotalValue(context);
+      const pipelineValue =
+        openOpportunities(context)
+          .reduce(
+            (total, opportunity) =>
+              total
+              + Math.max(
+                0,
+                opportunity.amount,
+              ),
+            0,
+          );
 
-      const coverageRatio =
-        totalValue / targetRevenue;
+      const ratio =
+        pipelineValue
+        / context.revenueTarget;
 
       const score =
-        coverageRatio >= 4
-          ? 100
-          : coverageRatio >= 3
-            ? 90
-            : coverageRatio >= 2
-              ? 75
-              : coverageRatio >= 1.5
-                ? 60
-                : coverageRatio >= 1
-                  ? 40
-                  : 20;
+        clamp(
+          ratio / 3 * 100,
+        );
 
-      return createSignal(
+      return result(
         this.key,
         this.label,
         score,
         weight,
-        95,
-        coverageRatio >= 3
-          ? "Pipeline coverage is sufficient to support the revenue target."
-          : "Pipeline coverage may be insufficient for the current target.",
+        100,
+        ratio >= 3
+          ? "Pipeline coverage is sufficient."
+          : "Pipeline coverage requires attention.",
         [
-          `Pipeline value: ${round(totalValue)}`,
-          `Revenue target: ${round(targetRevenue)}`,
-          `Coverage ratio: ${round(coverageRatio, 3)}`,
+          `Coverage ratio: ${round(ratio)}`,
+          `Pipeline value: ${round(pipelineValue)}`,
+          `Revenue target: ${round(context.revenueTarget)}`,
         ],
       );
     },
@@ -178,52 +241,50 @@ const conversionQualitySignal:
   PipelineHealthSignalDefinition = {
     key: "conversionQuality",
     label: "Conversion Quality",
-    defaultWeight: 1.2,
+    defaultWeight: 0.12,
 
     evaluate(context, weight) {
       const probabilities =
-        context.opportunities
+        openOpportunities(context)
           .map(
             (opportunity) =>
-              opportunity.winProbability
-                ?.probability,
+              normalizePercent(
+                opportunity.winProbability
+                ?? opportunity.stageProbability,
+              ),
           )
           .filter(
             (value): value is number =>
-              value !== undefined
-              && Number.isFinite(value),
+              value !== null,
           );
 
-      if (probabilities.length === 0) {
-        return createUnavailableSignal(
+      const score =
+        average(probabilities);
+
+      if (score === null) {
+        return unavailable(
           this.key,
           this.label,
           weight,
-          "Win-probability evidence is unavailable.",
+          "Opportunity conversion probabilities are unavailable.",
         );
       }
 
-      const average =
-        probabilities.reduce(
-          (total, value) => total + value,
-          0,
-        ) / probabilities.length;
-
-      return createSignal(
+      return result(
         this.key,
         this.label,
-        average,
+        score,
         weight,
-        (
-          probabilities.length
-          / context.opportunities.length
-        ) * 100,
-        average >= 65
-          ? "Pipeline opportunities have strong predicted conversion quality."
-          : "Predicted conversion quality requires improvement.",
+        probabilities.length
+          / Math.max(
+            1,
+            context.opportunities.length,
+          )
+          * 100,
+        "Average opportunity probability represents conversion quality.",
         [
-          `Average win probability: ${round(average)}`,
-          `Covered opportunities: ${probabilities.length}`,
+          `Average probability: ${round(score)}%`,
+          `Evaluated opportunities: ${probabilities.length}`,
         ],
       );
     },
@@ -233,68 +294,55 @@ const revenueConfidenceSignal:
   PipelineHealthSignalDefinition = {
     key: "revenueConfidence",
     label: "Revenue Confidence",
-    defaultWeight: 1.15,
+    defaultWeight: 0.12,
 
     evaluate(context, weight) {
-      const predictions =
-        context.opportunities
-          .map(
-            (opportunity) =>
-              opportunity.revenuePrediction,
-          )
-          .filter(
-            (
-              prediction,
-            ): prediction is NonNullable<
-              typeof prediction
-            > => prediction !== null
-              && prediction !== undefined,
-          );
+      const open =
+        openOpportunities(context);
 
-      if (predictions.length === 0) {
-        return createUnavailableSignal(
+      if (open.length === 0) {
+        return unavailable(
           this.key,
           this.label,
           weight,
-          "Revenue-prediction evidence is unavailable.",
+          "No open opportunities are available.",
         );
       }
 
-      const averageConfidence =
-        predictions.reduce(
-          (total, prediction) =>
-            total + prediction.confidence,
+      const openValue =
+        open.reduce(
+          (total, opportunity) =>
+            total
+            + Math.max(
+              0,
+              opportunity.amount,
+            ),
           0,
-        ) / predictions.length;
+        );
 
-      const criticalCount =
-        predictions.filter(
-          (prediction) =>
-            prediction.riskLevel
-            === "critical",
-        ).length;
+      const weightedValue =
+        open.reduce(
+          (total, opportunity) =>
+            total
+            + weightedAmount(opportunity),
+          0,
+        );
 
-      const riskPenalty =
-        (
-          criticalCount
-          / predictions.length
-        ) * 30;
+      const score =
+        openValue > 0
+          ? weightedValue / openValue * 100
+          : 0;
 
-      return createSignal(
+      return result(
         this.key,
         this.label,
-        averageConfidence - riskPenalty,
+        score,
         weight,
-        (
-          predictions.length
-          / context.opportunities.length
-        ) * 100,
-        criticalCount === 0
-          ? "Revenue predictions are supported by reliable evidence."
-          : "Critical revenue-prediction risks are reducing confidence.",
+        90,
+        "Weighted pipeline value represents forecast confidence.",
         [
-          `Average prediction confidence: ${round(averageConfidence)}`,
-          `Critical predictions: ${criticalCount}`,
+          `Weighted value: ${round(weightedValue)}`,
+          `Open value: ${round(openValue)}`,
         ],
       );
     },
@@ -304,76 +352,46 @@ const stageDistributionSignal:
   PipelineHealthSignalDefinition = {
     key: "stageDistribution",
     label: "Stage Distribution",
-    defaultWeight: 0.9,
+    defaultWeight: 0.08,
 
     evaluate(context, weight) {
-      if (context.opportunities.length === 0) {
-        return createUnavailableSignal(
+      const open =
+        openOpportunities(context);
+
+      if (open.length === 0) {
+        return unavailable(
           this.key,
           this.label,
           weight,
-          "The pipeline contains no opportunities.",
+          "No open opportunities are available.",
         );
       }
 
-      const stageCounts =
-        context.opportunities.reduce<
-          Record<string, number>
-        >((counts, opportunity) => {
-          const stage =
-            opportunity.stage?.trim()
-            || "unknown";
-
-          counts[stage] =
-            (counts[stage] ?? 0) + 1;
-
-          return counts;
-        }, {});
-
-      const stageValues =
-        Object.values(stageCounts);
-
-      const largestStageCount =
-        Math.max(...stageValues);
-
-      const concentration =
-        largestStageCount
-        / context.opportunities.length;
-
-      const unknownCount =
-        stageCounts.unknown ?? 0;
-
-      const unknownPenalty =
-        (
-          unknownCount
-          / context.opportunities.length
-        ) * 30;
-
-      const concentrationPenalty =
-        concentration > 0.7
-          ? 30
-          : concentration > 0.5
-            ? 15
-            : 0;
+      const stages =
+        new Set(
+          open.map(
+            (opportunity) =>
+              opportunity.stage,
+          ),
+        );
 
       const score =
-        100
-        - unknownPenalty
-        - concentrationPenalty;
+        clamp(
+          stages.size * 20,
+        );
 
-      return createSignal(
+      return result(
         this.key,
         this.label,
         score,
         weight,
         80,
-        concentration <= 0.5
-          ? "Opportunity distribution across stages is balanced."
-          : "Pipeline value is concentrated in too few stages.",
+        stages.size >= 4
+          ? "Pipeline opportunities are distributed across multiple stages."
+          : "Pipeline stage distribution is concentrated.",
         [
-          `Distinct stages: ${Object.keys(stageCounts).length}`,
-          `Largest-stage concentration: ${round(concentration * 100)}%`,
-          `Unknown-stage opportunities: ${unknownCount}`,
+          `Active stages: ${stages.size}`,
+          `Open opportunities: ${open.length}`,
         ],
       );
     },
@@ -383,25 +401,27 @@ const pipelineVelocitySignal:
   PipelineHealthSignalDefinition = {
     key: "pipelineVelocity",
     label: "Pipeline Velocity",
-    defaultWeight: 1,
+    defaultWeight: 0.11,
 
     evaluate(context, weight) {
-      const stageDurations =
-        context.opportunities
+      const values =
+        openOpportunities(context)
           .map(
             (opportunity) =>
-              opportunity.daysInCurrentStage,
+              opportunity.daysInStage,
           )
           .filter(
             (value): value is number =>
-              value !== null
-              && value !== undefined
+              value !== undefined
               && Number.isFinite(value)
               && value >= 0,
           );
 
-      if (stageDurations.length === 0) {
-        return createUnavailableSignal(
+      const days =
+        average(values);
+
+      if (days === null) {
+        return unavailable(
           this.key,
           this.label,
           weight,
@@ -409,38 +429,33 @@ const pipelineVelocitySignal:
         );
       }
 
-      const averageDays =
-        stageDurations.reduce(
-          (total, value) => total + value,
-          0,
-        ) / stageDurations.length;
-
       const score =
-        averageDays <= 7
+        days <= 10
           ? 100
-          : averageDays <= 14
-            ? 85
-            : averageDays <= 30
-              ? 65
-              : averageDays <= 60
-                ? 40
-                : 15;
+          : days <= 20
+            ? 80
+            : days <= 30
+              ? 60
+              : days <= 45
+                ? 35
+                : 10;
 
-      return createSignal(
+      return result(
         this.key,
         this.label,
         score,
         weight,
-        (
-          stageDurations.length
-          / context.opportunities.length
-        ) * 100,
-        averageDays <= 30
-          ? "Opportunities are progressing through the pipeline at a healthy pace."
-          : "Extended stage duration indicates pipeline stagnation.",
+        values.length
+          / Math.max(
+            1,
+            context.opportunities.length,
+          )
+          * 100,
+        days <= 20
+          ? "Pipeline stage velocity is healthy."
+          : "Extended stage duration is slowing pipeline movement.",
         [
-          `Average days in current stage: ${round(averageDays)}`,
-          `Measured opportunities: ${stageDurations.length}`,
+          `Average days in stage: ${round(days)}`,
         ],
       );
     },
@@ -450,74 +465,61 @@ const activityHealthSignal:
   PipelineHealthSignalDefinition = {
     key: "activityHealth",
     label: "Activity Health",
-    defaultWeight: 1,
+    defaultWeight: 0.11,
 
     evaluate(context, weight) {
-      const measured =
-        context.opportunities.filter(
-          (opportunity) =>
-            opportunity.daysSinceLastActivity
-              !== null
-            && opportunity.daysSinceLastActivity
-              !== undefined
-            && Number.isFinite(
+      const values =
+        openOpportunities(context)
+          .map(
+            (opportunity) =>
               opportunity.daysSinceLastActivity,
-            ),
-        );
+          )
+          .filter(
+            (value): value is number =>
+              value !== undefined
+              && Number.isFinite(value)
+              && value >= 0,
+          );
 
-      if (measured.length === 0) {
-        return createUnavailableSignal(
+      const inactivity =
+        average(values);
+
+      if (inactivity === null) {
+        return unavailable(
           this.key,
           this.label,
           weight,
-          "Recent-activity evidence is unavailable.",
+          "Opportunity activity evidence is unavailable.",
         );
       }
 
-      const healthyCount =
-        measured.filter(
-          (opportunity) =>
-            (
-              opportunity.daysSinceLastActivity
-              ?? Number.POSITIVE_INFINITY
-            ) <= 7,
-        ).length;
-
-      const staleCount =
-        measured.filter(
-          (opportunity) =>
-            (
-              opportunity.daysSinceLastActivity
-              ?? 0
-            ) > 30,
-        ).length;
-
-      const healthyRatio =
-        healthyCount / measured.length;
-
-      const staleRatio =
-        staleCount / measured.length;
-
       const score =
-        healthyRatio * 100
-        - staleRatio * 25;
+        inactivity <= 3
+          ? 100
+          : inactivity <= 7
+            ? 85
+            : inactivity <= 14
+              ? 65
+              : inactivity <= 30
+                ? 35
+                : 10;
 
-      return createSignal(
+      return result(
         this.key,
         this.label,
         score,
         weight,
-        (
-          measured.length
-          / context.opportunities.length
-        ) * 100,
-        healthyRatio >= 0.7
-          ? "Most pipeline opportunities have recent customer activity."
-          : "A material portion of the pipeline lacks recent activity.",
+        values.length
+          / Math.max(
+            1,
+            context.opportunities.length,
+          )
+          * 100,
+        inactivity <= 14
+          ? "Pipeline activity remains healthy."
+          : "Opportunity inactivity is weakening pipeline health.",
         [
-          `Recently active opportunities: ${healthyCount}`,
-          `Stale opportunities: ${staleCount}`,
-          `Measured opportunities: ${measured.length}`,
+          `Average inactivity days: ${round(inactivity)}`,
         ],
       );
     },
@@ -527,61 +529,51 @@ const closeDateStabilitySignal:
   PipelineHealthSignalDefinition = {
     key: "closeDateStability",
     label: "Close-Date Stability",
-    defaultWeight: 0.8,
+    defaultWeight: 0.09,
 
     evaluate(context, weight) {
-      const measured =
-        context.opportunities.filter(
-          (opportunity) =>
-            opportunity.closeDateChangeCount
-              !== null
-            && opportunity.closeDateChangeCount
-              !== undefined
-            && Number.isFinite(
-              opportunity.closeDateChangeCount,
-            ),
-        );
+      const open =
+        openOpportunities(context);
 
-      if (measured.length === 0) {
-        return createUnavailableSignal(
+      if (open.length === 0) {
+        return unavailable(
           this.key,
           this.label,
           weight,
-          "Close-date change evidence is unavailable.",
+          "No open opportunities are available.",
         );
       }
 
-      const averageChanges =
-        measured.reduce(
-          (total, opportunity) =>
-            total
-            + (
-              opportunity.closeDateChangeCount
-              ?? 0
-            ),
-          0,
-        ) / measured.length;
+      const validDates =
+        open.filter(
+          (opportunity) => {
+            if (!opportunity.expectedCloseDate) {
+              return false;
+            }
+
+            return !Number.isNaN(
+              new Date(
+                opportunity.expectedCloseDate,
+              ).getTime(),
+            );
+          },
+        ).length;
 
       const score =
-        clamp(
-          100 - averageChanges * 18,
-        );
+        validDates / open.length * 100;
 
-      return createSignal(
+      return result(
         this.key,
         this.label,
         score,
         weight,
-        (
-          measured.length
-          / context.opportunities.length
-        ) * 100,
-        averageChanges <= 1
-          ? "Pipeline close dates are stable."
-          : "Repeated close-date movement is reducing pipeline reliability.",
+        90,
+        score >= 80
+          ? "Most opportunities have valid expected close dates."
+          : "Missing or invalid close dates reduce pipeline reliability.",
         [
-          `Average close-date changes: ${round(averageChanges)}`,
-          `Measured opportunities: ${measured.length}`,
+          `Valid close dates: ${validDates}`,
+          `Open opportunities: ${open.length}`,
         ],
       );
     },
@@ -591,86 +583,43 @@ const riskConcentrationSignal:
   PipelineHealthSignalDefinition = {
     key: "riskConcentration",
     label: "Risk Concentration",
-    defaultWeight: 1.2,
+    defaultWeight: 0.09,
 
     evaluate(context, weight) {
-      const measured =
-        context.opportunities.filter(
+      const open =
+        openOpportunities(context);
+
+      if (open.length === 0) {
+        return unavailable(
+          this.key,
+          this.label,
+          weight,
+          "No open opportunities are available.",
+        );
+      }
+
+      const riskScores =
+        open.map(
           (opportunity) =>
-            opportunity.riskLevel
-            !== null
-            && opportunity.riskLevel
-            !== undefined,
+            normalizePercent(
+              opportunity.riskScore,
+            ) ?? 30,
         );
 
-      if (measured.length === 0) {
-        return createUnavailableSignal(
-          this.key,
-          this.label,
-          weight,
-          "Opportunity-risk evidence is unavailable.",
-        );
-      }
+      const averageRisk =
+        average(riskScores) ?? 0;
 
-      const totalValue =
-        measured.reduce(
-          (total, opportunity) =>
-            total
-            + Math.max(
-              0,
-              opportunity.dealValue,
-            ),
-          0,
-        );
-
-      if (totalValue <= 0) {
-        return createUnavailableSignal(
-          this.key,
-          this.label,
-          weight,
-          "Risk-weighted pipeline value is unavailable.",
-        );
-      }
-
-      const highRiskValue =
-        measured
-          .filter(
-            (opportunity) =>
-              opportunity.riskLevel === "high"
-              || opportunity.riskLevel
-                === "critical",
-          )
-          .reduce(
-            (total, opportunity) =>
-              total
-              + Math.max(
-                  0,
-                  opportunity.dealValue,
-                ),
-            0,
-          );
-
-      const highRiskRatio =
-        highRiskValue / totalValue;
-
-      const score =
-        100 - highRiskRatio * 100;
-
-      return createSignal(
+      return result(
         this.key,
         this.label,
-        score,
+        100 - averageRisk,
         weight,
-        (
-          measured.length
-          / context.opportunities.length
-        ) * 100,
-        highRiskRatio <= 0.25
-          ? "High-risk exposure is controlled."
-          : "A material portion of pipeline value is concentrated in high-risk opportunities.",
+        90,
+        averageRisk <= 35
+          ? "Aggregate opportunity risk remains controlled."
+          : "Risk concentration is weakening pipeline health.",
         [
-          `High-risk value ratio: ${round(highRiskRatio * 100)}%`,
-          `High-risk value: ${round(highRiskValue)}`,
+          `Average risk: ${round(averageRisk)}%`,
         ],
       );
     },
@@ -680,78 +629,60 @@ const dealConcentrationSignal:
   PipelineHealthSignalDefinition = {
     key: "dealConcentration",
     label: "Deal Concentration",
-    defaultWeight: 0.75,
+    defaultWeight: 0.07,
 
     evaluate(context, weight) {
-      if (context.opportunities.length === 0) {
-        return createUnavailableSignal(
-          this.key,
-          this.label,
-          weight,
-          "The pipeline contains no opportunities.",
-        );
-      }
-
-      const values =
-        context.opportunities
-          .map(
-            (opportunity) =>
-              Math.max(
-                0,
-                opportunity.dealValue,
-              ),
-          )
-          .filter(
-            (value) => value > 0,
-          );
+      const open =
+        openOpportunities(context);
 
       const totalValue =
-        values.reduce(
-          (total, value) => total + value,
+        open.reduce(
+          (total, opportunity) =>
+            total
+            + Math.max(
+              0,
+              opportunity.amount,
+            ),
           0,
         );
 
       if (
-        values.length === 0
+        open.length === 0
         || totalValue <= 0
       ) {
-        return createUnavailableSignal(
+        return unavailable(
           this.key,
           this.label,
           weight,
-          "Valid opportunity values are unavailable.",
+          "Open pipeline value is unavailable.",
         );
       }
 
-      const largestDeal =
-        Math.max(...values);
+      const largestValue =
+        Math.max(
+          ...open.map(
+            (opportunity) =>
+              Math.max(
+                0,
+                opportunity.amount,
+              ),
+          ),
+        );
 
       const concentration =
-        largestDeal / totalValue;
+        largestValue / totalValue * 100;
 
-      const score =
-        concentration <= 0.2
-          ? 100
-          : concentration <= 0.35
-            ? 80
-            : concentration <= 0.5
-              ? 60
-              : concentration <= 0.7
-                ? 35
-                : 15;
-
-      return createSignal(
+      return result(
         this.key,
         this.label,
-        score,
+        100 - concentration,
         weight,
-        95,
-        concentration <= 0.35
-          ? "Pipeline value is distributed across multiple opportunities."
-          : "Pipeline performance depends heavily on a small number of deals.",
+        100,
+        concentration <= 35
+          ? "Pipeline value is sufficiently diversified."
+          : "Pipeline value is concentrated in a small number of deals.",
         [
-          `Largest deal concentration: ${round(concentration * 100)}%`,
-          `Largest deal value: ${round(largestDeal)}`,
+          `Largest-deal concentration: ${round(concentration)}%`,
         ],
       );
     },
@@ -760,34 +691,60 @@ const dealConcentrationSignal:
 const forecastAccuracySignal:
   PipelineHealthSignalDefinition = {
     key: "forecastAccuracy",
-    label: "Forecast Accuracy",
-    defaultWeight: 0.95,
+    label: "Forecast Alignment",
+    defaultWeight: 0.06,
 
     evaluate(context, weight) {
-      const accuracy = normalizePercent(
-        context.historicalForecastAccuracy,
-      );
-
-      if (accuracy === null) {
-        return createUnavailableSignal(
+      if (
+        context.revenueForecast === undefined
+        || context.revenueForecast < 0
+      ) {
+        return unavailable(
           this.key,
           this.label,
           weight,
-          "Historical forecast-accuracy evidence is unavailable.",
+          "Revenue forecast is unavailable.",
         );
       }
 
-      return createSignal(
+      const weightedPipeline =
+        openOpportunities(context)
+          .reduce(
+            (total, opportunity) =>
+              total
+              + weightedAmount(opportunity),
+            0,
+          );
+
+      const denominator =
+        Math.max(
+          1,
+          context.revenueForecast,
+          weightedPipeline,
+        );
+
+      const variance =
+        Math.abs(
+          context.revenueForecast
+          - weightedPipeline,
+        ) / denominator * 100;
+
+      const score =
+        100 - variance;
+
+      return result(
         this.key,
         this.label,
-        accuracy,
+        score,
         weight,
         90,
-        accuracy >= 75
-          ? "Historical forecast performance supports pipeline reliability."
-          : "Historical forecast variance reduces confidence in the pipeline.",
+        variance <= 15
+          ? "Revenue forecast aligns with weighted pipeline evidence."
+          : "Revenue forecast materially differs from weighted pipeline evidence.",
         [
-          `Historical forecast accuracy: ${round(accuracy)}%`,
+          `Forecast variance: ${round(variance)}%`,
+          `Revenue forecast: ${round(context.revenueForecast)}`,
+          `Weighted pipeline: ${round(weightedPipeline)}`,
         ],
       );
     },
@@ -815,8 +772,25 @@ export const createPipelineHealthSignals = (
   pipelineHealthSignals.map(
     (signal) => ({
       ...signal,
+
       defaultWeight:
         weightOverrides[signal.key]
         ?? signal.defaultWeight,
     }),
+  );
+
+export const evaluatePipelineHealthSignals = (
+  context: PipelineHealthContext,
+  weightOverrides: Partial<
+    Record<PipelineHealthSignalKey, number>
+  > = {},
+): readonly PipelineHealthSignalResult[] =>
+  createPipelineHealthSignals(
+    weightOverrides,
+  ).map(
+    (signal) =>
+      signal.evaluate(
+        context,
+        signal.defaultWeight,
+      ),
   );

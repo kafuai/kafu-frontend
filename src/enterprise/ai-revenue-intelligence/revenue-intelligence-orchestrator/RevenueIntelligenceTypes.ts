@@ -8,7 +8,7 @@ import type {
   OpportunityScore,
 } from "../opportunity-scoring";
 import type {
-  RevenuePrediction,
+  RevenuePredictionForecast,
 } from "../revenue-prediction";
 import type {
   SalesForecast,
@@ -149,7 +149,7 @@ export interface RevenueIntelligenceOpportunitySnapshot {
 
   opportunityScore: OpportunityScore;
   winProbability: WinProbabilityPrediction;
-  revenuePrediction: RevenuePrediction;
+  revenuePrediction: RevenuePredictionForecast;
   dealRisk: DealRiskAssessment;
 
   nextBestAction?: NextBestActionPlan;
@@ -317,3 +317,4 @@ export interface RevenueIntelligenceClock {
 export interface RevenueIntelligenceIdGenerator {
   next(): string;
 }
+

@@ -1,35 +1,35 @@
 ﻿import {
-  PipelineHealthEngine,
-} from "./PipelineHealthEngine";
+  PredictiveRiskEngine,
+} from "./PredictiveRiskEngine";
 import {
-  assertPipelineHealthRepository,
-} from "./PipelineHealthRepository";
+  assertPredictiveRiskRepository,
+} from "./PredictiveRiskRepository";
 import type {
-  PipelineHealthRepository,
-} from "./PipelineHealthRepository";
+  PredictiveRiskRepository,
+} from "./PredictiveRiskRepository";
 import type {
-  PipelineHealthAssessment,
-  PipelineHealthAuditRecord,
-  PipelineHealthClock,
-  PipelineHealthConfiguration,
-  PipelineHealthEvent,
-  PipelineHealthHistoryEntry,
-  PipelineHealthIdGenerator,
-  PipelineHealthQuery,
-  PipelineHealthRequest,
-} from "./PipelineHealthTypes";
+  PredictiveRiskAssessment,
+  PredictiveRiskAuditRecord,
+  PredictiveRiskClock,
+  PredictiveRiskConfiguration,
+  PredictiveRiskEvent,
+  PredictiveRiskHistoryEntry,
+  PredictiveRiskIdGenerator,
+  PredictiveRiskQuery,
+  PredictiveRiskRequest,
+} from "./PredictiveRiskTypes";
 
-export interface PipelineHealthCache {
+export interface PredictiveRiskCache {
   get(
     key: string,
   ): Promise<
-    PipelineHealthAssessment | null
+    PredictiveRiskAssessment | null
   >;
 
   set(
     key: string,
     assessment:
-      PipelineHealthAssessment,
+      PredictiveRiskAssessment,
     ttlMs: number,
   ): Promise<void>;
 
@@ -38,58 +38,53 @@ export interface PipelineHealthCache {
   ): Promise<void>;
 }
 
-export interface PipelineHealthEventPublisher {
+export interface PredictiveRiskEventPublisher {
   publish(
-    event: PipelineHealthEvent,
+    event: PredictiveRiskEvent,
   ): Promise<void>;
 }
 
-export interface PipelineHealthAuditWriter {
+export interface PredictiveRiskAuditWriter {
   write(
     record:
-      PipelineHealthAuditRecord,
+      PredictiveRiskAuditRecord,
   ): Promise<void>;
 }
 
-export interface PipelineHealthRuntimeDependencies {
+export interface PredictiveRiskRuntimeDependencies {
   engine:
-    PipelineHealthEngine;
+    PredictiveRiskEngine;
 
   repository:
-    PipelineHealthRepository;
+    PredictiveRiskRepository;
 
   cache?:
-    PipelineHealthCache;
+    PredictiveRiskCache;
 
   eventPublisher?:
-    PipelineHealthEventPublisher;
+    PredictiveRiskEventPublisher;
 
   auditWriter?:
-    PipelineHealthAuditWriter;
+    PredictiveRiskAuditWriter;
 
   clock?:
-    PipelineHealthClock;
+    PredictiveRiskClock;
 
   idGenerator?:
-    PipelineHealthIdGenerator;
+    PredictiveRiskIdGenerator;
 
   configuration?:
-    Partial<PipelineHealthConfiguration>;
+    Partial<PredictiveRiskConfiguration>;
 }
 
 const DEFAULT_CONFIGURATION:
-  PipelineHealthConfiguration = {
+  PredictiveRiskConfiguration = {
     modelVersion: "5.0.0",
     assessmentTtlHours: 12,
 
-    excellentThreshold: 85,
-    healthyThreshold: 70,
-    watchThreshold: 55,
-    atRiskThreshold: 40,
-
-    minimumCoverageRatio: 1,
-    healthyCoverageRatio: 2.5,
-    excellentCoverageRatio: 4,
+    criticalRiskThreshold: 80,
+    highRiskThreshold: 60,
+    mediumRiskThreshold: 35,
 
     staleActivityDays: 14,
     criticalActivityDays: 30,
@@ -97,57 +92,63 @@ const DEFAULT_CONFIGURATION:
     slowStageDays: 21,
     criticalStageDays: 45,
 
-    materialScoreChange: 10,
+    criticalCoverageRatio: 0.6,
+    highCoverageRatio: 1,
 
     concentrationRiskPercentage: 40,
     criticalConcentrationPercentage: 65,
+
+    materialRiskScoreChange: 10,
+
+    maximumRisks: 24,
+    maximumRecommendations: 16,
   };
 
 const systemClock:
-  PipelineHealthClock = {
+  PredictiveRiskClock = {
     now: () => new Date(),
   };
 
 const systemIdGenerator:
-  PipelineHealthIdGenerator = {
+  PredictiveRiskIdGenerator = {
     next: () =>
       globalThis.crypto.randomUUID(),
   };
 
-export class PipelineHealthRuntime {
+export class PredictiveRiskRuntime {
   private readonly engine:
-    PipelineHealthEngine;
+    PredictiveRiskEngine;
 
   private readonly repository:
-    PipelineHealthRepository;
+    PredictiveRiskRepository;
 
   private readonly cache?:
-    PipelineHealthCache;
+    PredictiveRiskCache;
 
   private readonly eventPublisher?:
-    PipelineHealthEventPublisher;
+    PredictiveRiskEventPublisher;
 
   private readonly auditWriter?:
-    PipelineHealthAuditWriter;
+    PredictiveRiskAuditWriter;
 
   private readonly clock:
-    PipelineHealthClock;
+    PredictiveRiskClock;
 
   private readonly idGenerator:
-    PipelineHealthIdGenerator;
+    PredictiveRiskIdGenerator;
 
   private readonly configuration:
-    PipelineHealthConfiguration;
+    PredictiveRiskConfiguration;
 
   constructor(
     dependencies:
-      PipelineHealthRuntimeDependencies,
+      PredictiveRiskRuntimeDependencies,
   ) {
     this.engine =
       dependencies.engine;
 
     this.repository =
-      assertPipelineHealthRepository(
+      assertPredictiveRiskRepository(
         dependencies.repository,
       );
 
@@ -175,9 +176,10 @@ export class PipelineHealthRuntime {
   }
 
   async getLatest(
-    query: PipelineHealthQuery,
+    query:
+      PredictiveRiskQuery,
   ): Promise<
-    PipelineHealthAssessment | null
+    PredictiveRiskAssessment | null
   > {
     const cacheKey =
       this.createCacheKey(query);
@@ -205,11 +207,11 @@ export class PipelineHealthRuntime {
           assessmentId:
             cached.id,
 
-          healthScore:
-            cached.healthScore,
+          overallRiskScore:
+            cached.overallRiskScore,
 
-          grade:
-            cached.grade,
+          overallSeverity:
+            cached.overallSeverity,
         },
       });
 
@@ -260,12 +262,13 @@ export class PipelineHealthRuntime {
   }
 
   async generate(
-    request: PipelineHealthRequest,
-  ): Promise<PipelineHealthAssessment> {
+    request:
+      PredictiveRiskRequest,
+  ): Promise<PredictiveRiskAssessment> {
     const { context } = request;
 
     const query:
-      PipelineHealthQuery = {
+      PredictiveRiskQuery = {
         tenantId:
           context.tenantId,
 
@@ -290,37 +293,23 @@ export class PipelineHealthRuntime {
           {
             ...context,
 
-            historicalSnapshots:
-              context.historicalSnapshots
+            previousAssessment:
+              context.previousAssessment
               ?? (
                 previous
-                  ? [
-                    {
-                      assessedAt:
-                        previous.generatedAt,
+                  ? {
+                    assessedAt:
+                      previous.generatedAt,
 
-                      healthScore:
-                        previous.healthScore,
+                    overallRiskScore:
+                      previous.overallRiskScore,
 
-                      coverageRatio:
-                        previous.coverageRatio,
+                    criticalRiskCount:
+                      previous.criticalRiskCount,
 
-                      weightedPipelineValue:
-                        previous.weightedPipelineValue,
-
-                      openPipelineValue:
-                        previous.openPipelineValue,
-
-                      opportunityCount:
-                        previous.opportunityCount,
-
-                      staleOpportunityCount:
-                        previous.staleOpportunityCount,
-
-                      criticalOpportunityCount:
-                        previous.criticalOpportunityCount,
-                    },
-                  ]
+                    highRiskCount:
+                      previous.highRiskCount,
+                  }
                   : undefined
               ),
           },
@@ -334,10 +323,32 @@ export class PipelineHealthRuntime {
           id:
             generated.id
             || this.idGenerator.next(),
+
+          risks:
+            generated.risks.map(
+              (risk) => ({
+                ...risk,
+
+                id:
+                  risk.id
+                  || this.idGenerator.next(),
+              }),
+            ),
+
+          recommendations:
+            generated.recommendations.map(
+              (recommendation) => ({
+                ...recommendation,
+
+                id:
+                  recommendation.id
+                  || this.idGenerator.next(),
+              }),
+            ),
         });
 
       const historyEntry:
-        PipelineHealthHistoryEntry = {
+        PredictiveRiskHistoryEntry = {
           id:
             this.idGenerator.next(),
 
@@ -356,26 +367,23 @@ export class PipelineHealthRuntime {
           periodEnd:
             persisted.periodEnd,
 
-          healthScore:
-            persisted.healthScore,
+          overallRiskScore:
+            persisted.overallRiskScore,
 
-          grade:
-            persisted.grade,
+          overallSeverity:
+            persisted.overallSeverity,
 
-          coverageRatio:
-            persisted.coverageRatio,
+          totalAmountAtRisk:
+            persisted.totalAmountAtRisk,
 
-          openPipelineValue:
-            persisted.openPipelineValue,
+          expectedRevenueLoss:
+            persisted.expectedRevenueLoss,
 
-          weightedPipelineValue:
-            persisted.weightedPipelineValue,
+          criticalRiskCount:
+            persisted.criticalRiskCount,
 
-          staleOpportunityCount:
-            persisted.staleOpportunityCount,
-
-          criticalOpportunityCount:
-            persisted.criticalOpportunityCount,
+          highRiskCount:
+            persisted.highRiskCount,
 
           generatedAt:
             persisted.generatedAt,
@@ -439,17 +447,20 @@ export class PipelineHealthRuntime {
           assessmentId:
             persisted.id,
 
-          healthScore:
-            persisted.healthScore,
+          overallRiskScore:
+            persisted.overallRiskScore,
 
-          grade:
-            persisted.grade,
+          overallSeverity:
+            persisted.overallSeverity,
 
           riskCount:
-            persisted.risks.length,
+            persisted.riskCount,
 
-          bottleneckCount:
-            persisted.bottlenecks.length,
+          criticalRiskCount:
+            persisted.criticalRiskCount,
+
+          totalAmountAtRisk:
+            persisted.totalAmountAtRisk,
 
           managementAttentionRequired:
             persisted.managementAttentionRequired,
@@ -463,7 +474,7 @@ export class PipelineHealthRuntime {
       const message =
         error instanceof Error
           ? error.message
-          : "Unknown pipeline health failure.";
+          : "Unknown predictive risk failure.";
 
       await this.writeAudit({
         tenantId:
@@ -494,7 +505,7 @@ export class PipelineHealthRuntime {
           this.idGenerator.next(),
 
         eventType:
-          "pipeline-health.failed",
+          "predictive-risk.failed",
 
         tenantId:
           context.tenantId,
@@ -524,10 +535,11 @@ export class PipelineHealthRuntime {
   }
 
   async regenerate(
-    request: PipelineHealthRequest,
-  ): Promise<PipelineHealthAssessment> {
+    request:
+      PredictiveRiskRequest,
+  ): Promise<PredictiveRiskAssessment> {
     const query:
-      PipelineHealthQuery = {
+      PredictiveRiskQuery = {
         tenantId:
           request.context.tenantId,
 
@@ -547,7 +559,9 @@ export class PipelineHealthRuntime {
 
     return this.generate({
       ...request,
+
       forceRefresh: true,
+
       reason:
         request.reason
         ?? "manual-regeneration",
@@ -556,9 +570,9 @@ export class PipelineHealthRuntime {
 
   private async publishEvents(
     previous:
-      PipelineHealthAssessment | null,
+      PredictiveRiskAssessment | null,
     current:
-      PipelineHealthAssessment,
+      PredictiveRiskAssessment,
     materialChange: boolean,
     correlationId?: string,
   ): Promise<void> {
@@ -571,7 +585,7 @@ export class PipelineHealthRuntime {
         this.idGenerator.next(),
 
       eventType:
-        "pipeline-health.generated",
+        "predictive-risk.generated",
 
       tenantId:
         current.tenantId,
@@ -588,23 +602,26 @@ export class PipelineHealthRuntime {
         assessmentId:
           current.id,
 
-        healthScore:
-          current.healthScore,
+        overallRiskScore:
+          current.overallRiskScore,
 
-        grade:
-          current.grade,
-
-        trend:
-          current.trend,
-
-        coverageRatio:
-          current.coverageRatio,
+        overallSeverity:
+          current.overallSeverity,
 
         riskCount:
-          current.risks.length,
+          current.riskCount,
 
-        bottleneckCount:
-          current.bottlenecks.length,
+        criticalRiskCount:
+          current.criticalRiskCount,
+
+        highRiskCount:
+          current.highRiskCount,
+
+        totalAmountAtRisk:
+          current.totalAmountAtRisk,
+
+        expectedRevenueLoss:
+          current.expectedRevenueLoss,
 
         managementAttentionRequired:
           current.managementAttentionRequired,
@@ -620,7 +637,7 @@ export class PipelineHealthRuntime {
           this.idGenerator.next(),
 
         eventType:
-          "pipeline-health.material-change",
+          "predictive-risk.material-change",
 
         tenantId:
           current.tenantId,
@@ -640,40 +657,38 @@ export class PipelineHealthRuntime {
           currentAssessmentId:
             current.id,
 
-          previousHealthScore:
-            previous?.healthScore,
+          previousRiskScore:
+            previous?.overallRiskScore,
 
-          currentHealthScore:
-            current.healthScore,
+          currentRiskScore:
+            current.overallRiskScore,
 
-          previousGrade:
-            previous?.grade,
+          previousSeverity:
+            previous?.overallSeverity,
 
-          currentGrade:
-            current.grade,
+          currentSeverity:
+            current.overallSeverity,
 
-          previousCoverageRatio:
-            previous?.coverageRatio,
+          previousCriticalRiskCount:
+            previous?.criticalRiskCount,
 
-          currentCoverageRatio:
-            current.coverageRatio,
+          currentCriticalRiskCount:
+            current.criticalRiskCount,
         },
       });
     }
 
     if (
-      current.grade === "critical"
-      || current.risks.some(
-        (risk) =>
-          risk.level === "critical",
-      )
+      current.overallSeverity
+        === "critical"
+      || current.criticalRiskCount > 0
     ) {
       await this.eventPublisher.publish({
         eventId:
           this.idGenerator.next(),
 
         eventType:
-          "pipeline-health.critical-risk",
+          "predictive-risk.critical",
 
         tenantId:
           current.tenantId,
@@ -690,35 +705,44 @@ export class PipelineHealthRuntime {
           assessmentId:
             current.id,
 
-          healthScore:
-            current.healthScore,
+          overallRiskScore:
+            current.overallRiskScore,
 
-          grade:
-            current.grade,
+          totalAmountAtRisk:
+            current.totalAmountAtRisk,
 
           criticalRisks:
             current.risks
               .filter(
                 (risk) =>
-                  risk.level
+                  risk.severity
                   === "critical",
               )
               .map(
                 (risk) => ({
-                  key:
-                    risk.key,
+                  id:
+                    risk.id,
 
-                  dimension:
-                    risk.dimension,
+                  scope:
+                    risk.scope,
+
+                  category:
+                    risk.category,
 
                   title:
                     risk.title,
+
+                  amountAtRisk:
+                    risk.amountAtRisk,
+
+                  recommendedAction:
+                    risk.recommendedAction,
                 }),
               ),
 
-          primaryAction:
+          priorityAction:
             current.summary
-              .primaryAction,
+              .priorityAction,
         },
       });
     }
@@ -726,9 +750,9 @@ export class PipelineHealthRuntime {
 
   private isMaterialChange(
     previous:
-      PipelineHealthAssessment | null,
+      PredictiveRiskAssessment | null,
     current:
-      PipelineHealthAssessment,
+      PredictiveRiskAssessment,
   ): boolean {
     if (!previous) {
       return true;
@@ -736,18 +760,25 @@ export class PipelineHealthRuntime {
 
     if (
       Math.abs(
-        current.healthScore
-        - previous.healthScore,
+        current.overallRiskScore
+        - previous.overallRiskScore,
       )
       >= this.configuration
-        .materialScoreChange
+        .materialRiskScoreChange
     ) {
       return true;
     }
 
     if (
-      previous.grade
-      !== current.grade
+      previous.overallSeverity
+      !== current.overallSeverity
+    ) {
+      return true;
+    }
+
+    if (
+      previous.criticalRiskCount
+      !== current.criticalRiskCount
     ) {
       return true;
     }
@@ -759,27 +790,12 @@ export class PipelineHealthRuntime {
       return true;
     }
 
-    const previousCriticalRisks =
-      previous.risks.filter(
-        (risk) =>
-          risk.level === "critical",
-      ).length;
-
-    const currentCriticalRisks =
-      current.risks.filter(
-        (risk) =>
-          risk.level === "critical",
-      ).length;
-
-    return (
-      previousCriticalRisks
-      !== currentCriticalRisks
-    );
+    return false;
   }
 
   private resolveCacheTtlMs(
     assessment:
-      PipelineHealthAssessment,
+      PredictiveRiskAssessment,
   ): number {
     const expiresAt =
       new Date(
@@ -808,11 +824,11 @@ export class PipelineHealthRuntime {
 
   private createCacheKey(
     query:
-      PipelineHealthQuery,
+      PredictiveRiskQuery,
   ): string {
     return [
       "ai-revenue-intelligence",
-      "pipeline-health",
+      "predictive-risk-detection",
       query.tenantId,
       query.workspaceId
         ?? "default",
@@ -823,7 +839,7 @@ export class PipelineHealthRuntime {
 
   private async writeAudit(
     record:
-      PipelineHealthAuditRecord,
+      PredictiveRiskAuditRecord,
   ): Promise<void> {
     await this.auditWriter?.write(
       record,
@@ -831,10 +847,10 @@ export class PipelineHealthRuntime {
   }
 }
 
-export const createPipelineHealthRuntime = (
+export const createPredictiveRiskRuntime = (
   dependencies:
-    PipelineHealthRuntimeDependencies,
-): PipelineHealthRuntime =>
-  new PipelineHealthRuntime(
+    PredictiveRiskRuntimeDependencies,
+): PredictiveRiskRuntime =>
+  new PredictiveRiskRuntime(
     dependencies,
   );

@@ -1,7 +1,12 @@
 ﻿import type {
   PipelineHealthAssessment,
+  PipelineHealthBatchFailure,
+  PipelineHealthBatchRequest,
+  PipelineHealthBatchResult,
   PipelineHealthContext,
   PipelineHealthHistoryEntry,
+  PipelineHealthHistoryQuery,
+  PipelineHealthQuery,
   PipelineHealthRequest,
 } from "./PipelineHealthTypes";
 import {
@@ -12,17 +17,19 @@ import type {
 } from "./PipelineHealthRepository";
 
 export interface PipelineHealthContextProvider {
-  getContext(input: {
-    tenantId: string;
-    workspaceId?: string;
-    pipelineId?: string;
-  }): Promise<PipelineHealthContext>;
+  getContext(
+    input:
+      PipelineHealthQuery,
+  ): Promise<PipelineHealthContext>;
 }
 
 export interface PipelineHealthServiceDependencies {
-  runtime: PipelineHealthRuntime;
+  runtime:
+    PipelineHealthRuntime;
+
   repository:
     PipelineHealthRepository;
+
   contextProvider:
     PipelineHealthContextProvider;
 }
@@ -51,108 +58,171 @@ export class PipelineHealthService {
       dependencies.contextProvider;
   }
 
-  async getLatestAssessment(input: {
-    tenantId: string;
-    workspaceId?: string;
-    pipelineId?: string;
-  }): Promise<
+  async getLatest(
+    query:
+      PipelineHealthQuery,
+  ): Promise<
     PipelineHealthAssessment | null
   > {
     return this.runtime.getLatest(
-      input.tenantId,
-      input.pipelineId,
-      input.workspaceId,
+      query,
     );
   }
 
-  async calculate(
-    request: PipelineHealthRequest,
+  async generate(
+    request:
+      PipelineHealthRequest,
   ): Promise<PipelineHealthAssessment> {
-    return this.runtime.calculate(
+    return this.runtime.generate(
       request,
     );
   }
 
-  async calculateFromPipeline(input: {
-    tenantId: string;
-    workspaceId?: string;
-    pipelineId?: string;
-    requestedBy?: string;
-    correlationId?: string;
-    reason?: string;
-  }): Promise<PipelineHealthAssessment> {
+  async generateForPeriod(
+    input:
+      PipelineHealthQuery & {
+        requestedBy?: string;
+        correlationId?: string;
+        reason?: string;
+      },
+  ): Promise<PipelineHealthAssessment> {
     const context =
-      await this.contextProvider.getContext({
-        tenantId:
-          input.tenantId,
-        workspaceId:
-          input.workspaceId,
-        pipelineId:
-          input.pipelineId,
-      });
+      await this.contextProvider
+        .getContext(input);
 
-    return this.runtime.calculate({
+    return this.runtime.generate({
       context,
+
       requestedBy:
         input.requestedBy,
+
       correlationId:
         input.correlationId,
+
       reason:
         input.reason,
     });
   }
 
-  async recalculate(input: {
-    tenantId: string;
-    workspaceId?: string;
-    pipelineId?: string;
-    requestedBy?: string;
-    correlationId?: string;
-    reason?: string;
-  }): Promise<PipelineHealthAssessment> {
+  async regenerateForPeriod(
+    input:
+      PipelineHealthQuery & {
+        requestedBy?: string;
+        correlationId?: string;
+        reason?: string;
+      },
+  ): Promise<PipelineHealthAssessment> {
     const context =
-      await this.contextProvider.getContext({
-        tenantId:
-          input.tenantId,
-        workspaceId:
-          input.workspaceId,
-        pipelineId:
-          input.pipelineId,
-      });
+      await this.contextProvider
+        .getContext(input);
 
-    return this.runtime.recalculate({
+    return this.runtime.regenerate({
       context,
+
       forceRefresh: true,
+
       requestedBy:
         input.requestedBy,
+
       correlationId:
         input.correlationId,
+
       reason:
         input.reason
-        ?? "manual-recalculation",
+        ?? "manual-regeneration",
     });
   }
 
-  async getHistory(input: {
-    tenantId: string;
-    workspaceId?: string;
-    pipelineId?: string;
-    limit?: number;
-    before?: string;
-  }): Promise<
+  async generateBatch(
+    request:
+      PipelineHealthBatchRequest,
+  ): Promise<PipelineHealthBatchResult> {
+    const assessments:
+      PipelineHealthAssessment[] = [];
+
+    const failures:
+      PipelineHealthBatchFailure[] = [];
+
+    for (
+      const context
+      of request.contexts
+    ) {
+      try {
+        const assessment =
+          await this.runtime.generate({
+            context,
+
+            requestedBy:
+              request.requestedBy,
+
+            correlationId:
+              request.correlationId,
+
+            reason:
+              "batch-generation",
+          });
+
+        assessments.push(
+          assessment,
+        );
+      } catch (error) {
+        failures.push({
+          periodStart:
+            context.periodStart,
+
+          periodEnd:
+            context.periodEnd,
+
+          code:
+            "PIPELINE_HEALTH_FAILED",
+
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unknown pipeline health failure.",
+        });
+      }
+    }
+
+    return {
+      requested:
+        request.contexts.length,
+
+      succeeded:
+        assessments.length,
+
+      failed:
+        failures.length,
+
+      assessments,
+      failures,
+    };
+  }
+
+  async getHistory(
+    query:
+      PipelineHealthHistoryQuery,
+  ): Promise<
     readonly PipelineHealthHistoryEntry[]
   > {
-    return this.repository.findHistory({
-      tenantId:
-        input.tenantId,
-      workspaceId:
-        input.workspaceId,
-      pipelineId:
-        input.pipelineId,
-      limit:
-        input.limit,
-      before:
-        input.before,
-    });
+    return this.repository.findHistory(
+      query,
+    );
+  }
+
+  async deleteAssessment(
+    query:
+      PipelineHealthQuery,
+  ): Promise<void> {
+    await this.repository
+      .deleteAssessment(query);
   }
 }
+
+export const createPipelineHealthService = (
+  dependencies:
+    PipelineHealthServiceDependencies,
+): PipelineHealthService =>
+  new PipelineHealthService(
+    dependencies,
+  );

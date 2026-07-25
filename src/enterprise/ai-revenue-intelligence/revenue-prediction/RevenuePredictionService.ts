@@ -1,9 +1,11 @@
 ﻿import type {
-  RevenuePrediction,
   RevenuePredictionBatchRequest,
   RevenuePredictionBatchResult,
   RevenuePredictionContext,
+  RevenuePredictionForecast,
   RevenuePredictionHistoryEntry,
+  RevenuePredictionHistoryQuery,
+  RevenuePredictionQuery,
   RevenuePredictionRequest,
 } from "./RevenuePredictionTypes";
 import {
@@ -14,16 +16,18 @@ import type {
 } from "./RevenuePredictionRepository";
 
 export interface RevenuePredictionContextProvider {
-  getContext(input: {
-    tenantId: string;
-    workspaceId?: string;
-    opportunityId: string;
-  }): Promise<RevenuePredictionContext>;
+  getContext(
+    input: RevenuePredictionQuery,
+  ): Promise<RevenuePredictionContext>;
 }
 
 export interface RevenuePredictionServiceDependencies {
-  runtime: RevenuePredictionRuntime;
-  repository: RevenuePredictionRepository;
+  runtime:
+    RevenuePredictionRuntime;
+
+  repository:
+    RevenuePredictionRepository;
+
   contextProvider:
     RevenuePredictionContextProvider;
 }
@@ -42,177 +46,180 @@ export class RevenuePredictionService {
     dependencies:
       RevenuePredictionServiceDependencies,
   ) {
-    this.runtime = dependencies.runtime;
+    this.runtime =
+      dependencies.runtime;
+
     this.repository =
       dependencies.repository;
+
     this.contextProvider =
       dependencies.contextProvider;
   }
 
-  async getLatestPrediction(input: {
-    tenantId: string;
-    workspaceId?: string;
-    opportunityId: string;
-  }): Promise<RevenuePrediction | null> {
+  async getLatest(
+    query: RevenuePredictionQuery,
+  ): Promise<
+    RevenuePredictionForecast | null
+  > {
     return this.runtime.getLatest(
-      input.tenantId,
-      input.opportunityId,
-      input.workspaceId,
+      query,
     );
   }
 
-  async calculate(
+  async generate(
     request: RevenuePredictionRequest,
-  ): Promise<RevenuePrediction> {
-    return this.runtime.calculate(request);
+  ): Promise<RevenuePredictionForecast> {
+    return this.runtime.generate(
+      request,
+    );
   }
 
-  async calculateFromOpportunity(input: {
-    tenantId: string;
-    workspaceId?: string;
-    opportunityId: string;
-    requestedBy?: string;
-    correlationId?: string;
-    reason?: string;
-    horizon?: RevenuePredictionRequest["horizon"];
-  }): Promise<RevenuePrediction> {
+  async generateForPeriod(
+    input: RevenuePredictionQuery & {
+      requestedBy?: string;
+      correlationId?: string;
+      reason?: string;
+    },
+  ): Promise<RevenuePredictionForecast> {
     const context =
-      await this.contextProvider.getContext({
-        tenantId: input.tenantId,
-        workspaceId: input.workspaceId,
-        opportunityId:
-          input.opportunityId,
-      });
+      await this.contextProvider
+        .getContext(input);
 
-    return this.runtime.calculate({
+    return this.runtime.generate({
       context,
-      horizon: input.horizon,
+
       requestedBy:
         input.requestedBy,
+
       correlationId:
         input.correlationId,
-      reason: input.reason,
+
+      reason:
+        input.reason,
     });
   }
 
-  async recalculate(input: {
-    tenantId: string;
-    workspaceId?: string;
-    opportunityId: string;
-    requestedBy?: string;
-    correlationId?: string;
-    reason?: string;
-    horizon?: RevenuePredictionRequest["horizon"];
-  }): Promise<RevenuePrediction> {
+  async regenerateForPeriod(
+    input: RevenuePredictionQuery & {
+      requestedBy?: string;
+      correlationId?: string;
+      reason?: string;
+    },
+  ): Promise<RevenuePredictionForecast> {
     const context =
-      await this.contextProvider.getContext({
-        tenantId: input.tenantId,
-        workspaceId: input.workspaceId,
-        opportunityId:
-          input.opportunityId,
-      });
+      await this.contextProvider
+        .getContext(input);
 
-    return this.runtime.recalculate({
+    return this.runtime.regenerate({
       context,
-      horizon: input.horizon,
+
       forceRefresh: true,
+
       requestedBy:
         input.requestedBy,
+
       correlationId:
         input.correlationId,
+
       reason:
         input.reason
-        ?? "manual-recalculation",
+        ?? "manual-regeneration",
     });
   }
 
-  async refreshBatch(
+  async generateBatch(
     request: RevenuePredictionBatchRequest,
   ): Promise<RevenuePredictionBatchResult> {
-    const predictions:
-      RevenuePrediction[] = [];
+    const forecasts:
+      RevenuePredictionForecast[] = [];
 
-    const failures: {
-      opportunityId: string;
-      code: string;
-      message: string;
-    }[] = [];
+    const failures: Array<
+      NonNullable<
+        RevenuePredictionBatchResult["failures"]
+      >[number]
+    > = [];
 
     for (
-      const opportunityId
-      of request.opportunityIds
+      const context
+      of request.contexts
     ) {
       try {
-        const prediction =
-          await this.recalculate({
-            tenantId: request.tenantId,
-            workspaceId:
-              request.workspaceId,
-            opportunityId,
+        const forecast =
+          await this.runtime.generate({
+            context,
+
             requestedBy:
               request.requestedBy,
+
             correlationId:
               request.correlationId,
-            horizon: request.horizon,
-            reason: "batch-refresh",
+
+            reason:
+              "batch-generation",
           });
 
-        predictions.push(prediction);
+        forecasts.push(
+          forecast,
+        );
       } catch (error) {
         failures.push({
-          opportunityId,
+          periodStart:
+            context.periodStart,
+
+          periodEnd:
+            context.periodEnd,
+
           code:
             "REVENUE_PREDICTION_FAILED",
+
           message:
             error instanceof Error
               ? error.message
-              : "Unknown revenue-prediction failure.",
+              : "Unknown revenue prediction failure.",
         });
       }
     }
 
-    const currencyTotals =
-      predictions.reduce<
-        Record<string, number>
-      >((totals, prediction) => {
-        totals[prediction.currency] =
-          (
-            totals[prediction.currency]
-            ?? 0
-          )
-          + prediction.predictedRevenue;
-
-        return totals;
-      }, {});
-
     return {
       requested:
-        request.opportunityIds.length,
-      succeeded: predictions.length,
-      failed: failures.length,
-      predictions,
+        request.contexts.length,
+
+      succeeded:
+        forecasts.length,
+
+      failed:
+        failures.length,
+
+      forecasts,
       failures,
-      currencyTotals,
     };
   }
 
-  async getHistory(input: {
-    tenantId: string;
-    workspaceId?: string;
-    opportunityId: string;
-    limit?: number;
-    before?: string;
-  }): Promise<
+  async getHistory(
+    query:
+      RevenuePredictionHistoryQuery,
+  ): Promise<
     readonly RevenuePredictionHistoryEntry[]
   > {
-    return this.repository.findHistory({
-      tenantId: input.tenantId,
-      workspaceId:
-        input.workspaceId,
-      opportunityId:
-        input.opportunityId,
-      limit: input.limit,
-      before: input.before,
-    });
+    return this.repository.findHistory(
+      query,
+    );
+  }
+
+  async deleteForecast(
+    query: RevenuePredictionQuery,
+  ): Promise<void> {
+    await this.repository.deleteForecast(
+      query,
+    );
   }
 }
+
+export const createRevenuePredictionService = (
+  dependencies:
+    RevenuePredictionServiceDependencies,
+): RevenuePredictionService =>
+  new RevenuePredictionService(
+    dependencies,
+  );
+

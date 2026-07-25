@@ -1,21 +1,41 @@
-﻿import type {
-  RevenuePrediction,
-  RevenuePredictionAuditRecord,
-  RevenuePredictionChange,
-  RevenuePredictionClock,
-  RevenuePredictionConfiguration,
-  RevenuePredictionEvent,
-  RevenuePredictionHistoryEntry,
-  RevenuePredictionIdGenerator,
-  RevenuePredictionRequest,
-} from "./RevenuePredictionTypes";
-import {
+﻿import {
   RevenuePredictionEngine,
 } from "./RevenuePredictionEngine";
 import {
   assertRevenuePredictionRepository,
-  type RevenuePredictionRepository,
 } from "./RevenuePredictionRepository";
+import type {
+  RevenuePredictionRepository,
+} from "./RevenuePredictionRepository";
+import type {
+  RevenuePredictionAuditRecord,
+  RevenuePredictionClock,
+  RevenuePredictionConfiguration,
+  RevenuePredictionEvent,
+  RevenuePredictionForecast,
+  RevenuePredictionHistoryEntry,
+  RevenuePredictionIdGenerator,
+  RevenuePredictionQuery,
+  RevenuePredictionRequest,
+} from "./RevenuePredictionTypes";
+
+export interface RevenuePredictionCache {
+  get(
+    key: string,
+  ): Promise<
+    RevenuePredictionForecast | null
+  >;
+
+  set(
+    key: string,
+    forecast: RevenuePredictionForecast,
+    ttlMs: number,
+  ): Promise<void>;
+
+  delete(
+    key: string,
+  ): Promise<void>;
+}
 
 export interface RevenuePredictionEventPublisher {
   publish(
@@ -25,58 +45,55 @@ export interface RevenuePredictionEventPublisher {
 
 export interface RevenuePredictionAuditWriter {
   write(
-    record: RevenuePredictionAuditRecord,
+    record:
+      RevenuePredictionAuditRecord,
   ): Promise<void>;
-}
-
-export interface RevenuePredictionCache {
-  get(
-    key: string,
-  ): Promise<RevenuePrediction | null>;
-
-  set(
-    key: string,
-    prediction: RevenuePrediction,
-    ttlMs: number,
-  ): Promise<void>;
-
-  delete(key: string): Promise<void>;
 }
 
 export interface RevenuePredictionRuntimeDependencies {
   engine: RevenuePredictionEngine;
-  repository: RevenuePredictionRepository;
+
+  repository:
+    RevenuePredictionRepository;
 
   cache?: RevenuePredictionCache;
-  eventPublisher?: RevenuePredictionEventPublisher;
-  auditWriter?: RevenuePredictionAuditWriter;
+
+  eventPublisher?:
+    RevenuePredictionEventPublisher;
+
+  auditWriter?:
+    RevenuePredictionAuditWriter;
 
   clock?: RevenuePredictionClock;
-  idGenerator?: RevenuePredictionIdGenerator;
 
-  configuration?: Partial<
-    RevenuePredictionConfiguration
-  >;
+  idGenerator?:
+    RevenuePredictionIdGenerator;
+
+  configuration?:
+    Partial<RevenuePredictionConfiguration>;
 }
 
 const DEFAULT_CONFIGURATION:
   RevenuePredictionConfiguration = {
     modelVersion: "5.0.0",
-    materialChangeThresholdPercent: 5,
-    cacheTtlMs: 5 * 60 * 1000,
-    minimumConfidence: 25,
-    defaultHorizon: "current-quarter",
-    minimumAdjustmentMultiplier: 0.75,
-    maximumAdjustmentMultiplier: 1.2,
+    defaultCurrency: "USD",
+    forecastTtlHours: 12,
+    materialChangePercentage: 10,
+    criticalTargetGapPercentage: 30,
+    highTargetGapPercentage: 15,
+    minimumConfidenceScore: 25,
+    maximumHistoryEntries: 100,
   };
 
-const systemClock: RevenuePredictionClock = {
-  now: () => new Date(),
-};
+const systemClock:
+  RevenuePredictionClock = {
+    now: () => new Date(),
+  };
 
 const systemIdGenerator:
   RevenuePredictionIdGenerator = {
-    next: () => globalThis.crypto.randomUUID(),
+    next: () =>
+      globalThis.crypto.randomUUID(),
   };
 
 export class RevenuePredictionRuntime {
@@ -108,21 +125,26 @@ export class RevenuePredictionRuntime {
     dependencies:
       RevenuePredictionRuntimeDependencies,
   ) {
-    this.engine = dependencies.engine;
+    this.engine =
+      dependencies.engine;
 
     this.repository =
       assertRevenuePredictionRepository(
         dependencies.repository,
       );
 
-    this.cache = dependencies.cache;
+    this.cache =
+      dependencies.cache;
+
     this.eventPublisher =
       dependencies.eventPublisher;
+
     this.auditWriter =
       dependencies.auditWriter;
 
     this.clock =
-      dependencies.clock ?? systemClock;
+      dependencies.clock
+      ?? systemClock;
 
     this.idGenerator =
       dependencies.idGenerator
@@ -135,29 +157,28 @@ export class RevenuePredictionRuntime {
   }
 
   async getLatest(
-    tenantId: string,
-    opportunityId: string,
-    workspaceId?: string,
-  ): Promise<RevenuePrediction | null> {
-    const cacheKey = this.createCacheKey(
-      tenantId,
-      opportunityId,
-      workspaceId,
-    );
+    query: RevenuePredictionQuery,
+  ): Promise<
+    RevenuePredictionForecast | null
+  > {
+    const cacheKey =
+      this.createCacheKey(query);
 
     const cached =
       await this.cache?.get(cacheKey);
 
     if (cached) {
       await this.writeAudit({
-        tenantId,
-        workspaceId,
-        opportunityId,
+        tenantId: query.tenantId,
+        workspaceId:
+          query.workspaceId,
         action: "cache-hit",
         occurredAt:
           this.clock.now().toISOString(),
         details: {
-          modelVersion: cached.modelVersion,
+          forecastId: cached.id,
+          expectedRevenue:
+            cached.expectedRevenue,
         },
       });
 
@@ -165,153 +186,199 @@ export class RevenuePredictionRuntime {
     }
 
     await this.writeAudit({
-      tenantId,
-      workspaceId,
-      opportunityId,
+      tenantId: query.tenantId,
+      workspaceId:
+        query.workspaceId,
       action: "cache-miss",
       occurredAt:
         this.clock.now().toISOString(),
-      details: {},
+      details: {
+        horizon: query.horizon,
+        periodStart:
+          query.periodStart,
+        periodEnd:
+          query.periodEnd,
+      },
     });
 
-    const prediction =
-      await this.repository.findLatest({
-        tenantId,
-        workspaceId,
-        opportunityId,
-      });
+    const forecast =
+      await this.repository.findLatest(
+        query,
+      );
 
-    if (prediction && this.cache) {
+    if (
+      forecast
+      && this.cache
+    ) {
       await this.cache.set(
         cacheKey,
-        prediction,
-        this.configuration.cacheTtlMs,
+        forecast,
+        this.resolveCacheTtlMs(
+          forecast,
+        ),
       );
     }
 
-    return prediction;
+    return forecast;
   }
 
-  async calculate(
+  async generate(
     request: RevenuePredictionRequest,
-  ): Promise<RevenuePrediction> {
+  ): Promise<RevenuePredictionForecast> {
     const { context } = request;
 
-    const previous =
-      await this.repository.findLatest({
+    const query:
+      RevenuePredictionQuery = {
         tenantId: context.tenantId,
-        workspaceId: context.workspaceId,
-        opportunityId:
-          context.opportunityId,
-      });
+        workspaceId:
+          context.workspaceId,
+        horizon: context.horizon,
+        periodStart:
+          context.periodStart,
+        periodEnd:
+          context.periodEnd,
+      };
+
+    const previous =
+      await this.repository.findLatest(
+        query,
+      );
 
     try {
-      const calculated =
-        this.engine.calculate(
+      const generated =
+        this.engine.generate(
           {
             ...context,
-            previousPredictedRevenue:
-              context.previousPredictedRevenue
-              ?? previous?.predictedRevenue,
+            previousForecast:
+              context.previousForecast
+              ?? previous?.expectedRevenue,
           },
-          request.horizon
-            ?? this.configuration
-              .defaultHorizon,
           this.clock.now(),
         );
 
       const persisted =
-        await this.repository.save({
-          ...calculated,
+        await this.repository.saveForecast({
+          ...generated,
           id:
-            calculated.id
-            ?? this.idGenerator.next(),
+            generated.id
+            || this.idGenerator.next(),
         });
 
       const historyEntry:
         RevenuePredictionHistoryEntry = {
-          id: this.idGenerator.next(),
+          id:
+            this.idGenerator.next(),
 
-          tenantId: persisted.tenantId,
+          forecastId:
+            persisted.id,
+
+          tenantId:
+            persisted.tenantId,
+
           workspaceId:
             persisted.workspaceId,
-          opportunityId:
-            persisted.opportunityId,
 
-          currency: persisted.currency,
-          dealValue: persisted.dealValue,
-          predictedRevenue:
-            persisted.predictedRevenue,
-          confidence:
-            persisted.confidence,
-          riskLevel:
-            persisted.riskLevel,
-          horizon: persisted.horizon,
+          horizon:
+            persisted.horizon,
 
-          modelVersion:
-            persisted.modelVersion,
-          reason: request.reason,
-          calculatedAt:
-            persisted.calculatedAt,
+          periodStart:
+            persisted.periodStart,
+
+          periodEnd:
+            persisted.periodEnd,
+
+          expectedRevenue:
+            persisted.expectedRevenue,
+
+          conservativeRevenue:
+            persisted.conservative
+              .predictedRevenue,
+
+          optimisticRevenue:
+            persisted.optimistic
+              .predictedRevenue,
+
+          confidenceScore:
+            persisted.confidenceScore,
+
+          targetRevenue:
+            persisted.revenueTarget,
+
+          targetGap:
+            persisted.targetGap,
+
+          generatedAt:
+            persisted.generatedAt,
+
+          reason:
+            request.reason,
         };
 
       await this.repository.appendHistory(
         historyEntry,
       );
 
+      const cacheKey =
+        this.createCacheKey(query);
+
       if (this.cache) {
         await this.cache.set(
-          this.createCacheKey(
-            persisted.tenantId,
-            persisted.opportunityId,
-            persisted.workspaceId,
-          ),
+          cacheKey,
           persisted,
-          this.configuration.cacheTtlMs,
+          this.resolveCacheTtlMs(
+            persisted,
+          ),
         );
       }
 
-      const change =
-        this.calculateChange(
+      const materialChange =
+        this.isMaterialChange(
           previous,
           persisted,
         );
 
-      await this.publishEvents(
+      await this.publishGeneratedEvents(
+        previous,
         persisted,
-        change,
+        materialChange,
         request.correlationId,
       );
 
       await this.writeAudit({
-        tenantId: persisted.tenantId,
+        tenantId:
+          persisted.tenantId,
+
         workspaceId:
           persisted.workspaceId,
-        opportunityId:
-          persisted.opportunityId,
-        action: request.forceRefresh
-          ? "refresh"
-          : "calculate",
-        actorId: request.requestedBy,
+
+        action:
+          request.forceRefresh
+            ? "refresh"
+            : "generate",
+
+        actorId:
+          request.requestedBy,
+
         correlationId:
           request.correlationId,
+
         occurredAt:
           this.clock.now().toISOString(),
+
         details: {
-          currency: persisted.currency,
-          dealValue:
-            persisted.dealValue,
-          predictedRevenue:
-            persisted.predictedRevenue,
-          confidence:
-            persisted.confidence,
-          riskLevel:
-            persisted.riskLevel,
-          delta: change.delta,
-          deltaPercent:
-            change.deltaPercent,
-          materiallyChanged:
-            change.materiallyChanged,
+          forecastId:
+            persisted.id,
+
+          expectedRevenue:
+            persisted.expectedRevenue,
+
+          confidenceScore:
+            persisted.confidenceScore,
+
+          targetGap:
+            persisted.targetGap,
+
+          materialChange,
         },
       });
 
@@ -320,104 +387,105 @@ export class RevenuePredictionRuntime {
       const message =
         error instanceof Error
           ? error.message
-          : "Unknown revenue-prediction failure.";
+          : "Unknown revenue prediction failure.";
 
       await this.writeAudit({
-        tenantId: context.tenantId,
+        tenantId:
+          context.tenantId,
+
         workspaceId:
           context.workspaceId,
-        opportunityId:
-          context.opportunityId,
+
         action: "failure",
-        actorId: request.requestedBy,
+
+        actorId:
+          request.requestedBy,
+
         correlationId:
           request.correlationId,
+
         occurredAt:
           this.clock.now().toISOString(),
-        details: { message },
+
+        details: {
+          message,
+        },
       });
 
       await this.eventPublisher?.publish({
         eventId:
           this.idGenerator.next(),
+
         eventType:
           "revenue-prediction.failed",
-        tenantId: context.tenantId,
+
+        tenantId:
+          context.tenantId,
+
         workspaceId:
           context.workspaceId,
-        opportunityId:
-          context.opportunityId,
+
         occurredAt:
           this.clock.now().toISOString(),
+
         correlationId:
           request.correlationId,
-        payload: { message },
+
+        payload: {
+          message,
+          horizon:
+            context.horizon,
+          periodStart:
+            context.periodStart,
+          periodEnd:
+            context.periodEnd,
+        },
       });
 
       throw error;
     }
   }
 
-  async recalculate(
+  async regenerate(
     request: RevenuePredictionRequest,
-  ): Promise<RevenuePrediction> {
+  ): Promise<RevenuePredictionForecast> {
+    const query:
+      RevenuePredictionQuery = {
+        tenantId:
+          request.context.tenantId,
+
+        workspaceId:
+          request.context.workspaceId,
+
+        horizon:
+          request.context.horizon,
+
+        periodStart:
+          request.context.periodStart,
+
+        periodEnd:
+          request.context.periodEnd,
+      };
+
     await this.cache?.delete(
-      this.createCacheKey(
-        request.context.tenantId,
-        request.context.opportunityId,
-        request.context.workspaceId,
-      ),
+      this.createCacheKey(query),
     );
 
-    return this.calculate({
+    return this.generate({
       ...request,
       forceRefresh: true,
+      reason:
+        request.reason
+        ?? "manual-regeneration",
     });
   }
 
-  private calculateChange(
-    previous: RevenuePrediction | null,
-    current: RevenuePrediction,
-  ): RevenuePredictionChange {
-    const previousPredictedRevenue =
-      previous?.predictedRevenue;
-
-    const delta =
-      previousPredictedRevenue === undefined
-        ? 0
-        : current.predictedRevenue
-          - previousPredictedRevenue;
-
-    const deltaPercent =
-      previousPredictedRevenue
-        && previousPredictedRevenue !== 0
-        ? (delta
-            / previousPredictedRevenue)
-          * 100
-        : undefined;
-
-    return {
-      previousPredictedRevenue,
-      currentPredictedRevenue:
-        current.predictedRevenue,
-      delta,
-      deltaPercent,
-      materiallyChanged:
-        previous === null
-        || (
-          deltaPercent !== undefined
-          && Math.abs(deltaPercent)
-            >= this.configuration
-              .materialChangeThresholdPercent
-        )
-        || previous.riskLevel
-          !== current.riskLevel,
-    };
-  }
-
-  private async publishEvents(
-    prediction: RevenuePrediction,
-    change: RevenuePredictionChange,
+  private async publishGeneratedEvents(
+    previous:
+      RevenuePredictionForecast | null,
+    current:
+      RevenuePredictionForecast,
+    materialChange: boolean,
     correlationId?: string,
   ): Promise<void> {
     if (!this.eventPublisher) {
@@ -427,79 +495,276 @@ export class RevenuePredictionRuntime {
     await this.eventPublisher.publish({
       eventId:
         this.idGenerator.next(),
+
       eventType:
-        "revenue-prediction.calculated",
-      tenantId: prediction.tenantId,
+        "revenue-prediction.generated",
+
+      tenantId:
+        current.tenantId,
+
       workspaceId:
-        prediction.workspaceId,
-      opportunityId:
-        prediction.opportunityId,
+        current.workspaceId,
+
       occurredAt:
         this.clock.now().toISOString(),
+
       correlationId,
+
       payload: {
-        currency:
-          prediction.currency,
-        dealValue:
-          prediction.dealValue,
-        predictedRevenue:
-          prediction.predictedRevenue,
-        confidence:
-          prediction.confidence,
-        riskLevel:
-          prediction.riskLevel,
+        forecastId:
+          current.id,
+
         horizon:
-          prediction.horizon,
+          current.horizon,
+
+        periodStart:
+          current.periodStart,
+
+        periodEnd:
+          current.periodEnd,
+
+        expectedRevenue:
+          current.expectedRevenue,
+
+        conservativeRevenue:
+          current.conservative
+            .predictedRevenue,
+
+        optimisticRevenue:
+          current.optimistic
+            .predictedRevenue,
+
+        targetRevenue:
+          current.revenueTarget,
+
+        targetGap:
+          current.targetGap,
+
+        confidenceScore:
+          current.confidenceScore,
+
+        managementAttentionRequired:
+          current.managementAttentionRequired,
+
         modelVersion:
-          prediction.modelVersion,
+          current.modelVersion,
       },
     });
 
-    if (change.materiallyChanged) {
+    if (materialChange) {
       await this.eventPublisher.publish({
         eventId:
           this.idGenerator.next(),
+
         eventType:
-          "revenue-prediction.changed",
+          "revenue-prediction.material-change",
+
         tenantId:
-          prediction.tenantId,
+          current.tenantId,
+
         workspaceId:
-          prediction.workspaceId,
-        opportunityId:
-          prediction.opportunityId,
+          current.workspaceId,
+
         occurredAt:
           this.clock.now().toISOString(),
+
         correlationId,
+
         payload: {
-          previousPredictedRevenue:
-            change.previousPredictedRevenue,
-          currentPredictedRevenue:
-            change.currentPredictedRevenue,
-          delta: change.delta,
-          deltaPercent:
-            change.deltaPercent,
+          previousForecastId:
+            previous?.id,
+
+          currentForecastId:
+            current.id,
+
+          previousExpectedRevenue:
+            previous?.expectedRevenue,
+
+          currentExpectedRevenue:
+            current.expectedRevenue,
+
+          previousConfidenceScore:
+            previous?.confidenceScore,
+
+          currentConfidenceScore:
+            current.confidenceScore,
+
+          previousTargetGap:
+            previous?.targetGap,
+
+          currentTargetGap:
+            current.targetGap,
+        },
+      });
+    }
+
+    if (
+      current.summary.targetStatus
+        === "critical"
+      || current.summary.targetStatus
+        === "at-risk"
+    ) {
+      await this.eventPublisher.publish({
+        eventId:
+          this.idGenerator.next(),
+
+        eventType:
+          "revenue-prediction.target-risk",
+
+        tenantId:
+          current.tenantId,
+
+        workspaceId:
+          current.workspaceId,
+
+        occurredAt:
+          this.clock.now().toISOString(),
+
+        correlationId,
+
+        payload: {
+          forecastId:
+            current.id,
+
+          targetStatus:
+            current.summary.targetStatus,
+
+          targetRevenue:
+            current.revenueTarget,
+
+          expectedRevenue:
+            current.expectedRevenue,
+
+          targetGap:
+            current.targetGap,
+
+          targetAttainmentPercentage:
+            current.targetAttainmentPercentage,
+
+          risks:
+            current.risks.map(
+              (risk) => ({
+                key: risk.key,
+                level: risk.level,
+                title: risk.title,
+              }),
+            ),
         },
       });
     }
   }
 
-  private async writeAudit(
-    record: RevenuePredictionAuditRecord,
-  ): Promise<void> {
-    await this.auditWriter?.write(record);
+  private isMaterialChange(
+    previous:
+      RevenuePredictionForecast | null,
+    current:
+      RevenuePredictionForecast,
+  ): boolean {
+    if (!previous) {
+      return true;
+    }
+
+    if (
+      previous.expectedRevenue === 0
+    ) {
+      return (
+        current.expectedRevenue !== 0
+      );
+    }
+
+    const change =
+      Math.abs(
+        (
+          current.expectedRevenue
+          - previous.expectedRevenue
+        )
+        / previous.expectedRevenue
+        * 100,
+      );
+
+    if (
+      change
+      >= this.configuration
+        .materialChangePercentage
+    ) {
+      return true;
+    }
+
+    if (
+      previous.summary.targetStatus
+      !== current.summary.targetStatus
+    ) {
+      return true;
+    }
+
+    if (
+      previous.managementAttentionRequired
+      !== current.managementAttentionRequired
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private resolveCacheTtlMs(
+    forecast:
+      RevenuePredictionForecast,
+  ): number {
+    const expiresAt =
+      new Date(
+        forecast.expiresAt,
+      ).getTime();
+
+    const remaining =
+      expiresAt
+      - this.clock.now().getTime();
+
+    if (
+      Number.isFinite(remaining)
+      && remaining > 0
+    ) {
+      return remaining;
+    }
+
+    return (
+      this.configuration
+        .forecastTtlHours
+      * 60
+      * 60
+      * 1000
+    );
   }
 
   private createCacheKey(
-    tenantId: string,
-    opportunityId: string,
-    workspaceId?: string,
+    query: RevenuePredictionQuery,
   ): string {
     return [
       "ai-revenue-intelligence",
       "revenue-prediction",
-      tenantId,
-      workspaceId ?? "default",
-      opportunityId,
+      query.tenantId,
+      query.workspaceId
+        ?? "default",
+      query.horizon,
+      query.periodStart,
+      query.periodEnd,
     ].join(":");
   }
+
+  private async writeAudit(
+    record:
+      RevenuePredictionAuditRecord,
+  ): Promise<void> {
+    await this.auditWriter?.write(
+      record,
+    );
+  }
 }
+
+export const createRevenuePredictionRuntime = (
+  dependencies:
+    RevenuePredictionRuntimeDependencies,
+): RevenuePredictionRuntime =>
+  new RevenuePredictionRuntime(
+    dependencies,
+  );

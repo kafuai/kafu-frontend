@@ -18,16 +18,17 @@ export interface PipelineHealthRepository {
     readonly PipelineHealthHistoryEntry[]
   >;
 
-  save(
+  saveAssessment(
     assessment:
       PipelineHealthAssessment,
   ): Promise<PipelineHealthAssessment>;
 
   appendHistory(
-    entry: PipelineHealthHistoryEntry,
+    entry:
+      PipelineHealthHistoryEntry,
   ): Promise<PipelineHealthHistoryEntry>;
 
-  deleteForPipeline(
+  deleteAssessment(
     query: PipelineHealthQuery,
   ): Promise<void>;
 }
@@ -53,7 +54,8 @@ export class PipelineHealthRepositoryError
 }
 
 export const assertPipelineHealthRepository = (
-  repository: PipelineHealthRepository,
+  repository:
+    PipelineHealthRepository,
 ): PipelineHealthRepository => {
   if (!repository) {
     throw new PipelineHealthRepositoryError(

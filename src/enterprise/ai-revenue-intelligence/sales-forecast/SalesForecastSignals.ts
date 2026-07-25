@@ -163,7 +163,7 @@ const weightedPipelineSignal:
             total
             + opportunity
               .revenuePrediction
-              .predictedRevenue,
+              .expectedRevenue,
           0,
         );
 
@@ -232,7 +232,7 @@ const commitCoverageSignal:
                   ? opportunity.dealValue
                   : opportunity
                       .revenuePrediction
-                      .predictedRevenue
+                      .expectedRevenue
               ),
             0,
           );
@@ -296,7 +296,7 @@ const forecastRiskSignal:
             total
             + opportunity
               .revenuePrediction
-              .predictedRevenue,
+              .expectedRevenue,
           0,
         );
 
@@ -306,7 +306,7 @@ const forecastRiskSignal:
             total
             + opportunity
               .revenuePrediction
-              .predictedRevenue,
+              .expectedRevenue,
           0,
         );
 
@@ -479,7 +479,7 @@ const predictionConfidenceSignal:
             total
             + opportunity
               .revenuePrediction
-              .confidence
+              .confidenceScore
               * Math.max(
                   opportunity.dealValue,
                   1,
@@ -689,4 +689,8 @@ export const createSalesForecastSignals = (
         ?? signal.defaultWeight,
     }),
   );
+
+
+
+
 

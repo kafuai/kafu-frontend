@@ -1,0 +1,1124 @@
+﻿========================================================
+AI REVENUE INTELLIGENCE — FINAL STRUCTURE REPORT
+Generated: 2026-07-25 22:56:03
+Root: src\enterprise\ai-revenue-intelligence
+========================================================
+
+========================================================
+DIRECTORY TREE
+========================================================
+[DIR ] ai-recommendation-runtime
+[FILE] ai-recommendation-runtime\AIRecommendationRuntime.ts
+[FILE] ai-recommendation-runtime\AIRecommendationRuntimeEngine.ts
+[FILE] ai-recommendation-runtime\AIRecommendationRuntimeRepository.ts
+[FILE] ai-recommendation-runtime\AIRecommendationRuntimeService.ts
+[FILE] ai-recommendation-runtime\AIRecommendationRuntimeTypes.ts
+[DIR ] deal-risk-detection
+[FILE] deal-risk-detection\DealRiskEngine.ts
+[FILE] deal-risk-detection\DealRiskRepository.ts
+[FILE] deal-risk-detection\DealRiskRuntime.ts
+[FILE] deal-risk-detection\DealRiskService.ts
+[FILE] deal-risk-detection\DealRiskSignals.ts
+[FILE] deal-risk-detection\DealRiskTypes.ts
+[FILE] deal-risk-detection\index.ts
+[DIR ] executive-ai-insights
+[FILE] executive-ai-insights\ExecutiveAIInsightEngine.ts
+[FILE] executive-ai-insights\ExecutiveAIInsightRepository.ts
+[FILE] executive-ai-insights\ExecutiveAIInsightRules.ts
+[FILE] executive-ai-insights\ExecutiveAIInsightRuntime.ts
+[FILE] executive-ai-insights\ExecutiveAIInsightService.ts
+[FILE] executive-ai-insights\ExecutiveAIInsightTypes.ts
+[FILE] index.ts
+[DIR ] next-best-action
+[FILE] next-best-action\index.ts
+[FILE] next-best-action\NextBestActionEngine.ts
+[FILE] next-best-action\NextBestActionRepository.ts
+[FILE] next-best-action\NextBestActionRuntime.ts
+[FILE] next-best-action\NextBestActionService.ts
+[FILE] next-best-action\NextBestActionSignals.ts
+[FILE] next-best-action\NextBestActionTypes.ts
+[DIR ] opportunity-scoring
+[FILE] opportunity-scoring\index.ts
+[FILE] opportunity-scoring\OpportunityScoringEngine.ts
+[FILE] opportunity-scoring\OpportunityScoringFactors.ts
+[FILE] opportunity-scoring\OpportunityScoringRepository.ts
+[FILE] opportunity-scoring\OpportunityScoringRuntime.ts
+[FILE] opportunity-scoring\OpportunityScoringService.ts
+[FILE] opportunity-scoring\OpportunityScoringTypes.ts
+[DIR ] pipeline-health
+[FILE] pipeline-health\index.ts
+[FILE] pipeline-health\PipelineHealthEngine.ts
+[FILE] pipeline-health\PipelineHealthMetrics.ts
+[FILE] pipeline-health\PipelineHealthRepository.ts
+[FILE] pipeline-health\PipelineHealthRuntime.ts
+[FILE] pipeline-health\PipelineHealthService.ts
+[FILE] pipeline-health\PipelineHealthSignals.ts
+[FILE] pipeline-health\PipelineHealthTypes.ts
+[DIR ] predictive-risk-detection
+[FILE] predictive-risk-detection\PredictiveRiskEngine.ts
+[FILE] predictive-risk-detection\PredictiveRiskRepository.ts
+[FILE] predictive-risk-detection\PredictiveRiskRules.ts
+[FILE] predictive-risk-detection\PredictiveRiskRuntime.ts
+[FILE] predictive-risk-detection\PredictiveRiskService.ts
+[FILE] predictive-risk-detection\PredictiveRiskTypes.ts
+[DIR ] revenue-intelligence-orchestrator
+[FILE] revenue-intelligence-orchestrator\index.ts
+[FILE] revenue-intelligence-orchestrator\RevenueIntelligenceContext.ts
+[FILE] revenue-intelligence-orchestrator\RevenueIntelligenceOrchestrator.ts
+[FILE] revenue-intelligence-orchestrator\RevenueIntelligenceRepository.ts
+[FILE] revenue-intelligence-orchestrator\RevenueIntelligenceRuntime.ts
+[FILE] revenue-intelligence-orchestrator\RevenueIntelligenceService.ts
+[FILE] revenue-intelligence-orchestrator\RevenueIntelligenceTypes.ts
+[DIR ] revenue-prediction
+[FILE] revenue-prediction\index.ts
+[FILE] revenue-prediction\RevenuePredictionEngine.ts
+[FILE] revenue-prediction\RevenuePredictionModels.ts
+[FILE] revenue-prediction\RevenuePredictionRepository.ts
+[FILE] revenue-prediction\RevenuePredictionRuntime.ts
+[FILE] revenue-prediction\RevenuePredictionService.ts
+[FILE] revenue-prediction\RevenuePredictionSignals.ts
+[FILE] revenue-prediction\RevenuePredictionTypes.ts
+[DIR ] sales-coaching
+[FILE] sales-coaching\index.ts
+[FILE] sales-coaching\SalesCoachingEngine.ts
+[FILE] sales-coaching\SalesCoachingRepository.ts
+[FILE] sales-coaching\SalesCoachingRules.ts
+[FILE] sales-coaching\SalesCoachingRuntime.ts
+[FILE] sales-coaching\SalesCoachingService.ts
+[FILE] sales-coaching\SalesCoachingTypes.ts
+[DIR ] sales-forecast
+[FILE] sales-forecast\index.ts
+[FILE] sales-forecast\SalesForecastEngine.ts
+[FILE] sales-forecast\SalesForecastRepository.ts
+[FILE] sales-forecast\SalesForecastRuntime.ts
+[FILE] sales-forecast\SalesForecastService.ts
+[FILE] sales-forecast\SalesForecastSignals.ts
+[FILE] sales-forecast\SalesForecastTypes.ts
+[DIR ] win-probability
+[FILE] win-probability\index.ts
+[FILE] win-probability\WinProbabilityEngine.ts
+[FILE] win-probability\WinProbabilityRepository.ts
+[FILE] win-probability\WinProbabilityRuntime.ts
+[FILE] win-probability\WinProbabilityService.ts
+[FILE] win-probability\WinProbabilitySignals.ts
+[FILE] win-probability\WinProbabilityTypes.ts
+
+========================================================
+EXISTING INDEX FILES
+========================================================
+
+========================================================
+ALL EXPORT STATEMENTS
+========================================================
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\ai-recommendation-runtime\AIRecommendationRuntime.ts
+--------------------------------------------------------
+Line 29: export interface AIRecommendationEventPublisher {
+Line 35: export interface AIRecommendationAuditWriter {
+Line 42: export interface AIRecommendationRuntimeDependencies {
+Line 94: export class AIRecommendationRuntime {
+Line 1219: export const createAIRecommendationRuntime = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\ai-recommendation-runtime\AIRecommendationRuntimeEngine.ts
+--------------------------------------------------------
+Line 29: export interface AIRecommendationRuntimeEngineDependencies {
+Line 48: export class AIRecommendationRuntimeEngine {
+Line 972: export const createAIRecommendationRuntimeEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\ai-recommendation-runtime\AIRecommendationRuntimeRepository.ts
+--------------------------------------------------------
+Line 8: export interface AIRecommendationRepository {
+Line 60: export class AIRecommendationRepositoryError
+Line 80: export const assertAIRecommendationRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\ai-recommendation-runtime\AIRecommendationRuntimeService.ts
+--------------------------------------------------------
+Line 17: export interface AIRecommendationCandidateProvider {
+Line 35: export interface AIRecommendationRuntimeServiceDependencies {
+Line 43: export class AIRecommendationRuntimeService {
+Line 226: export const createAIRecommendationRuntimeService = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\ai-recommendation-runtime\AIRecommendationRuntimeTypes.ts
+--------------------------------------------------------
+Line 1: export type AIRecommendationSource =
+Line 12: export type AIRecommendationCategory =
+Line 24: export type AIRecommendationPriority =
+Line 30: export type AIRecommendationStatus =
+Line 40: export type AIRecommendationScope =
+Line 49: export type AIRecommendationAudience =
+Line 57: export type AIRecommendationActionType =
+Line 71: export type AIRecommendationEventType =
+Line 82: export interface AIRecommendationClock {
+Line 86: export interface AIRecommendationIdGenerator {
+Line 90: export interface AIRecommendationConfiguration {
+Line 107: export interface AIRecommendationCandidate {
+Line 156: export interface AIRecommendationContext {
+Line 173: export interface AIRecommendation {
+Line 249: export interface AIRecommendationQueueSummary {
+Line 275: export interface AIRecommendationGenerationResult {
+Line 292: export interface AIRecommendationQuery {
+Line 317: export interface AIRecommendationMutationContext {
+Line 323: export interface AIRecommendationAssignmentRequest
+Line 329: export interface AIRecommendationAcceptanceRequest
+Line 334: export interface AIRecommendationStartRequest
+Line 339: export interface AIRecommendationCompletionRequest
+Line 345: export interface AIRecommendationDismissalRequest
+Line 351: export interface AIRecommendationHistoryEntry {
+Line 381: export interface AIRecommendationEvent {
+Line 395: export interface AIRecommendationAuditRecord {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\deal-risk-detection\DealRiskEngine.ts
+--------------------------------------------------------
+Line 344: export class DealRiskEngine {
+Line 576: export const createDealRiskEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\deal-risk-detection\DealRiskRepository.ts
+--------------------------------------------------------
+Line 8: export interface DealRiskRepository {
+Line 32: export class DealRiskRepositoryError
+Line 52: export const assertDealRiskRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\deal-risk-detection\DealRiskRuntime.ts
+--------------------------------------------------------
+Line 20: export interface DealRiskEventPublisher {
+Line 26: export interface DealRiskAuditWriter {
+Line 32: export interface DealRiskCache {
+Line 46: export interface DealRiskRuntimeDependencies {
+Line 81: export class DealRiskRuntime {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\deal-risk-detection\DealRiskService.ts
+--------------------------------------------------------
+Line 16: export interface DealRiskContextProvider {
+Line 24: export interface DealRiskServiceDependencies {
+Line 30: export class DealRiskService {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\deal-risk-detection\DealRiskSignals.ts
+--------------------------------------------------------
+Line 9: export interface DealRiskSignalDefinition {
+Line 1041: export const dealRiskSignals:
+Line 1057: export const createDealRiskSignals = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\deal-risk-detection\DealRiskTypes.ts
+--------------------------------------------------------
+Line 14: export type DealRiskLevel =
+Line 20: export type DealRiskTrend =
+Line 25: export type DealRiskCategory =
+Line 37: export type DealRiskSignalKey =
+Line 51: export interface DealRiskContext {
+Line 111: export interface DealRiskSignalResult {
+Line 130: export interface DealRiskCategorySummary {
+Line 139: export interface DealRiskBreakdown {
+Line 154: export interface DealRiskExplanation {
+Line 161: export interface DealRiskAssessment {
+Line 195: export interface DealRiskHistoryEntry {
+Line 215: export interface DealRiskQuery {
+Line 221: export interface DealRiskHistoryQuery
+Line 227: export interface DealRiskRequest {
+Line 235: export interface DealRiskBatchRequest {
+Line 243: export interface DealRiskFailure {
+Line 249: export interface DealRiskBatchResult {
+Line 263: export interface DealRiskChange {
+Line 274: export interface DealRiskConfiguration {
+Line 286: export interface DealRiskEvent {
+Line 305: export interface DealRiskAuditRecord {
+Line 326: export interface DealRiskClock {
+Line 330: export interface DealRiskIdGenerator {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\deal-risk-detection\index.ts
+--------------------------------------------------------
+Line 1: export * from "./DealRiskTypes";
+Line 2: export * from "./DealRiskSignals";
+Line 3: export * from "./DealRiskEngine";
+Line 4: export * from "./DealRiskRepository";
+Line 5: export * from "./DealRiskRuntime";
+Line 6: export * from "./DealRiskService";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\executive-ai-insights\ExecutiveAIInsightEngine.ts
+--------------------------------------------------------
+Line 38: export interface ExecutiveAIInsightEngineDependencies {
+Line 75: export class ExecutiveAIInsightEngine {
+Line 2069: export const createExecutiveAIInsightEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\executive-ai-insights\ExecutiveAIInsightRepository.ts
+--------------------------------------------------------
+Line 8: export interface ExecutiveAIInsightRepository {
+Line 39: export class ExecutiveAIInsightRepositoryError
+Line 59: export const assertExecutiveAIInsightRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\executive-ai-insights\ExecutiveAIInsightRules.ts
+--------------------------------------------------------
+Line 8: export const clampExecutiveAIInsightScore = (
+Line 16: export const roundExecutiveAIInsightNumber = (
+Line 23: export const resolveExecutiveAIInsightPriority = (
+Line 44: export const resolveExecutiveAIInsightTrend = (
+Line 115: export const resolveExecutiveCategoryLabel = (
+Line 139: export const severityWeight:
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\executive-ai-insights\ExecutiveAIInsightRuntime.ts
+--------------------------------------------------------
+Line 22: export interface ExecutiveAIInsightCache {
+Line 41: export interface ExecutiveAIInsightEventPublisher {
+Line 48: export interface ExecutiveAIInsightAuditWriter {
+Line 55: export interface ExecutiveAIInsightRuntimeDependencies {
+Line 111: export class ExecutiveAIInsightRuntime {
+Line 805: export const createExecutiveAIInsightRuntime = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\executive-ai-insights\ExecutiveAIInsightService.ts
+--------------------------------------------------------
+Line 16: export interface ExecutiveAIInsightContextProvider {
+Line 23: export interface ExecutiveAIInsightServiceDependencies {
+Line 34: export class ExecutiveAIInsightService {
+Line 153: export const createExecutiveAIInsightService = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\executive-ai-insights\ExecutiveAIInsightTypes.ts
+--------------------------------------------------------
+Line 1: export type ExecutiveAIInsightSeverity =
+Line 8: export type ExecutiveAIInsightPriority =
+Line 14: export type ExecutiveAIInsightCategory =
+Line 25: export type ExecutiveAIInsightStatus =
+Line 32: export type ExecutiveAIInsightAudience =
+Line 39: export type ExecutiveAIInsightTrend =
+Line 46: export type ExecutiveAIInsightEventType =
+Line 52: export interface ExecutiveAIInsightClock {
+Line 56: export interface ExecutiveAIInsightIdGenerator {
+Line 60: export interface ExecutiveAIInsightConfiguration {
+Line 78: export interface ExecutiveRevenueSnapshot {
+Line 98: export interface ExecutivePipelineSnapshot {
+Line 117: export interface ExecutiveOpportunitySnapshot {
+Line 145: export interface ExecutiveSalesPerformanceSnapshot {
+Line 169: export interface ExecutiveRiskSnapshot {
+Line 189: export interface ExecutiveRecommendationSnapshot {
+Line 207: export interface ExecutiveAIInsightContext {
+Line 235: export interface ExecutiveAIInsight {
+Line 285: export interface ExecutiveAIInsightRecommendation {
+Line 313: export interface ExecutiveBoardHighlight {
+Line 333: export interface ExecutiveBriefingSummary {
+Line 348: export interface ExecutiveAIInsightBriefing {
+Line 390: export interface ExecutiveAIInsightRequest {
+Line 401: export interface ExecutiveAIInsightQuery {
+Line 409: export interface ExecutiveAIInsightHistoryQuery
+Line 415: export interface ExecutiveAIInsightHistoryEntry {
+Line 436: export interface ExecutiveAIInsightEvent {
+Line 451: export interface ExecutiveAIInsightAuditRecord {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\index.ts
+--------------------------------------------------------
+Line 1: export * from "./opportunity-scoring";
+Line 2: export * from "./win-probability";
+Line 3: export * from "./revenue-prediction";
+Line 4: export * from "./pipeline-health";
+Line 5: export * from "./deal-risk-detection";
+Line 6: export * from "./next-best-action";
+Line 7: export * from "./sales-forecast";
+Line 8: export * from "./revenue-intelligence-orchestrator";
+Line 9: export * from "./sales-coaching";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\next-best-action\index.ts
+--------------------------------------------------------
+Line 1: export * from "./NextBestActionTypes";
+Line 2: export * from "./NextBestActionSignals";
+Line 3: export * from "./NextBestActionEngine";
+Line 4: export * from "./NextBestActionRepository";
+Line 5: export * from "./NextBestActionRuntime";
+Line 6: export * from "./NextBestActionService";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\next-best-action\NextBestActionEngine.ts
+--------------------------------------------------------
+Line 278: export class NextBestActionEngine {
+Line 692: export const createNextBestActionEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\next-best-action\NextBestActionRepository.ts
+--------------------------------------------------------
+Line 9: export interface NextBestActionRepository {
+Line 54: export class NextBestActionRepositoryError
+Line 74: export const assertNextBestActionRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\next-best-action\NextBestActionRuntime.ts
+--------------------------------------------------------
+Line 20: export interface NextBestActionEventPublisher {
+Line 26: export interface NextBestActionAuditWriter {
+Line 32: export interface NextBestActionCache {
+Line 46: export interface NextBestActionRuntimeDependencies {
+Line 97: export class NextBestActionRuntime {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\next-best-action\NextBestActionService.ts
+--------------------------------------------------------
+Line 16: export interface NextBestActionContextProvider {
+Line 24: export interface NextBestActionServiceDependencies {
+Line 31: export class NextBestActionService {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\next-best-action\NextBestActionSignals.ts
+--------------------------------------------------------
+Line 8: export interface NextBestActionSignalDefinition {
+Line 1441: export const nextBestActionSignals:
+Line 1457: export const createNextBestActionSignals = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\next-best-action\NextBestActionTypes.ts
+--------------------------------------------------------
+Line 17: export type NextBestActionPriority =
+Line 23: export type NextBestActionStatus =
+Line 31: export type NextBestActionType =
+Line 53: export type NextBestActionChannel =
+Line 61: export type NextBestActionSignalKey =
+Line 75: export interface NextBestActionContext {
+Line 128: export interface NextBestActionCandidate {
+Line 162: export interface NextBestActionRecommendation {
+Line 213: export interface NextBestActionPlan {
+Line 249: export interface NextBestActionQuery {
+Line 255: export interface NextBestActionHistoryQuery
+Line 262: export interface NextBestActionRequest {
+Line 271: export interface NextBestActionStatusUpdate {
+Line 288: export interface NextBestActionConfiguration {
+Line 307: export interface NextBestActionEvent {
+Line 328: export interface NextBestActionAuditRecord {
+Line 351: export interface NextBestActionClock {
+Line 355: export interface NextBestActionIdGenerator {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\opportunity-scoring\index.ts
+--------------------------------------------------------
+Line 1: export * from "./OpportunityScoringTypes";
+Line 2: export * from "./OpportunityScoringFactors";
+Line 3: export * from "./OpportunityScoringEngine";
+Line 4: export * from "./OpportunityScoringRepository";
+Line 5: export * from "./OpportunityScoringRuntime";
+Line 6: export * from "./OpportunityScoringService";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\opportunity-scoring\OpportunityScoringEngine.ts
+--------------------------------------------------------
+Line 192: export class OpportunityScoringEngine {
+Line 334: export const createOpportunityScoringEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\opportunity-scoring\OpportunityScoringFactors.ts
+--------------------------------------------------------
+Line 7: export interface OpportunityScoringFactorDefinition {
+Line 543: export const opportunityScoringFactors:
+Line 559: export const createOpportunityScoringFactors = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\opportunity-scoring\OpportunityScoringRepository.ts
+--------------------------------------------------------
+Line 8: export interface OpportunityScoringRepository {
+Line 28: export class OpportunityScoringRepositoryError extends Error {
+Line 45: export const assertOpportunityScoringRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\opportunity-scoring\OpportunityScoringRuntime.ts
+--------------------------------------------------------
+Line 20: export interface OpportunityScoringEventPublisher {
+Line 24: export interface OpportunityScoringAuditWriter {
+Line 28: export interface OpportunityScoringCache {
+Line 38: export interface OpportunityScoringRuntimeDependencies {
+Line 64: export class OpportunityScoringRuntime {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\opportunity-scoring\OpportunityScoringService.ts
+--------------------------------------------------------
+Line 16: export interface OpportunityScoringContextProvider {
+Line 24: export interface OpportunityScoringServiceDependencies {
+Line 30: export class OpportunityScoringService {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\opportunity-scoring\OpportunityScoringTypes.ts
+--------------------------------------------------------
+Line 1: export type OpportunityRiskLevel =
+Line 7: export type OpportunityScoreBand =
+Line 14: export type OpportunityScoringFactorKey =
+Line 28: export interface OpportunityScoringContext {
+Line 66: export interface OpportunityScoringFactorResult {
+Line 79: export interface OpportunityScoreBreakdown {
+Line 88: export interface OpportunityScoringExplanation {
+Line 95: export interface OpportunityScore {
+Line 115: export interface OpportunityScoreHistoryEntry {
+Line 130: export interface OpportunityScoreQuery {
+Line 136: export interface OpportunityScoreHistoryQuery
+Line 142: export interface OpportunityScoringRequest {
+Line 150: export interface OpportunityScoringRefreshRequest {
+Line 158: export interface OpportunityScoringRefreshResult {
+Line 166: export interface OpportunityScoringFailure {
+Line 172: export interface OpportunityScoreChange {
+Line 181: export interface OpportunityScoringEvent {
+Line 195: export interface OpportunityScoringAuditRecord {
+Line 212: export interface OpportunityScoringConfiguration {
+Line 222: export interface OpportunityScoringClock {
+Line 226: export interface OpportunityScoringIdGenerator {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\pipeline-health\index.ts
+--------------------------------------------------------
+Line 1: export * from "./PipelineHealthTypes";
+Line 2: export * from "./PipelineHealthSignals";
+Line 3: export * from "./PipelineHealthEngine";
+Line 4: export * from "./PipelineHealthRepository";
+Line 5: export * from "./PipelineHealthRuntime";
+Line 6: export * from "./PipelineHealthService";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\pipeline-health\PipelineHealthEngine.ts
+--------------------------------------------------------
+Line 68: export interface PipelineHealthEngineDependencies {
+Line 73: export class PipelineHealthEngine {
+Line 2241: export const createPipelineHealthEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\pipeline-health\PipelineHealthMetrics.ts
+--------------------------------------------------------
+Line 9: export const clampPipelineHealthScore = (
+Line 17: export const roundPipelineHealthNumber = (
+Line 24: export const resolvePipelineHealthGrade = (
+Line 60: export const resolvePipelineHealthRiskLevel = (
+Line 78: export const resolvePipelineHealthTrend = (
+Line 149: export const resolvePipelineWeightedAmount = (
+Line 183: export const resolveOpportunityDaysInStage = (
+Line 235: export const resolveOpportunityInactivityDays = (
+Line 287: export const averagePipelineHealthValue = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\pipeline-health\PipelineHealthRepository.ts
+--------------------------------------------------------
+Line 8: export interface PipelineHealthRepository {
+Line 36: export class PipelineHealthRepositoryError
+Line 56: export const assertPipelineHealthRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\pipeline-health\PipelineHealthRuntime.ts
+--------------------------------------------------------
+Line 22: export interface PipelineHealthCache {
+Line 41: export interface PipelineHealthEventPublisher {
+Line 47: export interface PipelineHealthAuditWriter {
+Line 54: export interface PipelineHealthRuntimeDependencies {
+Line 117: export class PipelineHealthRuntime {
+Line 834: export const createPipelineHealthRuntime = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\pipeline-health\PipelineHealthService.ts
+--------------------------------------------------------
+Line 19: export interface PipelineHealthContextProvider {
+Line 26: export interface PipelineHealthServiceDependencies {
+Line 37: export class PipelineHealthService {
+Line 222: export const createPipelineHealthService = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\pipeline-health\PipelineHealthSignals.ts
+--------------------------------------------------------
+Line 7: export interface PipelineHealthSignalDefinition {
+Line 796: export const pipelineHealthSignals:
+Line 810: export const createPipelineHealthSignals = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\pipeline-health\PipelineHealthTypes.ts
+--------------------------------------------------------
+Line 1: export type PipelineHealthGrade =
+Line 8: export type PipelineHealthRiskLevel =
+Line 14: export type PipelineHealthTrend =
+Line 21: export type PipelineHealthDimension =
+Line 31: export type PipelineHealthEventType =
+Line 37: export interface PipelineHealthClock {
+Line 41: export interface PipelineHealthIdGenerator {
+Line 45: export interface PipelineHealthConfiguration {
+Line 68: export interface PipelineHealthOpportunityInput {
+Line 114: export interface PipelineHealthStageBenchmark {
+Line 123: export interface PipelineHealthHistoricalSnapshot {
+Line 136: export interface PipelineHealthContext {
+Line 158: export interface PipelineHealthDimensionScore {
+Line 171: export interface PipelineHealthStageAnalysis {
+Line 193: export interface PipelineHealthOwnerAnalysis {
+Line 211: export interface PipelineHealthBottleneck {
+Line 230: export interface PipelineHealthRisk {
+Line 247: export interface PipelineHealthRecommendation {
+Line 271: export interface PipelineHealthSummary {
+Line 286: export interface PipelineHealthAssessment {
+Line 351: export interface PipelineHealthRequest {
+Line 361: export interface PipelineHealthQuery {
+Line 369: export interface PipelineHealthHistoryQuery
+Line 375: export interface PipelineHealthHistoryEntry {
+Line 400: export interface PipelineHealthBatchRequest {
+Line 411: export interface PipelineHealthBatchFailure {
+Line 418: export interface PipelineHealthBatchResult {
+Line 430: export interface PipelineHealthEvent {
+Line 444: export interface PipelineHealthAuditRecord {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\predictive-risk-detection\PredictiveRiskEngine.ts
+--------------------------------------------------------
+Line 61: export interface PredictiveRiskEngineDependencies {
+Line 66: export class PredictiveRiskEngine {
+Line 2617: export const createPredictiveRiskEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\predictive-risk-detection\PredictiveRiskRepository.ts
+--------------------------------------------------------
+Line 8: export interface PredictiveRiskRepository {
+Line 37: export class PredictiveRiskRepositoryError
+Line 57: export const assertPredictiveRiskRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\predictive-risk-detection\PredictiveRiskRules.ts
+--------------------------------------------------------
+Line 7: export const clampPredictiveRiskScore = (
+Line 15: export const roundPredictiveRiskNumber = (
+Line 22: export const resolvePredictiveRiskSeverity = (
+Line 51: export const resolvePredictiveRiskTrend = (
+Line 112: export const resolvePredictiveWeightedAmount = (
+Line 145: export const resolveDaysBetween = (
+Line 182: export const severityWeight:
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\predictive-risk-detection\PredictiveRiskRuntime.ts
+--------------------------------------------------------
+Line 22: export interface PredictiveRiskCache {
+Line 41: export interface PredictiveRiskEventPublisher {
+Line 47: export interface PredictiveRiskAuditWriter {
+Line 54: export interface PredictiveRiskRuntimeDependencies {
+Line 118: export class PredictiveRiskRuntime {
+Line 850: export const createPredictiveRiskRuntime = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\predictive-risk-detection\PredictiveRiskService.ts
+--------------------------------------------------------
+Line 16: export interface PredictiveRiskContextProvider {
+Line 23: export interface PredictiveRiskServiceDependencies {
+Line 34: export class PredictiveRiskService {
+Line 153: export const createPredictiveRiskService = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\predictive-risk-detection\PredictiveRiskTypes.ts
+--------------------------------------------------------
+Line 1: export type PredictiveRiskSeverity =
+Line 7: export type PredictiveRiskStatus =
+Line 14: export type PredictiveRiskCategory =
+Line 28: export type PredictiveRiskScope =
+Line 36: export type PredictiveRiskTrend =
+Line 42: export type PredictiveRiskEventType =
+Line 49: export interface PredictiveRiskClock {
+Line 53: export interface PredictiveRiskIdGenerator {
+Line 57: export interface PredictiveRiskConfiguration {
+Line 82: export interface PredictiveRiskOpportunityInput {
+Line 141: export interface PredictiveRiskRevenueInput {
+Line 156: export interface PredictiveRiskPipelineInput {
+Line 170: export interface PredictiveRiskContext {
+Line 193: export interface PredictiveRiskEvidence {
+Line 210: export interface PredictiveRiskDetection {
+Line 255: export interface PredictiveRiskRecommendation {
+Line 284: export interface PredictiveRiskSummary {
+Line 299: export interface PredictiveRiskAssessment {
+Line 346: export interface PredictiveRiskRequest {
+Line 356: export interface PredictiveRiskQuery {
+Line 364: export interface PredictiveRiskHistoryQuery
+Line 370: export interface PredictiveRiskHistoryEntry {
+Line 393: export interface PredictiveRiskEvent {
+Line 407: export interface PredictiveRiskAuditRecord {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\index.ts
+--------------------------------------------------------
+Line 1: export * from "./RevenueIntelligenceTypes";
+Line 2: export * from "./RevenueIntelligenceContext";
+Line 3: export * from "./RevenueIntelligenceOrchestrator";
+Line 4: export * from "./RevenueIntelligenceRepository";
+Line 5: export * from "./RevenueIntelligenceRuntime";
+Line 6: export * from "./RevenueIntelligenceService";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\RevenueIntelligenceContext.ts
+--------------------------------------------------------
+Line 28: export interface RevenueIntelligenceOpportunitySource {
+Line 58: export interface RevenueIntelligenceContextProvider {
+Line 84: export class RevenueIntelligenceContextError
+Line 104: export const assertOpportunitySource = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\RevenueIntelligenceOrchestrator.ts
+--------------------------------------------------------
+Line 33: export interface RevenueIntelligenceOpportunityScoringExecutor {
+Line 40: export interface RevenueIntelligenceWinProbabilityExecutor {
+Line 48: export interface RevenueIntelligenceRevenuePredictionExecutor {
+Line 56: export interface RevenueIntelligenceDealRiskExecutor {
+Line 64: export interface RevenueIntelligenceNextBestActionExecutor {
+Line 78: export interface RevenueIntelligenceSalesForecastExecutor {
+Line 82: export interface RevenueIntelligenceOrchestratorDependencies {
+Line 164: export class RevenueIntelligenceOrchestrator {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\RevenueIntelligenceRepository.ts
+--------------------------------------------------------
+Line 7: export interface RevenueIntelligenceRepository {
+Line 30: export class RevenueIntelligenceRepositoryError
+Line 50: export const assertRevenueIntelligenceRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\RevenueIntelligenceRuntime.ts
+--------------------------------------------------------
+Line 21: export interface RevenueIntelligenceEventPublisher {
+Line 27: export interface RevenueIntelligenceAuditWriter {
+Line 34: export interface RevenueIntelligenceCache {
+Line 50: export interface RevenueIntelligenceRuntimeDependencies {
+Line 106: export class RevenueIntelligenceRuntime {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\RevenueIntelligenceService.ts
+--------------------------------------------------------
+Line 14: export interface RevenueIntelligenceServiceDependencies {
+Line 22: export class RevenueIntelligenceService {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\RevenueIntelligenceTypes.ts
+--------------------------------------------------------
+Line 20: export type RevenueIntelligenceScope =
+Line 25: export type RevenueIntelligenceStatus =
+Line 32: export type RevenueIntelligenceComponent =
+Line 40: export type RevenueIntelligenceHealth =
+Line 46: export interface RevenueIntelligenceOpportunityReference {
+Line 60: export interface RevenueIntelligenceExecutionOptions {
+Line 73: export interface RevenueIntelligenceOpportunityRequest {
+Line 82: export interface RevenueIntelligencePipelineRequest {
+Line 95: export interface RevenueIntelligenceForecastRequest {
+Line 116: export type RevenueIntelligenceRequest =
+Line 121: export interface RevenueIntelligenceComponentExecution {
+Line 139: export interface RevenueIntelligenceOpportunitySnapshot {
+Line 170: export interface RevenueIntelligencePipelineSummary {
+Line 204: export interface RevenueIntelligenceResult {
+Line 236: export interface RevenueIntelligenceQuery {
+Line 248: export interface RevenueIntelligenceHistoryQuery
+Line 254: export interface RevenueIntelligenceConfiguration {
+Line 269: export interface RevenueIntelligenceEvent {
+Line 290: export interface RevenueIntelligenceAuditRecord {
+Line 313: export interface RevenueIntelligenceClock {
+Line 317: export interface RevenueIntelligenceIdGenerator {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-prediction\index.ts
+--------------------------------------------------------
+Line 1: export * from "./RevenuePredictionTypes";
+Line 2: export * from "./RevenuePredictionSignals";
+Line 3: export * from "./RevenuePredictionEngine";
+Line 4: export * from "./RevenuePredictionRepository";
+Line 5: export * from "./RevenuePredictionRuntime";
+Line 6: export * from "./RevenuePredictionService";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-prediction\RevenuePredictionEngine.ts
+--------------------------------------------------------
+Line 59: export interface RevenuePredictionEngineDependencies {
+Line 67: export class RevenuePredictionEngine {
+Line 1372: export const createRevenuePredictionEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-prediction\RevenuePredictionModels.ts
+--------------------------------------------------------
+Line 10: export interface RevenuePredictionModelInput {
+Line 17: export interface RevenuePredictionModelResult {
+Line 30: export interface RevenuePredictionProbabilityModel {
+Line 273: export class DefaultRevenuePredictionProbabilityModel
+Line 369: export const resolveRevenuePredictionConfidence = (
+Line 391: export const resolveRevenuePredictionRiskLevel = (
+Line 409: export const resolveRevenuePredictionTrend = (
+Line 463: export const resolveScenarioFactor = (
+Line 479: export const createRevenuePredictionProbabilityModel =
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-prediction\RevenuePredictionRepository.ts
+--------------------------------------------------------
+Line 8: export interface RevenuePredictionRepository {
+Line 34: export class RevenuePredictionRepositoryError
+Line 54: export const assertRevenuePredictionRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-prediction\RevenuePredictionRuntime.ts
+--------------------------------------------------------
+Line 22: export interface RevenuePredictionCache {
+Line 40: export interface RevenuePredictionEventPublisher {
+Line 46: export interface RevenuePredictionAuditWriter {
+Line 53: export interface RevenuePredictionRuntimeDependencies {
+Line 99: export class RevenuePredictionRuntime {
+Line 764: export const createRevenuePredictionRuntime = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-prediction\RevenuePredictionService.ts
+--------------------------------------------------------
+Line 18: export interface RevenuePredictionContextProvider {
+Line 24: export interface RevenuePredictionServiceDependencies {
+Line 35: export class RevenuePredictionService {
+Line 220: export const createRevenuePredictionService = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-prediction\RevenuePredictionSignals.ts
+--------------------------------------------------------
+Line 7: export interface RevenuePredictionSignalDefinition {
+Line 473: export const revenuePredictionSignals:
+Line 487: export const createRevenuePredictionSignals = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-prediction\RevenuePredictionTypes.ts
+--------------------------------------------------------
+Line 1: export type RevenuePredictionCurrency =
+Line 10: export type RevenuePredictionHorizon =
+Line 17: export type RevenuePredictionScenario =
+Line 22: export type RevenuePredictionConfidence =
+Line 29: export type RevenuePredictionRiskLevel =
+Line 35: export type RevenuePredictionTrend =
+Line 42: export type RevenuePredictionEventType =
+Line 48: export interface RevenuePredictionClock {
+Line 52: export interface RevenuePredictionIdGenerator {
+Line 56: export interface RevenuePredictionConfiguration {
+Line 67: export interface RevenuePredictionOpportunityInput {
+Line 112: export interface RevenuePredictionHistoricalActual {
+Line 120: export interface RevenuePredictionContext {
+Line 143: export interface RevenuePredictionOpportunityContribution {
+Line 171: export interface RevenuePredictionScenarioResult {
+Line 191: export interface RevenuePredictionDriver {
+Line 204: export interface RevenuePredictionRisk {
+Line 219: export interface RevenuePredictionSummary {
+Line 234: export interface RevenuePredictionForecast {
+Line 294: export interface RevenuePredictionRequest {
+Line 304: export interface RevenuePredictionQuery {
+Line 313: export interface RevenuePredictionHistoryQuery
+Line 319: export interface RevenuePredictionHistoryEntry {
+Line 342: export interface RevenuePredictionBatchRequest {
+Line 353: export interface RevenuePredictionBatchFailure {
+Line 360: export interface RevenuePredictionBatchResult {
+Line 372: export interface RevenuePredictionEvent {
+Line 386: export interface RevenuePredictionAuditRecord {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-coaching\index.ts
+--------------------------------------------------------
+Line 1: export * from "./SalesCoachingTypes";
+Line 2: export * from "./SalesCoachingRules";
+Line 3: export * from "./SalesCoachingEngine";
+Line 4: export * from "./SalesCoachingRepository";
+Line 5: export * from "./SalesCoachingRuntime";
+Line 6: export * from "./SalesCoachingService";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-coaching\SalesCoachingEngine.ts
+--------------------------------------------------------
+Line 147: export class SalesCoachingEngine {
+Line 490: export const createSalesCoachingEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-coaching\SalesCoachingRepository.ts
+--------------------------------------------------------
+Line 10: export interface SalesCoachingRecommendationStatusUpdate {
+Line 22: export interface SalesCoachingRepository {
+Line 55: export class SalesCoachingRepositoryError
+Line 73: export const assertSalesCoachingRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-coaching\SalesCoachingRules.ts
+--------------------------------------------------------
+Line 9: export interface SalesCoachingRule {
+Line 1390: export const salesCoachingRules:
+Line 1406: export const createSalesCoachingRules = ():
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-coaching\SalesCoachingRuntime.ts
+--------------------------------------------------------
+Line 24: export interface SalesCoachingEventPublisher {
+Line 28: export interface SalesCoachingAuditWriter {
+Line 32: export interface SalesCoachingCache {
+Line 44: export interface SalesCoachingRuntimeDependencies {
+Line 139: export class SalesCoachingRuntime {
+Line 741: export const createSalesCoachingRuntime = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-coaching\SalesCoachingService.ts
+--------------------------------------------------------
+Line 18: export interface SalesCoachingContextProvider {
+Line 26: export interface SalesCoachingServiceDependencies {
+Line 33: export class SalesCoachingService {
+Line 295: export const createSalesCoachingService = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-coaching\SalesCoachingTypes.ts
+--------------------------------------------------------
+Line 6: export type SalesCoachingPriority =
+Line 12: export type SalesCoachingCategory =
+Line 24: export type SalesCoachingEffort =
+Line 29: export type SalesCoachingRecommendationStatus =
+Line 37: export type SalesCoachingOutcome =
+Line 43: export type SalesCoachingRuleKey =
+Line 57: export interface SalesCoachingEvidence {
+Line 73: export interface SalesCoachingAction {
+Line 88: export interface SalesCoachingRecommendation {
+Line 133: export interface SalesCoachingPlan {
+Line 169: export interface SalesCoachingContext {
+Line 224: export interface SalesCoachingConfiguration {
+Line 235: export interface SalesCoachingRuleResult {
+Line 256: export interface SalesCoachingRequest {
+Line 264: export interface SalesCoachingQuery {
+Line 270: export interface SalesCoachingHistoryQuery
+Line 276: export interface SalesCoachingHistoryEntry {
+Line 294: export interface SalesCoachingBatchRequest {
+Line 302: export interface SalesCoachingFailure {
+Line 308: export interface SalesCoachingBatchResult {
+Line 316: export interface SalesCoachingClock {
+Line 320: export interface SalesCoachingIdGenerator {
+Line 324: export interface SalesCoachingEvent {
+Line 339: export interface SalesCoachingAuditRecord {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-forecast\index.ts
+--------------------------------------------------------
+Line 1: export * from "./SalesForecastTypes";
+Line 2: export * from "./SalesForecastSignals";
+Line 3: export * from "./SalesForecastEngine";
+Line 4: export * from "./SalesForecastRepository";
+Line 5: export * from "./SalesForecastRuntime";
+Line 6: export * from "./SalesForecastService";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-forecast\SalesForecastEngine.ts
+--------------------------------------------------------
+Line 865: export class SalesForecastEngine {
+Line 1237: export const createSalesForecastEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-forecast\SalesForecastRepository.ts
+--------------------------------------------------------
+Line 7: export interface SalesForecastRepository {
+Line 27: export class SalesForecastRepositoryError
+Line 47: export const assertSalesForecastRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-forecast\SalesForecastRuntime.ts
+--------------------------------------------------------
+Line 19: export interface SalesForecastEventPublisher {
+Line 25: export interface SalesForecastAuditWriter {
+Line 31: export interface SalesForecastCache {
+Line 45: export interface SalesForecastRuntimeDependencies {
+Line 89: export class SalesForecastRuntime {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-forecast\SalesForecastService.ts
+--------------------------------------------------------
+Line 15: export interface SalesForecastContextProvider {
+Line 21: export interface SalesForecastServiceDependencies {
+Line 28: export class SalesForecastService {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-forecast\SalesForecastSignals.ts
+--------------------------------------------------------
+Line 10: export interface SalesForecastSignalDefinition {
+Line 666: export const salesForecastSignals:
+Line 678: export const createSalesForecastSignals = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-forecast\SalesForecastTypes.ts
+--------------------------------------------------------
+Line 17: export type SalesForecastPeriod =
+Line 24: export type SalesForecastCategory =
+Line 30: export type SalesForecastConfidence =
+Line 36: export type SalesForecastTrend =
+Line 41: export type SalesForecastHealth =
+Line 47: export type SalesForecastSignalKey =
+Line 57: export interface SalesForecastOpportunityInput {
+Line 88: export interface SalesForecastHistoricalPerformance {
+Line 100: export interface SalesForecastContext {
+Line 124: export interface SalesForecastOpportunityResult {
+Line 152: export interface SalesForecastSignalResult {
+Line 167: export interface SalesForecastCategorySummary {
+Line 182: export interface SalesForecastOwnerSummary {
+Line 199: export interface SalesForecastRiskSummary {
+Line 211: export interface SalesForecastExplanation {
+Line 219: export interface SalesForecast {
+Line 272: export interface SalesForecastQuery {
+Line 281: export interface SalesForecastHistoryQuery
+Line 287: export interface SalesForecastRequest {
+Line 296: export interface SalesForecastConfiguration {
+Line 311: export interface SalesForecastChange {
+Line 319: export interface SalesForecastEvent {
+Line 337: export interface SalesForecastAuditRecord {
+Line 357: export interface SalesForecastClock {
+Line 361: export interface SalesForecastIdGenerator {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\win-probability\index.ts
+--------------------------------------------------------
+Line 1: export * from "./WinProbabilityTypes";
+Line 2: export * from "./WinProbabilitySignals";
+Line 3: export * from "./WinProbabilityEngine";
+Line 4: export * from "./WinProbabilityRepository";
+Line 5: export * from "./WinProbabilityRuntime";
+Line 6: export * from "./WinProbabilityService";
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\win-probability\WinProbabilityEngine.ts
+--------------------------------------------------------
+Line 187: export class WinProbabilityEngine {
+Line 322: export const createWinProbabilityEngine = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\win-probability\WinProbabilityRepository.ts
+--------------------------------------------------------
+Line 8: export interface WinProbabilityRepository {
+Line 30: export class WinProbabilityRepositoryError extends Error {
+Line 47: export const assertWinProbabilityRepository = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\win-probability\WinProbabilityRuntime.ts
+--------------------------------------------------------
+Line 20: export interface WinProbabilityEventPublisher {
+Line 24: export interface WinProbabilityAuditWriter {
+Line 28: export interface WinProbabilityCache {
+Line 38: export interface WinProbabilityRuntimeDependencies {
+Line 65: export class WinProbabilityRuntime {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\win-probability\WinProbabilityService.ts
+--------------------------------------------------------
+Line 16: export interface WinProbabilityContextProvider {
+Line 24: export interface WinProbabilityServiceDependencies {
+Line 30: export class WinProbabilityService {
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\win-probability\WinProbabilitySignals.ts
+--------------------------------------------------------
+Line 7: export interface WinProbabilitySignalDefinition {
+Line 502: export const winProbabilitySignals:
+Line 516: export const createWinProbabilitySignals = (
+
+--------------------------------------------------------
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\win-probability\WinProbabilityTypes.ts
+--------------------------------------------------------
+Line 6: export type WinProbabilityBand =
+Line 12: export type WinProbabilityTrend =
+Line 17: export type WinProbabilitySignalKey =
+Line 29: export interface WinProbabilityContext {
+Line 65: export interface WinProbabilitySignalResult {
+Line 78: export interface WinProbabilityBreakdown {
+Line 87: export interface WinProbabilityExplanation {
+Line 94: export interface WinProbabilityPrediction {
+Line 114: export interface WinProbabilityHistoryEntry {
+Line 130: export interface WinProbabilityQuery {
+Line 136: export interface WinProbabilityHistoryQuery
+Line 142: export interface WinProbabilityRequest {
+Line 150: export interface WinProbabilityBatchRequest {
+Line 158: export interface WinProbabilityFailure {
+Line 164: export interface WinProbabilityBatchResult {
+Line 172: export interface WinProbabilityChange {
+Line 181: export interface WinProbabilityConfiguration {
+Line 192: export interface WinProbabilityEvent {
+Line 206: export interface WinProbabilityAuditRecord {
+Line 223: export interface WinProbabilityClock {
+Line 227: export interface WinProbabilityIdGenerator {
+
+========================================================
+IMPORTS REFERENCING AI REVENUE INTELLIGENCE
+========================================================
+FILE: C:\Users\hp\Desktop\kafu-frontend\features\executive\runtime\ExecutiveRevenueAdapter.ts
+LINE: 4
+TEXT: } from "../../../src/enterprise/ai-revenue-intelligence/revenue-intelligence-orchestrator/RevenueIntelligenceTypes";
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\features\executive\runtime\ExecutiveRevenueAdapter.ts
+LINE: 7
+TEXT: } from "../../../src/enterprise/ai-revenue-intelligence/revenue-intelligence-orchestrator/RevenueIntelligenceService";
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\features\executive\selectors\ai-insights.selector.ts
+LINE: 4
+TEXT: } from "../../../src/enterprise/ai-revenue-intelligence/revenue-intelligence-orchestrator/RevenueIntelligenceTypes";
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\features\executive\selectors\executive-kpi.selector.ts
+LINE: 4
+TEXT: } from "../../../src/enterprise/ai-revenue-intelligence/revenue-intelligence-orchestrator/RevenueIntelligenceTypes";
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\features\executive\selectors\executive-kpi.selector.ts
+LINE: 7
+TEXT: } from "../../../src/enterprise/ai-revenue-intelligence/sales-forecast/SalesForecastTypes";
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\features\executive\selectors\revenue-alert.selector.ts
+LINE: 4
+TEXT: } from "../../../src/enterprise/ai-revenue-intelligence/revenue-intelligence-orchestrator/RevenueIntelligenceTypes";
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\features\executive\selectors\revenue-dashboard.selector.ts
+LINE: 3
+TEXT: } from "../../../src/enterprise/ai-revenue-intelligence/revenue-intelligence-orchestrator/RevenueIntelligenceTypes";
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\deal-risk-detection\DealRiskRuntime.ts
+LINE: 687
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\executive-ai-insights\ExecutiveAIInsightRuntime.ts
+LINE: 785
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\next-best-action\NextBestActionRuntime.ts
+LINE: 722
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\opportunity-scoring\OpportunityScoringRuntime.ts
+LINE: 363
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\pipeline-health\PipelineHealthRuntime.ts
+LINE: 814
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\predictive-risk-detection\PredictiveRiskRuntime.ts
+LINE: 830
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\RevenueIntelligenceRuntime.ts
+LINE: 977
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\RevenueIntelligenceRuntime.ts
+LINE: 992
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-intelligence-orchestrator\RevenueIntelligenceRuntime.ts
+LINE: 1007
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\revenue-prediction\RevenuePredictionRuntime.ts
+LINE: 743
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-coaching\SalesCoachingRuntime.ts
+LINE: 726
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\sales-forecast\SalesForecastRuntime.ts
+LINE: 730
+TEXT: "ai-revenue-intelligence",
+
+FILE: C:\Users\hp\Desktop\kafu-frontend\src\enterprise\ai-revenue-intelligence\win-probability\WinProbabilityRuntime.ts
+LINE: 368
+TEXT: "ai-revenue-intelligence",
+
+
+========================================================
+SUMMARY
+========================================================
+Directories: 12
+TypeScript files: 83
+Existing index.ts files: 10
+========================================================

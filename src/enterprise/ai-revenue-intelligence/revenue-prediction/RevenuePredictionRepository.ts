@@ -1,5 +1,5 @@
 ﻿import type {
-  RevenuePrediction,
+  RevenuePredictionForecast,
   RevenuePredictionHistoryEntry,
   RevenuePredictionHistoryQuery,
   RevenuePredictionQuery,
@@ -8,7 +8,9 @@
 export interface RevenuePredictionRepository {
   findLatest(
     query: RevenuePredictionQuery,
-  ): Promise<RevenuePrediction | null>;
+  ): Promise<
+    RevenuePredictionForecast | null
+  >;
 
   findHistory(
     query: RevenuePredictionHistoryQuery,
@@ -16,15 +18,15 @@ export interface RevenuePredictionRepository {
     readonly RevenuePredictionHistoryEntry[]
   >;
 
-  save(
-    prediction: RevenuePrediction,
-  ): Promise<RevenuePrediction>;
+  saveForecast(
+    forecast: RevenuePredictionForecast,
+  ): Promise<RevenuePredictionForecast>;
 
   appendHistory(
     entry: RevenuePredictionHistoryEntry,
   ): Promise<RevenuePredictionHistoryEntry>;
 
-  deleteForOpportunity(
+  deleteForecast(
     query: RevenuePredictionQuery,
   ): Promise<void>;
 }
@@ -43,13 +45,15 @@ export class RevenuePredictionRepositoryError
 
     this.name =
       "RevenuePredictionRepositoryError";
+
     this.code = code;
     this.cause = cause;
   }
 }
 
 export const assertRevenuePredictionRepository = (
-  repository: RevenuePredictionRepository,
+  repository:
+    RevenuePredictionRepository,
 ): RevenuePredictionRepository => {
   if (!repository) {
     throw new RevenuePredictionRepositoryError(

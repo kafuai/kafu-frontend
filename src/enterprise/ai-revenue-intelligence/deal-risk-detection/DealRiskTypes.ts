@@ -3,7 +3,7 @@
   OpportunityScore,
 } from "../opportunity-scoring";
 import type {
-  RevenuePrediction,
+  RevenuePredictionForecast,
   RevenuePredictionRisk,
 } from "../revenue-prediction";
 import type {
@@ -97,7 +97,7 @@ export interface DealRiskContext {
 
   opportunityScore: OpportunityScore;
   winProbability: WinProbabilityPrediction;
-  revenuePrediction?: RevenuePrediction | null;
+  revenuePrediction?: RevenuePredictionForecast | null;
 
   previousRiskScore?: number | null;
   previousRiskLevel?: DealRiskLevel | null;
@@ -330,3 +330,4 @@ export interface DealRiskClock {
 export interface DealRiskIdGenerator {
   next(): string;
 }
+

@@ -1,8 +1,34 @@
 ﻿import type {
   RevenuePredictionContext,
-  RevenuePredictionSignalKey,
-  RevenuePredictionSignalResult,
+  RevenuePredictionOpportunityInput,
+  RevenuePredictionRiskLevel,
 } from "./RevenuePredictionTypes";
+
+export type RevenuePredictionSignalKey =
+  | "pipelineValue"
+  | "probabilityQuality"
+  | "stageMaturity"
+  | "closeDateReliability"
+  | "activityMomentum"
+  | "historicalPerformance"
+  | "riskExposure"
+  | "pipelineCommitment"
+  | "targetCoverage"
+  | "dataCompleteness";
+
+export interface RevenuePredictionSignalResult {
+  key: RevenuePredictionSignalKey;
+  label: string;
+
+  normalizedValue: number;
+  coefficient: number;
+  contribution: number;
+  confidence: number;
+
+  available: boolean;
+  reason: string;
+  evidence: readonly string[];
+}
 
 export interface RevenuePredictionSignalDefinition {
   key: RevenuePredictionSignalKey;
@@ -20,7 +46,17 @@ const clamp = (
   minimum = 0,
   maximum = 100,
 ): number =>
-  Math.min(maximum, Math.max(minimum, value));
+  Math.min(
+    maximum,
+    Math.max(minimum, value),
+  );
+
+const round = (
+  value: number,
+): number =>
+  Math.round(
+    (value + Number.EPSILON) * 100,
+  ) / 100;
 
 const normalizePercent = (
   value: number | null | undefined,
@@ -33,7 +69,25 @@ const normalizePercent = (
     return null;
   }
 
-  return clamp(value <= 1 ? value * 100 : value);
+  return clamp(
+    value <= 1
+      ? value * 100
+      : value,
+  );
+};
+
+const average = (
+  values: readonly number[],
+): number | null => {
+  if (values.length === 0) {
+    return null;
+  }
+
+  return values.reduce(
+    (total, value) =>
+      total + value,
+    0,
+  ) / values.length;
 };
 
 const createUnavailableSignal = (
@@ -44,10 +98,12 @@ const createUnavailableSignal = (
 ): RevenuePredictionSignalResult => ({
   key,
   label,
+
   normalizedValue: 0,
   coefficient,
   contribution: 0,
   confidence: 0,
+
   available: false,
   reason,
   evidence: [],
@@ -62,94 +118,178 @@ const createSignal = (
   reason: string,
   evidence: readonly string[],
 ): RevenuePredictionSignalResult => {
-  const value = clamp(normalizedValue);
-  const centeredValue = (value - 50) / 50;
+  const value =
+    clamp(normalizedValue);
+
+  const centeredValue =
+    (value - 50) / 50;
 
   return {
     key,
     label,
-    normalizedValue: value,
+
+    normalizedValue:
+      round(value),
+
     coefficient,
-    contribution: centeredValue * coefficient,
-    confidence: clamp(confidence),
+
+    contribution:
+      round(
+        centeredValue * coefficient,
+      ),
+
+    confidence:
+      round(
+        clamp(confidence),
+      ),
+
     available: true,
     reason,
     evidence,
   };
 };
 
-const dealValueSignal: RevenuePredictionSignalDefinition = {
-  key: "dealValue",
-  label: "Deal Value Integrity",
-  defaultCoefficient: 0.55,
+const getOpenOpportunities = (
+  context: RevenuePredictionContext,
+): readonly RevenuePredictionOpportunityInput[] =>
+  context.opportunities.filter(
+    (opportunity) =>
+      opportunity.isOpen,
+  );
 
-  evaluate(context, coefficient) {
-    if (
-      !Number.isFinite(context.dealValue)
-      || context.dealValue <= 0
-    ) {
-      return createUnavailableSignal(
-        this.key,
-        this.label,
-        coefficient,
-        "A valid positive opportunity value is unavailable.",
-      );
-    }
+const resolveOpportunityProbability = (
+  opportunity: RevenuePredictionOpportunityInput,
+): number | null =>
+  normalizePercent(
+    opportunity.winProbability
+    ?? opportunity.stageProbability
+    ?? opportunity.historicalWinRate,
+  );
 
-    return createSignal(
-      this.key,
-      this.label,
-      100,
-      coefficient,
-      100,
-      "The opportunity has a valid commercial value.",
-      [
-        `Deal value: ${context.dealValue}`,
-        `Currency: ${context.currency}`,
-      ],
-    );
-  },
+const resolveRiskLevel = (
+  opportunity: RevenuePredictionOpportunityInput,
+): RevenuePredictionRiskLevel => {
+  const risk =
+    normalizePercent(
+      opportunity.riskScore,
+    ) ?? 30;
+
+  if (risk >= 85) {
+    return "critical";
+  }
+
+  if (risk >= 65) {
+    return "high";
+  }
+
+  if (risk >= 40) {
+    return "medium";
+  }
+
+  return "low";
 };
 
-const winProbabilitySignal:
+const pipelineValueSignal:
   RevenuePredictionSignalDefinition = {
-    key: "winProbability",
-    label: "Win Probability",
-    defaultCoefficient: 1.4,
+    key: "pipelineValue",
+    label: "Pipeline Value Integrity",
+    defaultCoefficient: 0.7,
 
     evaluate(context, coefficient) {
+      const open =
+        getOpenOpportunities(context);
+
+      const totalValue =
+        open.reduce(
+          (total, opportunity) =>
+            total
+            + Math.max(
+              0,
+              opportunity.amount,
+            ),
+          0,
+        );
+
+      if (open.length === 0) {
+        return createUnavailableSignal(
+          this.key,
+          this.label,
+          coefficient,
+          "No open opportunities are available for the forecast period.",
+        );
+      }
+
+      const validCount =
+        open.filter(
+          (opportunity) =>
+            Number.isFinite(
+              opportunity.amount,
+            )
+            && opportunity.amount > 0,
+        ).length;
+
       return createSignal(
         this.key,
         this.label,
-        context.winProbability.probability,
+        validCount / open.length * 100,
         coefficient,
-        context.winProbability.confidence,
-        "Predicted conversion probability is the primary revenue-weighting signal.",
+        100,
+        "The signal measures commercial-value completeness across the open pipeline.",
         [
-          `Win probability: ${context.winProbability.probability}`,
-          `Probability trend: ${context.winProbability.trend}`,
+          `Open opportunities: ${open.length}`,
+          `Valid-value opportunities: ${validCount}`,
+          `Total open pipeline: ${round(totalValue)}`,
         ],
       );
     },
   };
 
-const opportunityQualitySignal:
+const probabilityQualitySignal:
   RevenuePredictionSignalDefinition = {
-    key: "opportunityQuality",
-    label: "Opportunity Quality",
-    defaultCoefficient: 1,
+    key: "probabilityQuality",
+    label: "Probability Quality",
+    defaultCoefficient: 1.25,
 
     evaluate(context, coefficient) {
+      const probabilities =
+        getOpenOpportunities(context)
+          .map(
+            resolveOpportunityProbability,
+          )
+          .filter(
+            (value): value is number =>
+              value !== null,
+          );
+
+      const probabilityAverage =
+        average(probabilities);
+
+      if (probabilityAverage === null) {
+        return createUnavailableSignal(
+          this.key,
+          this.label,
+          coefficient,
+          "No calibrated opportunity probability is available.",
+        );
+      }
+
+      const coverage =
+        context.opportunities.length > 0
+          ? probabilities.length
+            / context.opportunities.length
+            * 100
+          : 0;
+
       return createSignal(
         this.key,
         this.label,
-        context.opportunityScore.score,
+        probabilityAverage,
         coefficient,
-        context.opportunityScore.confidence,
-        "Opportunity quality influences expected revenue realization.",
+        coverage,
+        "Average calibrated probability represents the expected conversion quality of the pipeline.",
         [
-          `Opportunity score: ${context.opportunityScore.score}`,
-          `Opportunity risk: ${context.opportunityScore.riskLevel}`,
+          `Average probability: ${round(probabilityAverage)}%`,
+          `Probability coverage: ${round(coverage)}%`,
         ],
       );
     },
@@ -162,29 +302,46 @@ const stageMaturitySignal:
     defaultCoefficient: 0.85,
 
     evaluate(context, coefficient) {
-      const stageProbability = normalizePercent(
-        context.stageProbability,
-      );
+      const probabilities =
+        getOpenOpportunities(context)
+          .map(
+            (opportunity) =>
+              normalizePercent(
+                opportunity.stageProbability,
+              ),
+          )
+          .filter(
+            (value): value is number =>
+              value !== null,
+          );
 
-      if (stageProbability === null) {
+      const maturity =
+        average(probabilities);
+
+      if (maturity === null) {
         return createUnavailableSignal(
           this.key,
           this.label,
           coefficient,
-          "Calibrated pipeline-stage probability is unavailable.",
+          "Pipeline stage probabilities are unavailable.",
         );
       }
 
       return createSignal(
         this.key,
         this.label,
-        stageProbability,
+        maturity,
         coefficient,
-        85,
-        "Pipeline maturity adjusts revenue realization expectations.",
+        probabilities.length
+          / Math.max(
+            1,
+            context.opportunities.length,
+          )
+          * 100,
+        "Pipeline stage maturity influences expected revenue realization.",
         [
-          `Stage: ${context.stage ?? "Unknown"}`,
-          `Stage probability: ${stageProbability}`,
+          `Average stage probability: ${round(maturity)}%`,
+          `Evaluated opportunities: ${probabilities.length}`,
         ],
       );
     },
@@ -194,128 +351,66 @@ const closeDateReliabilitySignal:
   RevenuePredictionSignalDefinition = {
     key: "closeDateReliability",
     label: "Close-Date Reliability",
-    defaultCoefficient: 0.75,
-
-    evaluate(context, coefficient) {
-      if (!context.expectedCloseDate) {
-        return createUnavailableSignal(
-          this.key,
-          this.label,
-          coefficient,
-          "Expected close date is unavailable.",
-        );
-      }
-
-      const closeDate = new Date(context.expectedCloseDate);
-
-      if (Number.isNaN(closeDate.getTime())) {
-        return createUnavailableSignal(
-          this.key,
-          this.label,
-          coefficient,
-          "Expected close date is invalid.",
-        );
-      }
-
-      const changeCount =
-        context.closeDateChangeCount ?? 0;
-
-      const value = clamp(
-        100 - changeCount * 18,
-      );
-
-      return createSignal(
-        this.key,
-        this.label,
-        value,
-        coefficient,
-        75,
-        changeCount <= 1
-          ? "The expected close date is stable."
-          : "Repeated close-date changes are reducing forecast reliability.",
-        [
-          `Expected close date: ${closeDate.toISOString()}`,
-          `Close-date changes: ${changeCount}`,
-        ],
-      );
-    },
-  };
-
-const forecastConfidenceSignal:
-  RevenuePredictionSignalDefinition = {
-    key: "forecastConfidence",
-    label: "Forecast Confidence",
-    defaultCoefficient: 0.85,
-
-    evaluate(context, coefficient) {
-      const confidence = normalizePercent(
-        context.forecastConfidence,
-      );
-
-      if (confidence === null) {
-        return createUnavailableSignal(
-          this.key,
-          this.label,
-          coefficient,
-          "Forecast-confidence evidence is unavailable.",
-        );
-      }
-
-      return createSignal(
-        this.key,
-        this.label,
-        confidence,
-        coefficient,
-        85,
-        confidence >= 70
-          ? "Commercial evidence supports the expected revenue outcome."
-          : "Forecast evidence is currently weak.",
-        [`Forecast confidence: ${confidence}`],
-      );
-    },
-  };
-
-const engagementMomentumSignal:
-  RevenuePredictionSignalDefinition = {
-    key: "engagementMomentum",
-    label: "Engagement Momentum",
     defaultCoefficient: 0.8,
 
     evaluate(context, coefficient) {
-      const engagement = normalizePercent(
-        context.engagementScore,
-      );
+      const open =
+        getOpenOpportunities(context);
 
-      if (engagement === null) {
+      if (open.length === 0) {
         return createUnavailableSignal(
           this.key,
           this.label,
           coefficient,
-          "Customer engagement evidence is unavailable.",
+          "No open opportunities are available.",
         );
       }
 
-      const adjustment =
-        context.engagementTrend === "improving"
-          ? 10
-          : context.engagementTrend === "declining"
-            ? -15
-            : 0;
+      const periodStart =
+        new Date(context.periodStart);
 
-      const value = clamp(engagement + adjustment);
+      const periodEnd =
+        new Date(context.periodEnd);
+
+      const validCloseDates =
+        open.filter(
+          (opportunity) => {
+            if (!opportunity.expectedCloseDate) {
+              return false;
+            }
+
+            const closeDate =
+              new Date(
+                opportunity.expectedCloseDate,
+              );
+
+            return (
+              !Number.isNaN(
+                closeDate.getTime(),
+              )
+              && closeDate >= periodStart
+              && closeDate <= periodEnd
+            );
+          },
+        );
+
+      const value =
+        validCloseDates.length
+        / open.length
+        * 100;
 
       return createSignal(
         this.key,
         this.label,
         value,
         coefficient,
-        80,
-        context.engagementTrend === "declining"
-          ? "Declining customer engagement is reducing expected revenue."
-          : "Customer engagement supports revenue realization.",
+        90,
+        value >= 75
+          ? "Most open opportunities have credible close dates within the forecast period."
+          : "Close-date gaps reduce revenue forecast reliability.",
         [
-          `Engagement score: ${engagement}`,
-          `Engagement trend: ${context.engagementTrend ?? "stable"}`,
+          `Open opportunities: ${open.length}`,
+          `Valid in-period close dates: ${validCloseDates.length}`,
         ],
       );
     },
@@ -325,60 +420,63 @@ const activityMomentumSignal:
   RevenuePredictionSignalDefinition = {
     key: "activityMomentum",
     label: "Activity Momentum",
-    defaultCoefficient: 0.65,
+    defaultCoefficient: 0.75,
 
     evaluate(context, coefficient) {
-      const daysSinceLastActivity =
-        context.daysSinceLastActivity;
+      const recencyScores =
+        getOpenOpportunities(context)
+          .map(
+            (opportunity) =>
+              opportunity.daysSinceLastActivity,
+          )
+          .filter(
+            (value): value is number =>
+              value !== undefined
+              && Number.isFinite(value)
+              && value >= 0,
+          )
+          .map(
+            (days) =>
+              days <= 3
+                ? 100
+                : days <= 7
+                  ? 85
+                  : days <= 14
+                    ? 65
+                    : days <= 30
+                      ? 35
+                      : 10,
+          );
 
-      if (
-        daysSinceLastActivity === null
-        || daysSinceLastActivity === undefined
-        || !Number.isFinite(daysSinceLastActivity)
-        || daysSinceLastActivity < 0
-      ) {
+      const activityScore =
+        average(recencyScores);
+
+      if (activityScore === null) {
         return createUnavailableSignal(
           this.key,
           this.label,
           coefficient,
-          "Recent activity evidence is unavailable.",
+          "Opportunity activity evidence is unavailable.",
         );
       }
-
-      const recencyScore =
-        daysSinceLastActivity <= 2
-          ? 100
-          : daysSinceLastActivity <= 7
-            ? 80
-            : daysSinceLastActivity <= 14
-              ? 60
-              : daysSinceLastActivity <= 30
-                ? 35
-                : 10;
-
-      const activityCount =
-        context.activityCount30Days ?? 0;
-
-      const frequencyScore = clamp(
-        activityCount * 10,
-      );
-
-      const value =
-        recencyScore * 0.65
-        + frequencyScore * 0.35;
 
       return createSignal(
         this.key,
         this.label,
-        value,
+        activityScore,
         coefficient,
-        80,
-        daysSinceLastActivity <= 7
-          ? "Recent sales activity supports revenue conversion."
-          : "Opportunity inactivity is reducing expected revenue.",
+        recencyScores.length
+          / Math.max(
+            1,
+            context.opportunities.length,
+          )
+          * 100,
+        activityScore >= 65
+          ? "Recent pipeline activity supports revenue realization."
+          : "Pipeline inactivity is weakening forecast confidence.",
         [
-          `Days since last activity: ${daysSinceLastActivity}`,
-          `Activities in 30 days: ${activityCount}`,
+          `Activity score: ${round(activityScore)}`,
+          `Evaluated opportunities: ${recencyScores.length}`,
         ],
       );
     },
@@ -391,97 +489,332 @@ const historicalPerformanceSignal:
     defaultCoefficient: 0.65,
 
     evaluate(context, coefficient) {
-      const historicalWinRate = normalizePercent(
-        context.historicalWinRate,
-      );
+      const actuals =
+        context.historicalActuals ?? [];
 
-      if (historicalWinRate === null) {
+      if (actuals.length === 0) {
         return createUnavailableSignal(
           this.key,
           this.label,
           coefficient,
-          "Historical win-rate evidence is unavailable.",
+          "Historical revenue actuals are unavailable.",
+        );
+      }
+
+      const attainmentValues =
+        actuals
+          .filter(
+            (entry) =>
+              entry.targetRevenue !== undefined
+              && entry.targetRevenue > 0,
+          )
+          .map(
+            (entry) =>
+              clamp(
+                entry.actualRevenue
+                / (entry.targetRevenue ?? 1)
+                * 100,
+              ),
+          );
+
+      const attainment =
+        average(attainmentValues);
+
+      if (attainment === null) {
+        return createUnavailableSignal(
+          this.key,
+          this.label,
+          coefficient,
+          "Historical targets are unavailable for attainment calibration.",
         );
       }
 
       return createSignal(
         this.key,
         this.label,
-        historicalWinRate,
+        attainment,
         coefficient,
-        75,
-        historicalWinRate >= 60
-          ? "Comparable historical opportunities support revenue conversion."
-          : "Comparable historical performance indicates lower realization.",
-        [`Historical win rate: ${historicalWinRate}`],
+        Math.min(
+          100,
+          actuals.length * 20,
+        ),
+        attainment >= 80
+          ? "Historical revenue attainment supports the current forecast."
+          : "Historical performance indicates lower revenue realization.",
+        [
+          `Historical periods: ${actuals.length}`,
+          `Average attainment: ${round(attainment)}%`,
+        ],
       );
     },
   };
 
-const riskAdjustmentSignal:
+const riskExposureSignal:
   RevenuePredictionSignalDefinition = {
-    key: "riskAdjustment",
-    label: "Risk Adjustment",
+    key: "riskExposure",
+    label: "Risk Exposure",
     defaultCoefficient: 1,
 
     evaluate(context, coefficient) {
-      const predictiveRisk = normalizePercent(
-        context.predictiveRiskScore,
-      );
+      const open =
+        getOpenOpportunities(context);
 
-      if (predictiveRisk !== null) {
-        return createSignal(
+      if (open.length === 0) {
+        return createUnavailableSignal(
           this.key,
           this.label,
-          100 - predictiveRisk,
           coefficient,
-          85,
-          predictiveRisk <= 30
-            ? "Predictive risk remains controlled."
-            : "Predictive risk is reducing expected revenue.",
-          [`Predictive risk: ${predictiveRisk}`],
+          "No open opportunities are available for risk analysis.",
         );
       }
 
-      const riskLevel =
-        context.currentRiskLevel
-        ?? context.opportunityScore.riskLevel;
+      const riskScores =
+        open.map(
+          (opportunity) =>
+            normalizePercent(
+              opportunity.riskScore,
+            ) ?? 30,
+        );
 
-      const value =
-        riskLevel === "low"
-          ? 90
-          : riskLevel === "moderate"
-            ? 65
-            : riskLevel === "high"
-              ? 35
-              : 10;
+      const averageRisk =
+        average(riskScores) ?? 0;
+
+      const criticalCount =
+        open.filter(
+          (opportunity) =>
+            resolveRiskLevel(opportunity)
+              === "critical",
+        ).length;
 
       return createSignal(
         this.key,
         this.label,
-        value,
+        100 - averageRisk,
         coefficient,
-        70,
-        riskLevel === "low"
-          ? "Opportunity risk is controlled."
-          : "Opportunity risk is reducing revenue realization.",
-        [`Risk level: ${riskLevel}`],
+        riskScores.length
+          / open.length
+          * 100,
+        averageRisk <= 35
+          ? "Aggregate pipeline risk remains controlled."
+          : "Risk exposure is reducing expected revenue realization.",
+        [
+          `Average risk: ${round(averageRisk)}%`,
+          `Critical-risk opportunities: ${criticalCount}`,
+        ],
+      );
+    },
+  };
+
+const pipelineCommitmentSignal:
+  RevenuePredictionSignalDefinition = {
+    key: "pipelineCommitment",
+    label: "Pipeline Commitment",
+    defaultCoefficient: 0.9,
+
+    evaluate(context, coefficient) {
+      const open =
+        getOpenOpportunities(context);
+
+      if (open.length === 0) {
+        return createUnavailableSignal(
+          this.key,
+          this.label,
+          coefficient,
+          "No open opportunities are available.",
+        );
+      }
+
+      const committedValue =
+        open
+          .filter(
+            (opportunity) =>
+              opportunity.committed
+              || opportunity.pipelineCategory
+                === "commit",
+          )
+          .reduce(
+            (total, opportunity) =>
+              total
+              + Math.max(
+                0,
+                opportunity.amount,
+              ),
+            0,
+          );
+
+      const totalValue =
+        open.reduce(
+          (total, opportunity) =>
+            total
+            + Math.max(
+              0,
+              opportunity.amount,
+            ),
+          0,
+        );
+
+      const commitment =
+        totalValue > 0
+          ? committedValue / totalValue * 100
+          : 0;
+
+      return createSignal(
+        this.key,
+        this.label,
+        commitment,
+        coefficient,
+        90,
+        commitment >= 50
+          ? "Committed opportunities materially support the base forecast."
+          : "The forecast depends heavily on uncommitted pipeline.",
+        [
+          `Committed pipeline: ${round(committedValue)}`,
+          `Total open pipeline: ${round(totalValue)}`,
+        ],
+      );
+    },
+  };
+
+const targetCoverageSignal:
+  RevenuePredictionSignalDefinition = {
+    key: "targetCoverage",
+    label: "Target Coverage",
+    defaultCoefficient: 1,
+
+    evaluate(context, coefficient) {
+      if (
+        context.revenueTarget === undefined
+        || context.revenueTarget <= 0
+      ) {
+        return createUnavailableSignal(
+          this.key,
+          this.label,
+          coefficient,
+          "A positive revenue target is not configured.",
+        );
+      }
+
+      const weightedPipeline =
+        getOpenOpportunities(context)
+          .reduce(
+            (total, opportunity) => {
+              const probability =
+                resolveOpportunityProbability(
+                  opportunity,
+                ) ?? 0;
+
+              return total
+                + Math.max(
+                  0,
+                  opportunity.amount,
+                )
+                * probability
+                / 100;
+            },
+            0,
+          );
+
+      const coverage =
+        weightedPipeline
+        / context.revenueTarget
+        * 100;
+
+      return createSignal(
+        this.key,
+        this.label,
+        coverage,
+        coefficient,
+        90,
+        coverage >= 100
+          ? "Weighted pipeline covers the configured revenue target."
+          : "Weighted pipeline remains below the configured revenue target.",
+        [
+          `Weighted pipeline: ${round(weightedPipeline)}`,
+          `Revenue target: ${round(context.revenueTarget)}`,
+          `Coverage: ${round(coverage)}%`,
+        ],
+      );
+    },
+  };
+
+const dataCompletenessSignal:
+  RevenuePredictionSignalDefinition = {
+    key: "dataCompleteness",
+    label: "Forecast Data Completeness",
+    defaultCoefficient: 0.7,
+
+    evaluate(context, coefficient) {
+      const opportunities =
+        context.opportunities;
+
+      if (opportunities.length === 0) {
+        return createUnavailableSignal(
+          this.key,
+          this.label,
+          coefficient,
+          "No opportunities are available for completeness analysis.",
+        );
+      }
+
+      const scores =
+        opportunities.map(
+          (opportunity) => {
+            const fields = [
+              opportunity.amount > 0,
+              Boolean(opportunity.stage),
+              opportunity.stageProbability
+                !== undefined,
+              opportunity.winProbability
+                !== undefined,
+              Boolean(
+                opportunity.expectedCloseDate,
+              ),
+              opportunity.daysSinceLastActivity
+                !== undefined,
+              opportunity.riskScore
+                !== undefined,
+              opportunity.momentumScore
+                !== undefined,
+            ];
+
+            return fields.filter(Boolean).length
+              / fields.length
+              * 100;
+          },
+        );
+
+      const completeness =
+        average(scores) ?? 0;
+
+      return createSignal(
+        this.key,
+        this.label,
+        completeness,
+        coefficient,
+        100,
+        completeness >= 75
+          ? "Forecast source data is sufficiently complete."
+          : "Missing opportunity evidence reduces forecast reliability.",
+        [
+          `Average completeness: ${round(completeness)}%`,
+          `Evaluated opportunities: ${opportunities.length}`,
+        ],
       );
     },
   };
 
 export const revenuePredictionSignals:
   readonly RevenuePredictionSignalDefinition[] = [
-    dealValueSignal,
-    winProbabilitySignal,
-    opportunityQualitySignal,
+    pipelineValueSignal,
+    probabilityQualitySignal,
     stageMaturitySignal,
     closeDateReliabilitySignal,
-    forecastConfidenceSignal,
-    engagementMomentumSignal,
     activityMomentumSignal,
     historicalPerformanceSignal,
-    riskAdjustmentSignal,
+    riskExposureSignal,
+    pipelineCommitmentSignal,
+    targetCoverageSignal,
+    dataCompletenessSignal,
   ];
 
 export const createRevenuePredictionSignals = (
@@ -489,9 +822,28 @@ export const createRevenuePredictionSignals = (
     Record<RevenuePredictionSignalKey, number>
   > = {},
 ): readonly RevenuePredictionSignalDefinition[] =>
-  revenuePredictionSignals.map((signal) => ({
-    ...signal,
-    defaultCoefficient:
-      coefficientOverrides[signal.key]
-      ?? signal.defaultCoefficient,
-  }));
+  revenuePredictionSignals.map(
+    (signal) => ({
+      ...signal,
+
+      defaultCoefficient:
+        coefficientOverrides[signal.key]
+        ?? signal.defaultCoefficient,
+    }),
+  );
+
+export const evaluateRevenuePredictionSignals = (
+  context: RevenuePredictionContext,
+  coefficientOverrides: Partial<
+    Record<RevenuePredictionSignalKey, number>
+  > = {},
+): readonly RevenuePredictionSignalResult[] =>
+  createRevenuePredictionSignals(
+    coefficientOverrides,
+  ).map(
+    (signal) =>
+      signal.evaluate(
+        context,
+        signal.defaultCoefficient,
+      ),
+  );

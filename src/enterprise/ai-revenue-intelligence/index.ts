@@ -7,3 +7,6 @@ export * from "./next-best-action";
 export * from "./sales-forecast";
 export * from "./revenue-intelligence-orchestrator";
 export * from "./sales-coaching";
+export * from "./executive-ai-insights";
+export * from "./predictive-risk-detection";
+export * from "./ai-recommendation-runtime";

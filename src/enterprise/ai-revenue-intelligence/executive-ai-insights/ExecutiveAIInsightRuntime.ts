@@ -1,35 +1,35 @@
 ﻿import {
-  PipelineHealthEngine,
-} from "./PipelineHealthEngine";
+  ExecutiveAIInsightEngine,
+} from "./ExecutiveAIInsightEngine";
 import {
-  assertPipelineHealthRepository,
-} from "./PipelineHealthRepository";
+  assertExecutiveAIInsightRepository,
+} from "./ExecutiveAIInsightRepository";
 import type {
-  PipelineHealthRepository,
-} from "./PipelineHealthRepository";
+  ExecutiveAIInsightRepository,
+} from "./ExecutiveAIInsightRepository";
 import type {
-  PipelineHealthAssessment,
-  PipelineHealthAuditRecord,
-  PipelineHealthClock,
-  PipelineHealthConfiguration,
-  PipelineHealthEvent,
-  PipelineHealthHistoryEntry,
-  PipelineHealthIdGenerator,
-  PipelineHealthQuery,
-  PipelineHealthRequest,
-} from "./PipelineHealthTypes";
+  ExecutiveAIInsightAuditRecord,
+  ExecutiveAIInsightBriefing,
+  ExecutiveAIInsightClock,
+  ExecutiveAIInsightConfiguration,
+  ExecutiveAIInsightEvent,
+  ExecutiveAIInsightHistoryEntry,
+  ExecutiveAIInsightIdGenerator,
+  ExecutiveAIInsightQuery,
+  ExecutiveAIInsightRequest,
+} from "./ExecutiveAIInsightTypes";
 
-export interface PipelineHealthCache {
+export interface ExecutiveAIInsightCache {
   get(
     key: string,
   ): Promise<
-    PipelineHealthAssessment | null
+    ExecutiveAIInsightBriefing | null
   >;
 
   set(
     key: string,
-    assessment:
-      PipelineHealthAssessment,
+    briefing:
+      ExecutiveAIInsightBriefing,
     ttlMs: number,
   ): Promise<void>;
 
@@ -38,116 +38,110 @@ export interface PipelineHealthCache {
   ): Promise<void>;
 }
 
-export interface PipelineHealthEventPublisher {
+export interface ExecutiveAIInsightEventPublisher {
   publish(
-    event: PipelineHealthEvent,
+    event:
+      ExecutiveAIInsightEvent,
   ): Promise<void>;
 }
 
-export interface PipelineHealthAuditWriter {
+export interface ExecutiveAIInsightAuditWriter {
   write(
     record:
-      PipelineHealthAuditRecord,
+      ExecutiveAIInsightAuditRecord,
   ): Promise<void>;
 }
 
-export interface PipelineHealthRuntimeDependencies {
+export interface ExecutiveAIInsightRuntimeDependencies {
   engine:
-    PipelineHealthEngine;
+    ExecutiveAIInsightEngine;
 
   repository:
-    PipelineHealthRepository;
+    ExecutiveAIInsightRepository;
 
   cache?:
-    PipelineHealthCache;
+    ExecutiveAIInsightCache;
 
   eventPublisher?:
-    PipelineHealthEventPublisher;
+    ExecutiveAIInsightEventPublisher;
 
   auditWriter?:
-    PipelineHealthAuditWriter;
+    ExecutiveAIInsightAuditWriter;
 
   clock?:
-    PipelineHealthClock;
+    ExecutiveAIInsightClock;
 
   idGenerator?:
-    PipelineHealthIdGenerator;
+    ExecutiveAIInsightIdGenerator;
 
   configuration?:
-    Partial<PipelineHealthConfiguration>;
+    Partial<ExecutiveAIInsightConfiguration>;
 }
 
 const DEFAULT_CONFIGURATION:
-  PipelineHealthConfiguration = {
+  ExecutiveAIInsightConfiguration = {
     modelVersion: "5.0.0",
-    assessmentTtlHours: 12,
+    briefingTtlHours: 12,
 
-    excellentThreshold: 85,
-    healthyThreshold: 70,
-    watchThreshold: 55,
-    atRiskThreshold: 40,
+    maximumInsights: 16,
+    maximumRecommendations: 12,
+    maximumBoardHighlights: 8,
 
-    minimumCoverageRatio: 1,
-    healthyCoverageRatio: 2.5,
-    excellentCoverageRatio: 4,
+    criticalRevenueGapPercentage: 30,
+    highRevenueGapPercentage: 15,
 
-    staleActivityDays: 14,
-    criticalActivityDays: 30,
+    criticalPipelineHealthScore: 40,
+    highPipelineHealthScore: 55,
 
-    slowStageDays: 21,
-    criticalStageDays: 45,
-
-    materialScoreChange: 10,
-
-    concentrationRiskPercentage: 40,
-    criticalConcentrationPercentage: 65,
+    materialForecastChangePercentage: 10,
+    materialPipelineScoreChange: 10,
   };
 
 const systemClock:
-  PipelineHealthClock = {
+  ExecutiveAIInsightClock = {
     now: () => new Date(),
   };
 
 const systemIdGenerator:
-  PipelineHealthIdGenerator = {
+  ExecutiveAIInsightIdGenerator = {
     next: () =>
       globalThis.crypto.randomUUID(),
   };
 
-export class PipelineHealthRuntime {
+export class ExecutiveAIInsightRuntime {
   private readonly engine:
-    PipelineHealthEngine;
+    ExecutiveAIInsightEngine;
 
   private readonly repository:
-    PipelineHealthRepository;
+    ExecutiveAIInsightRepository;
 
   private readonly cache?:
-    PipelineHealthCache;
+    ExecutiveAIInsightCache;
 
   private readonly eventPublisher?:
-    PipelineHealthEventPublisher;
+    ExecutiveAIInsightEventPublisher;
 
   private readonly auditWriter?:
-    PipelineHealthAuditWriter;
+    ExecutiveAIInsightAuditWriter;
 
   private readonly clock:
-    PipelineHealthClock;
+    ExecutiveAIInsightClock;
 
   private readonly idGenerator:
-    PipelineHealthIdGenerator;
+    ExecutiveAIInsightIdGenerator;
 
   private readonly configuration:
-    PipelineHealthConfiguration;
+    ExecutiveAIInsightConfiguration;
 
   constructor(
     dependencies:
-      PipelineHealthRuntimeDependencies,
+      ExecutiveAIInsightRuntimeDependencies,
   ) {
     this.engine =
       dependencies.engine;
 
     this.repository =
-      assertPipelineHealthRepository(
+      assertExecutiveAIInsightRepository(
         dependencies.repository,
       );
 
@@ -175,9 +169,10 @@ export class PipelineHealthRuntime {
   }
 
   async getLatest(
-    query: PipelineHealthQuery,
+    query:
+      ExecutiveAIInsightQuery,
   ): Promise<
-    PipelineHealthAssessment | null
+    ExecutiveAIInsightBriefing | null
   > {
     const cacheKey =
       this.createCacheKey(query);
@@ -195,21 +190,20 @@ export class PipelineHealthRuntime {
         workspaceId:
           query.workspaceId,
 
-        action:
-          "cache-hit",
+        action: "cache-hit",
 
         occurredAt:
           this.clock.now().toISOString(),
 
         details: {
-          assessmentId:
+          briefingId:
             cached.id,
 
-          healthScore:
-            cached.healthScore,
+          executiveScore:
+            cached.executiveScore,
 
-          grade:
-            cached.grade,
+          criticalInsightCount:
+            cached.criticalInsightCount,
         },
       });
 
@@ -223,8 +217,7 @@ export class PipelineHealthRuntime {
       workspaceId:
         query.workspaceId,
 
-      action:
-        "cache-miss",
+      action: "cache-miss",
 
       occurredAt:
         this.clock.now().toISOString(),
@@ -238,34 +231,35 @@ export class PipelineHealthRuntime {
       },
     });
 
-    const assessment =
+    const briefing =
       await this.repository.findLatest(
         query,
       );
 
     if (
-      assessment
+      briefing
       && this.cache
     ) {
       await this.cache.set(
         cacheKey,
-        assessment,
+        briefing,
         this.resolveCacheTtlMs(
-          assessment,
+          briefing,
         ),
       );
     }
 
-    return assessment;
+    return briefing;
   }
 
   async generate(
-    request: PipelineHealthRequest,
-  ): Promise<PipelineHealthAssessment> {
+    request:
+      ExecutiveAIInsightRequest,
+  ): Promise<ExecutiveAIInsightBriefing> {
     const { context } = request;
 
     const query:
-      PipelineHealthQuery = {
+      ExecutiveAIInsightQuery = {
         tenantId:
           context.tenantId,
 
@@ -287,61 +281,50 @@ export class PipelineHealthRuntime {
     try {
       const generated =
         this.engine.generate(
-          {
-            ...context,
-
-            historicalSnapshots:
-              context.historicalSnapshots
-              ?? (
-                previous
-                  ? [
-                    {
-                      assessedAt:
-                        previous.generatedAt,
-
-                      healthScore:
-                        previous.healthScore,
-
-                      coverageRatio:
-                        previous.coverageRatio,
-
-                      weightedPipelineValue:
-                        previous.weightedPipelineValue,
-
-                      openPipelineValue:
-                        previous.openPipelineValue,
-
-                      opportunityCount:
-                        previous.opportunityCount,
-
-                      staleOpportunityCount:
-                        previous.staleOpportunityCount,
-
-                      criticalOpportunityCount:
-                        previous.criticalOpportunityCount,
-                    },
-                  ]
-                  : undefined
-              ),
-          },
+          context,
           this.clock.now(),
+          request.correlationId,
         );
 
+      const briefingId =
+        generated.id
+        || this.idGenerator.next();
+
       const persisted =
-        await this.repository.saveAssessment({
+        await this.repository.saveBriefing({
           ...generated,
 
-          id:
-            generated.id
-            || this.idGenerator.next(),
+          id: briefingId,
+
+          insights:
+            generated.insights.map(
+              (insight) => ({
+                ...insight,
+
+                id:
+                  insight.id
+                  || this.idGenerator.next(),
+              }),
+            ),
+
+          recommendations:
+            generated.recommendations.map(
+              (recommendation) => ({
+                ...recommendation,
+
+                id:
+                  recommendation.id
+                  || this.idGenerator.next(),
+              }),
+            ),
         });
 
       const historyEntry:
-        PipelineHealthHistoryEntry = {
+        ExecutiveAIInsightHistoryEntry = {
           id:
             this.idGenerator.next(),
 
-          assessmentId:
+          briefingId:
             persisted.id,
 
           tenantId:
@@ -356,26 +339,18 @@ export class PipelineHealthRuntime {
           periodEnd:
             persisted.periodEnd,
 
-          healthScore:
-            persisted.healthScore,
+          executiveScore:
+            persisted.executiveScore,
 
-          grade:
-            persisted.grade,
+          executiveStatus:
+            persisted.summary
+              .executiveStatus,
 
-          coverageRatio:
-            persisted.coverageRatio,
+          criticalInsightCount:
+            persisted.criticalInsightCount,
 
-          openPipelineValue:
-            persisted.openPipelineValue,
-
-          weightedPipelineValue:
-            persisted.weightedPipelineValue,
-
-          staleOpportunityCount:
-            persisted.staleOpportunityCount,
-
-          criticalOpportunityCount:
-            persisted.criticalOpportunityCount,
+          highInsightCount:
+            persisted.highInsightCount,
 
           generatedAt:
             persisted.generatedAt,
@@ -436,20 +411,24 @@ export class PipelineHealthRuntime {
           this.clock.now().toISOString(),
 
         details: {
-          assessmentId:
+          briefingId:
             persisted.id,
 
-          healthScore:
-            persisted.healthScore,
+          executiveScore:
+            persisted.executiveScore,
 
-          grade:
-            persisted.grade,
+          executiveStatus:
+            persisted.summary
+              .executiveStatus,
 
-          riskCount:
-            persisted.risks.length,
+          insightCount:
+            persisted.insights.length,
 
-          bottleneckCount:
-            persisted.bottlenecks.length,
+          recommendationCount:
+            persisted.recommendations.length,
+
+          criticalInsightCount:
+            persisted.criticalInsightCount,
 
           managementAttentionRequired:
             persisted.managementAttentionRequired,
@@ -463,7 +442,7 @@ export class PipelineHealthRuntime {
       const message =
         error instanceof Error
           ? error.message
-          : "Unknown pipeline health failure.";
+          : "Unknown executive AI insight failure.";
 
       await this.writeAudit({
         tenantId:
@@ -472,8 +451,7 @@ export class PipelineHealthRuntime {
         workspaceId:
           context.workspaceId,
 
-        action:
-          "failure",
+        action: "failure",
 
         actorId:
           request.requestedBy,
@@ -494,7 +472,7 @@ export class PipelineHealthRuntime {
           this.idGenerator.next(),
 
         eventType:
-          "pipeline-health.failed",
+          "executive-ai-insights.failed",
 
         tenantId:
           context.tenantId,
@@ -524,10 +502,11 @@ export class PipelineHealthRuntime {
   }
 
   async regenerate(
-    request: PipelineHealthRequest,
-  ): Promise<PipelineHealthAssessment> {
+    request:
+      ExecutiveAIInsightRequest,
+  ): Promise<ExecutiveAIInsightBriefing> {
     const query:
-      PipelineHealthQuery = {
+      ExecutiveAIInsightQuery = {
         tenantId:
           request.context.tenantId,
 
@@ -547,7 +526,9 @@ export class PipelineHealthRuntime {
 
     return this.generate({
       ...request,
+
       forceRefresh: true,
+
       reason:
         request.reason
         ?? "manual-regeneration",
@@ -556,9 +537,9 @@ export class PipelineHealthRuntime {
 
   private async publishEvents(
     previous:
-      PipelineHealthAssessment | null,
+      ExecutiveAIInsightBriefing | null,
     current:
-      PipelineHealthAssessment,
+      ExecutiveAIInsightBriefing,
     materialChange: boolean,
     correlationId?: string,
   ): Promise<void> {
@@ -571,7 +552,7 @@ export class PipelineHealthRuntime {
         this.idGenerator.next(),
 
       eventType:
-        "pipeline-health.generated",
+        "executive-ai-insights.generated",
 
       tenantId:
         current.tenantId,
@@ -585,26 +566,27 @@ export class PipelineHealthRuntime {
       correlationId,
 
       payload: {
-        assessmentId:
+        briefingId:
           current.id,
 
-        healthScore:
-          current.healthScore,
+        executiveScore:
+          current.executiveScore,
 
-        grade:
-          current.grade,
+        executiveStatus:
+          current.summary
+            .executiveStatus,
 
-        trend:
-          current.trend,
+        insightCount:
+          current.insights.length,
 
-        coverageRatio:
-          current.coverageRatio,
+        recommendationCount:
+          current.recommendations.length,
 
-        riskCount:
-          current.risks.length,
+        criticalInsightCount:
+          current.criticalInsightCount,
 
-        bottleneckCount:
-          current.bottlenecks.length,
+        highInsightCount:
+          current.highInsightCount,
 
         managementAttentionRequired:
           current.managementAttentionRequired,
@@ -620,7 +602,7 @@ export class PipelineHealthRuntime {
           this.idGenerator.next(),
 
         eventType:
-          "pipeline-health.material-change",
+          "executive-ai-insights.material-change",
 
         tenantId:
           current.tenantId,
@@ -634,46 +616,44 @@ export class PipelineHealthRuntime {
         correlationId,
 
         payload: {
-          previousAssessmentId:
+          previousBriefingId:
             previous?.id,
 
-          currentAssessmentId:
+          currentBriefingId:
             current.id,
 
-          previousHealthScore:
-            previous?.healthScore,
+          previousExecutiveScore:
+            previous?.executiveScore,
 
-          currentHealthScore:
-            current.healthScore,
+          currentExecutiveScore:
+            current.executiveScore,
 
-          previousGrade:
-            previous?.grade,
+          previousExecutiveStatus:
+            previous?.summary
+              .executiveStatus,
 
-          currentGrade:
-            current.grade,
+          currentExecutiveStatus:
+            current.summary
+              .executiveStatus,
 
-          previousCoverageRatio:
-            previous?.coverageRatio,
+          previousCriticalInsightCount:
+            previous?.criticalInsightCount,
 
-          currentCoverageRatio:
-            current.coverageRatio,
+          currentCriticalInsightCount:
+            current.criticalInsightCount,
         },
       });
     }
 
     if (
-      current.grade === "critical"
-      || current.risks.some(
-        (risk) =>
-          risk.level === "critical",
-      )
+      current.criticalInsightCount > 0
     ) {
       await this.eventPublisher.publish({
         eventId:
           this.idGenerator.next(),
 
         eventType:
-          "pipeline-health.critical-risk",
+          "executive-ai-insights.critical",
 
         tenantId:
           current.tenantId,
@@ -687,38 +667,38 @@ export class PipelineHealthRuntime {
         correlationId,
 
         payload: {
-          assessmentId:
+          briefingId:
             current.id,
 
-          healthScore:
-            current.healthScore,
+          executiveScore:
+            current.executiveScore,
 
-          grade:
-            current.grade,
+          executiveStatus:
+            current.summary
+              .executiveStatus,
 
-          criticalRisks:
-            current.risks
+          criticalInsights:
+            current.insights
               .filter(
-                (risk) =>
-                  risk.level
+                (insight) =>
+                  insight.severity
                   === "critical",
               )
               .map(
-                (risk) => ({
-                  key:
-                    risk.key,
-
-                  dimension:
-                    risk.dimension,
-
+                (insight) => ({
+                  id: insight.id,
+                  category:
+                    insight.category,
                   title:
-                    risk.title,
+                    insight.title,
+                  recommendedAction:
+                    insight.recommendedAction,
                 }),
               ),
 
-          primaryAction:
+          primaryDecision:
             current.summary
-              .primaryAction,
+              .primaryDecision,
         },
       });
     }
@@ -726,9 +706,9 @@ export class PipelineHealthRuntime {
 
   private isMaterialChange(
     previous:
-      PipelineHealthAssessment | null,
+      ExecutiveAIInsightBriefing | null,
     current:
-      PipelineHealthAssessment,
+      ExecutiveAIInsightBriefing,
   ): boolean {
     if (!previous) {
       return true;
@@ -736,54 +716,45 @@ export class PipelineHealthRuntime {
 
     if (
       Math.abs(
-        current.healthScore
-        - previous.healthScore,
-      )
-      >= this.configuration
-        .materialScoreChange
+        current.executiveScore
+        - previous.executiveScore,
+      ) >= 10
     ) {
       return true;
     }
 
     if (
-      previous.grade
-      !== current.grade
+      current.summary.executiveStatus
+      !== previous.summary
+        .executiveStatus
     ) {
       return true;
     }
 
     if (
-      previous.managementAttentionRequired
-      !== current.managementAttentionRequired
+      current.criticalInsightCount
+      !== previous.criticalInsightCount
     ) {
       return true;
     }
 
-    const previousCriticalRisks =
-      previous.risks.filter(
-        (risk) =>
-          risk.level === "critical",
-      ).length;
+    if (
+      current.managementAttentionRequired
+      !== previous.managementAttentionRequired
+    ) {
+      return true;
+    }
 
-    const currentCriticalRisks =
-      current.risks.filter(
-        (risk) =>
-          risk.level === "critical",
-      ).length;
-
-    return (
-      previousCriticalRisks
-      !== currentCriticalRisks
-    );
+    return false;
   }
 
   private resolveCacheTtlMs(
-    assessment:
-      PipelineHealthAssessment,
+    briefing:
+      ExecutiveAIInsightBriefing,
   ): number {
     const expiresAt =
       new Date(
-        assessment.expiresAt,
+        briefing.expiresAt,
       ).getTime();
 
     const remaining =
@@ -799,7 +770,7 @@ export class PipelineHealthRuntime {
 
     return (
       this.configuration
-        .assessmentTtlHours
+        .briefingTtlHours
       * 60
       * 60
       * 1000
@@ -808,11 +779,11 @@ export class PipelineHealthRuntime {
 
   private createCacheKey(
     query:
-      PipelineHealthQuery,
+      ExecutiveAIInsightQuery,
   ): string {
     return [
       "ai-revenue-intelligence",
-      "pipeline-health",
+      "executive-ai-insights",
       query.tenantId,
       query.workspaceId
         ?? "default",
@@ -823,7 +794,7 @@ export class PipelineHealthRuntime {
 
   private async writeAudit(
     record:
-      PipelineHealthAuditRecord,
+      ExecutiveAIInsightAuditRecord,
   ): Promise<void> {
     await this.auditWriter?.write(
       record,
@@ -831,10 +802,10 @@ export class PipelineHealthRuntime {
   }
 }
 
-export const createPipelineHealthRuntime = (
+export const createExecutiveAIInsightRuntime = (
   dependencies:
-    PipelineHealthRuntimeDependencies,
-): PipelineHealthRuntime =>
-  new PipelineHealthRuntime(
+    ExecutiveAIInsightRuntimeDependencies,
+): ExecutiveAIInsightRuntime =>
+  new ExecutiveAIInsightRuntime(
     dependencies,
   );

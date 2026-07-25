@@ -217,7 +217,7 @@ const buildOpportunityResults = (
             ? opportunity.dealValue
             : opportunity
                 .revenuePrediction
-                .predictedRevenue;
+                .expectedRevenue;
 
         const weightedRevenue =
           opportunity.isClosed
@@ -266,7 +266,7 @@ const buildOpportunityResults = (
           confidence:
             opportunity
               .revenuePrediction
-              .confidence,
+              .confidenceScore,
 
           forecastCategory:
             category,
@@ -1242,3 +1242,7 @@ export const createSalesForecastEngine = (
   new SalesForecastEngine(
     configuration,
   );
+
+
+
+
