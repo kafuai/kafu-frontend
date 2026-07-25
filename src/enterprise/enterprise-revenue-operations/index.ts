@@ -14,3 +14,4 @@ export * from "./revenueOperationsSummary";
 export * from "./revenueAnalytics";
 export * from "./revenueRisk";
 export * from "./revenueKPI";
+export * from "./revenueIntelligence";

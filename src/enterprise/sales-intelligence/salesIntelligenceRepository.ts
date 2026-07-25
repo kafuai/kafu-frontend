@@ -1,6 +1,10 @@
 import { resolveCurrentCompanyId } from "@/lib/workspace-identity/tenantResolver";
 import { supabase } from "@/lib/supabase";
 
+import {
+  createRevenueIntelligenceSnapshot,
+} from "../enterprise-revenue-operations/revenueIntelligence";
+
 import type {
   SalesActivityFeedItem,
   SalesForecastPeriod,
@@ -580,14 +584,29 @@ export async function getSalesIntelligenceSnapshot(): Promise<SalesIntelligenceS
   const activities = (activitiesResult.data ?? []) as ActivityRecord[];
   const opportunities = buildOpportunities(pipeline);
 
-  return {
-    generatedAt: new Date().toISOString(),
-    currency: "BHD",
-    metrics: buildMetrics(opportunities),
-    pipelineStages: buildPipelineStages(opportunities),
+  const generatedAt = new Date().toISOString();
+  const currency = "BHD" as const;
+  const pipelineStages = buildPipelineStages(opportunities);
+  const forecast = buildForecast(opportunities);
+
+  const revenue = createRevenueIntelligenceSnapshot({
     opportunities,
-    forecast: buildForecast(opportunities),
+    pipelineStages,
+    forecastPeriods: forecast,
+    targetRevenue: forecast[0]?.target ?? 0,
+    currency,
+    generatedAt,
+  });
+
+  return {
+    generatedAt,
+    currency,
+    metrics: buildMetrics(opportunities),
+    pipelineStages,
+    opportunities,
+    forecast,
     recommendations: buildRecommendations(opportunities),
     activities: buildActivities(activities),
+    revenue,
   };
 }

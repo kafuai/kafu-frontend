@@ -907,3 +907,645 @@
   cursor: wait;
   opacity: 0.58;
 }
+
+/* =========================================================
+   Phase 4.3 — Executive Opportunity Workspace
+   ========================================================= */
+
+.opportunityRow {
+  cursor: pointer;
+  outline: none;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.opportunityRow[data-selected="true"] {
+  background: color-mix(
+    in srgb,
+    var(--brand-subtle) 68%,
+    var(--surface)
+  );
+  box-shadow: inset 3px 0 0 var(--brand-primary);
+}
+
+.opportunityRow:focus-visible {
+  background: var(--brand-subtle);
+  box-shadow:
+    inset 3px 0 0 var(--brand-primary),
+    0 0 0 3px
+      color-mix(
+        in srgb,
+        var(--brand-primary) 16%,
+        transparent
+      );
+}
+
+.executiveWorkspace {
+  display: grid;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--brand-primary) 20%,
+      var(--border-default)
+    );
+  border-radius: var(--radius-container);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(
+        in srgb,
+        var(--brand-subtle) 35%,
+        var(--surface)
+      ),
+      var(--surface) 42%
+    );
+  box-shadow: var(--shadow-small);
+}
+
+.executiveWorkspaceHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.executiveWorkspaceIdentity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.executiveWorkspaceIcon {
+  display: inline-flex;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: var(--text-primary);
+  color: var(--surface);
+  box-shadow: var(--shadow-small);
+}
+
+.executiveWorkspaceIdentity h2 {
+  margin: 7px 0 0;
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.executiveWorkspaceIdentity p {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.executiveWorkspaceActions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.workspaceCloseButton {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.workspaceCloseButton:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+}
+
+.workspaceSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.workspaceSummaryCard {
+  display: grid;
+  gap: 7px;
+  padding: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: color-mix(
+    in srgb,
+    var(--surface) 94%,
+    transparent
+  );
+}
+
+.workspaceSummaryCard > span {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.workspaceSummaryCard > strong {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.workspaceSummaryCard > small {
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.workspaceSummaryCard[data-health="healthy"] {
+  border-color: color-mix(
+    in srgb,
+    var(--success) 25%,
+    var(--border-default)
+  );
+}
+
+.workspaceSummaryCard[data-health="critical"],
+.workspaceSummaryCard[data-alert="true"] {
+  border-color: color-mix(
+    in srgb,
+    var(--critical) 26%,
+    var(--border-default)
+  );
+  background: color-mix(
+    in srgb,
+    var(--critical) 4%,
+    var(--surface)
+  );
+}
+
+.workspacePrimaryGrid,
+.workspaceTimelineGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.workspacePanel {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  background: color-mix(
+    in srgb,
+    var(--surface) 96%,
+    transparent
+  );
+}
+
+.workspacePanelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 17px;
+  color: var(--brand-primary);
+}
+
+.workspacePanelHeader h3 {
+  margin: 7px 0 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.primaryActionCard {
+  display: grid;
+  gap: 13px;
+  padding: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.primaryActionCard[data-priority="critical"] {
+  border-color: color-mix(
+    in srgb,
+    var(--critical) 30%,
+    var(--border-default)
+  );
+}
+
+.primaryActionCard[data-priority="high"] {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-primary) 30%,
+    var(--border-default)
+  );
+}
+
+.primaryActionHeading,
+.primaryActionMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.primaryActionHeading > div {
+  display: grid;
+  gap: 5px;
+}
+
+.primaryActionHeading strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.primaryActionHeading > div > span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.primaryActionCard > p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.primaryActionMeta {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.primaryActionMeta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.actionStatusBadge,
+.priorityBadge {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.actionStatusBadge[data-status="in_progress"] {
+  background: var(--brand-subtle);
+  color: var(--brand-primary);
+}
+
+.actionStatusBadge[data-status="completed"] {
+  background: var(--success-background);
+  color: var(--success);
+}
+
+.priorityBadge[data-priority="critical"] {
+  background: color-mix(
+    in srgb,
+    var(--critical) 10%,
+    var(--surface)
+  );
+  color: var(--critical);
+}
+
+.priorityBadge[data-priority="high"] {
+  background: var(--brand-subtle);
+  color: var(--brand-primary);
+}
+
+.overdueIndicator {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: color-mix(
+    in srgb,
+    var(--critical) 7%,
+    var(--surface)
+  );
+  color: var(--critical);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.aiInsight {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 11px;
+  margin-top: 13px;
+  padding: 13px;
+  border-radius: 13px;
+  background: var(--brand-subtle);
+}
+
+.aiInsight > span {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--text-primary);
+  color: var(--surface);
+}
+
+.aiInsight strong {
+  color: var(--text-primary);
+  font-size: 11px;
+}
+
+.aiInsight p {
+  margin: 5px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.workspaceActionList {
+  display: grid;
+  gap: 9px;
+}
+
+.workspaceActionItem {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.workspaceActionItem[data-overdue="true"] {
+  border-color: color-mix(
+    in srgb,
+    var(--critical) 24%,
+    var(--border-default)
+  );
+}
+
+.workspaceActionIcon {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--success-background);
+  color: var(--success);
+}
+
+.workspaceActionItem[data-overdue="true"]
+  .workspaceActionIcon {
+  background: color-mix(
+    in srgb,
+    var(--critical) 9%,
+    var(--surface)
+  );
+  color: var(--critical);
+}
+
+.workspaceActionItem > div {
+  display: grid;
+  gap: 4px;
+}
+
+.workspaceActionItem strong {
+  color: var(--text-primary);
+  font-size: 10px;
+}
+
+.workspaceActionItem small {
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.lifecycleTimeline,
+.unifiedTimeline {
+  display: grid;
+}
+
+.lifecycleEvent,
+.unifiedTimelineItem {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 11px;
+  padding-bottom: 16px;
+}
+
+.lifecycleEvent:not(:last-child)::after,
+.unifiedTimelineItem:not(:last-child)::after {
+  position: absolute;
+  top: 36px;
+  bottom: 0;
+  inset-inline-start: 17px;
+  width: 1px;
+  background: var(--border-default);
+  content: "";
+}
+
+.lifecycleMarker,
+.unifiedTimelineIcon {
+  z-index: 1;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-default);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--brand-primary);
+}
+
+.lifecycleEvent > div > div,
+.unifiedTimelineItem > div > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lifecycleEvent strong,
+.unifiedTimelineItem strong {
+  color: var(--text-primary);
+  font-size: 10px;
+}
+
+.lifecycleEvent time,
+.unifiedTimelineItem time {
+  color: var(--text-muted);
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.lifecycleEvent p,
+.unifiedTimelineItem p {
+  margin: 5px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.unifiedTimelineItem small {
+  display: block;
+  margin-top: 5px;
+  color: var(--brand-primary);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.activitySummary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 17px;
+}
+
+.activitySummary span {
+  display: grid;
+  gap: 3px;
+  padding: 9px;
+  border-radius: 10px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 8px;
+  text-align: center;
+}
+
+.activitySummary strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.workspaceStatus,
+.workspaceError,
+.workspaceEmptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 76px;
+  padding: 16px;
+  border: 1px dashed var(--border-default);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.workspaceSpinner {
+  animation: workspace-spin 850ms linear infinite;
+}
+
+.workspaceError {
+  justify-content: flex-start;
+  border-style: solid;
+  border-color: color-mix(
+    in srgb,
+    var(--critical) 25%,
+    var(--border-default)
+  );
+  color: var(--critical);
+  text-align: start;
+}
+
+.workspaceError > div {
+  flex: 1;
+}
+
+.workspaceError strong {
+  font-size: 11px;
+}
+
+.workspaceError p {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.workspaceError button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--border-default);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.workspaceEmptyState p {
+  margin: 0;
+}
+
+@keyframes workspace-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1180px) {
+  .workspaceSummaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workspacePrimaryGrid,
+  .workspaceTimelineGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .executiveWorkspace {
+    padding: 18px;
+  }
+
+  .executiveWorkspaceHeader {
+    flex-direction: column;
+  }
+
+  .executiveWorkspaceActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .workspaceSummaryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .primaryActionHeading,
+  .primaryActionMeta,
+  .lifecycleEvent > div > div,
+  .unifiedTimelineItem > div > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .activitySummary {
+    grid-template-columns: 1fr;
+  }
+}

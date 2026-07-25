@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   NextActionPriority,
   NextActionStatus,
   NextActionType,
@@ -6,6 +6,10 @@
   SalesActivityType,
   SalesPipelineStatus,
 } from "./salesIntelligenceConstants";
+
+import type {
+  RevenueIntelligenceSnapshot,
+} from "../enterprise-revenue-operations/revenueIntelligence";
 
 export type SalesPipelineActivity = {
   id: string;
@@ -152,4 +156,5 @@ export type SalesIntelligenceSnapshot = {
   forecast: SalesForecastPeriod[];
   recommendations: SalesIntelligenceRecommendation[];
   activities: SalesActivityFeedItem[];
+  revenue: RevenueIntelligenceSnapshot;
 };

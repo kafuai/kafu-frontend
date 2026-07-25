@@ -6,6 +6,10 @@ import type {
   CommunicationRepository,
 } from "../../communicationLayer/communicationRepository";
 
+import type {
+  QueuedOmnichannelDeliveryRuntime,
+} from "../../communicationLayer/omnichannel/queuedOmnichannelDeliveryRuntime";
+
 import {
   SalesCommunicationFacade,
 } from "./salesCommunicationFacade";
@@ -36,6 +40,8 @@ export interface CreateSalesCommunicationRuntimeInput {
     CommunicationApplicationService;
   readonly communicationRepository:
     CommunicationRepository;
+  readonly queuedDeliveryRuntime?:
+    QueuedOmnichannelDeliveryRuntime;
 }
 
 export function createSalesCommunicationRuntime(
@@ -44,6 +50,7 @@ export function createSalesCommunicationRuntime(
   const service =
     new SalesCommunicationService(
       input.communicationApplicationService,
+      input.queuedDeliveryRuntime,
     );
 
   const facade =

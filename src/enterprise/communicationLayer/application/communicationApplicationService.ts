@@ -64,12 +64,9 @@ export class CommunicationApplicationService {
     input: CreateCommunicationConversationInput,
     authorization: AuthorizedCommunicationRequest,
   ): Promise<CommunicationConversation> {
-    this.authorizationService.assert({
-      action: "conversation:create",
-      context: authorization.permissionContext,
-      isResourceOwner:
-        authorization.isResourceOwner,
-    });
+    this.assertConversationCreateAuthorization(
+      authorization,
+    );
 
     return this.createConversationInternal(input);
   }
@@ -84,12 +81,9 @@ export class CommunicationApplicationService {
     input: SendCommunicationMessageInput,
     authorization: AuthorizedCommunicationRequest,
   ): Promise<CommunicationMessage> {
-    this.authorizationService.assert({
-      action: "message:create",
-      context: authorization.permissionContext,
-      isResourceOwner:
-        authorization.isResourceOwner,
-    });
+    this.assertMessageCreateAuthorization(
+      authorization,
+    );
 
     return this.createQueuedMessageInternal(input);
   }
@@ -109,24 +103,75 @@ export class CommunicationApplicationService {
     adapter: CommunicationChannelAdapter,
     authorization: AuthorizedCommunicationRequest,
   ): Promise<CommunicationMessage> {
+    this.assertMessageCreateAuthorization(
+      authorization,
+    );
+
+    this.assertMessageSendAuthorization(
+      authorization,
+    );
+
+    return this.dispatchMessageInternal(
+      input,
+      adapter,
+    );
+  }
+
+  assertConversationCreateAuthorization(
+    authorization: AuthorizedCommunicationRequest,
+  ): void {
+    this.authorizationService.assert({
+      action: "conversation:create",
+      context: authorization.permissionContext,
+      isResourceOwner:
+        authorization.isResourceOwner,
+    });
+  }
+
+  assertMessageCreateAuthorization(
+    authorization: AuthorizedCommunicationRequest,
+  ): void {
     this.authorizationService.assert({
       action: "message:create",
       context: authorization.permissionContext,
       isResourceOwner:
         authorization.isResourceOwner,
     });
+  }
 
+  assertMessageSendAuthorization(
+    authorization: AuthorizedCommunicationRequest,
+  ): void {
     this.authorizationService.assert({
       action: "message:send",
       context: authorization.permissionContext,
       isResourceOwner:
         authorization.isResourceOwner,
     });
+  }
 
-    return this.dispatchMessageInternal(
-      input,
-      adapter,
-    );
+  async publishMessageLifecycleEvents(
+    input: SendCommunicationMessageInput,
+    message: CommunicationMessage,
+  ): Promise<void> {
+    const conversation =
+      await this.service.getConversation(
+        input.companyId,
+        input.conversationId,
+      );
+
+    await this.eventPublisher.publishMany([
+      createMessageCreatedEvent(
+        conversation,
+        message,
+        this.createEventId(),
+      ),
+      createMessageDeliveryEvent(
+        conversation,
+        message,
+        this.createEventId(),
+      ),
+    ]);
   }
 
   async getConversation(
@@ -179,24 +224,10 @@ export class CommunicationApplicationService {
     const message =
       await this.service.createQueuedMessage(input);
 
-    const conversation =
-      await this.service.getConversation(
-        input.companyId,
-        input.conversationId,
-      );
-
-    await this.eventPublisher.publishMany([
-      createMessageCreatedEvent(
-        conversation,
-        message,
-        this.createEventId(),
-      ),
-      createMessageDeliveryEvent(
-        conversation,
-        message,
-        this.createEventId(),
-      ),
-    ]);
+    await this.publishMessageLifecycleEvents(
+      input,
+      message,
+    );
 
     return message;
   }
@@ -211,24 +242,10 @@ export class CommunicationApplicationService {
         adapter,
       );
 
-    const conversation =
-      await this.service.getConversation(
-        input.companyId,
-        input.conversationId,
-      );
-
-    await this.eventPublisher.publishMany([
-      createMessageCreatedEvent(
-        conversation,
-        message,
-        this.createEventId(),
-      ),
-      createMessageDeliveryEvent(
-        conversation,
-        message,
-        this.createEventId(),
-      ),
-    ]);
+    await this.publishMessageLifecycleEvents(
+      input,
+      message,
+    );
 
     return message;
   }

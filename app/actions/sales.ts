@@ -13,6 +13,13 @@ import {
 import {
   salesCommunicationOrchestrator,
 } from "@/src/enterprise/sales-intelligence/communication/salesCommunicationProductionRuntime";
+import {
+  getOpportunityLifecycleSnapshot,
+} from "@/src/enterprise/sales-intelligence/opportunity-lifecycle/opportunityLifecycleRepository";
+
+import type {
+  OpportunityLifecycleSnapshot,
+} from "@/src/enterprise/sales-intelligence/opportunity-lifecycle/opportunityLifecycleTypes";
 
 type UpdateLeadStageResult = {
   success: true;
@@ -135,6 +142,33 @@ async function loadAuthorizedPipeline(
   return data as SalesPipelineRecord;
 }
 
+
+import {
+  opportunityNextActionWorkflow,
+} from "@/src/enterprise/sales-intelligence/next-actions/opportunityNextActionWorkflow";
+
+import type {
+  CompleteOpportunityNextActionInput,
+  CreateOpportunityNextActionInput,
+  OpportunityNextActionMutationResult,
+  OpportunityNextActionQuery,
+  OpportunityNextActionSnapshot,
+  TransitionOpportunityNextActionInput,
+  UpdateOpportunityNextActionInput,
+} from "@/src/enterprise/sales-intelligence/next-actions/opportunityNextActionTypes";
+
+import type {
+  SalesPipelineNextAction,
+} from "@/src/enterprise/sales-intelligence/salesIntelligenceTypes";
+
+import {
+  unifiedActivityWorkflow,
+} from "@/src/enterprise/sales-intelligence/activity-engine/unifiedActivityWorkflow";
+
+import type {
+  UnifiedActivityQuery,
+  UnifiedActivitySnapshot,
+} from "@/src/enterprise/sales-intelligence/activity-engine/unifiedActivityTypes";
 export async function updateLeadStage(
   pipelineIdInput: string,
   newStageInput: string,
@@ -232,6 +266,74 @@ export async function updateLeadStage(
   };
 }
 
+
+
+
+export async function loadSalesOpportunityActivityTimeline(
+  query: UnifiedActivityQuery,
+): Promise<UnifiedActivitySnapshot> {
+  return unifiedActivityWorkflow.load(
+    query,
+  );
+}
+export async function loadOpportunityNextActions(
+  query: OpportunityNextActionQuery,
+): Promise<OpportunityNextActionSnapshot> {
+  return opportunityNextActionWorkflow.list(
+    query,
+  );
+}
+
+export async function createSalesOpportunityNextAction(
+  input: CreateOpportunityNextActionInput,
+): Promise<OpportunityNextActionMutationResult> {
+  return opportunityNextActionWorkflow.create(
+    input,
+  );
+}
+
+export async function updateSalesOpportunityNextAction(
+  input: UpdateOpportunityNextActionInput,
+): Promise<OpportunityNextActionMutationResult> {
+  return opportunityNextActionWorkflow.update(
+    input,
+  );
+}
+
+export async function transitionSalesOpportunityNextAction(
+  input: TransitionOpportunityNextActionInput,
+): Promise<SalesPipelineNextAction> {
+  return opportunityNextActionWorkflow.transition(
+    input,
+  );
+}
+
+export async function completeSalesOpportunityNextAction(
+  input: CompleteOpportunityNextActionInput,
+): Promise<SalesPipelineNextAction> {
+  return opportunityNextActionWorkflow.complete(
+    input,
+  );
+}
+
+export async function cancelSalesOpportunityNextAction(
+  input: {
+    actionId: string;
+    pipelineId: string;
+    reason?: string | null;
+  },
+): Promise<SalesPipelineNextAction> {
+  return opportunityNextActionWorkflow.cancel(
+    input,
+  );
+}
+export async function loadSalesOpportunityLifecycle(
+  pipelineIdInput: string,
+): Promise<OpportunityLifecycleSnapshot> {
+  return getOpportunityLifecycleSnapshot(
+    pipelineIdInput,
+  );
+}
 export async function openSalesOpportunityConversation(
   pipelineIdInput: string,
 ): Promise<OpenSalesOpportunityConversationResult> {
@@ -333,3 +435,6 @@ export async function openSalesOpportunityConversation(
     created: ensured.created,
   };
 }
+
+
+

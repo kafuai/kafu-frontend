@@ -16,3 +16,5 @@ export * from "./omnichannelRuntime";
 export * from "./providerHealthMonitor";
 export * from "./rateLimiter";
 export * from "./retryPolicyEngine";
+export * from "./queuedOmnichannelDeliveryRuntime";
+

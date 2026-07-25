@@ -7,6 +7,10 @@ import type {
   CommunicationChannelAdapter,
 } from "../../communicationLayer/communicationChannelAdapter";
 
+import type {
+  QueuedOmnichannelDeliveryRuntime,
+} from "../../communicationLayer/omnichannel/queuedOmnichannelDeliveryRuntime";
+
 import {
   CommunicationApplicationService,
 } from "../../communicationLayer/application/communicationApplicationService";
@@ -66,6 +70,8 @@ export class SalesCommunicationService {
   constructor(
     private readonly communication:
       CommunicationApplicationService,
+    private readonly queuedDeliveryRuntime?:
+      QueuedOmnichannelDeliveryRuntime,
   ) {}
 
   async createConversation(
@@ -107,11 +113,38 @@ export class SalesCommunicationService {
       request.input,
     );
 
-    const message =
-      await this.communication.createAuthorizedQueuedMessage(
-        request.input,
+    let message: CommunicationMessage;
+
+    if (this.queuedDeliveryRuntime) {
+      this.communication.assertMessageCreateAuthorization(
         request.authorization,
       );
+
+      const queued =
+        await this.queuedDeliveryRuntime.enqueue({
+          message: request.input,
+          tenantId:
+            request.authorization.permissionContext.tenantId,
+          organizationId:
+            request.authorization.permissionContext.organizationId,
+          priority: "normal",
+          auditSource:
+            "sales-intelligence",
+        });
+
+      message = queued.message;
+
+      await this.communication.publishMessageLifecycleEvents(
+        request.input,
+        message,
+      );
+    } else {
+      message =
+        await this.communication.createAuthorizedQueuedMessage(
+          request.input,
+          request.authorization,
+        );
+    }
 
     return {
       operation: "message_queued",
