@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   createContext,
@@ -29,6 +29,19 @@ function isSupportedLanguage(value: string | null): value is WebsiteLanguage {
   return value === "en" || value === "ar";
 }
 
+function detectBrowserLanguage(): WebsiteLanguage {
+  const browserLanguages = [
+    ...(navigator.languages ?? []),
+    navigator.language,
+  ].filter(Boolean);
+
+  return browserLanguages.some((value) =>
+    value.toLowerCase().startsWith("ar"),
+  )
+    ? "ar"
+    : "en";
+}
+
 function applyDocumentLanguage(language: WebsiteLanguage) {
   const direction: WebsiteDirection = language === "ar" ? "rtl" : "ltr";
 
@@ -44,8 +57,8 @@ export default function LanguageProvider({
   children: ReactNode;
 }>) {
   /*
-   * Keep the server render and the first client render identical.
-   * The saved browser preference is restored only after hydration.
+   * Keep the server render and first client render identical.
+   * Restore the saved preference or detect the browser language after hydration.
    */
   const [language, setLanguageState] =
     useState<WebsiteLanguage>("en");
@@ -57,7 +70,16 @@ export default function LanguageProvider({
 
     if (isSupportedLanguage(storedLanguage)) {
       setLanguageState(storedLanguage);
+      return;
     }
+
+    const detectedLanguage = detectBrowserLanguage();
+
+    setLanguageState(detectedLanguage);
+    window.localStorage.setItem(
+      LANGUAGE_STORAGE_KEY,
+      detectedLanguage,
+    );
   }, []);
 
   useEffect(() => {

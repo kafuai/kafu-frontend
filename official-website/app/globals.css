@@ -1975,3 +1975,419 @@ html[dir="rtl"] input[type="email"] {
 
 /* KAFU AI RTL LOCALIZATION END */
 
+
+/* =========================================================
+   KAFU AI — BOOK DEMO EXECUTIVE POLISH
+   Scoped production overrides
+   ========================================================= */
+
+.book-demo-page {
+  direction: ltr;
+  text-align: left;
+  background: #f5f8fa;
+}
+
+.book-demo-page .section-hero {
+  padding: 72px 0 78px;
+}
+
+.book-demo-page .section-hero__inner {
+  max-width: 1040px;
+}
+
+.book-demo-page .section-hero h1 {
+  max-width: 980px;
+  margin: 20px 0 18px;
+  font-size: clamp(3rem, 5.6vw, 4.85rem);
+  line-height: 1.02;
+}
+
+.book-demo-page .section-hero p {
+  max-width: 760px;
+  font-size: clamp(1.02rem, 1.5vw, 1.18rem);
+  line-height: 1.72;
+}
+
+.book-demo-trust {
+  position: relative;
+  z-index: 2;
+  margin-top: -1px;
+  border-bottom: 1px solid rgba(9, 34, 57, 0.08);
+  background: #ffffff;
+}
+
+.book-demo-trust__inner {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.book-demo-trust__item {
+  display: flex;
+  min-height: 92px;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px;
+  border-inline-end: 1px solid rgba(9, 34, 57, 0.08);
+}
+
+.book-demo-trust__item:last-child {
+  border-inline-end: 0;
+}
+
+.book-demo-trust__item span {
+  color: #56cdd2;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.book-demo-trust__item strong {
+  color: #10283e;
+  font-size: 0.91rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.book-demo-page .demo-request-section {
+  padding: 88px 0 104px;
+  background:
+    radial-gradient(circle at 10% 8%, rgba(86, 205, 210, 0.08), transparent 24%),
+    #f5f8fa;
+}
+
+.book-demo-page .demo-request-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.75fr) minmax(0, 1.65fr);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: start;
+}
+
+.book-demo-page .demo-briefing {
+  position: sticky;
+  top: 112px;
+  padding: 12px 0;
+}
+
+.book-demo-page .demo-briefing h2,
+.book-demo-page .demo-form-panel__heading h2 {
+  margin: 18px 0 16px;
+  color: #08192a;
+  letter-spacing: -0.04em;
+}
+
+.book-demo-page .demo-briefing h2 {
+  max-width: 460px;
+  font-size: clamp(2.3rem, 4vw, 3.7rem);
+  line-height: 1.03;
+}
+
+.book-demo-page .demo-briefing__intro {
+  max-width: 520px;
+  margin: 0;
+  color: #617181;
+  font-size: 1.02rem;
+  line-height: 1.75;
+}
+
+.book-demo-page .demo-briefing__list {
+  display: grid;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.book-demo-page .demo-briefing__item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgba(9, 34, 57, 0.09);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 10px 34px rgba(8, 29, 50, 0.045);
+  backdrop-filter: blur(10px);
+}
+
+.book-demo-page .demo-briefing__item > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 12px;
+  color: #0b6470;
+  background: rgba(86, 205, 210, 0.13);
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.book-demo-page .demo-briefing__item h3 {
+  margin: 1px 0 6px;
+  color: #10283e;
+  font-size: 1rem;
+  font-weight: 760;
+}
+
+.book-demo-page .demo-briefing__item p {
+  margin: 0;
+  color: #687786;
+  font-size: 0.91rem;
+  line-height: 1.65;
+}
+
+.book-demo-page .demo-briefing__contact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(9, 34, 57, 0.09);
+  color: #607080;
+  font-size: 0.92rem;
+}
+
+.book-demo-page .demo-briefing__contact a {
+  color: #087b86;
+  font-weight: 780;
+}
+
+.book-demo-page .demo-form-panel {
+  overflow: hidden;
+  border: 1px solid rgba(9, 34, 57, 0.1);
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(8, 29, 50, 0.1);
+}
+
+.book-demo-page .demo-form-panel__heading {
+  padding: 42px 44px 30px;
+  border-bottom: 1px solid rgba(9, 34, 57, 0.08);
+  background:
+    linear-gradient(135deg, rgba(86, 205, 210, 0.08), transparent 54%),
+    #ffffff;
+}
+
+.book-demo-page .demo-form-panel__heading h2 {
+  max-width: 760px;
+  font-size: clamp(2rem, 3.5vw, 3.25rem);
+  line-height: 1.08;
+}
+
+.book-demo-page .demo-form-panel__heading p {
+  max-width: 680px;
+  margin: 0;
+  color: #647382;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.book-demo-page .demo-form {
+  max-width: none;
+  margin: 0;
+  padding: 38px 44px 44px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.book-demo-page .demo-form__grid {
+  gap: 26px 24px;
+}
+
+.book-demo-page .form-field {
+  gap: 10px;
+}
+
+.book-demo-page .form-field label {
+  color: #243b50;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.book-demo-page .form-field input,
+.book-demo-page .form-field select,
+.book-demo-page .form-field textarea {
+  width: 100%;
+  border: 1px solid rgba(9, 34, 57, 0.14);
+  border-radius: 15px;
+  color: #10283e;
+  background: #fbfcfd;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.book-demo-page .form-field input,
+.book-demo-page .form-field select {
+  min-height: 58px;
+  padding: 0 17px;
+}
+
+.book-demo-page .form-field textarea {
+  min-height: 146px;
+  padding: 16px 17px;
+  resize: vertical;
+}
+
+.book-demo-page .form-field input:hover,
+.book-demo-page .form-field select:hover,
+.book-demo-page .form-field textarea:hover {
+  border-color: rgba(8, 123, 134, 0.34);
+  background: #ffffff;
+}
+
+.book-demo-page .form-field input:focus,
+.book-demo-page .form-field select:focus,
+.book-demo-page .form-field textarea:focus {
+  border-color: #38bfc5;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(86, 205, 210, 0.14);
+}
+
+.book-demo-page .demo-form__footer {
+  margin-top: 34px;
+  padding-top: 28px;
+}
+
+.book-demo-page .demo-form__footer .website-button {
+  min-width: 260px;
+  min-height: 58px;
+  padding-inline: 28px;
+  border-radius: 14px;
+}
+
+.website-header .website-brand__logo {
+  height: 52px;
+}
+
+.website-footer .website-brand__logo--footer {
+  height: 62px;
+}
+
+@media (max-width: 1020px) {
+  .book-demo-trust__inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .book-demo-trust__item:nth-child(2) {
+    border-inline-end: 0;
+  }
+
+  .book-demo-trust__item:nth-child(-n + 2) {
+    border-bottom: 1px solid rgba(9, 34, 57, 0.08);
+  }
+
+  .book-demo-page .demo-request-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .book-demo-page .demo-briefing {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .book-demo-page .section-hero {
+    padding: 58px 0 64px;
+  }
+
+  .book-demo-page .section-hero h1 {
+    font-size: clamp(2.35rem, 11vw, 3.5rem);
+  }
+
+  .book-demo-trust__inner {
+    grid-template-columns: 1fr;
+  }
+
+  .book-demo-trust__item {
+    min-height: 72px;
+    border-inline-end: 0;
+    border-bottom: 1px solid rgba(9, 34, 57, 0.08);
+  }
+
+  .book-demo-trust__item:last-child {
+    border-bottom: 0;
+  }
+
+  .book-demo-page .demo-request-section {
+    padding: 64px 0 76px;
+  }
+
+  .book-demo-page .demo-form-panel {
+    border-radius: 22px;
+  }
+
+  .book-demo-page .demo-form-panel__heading,
+  .book-demo-page .demo-form {
+    padding-inline: 24px;
+  }
+
+  .book-demo-page .demo-form-panel__heading {
+    padding-block: 30px 24px;
+  }
+
+  .book-demo-page .demo-form {
+    padding-block: 28px 30px;
+  }
+
+  .book-demo-page .demo-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .book-demo-page .form-field--full {
+    grid-column: auto;
+  }
+
+  .website-header .website-brand__logo {
+    height: 45px;
+  }
+
+  .website-footer .website-brand__logo--footer {
+    height: 52px;
+  }
+}
+
+/* KAFU AI — BOOK DEMO EXECUTIVE POLISH END */
+
+/* KAFU AI — BOOK DEMO BILINGUAL DIRECTION START */
+
+.book-demo-page[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+.book-demo-page[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+.book-demo-page[dir="rtl"] .section-hero__inner,
+.book-demo-page[dir="rtl"] .demo-briefing,
+.book-demo-page[dir="rtl"] .demo-form-panel__heading {
+  text-align: right;
+}
+
+.book-demo-page[dir="ltr"] .section-hero__inner,
+.book-demo-page[dir="ltr"] .demo-briefing,
+.book-demo-page[dir="ltr"] .demo-form-panel__heading {
+  text-align: left;
+}
+
+.book-demo-page[dir="rtl"] .demo-briefing__item {
+  grid-template-columns: 42px minmax(0, 1fr);
+}
+
+.book-demo-page[dir="rtl"] .demo-briefing__contact {
+  flex-direction: row;
+}
+
+.book-demo-page[dir="rtl"] .form-field {
+  text-align: right;
+}
+
+.book-demo-page[dir="ltr"] .form-field {
+  text-align: left;
+}
+
+/* KAFU AI — BOOK DEMO BILINGUAL DIRECTION END */
