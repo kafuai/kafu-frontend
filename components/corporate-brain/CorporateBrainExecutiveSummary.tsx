@@ -83,7 +83,7 @@ export default function CorporateBrainExecutiveSummary({
 
           <Link
             href="/workspace/executive-report"
-            className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-xs font-black text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+            className="inline-flex min-h-10 w-fit shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-xs font-black !text-white transition hover:bg-slate-800 hover:!text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
           >
             {isArabic
               ? "فتح التقرير التنفيذي"

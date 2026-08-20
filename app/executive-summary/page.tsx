@@ -1,4 +1,6 @@
-"use client";
+﻿"use client";
+
+import { useEffect, useState } from "react";
 
 import Link from "next/link";
 import {
@@ -23,159 +25,30 @@ import {
   StatusBadge,
 } from "../../src/product/executive-design-system";
 import { useLocalization } from "@/components/localization/LocalizationContext";
+import { useExecutiveSummary } from "@/hooks/useExecutiveSummary";
+import { useExecutiveInsights } from "@/hooks/useExecutiveInsights";
 
 const content = {
   en: {
-    languageLabel: "العربية",
-    eyebrow: "Today’s Executive Briefing",
-    title: "Three priorities require your attention.",
-    subtitle:
-      "Your organization is operating within normal parameters. The following items have the greatest impact on growth and execution today.",
-    reviewTime: "Estimated review time",
-    reviewValue: "4 minutes",
-    healthLabel: "Enterprise Health",
-    healthValue: "86 / 100",
-    healthStatus: "Healthy",
+    eyebrow: "Executive Briefing",
+    reviewTime: "Data Status",
+    healthLabel: "Enterprise Readiness",
     prioritiesLabel: "Executive Priorities",
-    priorities: [
-      {
-        title: "Revenue Growth",
-        insight: "Enterprise sales growth is 8% below forecast.",
-        impact: "$2.8M pipeline value requires action.",
-        action: "Review opportunities",
-        status: "attention",
-        icon: TrendingUp,
-      },
-      {
-        title: "Operational Efficiency",
-        insight: "Proposal approvals now average 11 days.",
-        impact: "Approval delays are slowing conversion.",
-        action: "Remove bottlenecks",
-        status: "critical",
-        icon: Clock3,
-      },
-      {
-        title: "Strategic Execution",
-        insight: "Two strategic initiatives are behind schedule.",
-        impact: "Execution confidence has declined to 73%.",
-        action: "Reprioritize execution",
-        status: "attention",
-        icon: Target,
-      },
-    ],
-    snapshotLabel: "Business Snapshot",
-    metrics: [
-      {
-        label: "Revenue",
-        value: "$12.4M",
-        trend: "+8.2%",
-        helper: "vs. previous quarter",
-        icon: Banknote,
-      },
-      {
-        label: "Cash Position",
-        value: "Stable",
-        trend: "14.6 months",
-        helper: "estimated runway",
-        icon: LineChart,
-      },
-      {
-        label: "AI Workforce",
-        value: "23 Active",
-        trend: "91%",
-        helper: "task completion rate",
-        icon: UsersRound,
-      },
-      {
-        label: "Critical Risks",
-        value: "3",
-        trend: "1 new",
-        helper: "since yesterday",
-        icon: ShieldAlert,
-      },
-    ],
+    snapshotLabel: "Enterprise Snapshot",
     aiTitle: "KAFU AI Executive Insight",
-    aiText:
-      "The company remains financially healthy. Current growth constraints are operational rather than financial.",
-    aiConfidence: "AI confidence: 96%",
     primaryAction: "Continue to Company Health",
     secondaryAction: "Return to Welcome",
     nextHref: "/company-dashboard",
     backHref: "/welcome",
   },
+
   ar: {
-    languageLabel: "English",
-    eyebrow: "الإحاطة التنفيذية لليوم",
-    title: "ثلاث أولويات تتطلب انتباهك.",
-    subtitle:
-      "تعمل المؤسسة ضمن مستويات الأداء الطبيعية، وتمثل العناصر التالية أكبر أثر مباشر على النمو والتنفيذ اليوم.",
-    reviewTime: "الوقت المتوقع للمراجعة",
-    reviewValue: "4 دقائق",
-    healthLabel: "صحة المؤسسة",
-    healthValue: "86 / 100",
-    healthStatus: "جيدة",
+    eyebrow: "الإحاطة التنفيذية",
+    reviewTime: "حالة البيانات",
+    healthLabel: "جاهزية المؤسسة",
     prioritiesLabel: "الأولويات التنفيذية",
-    priorities: [
-      {
-        title: "نمو الإيرادات",
-        insight: "نمو مبيعات قطاع الشركات أقل من التوقعات بنسبة 8%.",
-        impact: "فرص بقيمة 2.8 مليون دولار تتطلب إجراءً.",
-        action: "مراجعة الفرص",
-        status: "attention",
-        icon: TrendingUp,
-      },
-      {
-        title: "الكفاءة التشغيلية",
-        insight: "متوسط اعتماد العروض أصبح 11 يومًا.",
-        impact: "تأخر الاعتمادات يبطئ تحويل الفرص.",
-        action: "إزالة نقاط التعطيل",
-        status: "critical",
-        icon: Clock3,
-      },
-      {
-        title: "التنفيذ الاستراتيجي",
-        insight: "هناك مبادرتان استراتيجيتان متأخرتان.",
-        impact: "انخفضت موثوقية التنفيذ إلى 73%.",
-        action: "إعادة ترتيب التنفيذ",
-        status: "attention",
-        icon: Target,
-      },
-    ],
-    snapshotLabel: "ملخص الأعمال",
-    metrics: [
-      {
-        label: "الإيرادات",
-        value: "12.4 مليون $",
-        trend: "+8.2%",
-        helper: "مقارنة بالربع السابق",
-        icon: Banknote,
-      },
-      {
-        label: "الوضع النقدي",
-        value: "مستقر",
-        trend: "14.6 شهرًا",
-        helper: "المدة التشغيلية التقديرية",
-        icon: LineChart,
-      },
-      {
-        label: "القوى العاملة الذكية",
-        value: "23 نشطًا",
-        trend: "91%",
-        helper: "معدل إكمال المهام",
-        icon: UsersRound,
-      },
-      {
-        label: "المخاطر الحرجة",
-        value: "3",
-        trend: "1 جديد",
-        helper: "منذ الأمس",
-        icon: ShieldAlert,
-      },
-    ],
+    snapshotLabel: "ملخص المؤسسة",
     aiTitle: "الرؤية التنفيذية من KAFU AI",
-    aiText:
-      "لا تزال المؤسسة في وضع مالي جيد، بينما ترتبط قيود النمو الحالية بكفاءة التنفيذ أكثر من الوضع المالي.",
-    aiConfidence: "درجة ثقة التحليل: 96%",
     primaryAction: "الانتقال إلى صحة المؤسسة",
     secondaryAction: "العودة إلى الترحيب",
     nextHref: "/company-dashboard",
@@ -189,6 +62,405 @@ export default function ExecutiveSummaryPage() {
   const copy = content[language];
   const isArabic = language === "ar";
   const DirectionIcon = isArabic ? ArrowLeft : ArrowRight;
+
+  const {
+    company,
+    answers,
+    loading,
+    message,
+  } = useExecutiveSummary();
+
+  const {
+    insights,
+    executiveMetrics,
+  } = useExecutiveInsights(
+    company,
+    answers,
+  );
+
+  const [
+    aiInsight,
+    setAIInsight,
+  ] = useState("");
+
+  const [
+    aiSource,
+    setAISource,
+  ] = useState("");
+
+  const companyName =
+    company?.name
+    ?? (
+      isArabic
+        ? "المؤسسة الحالية"
+        : "Current organization"
+    );
+
+  const pageTitle =
+    isArabic
+      ? `الإحاطة التنفيذية لـ ${companyName}`
+      : `${companyName} Executive Briefing`;
+
+  const pageSubtitle =
+    isArabic
+      ? "الإحاطة مبنية على بيانات المؤسسة النشطة ومدخلات Discovery الحالية. لا يتم عرض مؤشرات مالية أو تشغيلية غير متوفرة في مصادر البيانات."
+      : "This briefing is based on the active company profile and current Discovery evidence. Financial or operational metrics without a verified source are not presented.";
+
+  const healthValue =
+    `${insights.score} / 100`;
+
+  const healthStatus =
+    insights.score >= 75
+      ? (
+          isArabic
+            ? "جاهزية جيدة"
+            : "Ready"
+        )
+      : insights.score >= 50
+        ? (
+            isArabic
+              ? "يحتاج متابعة"
+              : "Needs Attention"
+          )
+        : (
+            isArabic
+              ? "قيد البناء"
+              : "Building"
+          );
+
+  const dataStatus =
+    loading
+      ? (
+          isArabic
+            ? "جاري التحميل"
+            : "Loading"
+        )
+      : message
+        ? (
+            isArabic
+              ? "غير متاح"
+              : "Unavailable"
+          )
+        : (
+            isArabic
+              ? `${answers.length} إجابات Discovery`
+              : `${answers.length} Discovery answers`
+          );
+
+  const livePriorities =
+    insights.priorities
+      .slice(0, 3)
+      .map(
+        (
+          priority,
+          index,
+        ) => ({
+          title:
+            priority.title,
+
+          insight:
+            priority.description,
+
+          impact:
+            isArabic
+              ? `التوقيت المقترح: ${priority.timeline}`
+              : `Recommended timing: ${priority.timeline}`,
+
+          action:
+            isArabic
+              ? "مراجعة الأولوية"
+              : "Review priority",
+
+          status:
+            priority.timeline
+              .toLowerCase()
+              .includes("immediate")
+              ? "critical"
+              : "attention",
+
+          icon:
+            index === 0
+              ? TrendingUp
+              : index === 1
+                ? Clock3
+                : Target,
+        }),
+      );
+
+  const liveMetrics =
+    executiveMetrics.map(
+      (
+        metric,
+        index,
+      ) => ({
+        label:
+          metric.label,
+
+        value:
+          metric.value,
+
+        trend:
+          metric.note,
+
+        helper:
+          isArabic
+            ? "محسوب من البيانات الحالية"
+            : "Calculated from current data",
+
+        icon:
+          index === 0
+            ? Target
+            : index === 1
+              ? Sparkles
+              : index === 2
+                ? LineChart
+                : UsersRound,
+      }),
+    );
+
+  useEffect(() => {
+    if (
+      loading
+      || !company
+    ) {
+      return;
+    }
+
+    const controller =
+      new AbortController();
+
+    setAIInsight(
+      insights.summary,
+    );
+
+    setAISource(
+      isArabic
+        ? "تحليل حتمي مبني على البيانات الحالية"
+        : "Deterministic analysis based on current data",
+    );
+
+    const generateGroundedInsight =
+      async () => {
+        try {
+          const response =
+            await fetch(
+              "/api/ai/grounded",
+              {
+                method:
+                  "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                signal:
+                  controller.signal,
+
+                body:
+                  JSON.stringify({
+                    task:
+                      "Generate a concise executive briefing insight using only the supplied enterprise evidence.",
+
+                    question:
+                      isArabic
+                        ? "ما أهم ملاحظة تنفيذية يجب أن يعرفها المدير التنفيذي الآن بناءً على الأدلة المتاحة فقط؟"
+                        : "What is the most important executive observation right now based only on the available evidence?",
+
+                    evidence: [
+                      {
+                        id:
+                          "COMPANY",
+
+                        source:
+                          "supabase.companies",
+
+                        label:
+                          "Active company",
+
+                        value: {
+                          name:
+                            company.name,
+
+                          industry:
+                            company.industry,
+
+                          country:
+                            company.country,
+
+                          employeeCount:
+                            company.employee_count,
+                        },
+                      },
+
+                      {
+                        id:
+                          "DISCOVERY",
+
+                        source:
+                          "supabase.discovery_answers",
+
+                        label:
+                          "Discovery evidence",
+
+                        value: {
+                          answersCount:
+                            answers.length,
+
+                          discoveryCompletion:
+                            insights.discoveryCompletion,
+
+                          dataQualityScore:
+                            insights.dataQualityScore,
+                        },
+                      },
+
+                      {
+                        id:
+                          "EXECUTIVE-READINESS",
+
+                        source:
+                          "kafu.executive-report-engine",
+
+                        label:
+                          "Executive readiness",
+
+                        value: {
+                          score:
+                            insights.score,
+
+                          status:
+                            insights.status,
+
+                          maturityLevel:
+                            insights.maturityLevel,
+
+                          analysisConfidence:
+                            insights.aiConfidence,
+
+                          priorities:
+                            insights.priorities
+                              .slice(0, 3)
+                              .map(
+                                (priority) => ({
+                                  title:
+                                    priority.title,
+
+                                  timeline:
+                                    priority.timeline,
+                                }),
+                              ),
+                        },
+                      },
+                    ],
+
+                    context: {
+                      tenantId:
+                        company.id,
+
+                      companyId:
+                        company.id,
+
+                      locale:
+                        language,
+
+                      metadata: {
+                        surface:
+                          "executive-summary",
+                      },
+                    },
+
+                    instructions:
+                      "Use only supplied evidence. Do not invent revenue, cash position, forecasts, pipeline value, approval cycle duration, employee engagement, agent activity, business risks, financial health, or other unavailable metrics. Keep the response concise and executive-ready. Cite material claims using evidence IDs in square brackets.",
+                  }),
+              },
+            );
+
+          if (!response.ok) {
+            throw new Error(
+              `Grounded AI request failed with status ${response.status}.`,
+            );
+          }
+
+          const payload =
+            await response.json() as {
+              text?: unknown;
+
+              citations?:
+                unknown[];
+
+              result?: {
+                text?: unknown;
+
+                citations?:
+                  unknown[];
+              };
+            };
+
+          const text =
+            typeof payload.text
+              === "string"
+              ? payload.text
+              : typeof payload.result?.text
+                  === "string"
+                ? payload.result.text
+                : "";
+
+          if (
+            text.trim()
+          ) {
+            const citations =
+              Array.isArray(
+                payload.citations,
+              )
+                ? payload.citations
+                : Array.isArray(
+                    payload.result
+                      ?.citations,
+                  )
+                  ? payload.result
+                      ?.citations
+                  : [];
+
+            setAIInsight(
+              text.trim(),
+            );
+
+            setAISource(
+              isArabic
+                ? `Grounded AI • ${citations.length} مصادر مستشهد بها`
+                : `Grounded AI • ${citations.length} cited evidence sources`,
+            );
+          }
+        } catch (error) {
+          if (
+            error instanceof DOMException
+            && error.name
+              === "AbortError"
+          ) {
+            return;
+          }
+
+          console.error(
+            "Executive Summary Grounded AI generation failed:",
+            error,
+          );
+        }
+      };
+
+    void generateGroundedInsight();
+
+    return () => {
+      controller.abort();
+    };
+  }, [
+    loading,
+    company,
+    answers.length,
+    insights,
+    language,
+    isArabic,
+  ]);
 
   return (
     <main
@@ -233,11 +505,11 @@ export default function ExecutiveSummaryPage() {
               />
 
               <h1 className="mt-5 max-w-4xl text-[2.2rem] font-black leading-[1.08] tracking-[-0.04em] text-[var(--text-primary)] sm:text-[2.8rem] lg:text-[3.4rem]">
-                {copy.title}
+                {pageTitle}
               </h1>
 
               <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--text-secondary)] md:text-lg md:leading-8">
-                {copy.subtitle}
+                {pageSubtitle}
               </p>
             </div>
 
@@ -252,7 +524,7 @@ export default function ExecutiveSummaryPage() {
                     </p>
 
                     <p className="mt-1 font-black text-[var(--text-primary)]">
-                      {copy.reviewValue}
+                      {dataStatus}
                     </p>
                   </div>
                 </div>
@@ -265,12 +537,12 @@ export default function ExecutiveSummaryPage() {
 
                 <div className="mt-1.5 flex items-center gap-3">
                   <p className="text-xl font-black text-[var(--text-primary)]">
-                    {copy.healthValue}
+                    {healthValue}
                   </p>
 
                   <StatusBadge
                     status="healthy"
-                    label={copy.healthStatus}
+                    label={healthStatus}
                     className="border-[color-mix(in_srgb,var(--success)_22%,var(--border-default))] bg-[var(--surface)] text-[var(--success)]"
                   />
                 </div>
@@ -289,7 +561,7 @@ export default function ExecutiveSummaryPage() {
           </div>
 
           <div className="grid items-stretch gap-4 lg:grid-cols-3">
-            {copy.priorities.map((priority, index) => {
+            {livePriorities.map((priority, index) => {
               const Icon = priority.icon;
               const isCritical = priority.status === "critical";
 
@@ -358,7 +630,7 @@ export default function ExecutiveSummaryPage() {
           </div>
 
           <div className="grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {copy.metrics.map((metric) => {
+            {liveMetrics.map((metric) => {
               const Icon = metric.icon;
 
               return (
@@ -410,12 +682,12 @@ export default function ExecutiveSummaryPage() {
                 </h2>
 
                 <p className="mt-2 leading-7 text-[var(--text-secondary)]">
-                  {copy.aiText}
+                  {aiInsight}
                 </p>
 
                 <div className="mt-3 inline-flex items-center gap-2 text-xs font-black text-[var(--brand-primary)]">
                   <CheckCircle2 className="h-4 w-4" />
-                  {copy.aiConfidence}
+                  {aiSource}
                 </div>
               </div>
             </div>
@@ -447,13 +719,15 @@ export default function ExecutiveSummaryPage() {
           </Link>
 
           <p className="text-xs text-[var(--text-muted)]">
-            KAFU AI · Enterprise Operating Intelligence
+            KAFU AI آ· Enterprise Operating Intelligence
           </p>
         </footer>
       </section>
     </main>
   );
 }
+
+
 
 
 

@@ -1,4 +1,20 @@
-"use client";
+﻿"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
+import { supabase } from "@/lib/supabase";
+import { getCurrentCompanyId } from "@/lib/companySession";
+
+import {
+  calculateCorporateBrainScore,
+  calculatePipelineMetrics,
+  calculateReadinessScore,
+  type ExecutiveCompany,
+} from "@/lib/executive-dashboard";
+
+import {
+  buildDashboardEnterpriseIntelligence,
+} from "../../../src/product/dashboard";
 
 import Link from "next/link";
 import {
@@ -18,7 +34,7 @@ import {
   UsersRound,
   Workflow,
 } from "lucide-react";
-import { useState } from "react";
+
 
 import {
   ExecutiveButton,
@@ -30,219 +46,74 @@ type Language = "en" | "ar";
 const content = {
   en: {
     languageLabel: "العربية",
-    eyebrow: "Company Health",
-    title: "Your organization is healthy.",
-    subtitle:
-      "Financial performance remains strong. The main constraint is execution speed across approvals and strategic initiatives.",
+    eyebrow: "Company Intelligence",
     scoreLabel: "Enterprise Health Score",
-    scoreValue: "86",
-    scoreStatus: "Healthy",
-    dimensionsTitle: "Health Dimensions",
+
+    dimensionsTitle:
+      "Current Enterprise Signals",
+
     dimensionsHelper:
-      "A consolidated view of financial, commercial, operational, people, and AI readiness.",
-    dimensions: [
-      {
-        title: "Financial Health",
-        score: 92,
-        status: "Excellent",
-        insight:
-          "Revenue, profitability, and cash position remain strong.",
-        metric: "Cash runway: 14.6 months",
-        icon: Banknote,
-        tone: "success",
-      },
-      {
-        title: "Commercial Health",
-        score: 78,
-        status: "Good",
-        insight:
-          "Pipeline remains healthy, but enterprise conversion has slowed.",
-        metric: "Pipeline at risk: $2.8M",
-        icon: TrendingUp,
-        tone: "attention",
-      },
-      {
-        title: "Operational Health",
-        score: 74,
-        status: "Needs Attention",
-        insight:
-          "Approval delays are reducing execution speed.",
-        metric: "Average approval cycle: 11 days",
-        icon: Workflow,
-        tone: "critical",
-      },
-      {
-        title: "People Health",
-        score: 91,
-        status: "Excellent",
-        insight:
-          "Engagement and productivity remain above target.",
-        metric: "Engagement: 94%",
-        icon: UsersRound,
-        tone: "success",
-      },
-      {
-        title: "AI Readiness",
-        score: 88,
-        status: "Strong",
-        insight:
-          "Data quality and AI adoption support further automation.",
-        metric: "AI adoption: 81%",
-        icon: BrainCircuit,
-        tone: "good",
-      },
-    ],
-    timelineTitle: "Executive Health Timeline",
-    timelineHelper: "Last 30 days",
-    timelineValues: [72, 75, 78, 80, 82, 84, 86],
-    timelineLabels: ["Day 1", "Day 5", "Day 10", "Day 15", "Day 20", "Day 25", "Today"],
-    summaryTitle: "Executive Summary",
-    summaries: [
-      {
-        title: "What’s Going Well",
-        text:
-          "Revenue is above the previous quarter, cash remains stable, and employee engagement is strong.",
-        tone: "success",
-        icon: CheckCircle2,
-      },
-      {
-        title: "Needs Attention",
-        text:
-          "Approval cycles and delayed strategic initiatives are limiting growth.",
-        tone: "attention",
-        icon: CircleAlert,
-      },
-      {
-        title: "Recommended Executive Action",
-        text:
-          "Automate proposal approvals and assign one executive owner to delayed initiatives.",
-        tone: "good",
-        icon: Target,
-      },
-    ],
-    aiTitle: "KAFU AI Recommendation",
-    aiText:
-      "Reducing manual approval steps can lower the average cycle from 11 days to about 7 days, improving sales velocity and forecast confidence.",
-    aiConfidence: "AI confidence: 96%",
-    impactLabel: "Estimated Impact",
-    impactValue: "+12%",
-    impactText: "Revenue velocity",
-    primaryAction: "Analyze Root Causes",
-    secondaryAction: "Back to Executive Briefing",
-    nextHref: "/corporate-brain",
-    backHref: "/executive-summary",
+      "Readiness and execution indicators calculated from the active company profile, discovery evidence, and current sales pipeline.",
+
+    chartTitle:
+      "Current Signal Snapshot",
+
+    chartHelper:
+      "Live calculated indicators",
+
+    summaryTitle:
+      "Executive Summary",
+
+    aiTitle:
+      "KAFU AI Recommendation",
+
+    primaryAction:
+      "Analyze Root Causes",
+
+    secondaryAction:
+      "Back to Executive Briefing",
+
+    nextHref:
+      "/corporate-brain",
+
+    backHref:
+      "/executive-summary",
   },
+
   ar: {
     languageLabel: "English",
-    eyebrow: "صحة المؤسسة",
-    title: "مؤسستك في وضع صحي جيد.",
-    subtitle:
-      "لا يزال الأداء المالي قويًا، بينما يتمثل التحدي الرئيسي في سرعة تنفيذ الاعتمادات والمبادرات الاستراتيجية.",
+    eyebrow: "ذكاء المؤسسة",
     scoreLabel: "مؤشر صحة المؤسسة",
-    scoreValue: "86",
-    scoreStatus: "جيدة",
-    dimensionsTitle: "أبعاد صحة المؤسسة",
+
+    dimensionsTitle:
+      "المؤشرات الحالية للمؤسسة",
+
     dimensionsHelper:
-      "رؤية موحدة للصحة المالية والتجارية والتشغيلية ورأس المال البشري والجاهزية للذكاء الاصطناعي.",
-    dimensions: [
-      {
-        title: "الصحة المالية",
-        score: 92,
-        status: "ممتازة",
-        insight:
-          "لا تزال الإيرادات والربحية والسيولة النقدية في وضع قوي.",
-        metric: "مدة التغطية النقدية: 14.6 شهرًا",
-        icon: Banknote,
-        tone: "success",
-      },
-      {
-        title: "الصحة التجارية",
-        score: 78,
-        status: "جيدة",
-        insight:
-          "مسار الفرص صحي، لكن تحويل فرص قطاع المؤسسات تباطأ.",
-        metric: "فرص معرضة للخطر: 2.8 مليون دولار",
-        icon: TrendingUp,
-        tone: "attention",
-      },
-      {
-        title: "الصحة التشغيلية",
-        score: 74,
-        status: "تحتاج إلى اهتمام",
-        insight:
-          "تأخر الاعتمادات يحد من سرعة التنفيذ.",
-        metric: "متوسط دورة الاعتماد: 11 يومًا",
-        icon: Workflow,
-        tone: "critical",
-      },
-      {
-        title: "صحة رأس المال البشري",
-        score: 91,
-        status: "ممتازة",
-        insight:
-          "مستويات التفاعل والإنتاجية أعلى من المستهدف.",
-        metric: "التفاعل الوظيفي: 94%",
-        icon: UsersRound,
-        tone: "success",
-      },
-      {
-        title: "الجاهزية للذكاء الاصطناعي",
-        score: 88,
-        status: "قوية",
-        insight:
-          "جودة البيانات ومستوى التبني يدعمان المزيد من الأتمتة.",
-        metric: "نسبة تبني الذكاء الاصطناعي: 81%",
-        icon: BrainCircuit,
-        tone: "good",
-      },
-    ],
-    timelineTitle: "المسار الزمني لصحة المؤسسة",
-    timelineHelper: "آخر 30 يومًا",
-    timelineValues: [72, 75, 78, 80, 82, 84, 86],
-    timelineLabels: [
-      "اليوم 1",
-      "اليوم 5",
-      "اليوم 10",
-      "اليوم 15",
-      "اليوم 20",
-      "اليوم 25",
-      "اليوم",
-    ],
-    summaryTitle: "الملخص التنفيذي",
-    summaries: [
-      {
-        title: "ما يسير بشكل جيد",
-        text:
-          "الإيرادات أعلى من الربع السابق، والسيولة مستقرة، وتفاعل الموظفين قوي.",
-        tone: "success",
-        icon: CheckCircle2,
-      },
-      {
-        title: "ما يحتاج إلى اهتمام",
-        text:
-          "دورات الاعتماد وتأخر المبادرات الاستراتيجية يحدان من النمو.",
-        tone: "attention",
-        icon: CircleAlert,
-      },
-      {
-        title: "الإجراء التنفيذي المقترح",
-        text:
-          "أتمتة اعتماد العروض وتعيين مسؤول تنفيذي واحد للمبادرات المتأخرة.",
-        tone: "good",
-        icon: Target,
-      },
-    ],
-    aiTitle: "توصية KAFU AI",
-    aiText:
-      "يمكن لتقليل خطوات الاعتماد اليدوية خفض متوسط الدورة من 11 يومًا إلى نحو 7 أيام، مما يحسن سرعة المبيعات ودقة التوقعات.",
-    aiConfidence: "درجة ثقة التحليل: 96%",
-    impactLabel: "الأثر المتوقع",
-    impactValue: "+12%",
-    impactText: "في سرعة الإيرادات",
-    primaryAction: "تحليل الأسباب الجذرية",
-    secondaryAction: "العودة إلى الإحاطة التنفيذية",
-    nextHref: "/corporate-brain",
-    backHref: "/executive-summary",
+      "مؤشرات جاهزية وتنفيذ محسوبة من ملف المؤسسة النشط وبيانات الاستكشاف ومسار المبيعات الحالي.",
+
+    chartTitle:
+      "لقطة المؤشرات الحالية",
+
+    chartHelper:
+      "مؤشرات محسوبة من البيانات الحالية",
+
+    summaryTitle:
+      "الملخص التنفيذي",
+
+    aiTitle:
+      "توصية KAFU AI",
+
+    primaryAction:
+      "تحليل الأسباب الجذرية",
+
+    secondaryAction:
+      "العودة إلى الملخص التنفيذي",
+
+    nextHref:
+      "/corporate-brain",
+
+    backHref:
+      "/executive-summary",
   },
 } as const;
 
@@ -273,12 +144,918 @@ const toneClasses = {
   },
 } as const;
 
+
+type CompanyDashboardPipelineItem = {
+  id: string;
+  status: string | null;
+  opportunity_value: number | null;
+  response_deadline: string | null;
+};
+
+type CompanyDashboardData = {
+  company: ExecutiveCompany | null;
+  answersCount: number;
+  pipeline: CompanyDashboardPipelineItem[];
+};
+
+const EMPTY_COMPANY_DASHBOARD_DATA:
+  CompanyDashboardData = {
+    company: null,
+    answersCount: 0,
+    pipeline: [],
+  };
 export default function CompanyDashboardPage() {
+  const [dashboardData, setDashboardData] =
+    useState<CompanyDashboardData>(
+      EMPTY_COMPANY_DASHBOARD_DATA,
+    );
+
+  const [dashboardLoading, setDashboardLoading] =
+    useState(true);
+
+  const [dashboardError, setDashboardError] =
+    useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadDashboardData = async () => {
+      setDashboardLoading(true);
+      setDashboardError(null);
+
+      try {
+        const companyId =
+          getCurrentCompanyId();
+
+        if (!companyId) {
+          if (active) {
+            setDashboardData(
+              EMPTY_COMPANY_DASHBOARD_DATA,
+            );
+
+            setDashboardError(
+              "No active company is selected.",
+            );
+          }
+
+          return;
+        }
+
+        const [
+          companyResult,
+          answersResult,
+          pipelineResult,
+        ] = await Promise.all([
+          supabase
+            .from("companies")
+            .select(
+              "id,name,industry,country,employee_count,contact_name,contact_email,contact_phone,created_at",
+            )
+            .eq("id", companyId)
+            .maybeSingle(),
+
+          supabase
+            .from("discovery_answers")
+            .select("id")
+            .eq("company_id", companyId),
+
+          supabase
+            .from("sales_pipeline")
+            .select(
+              "id,status,opportunity_value,response_deadline",
+            )
+            .eq("company_id", companyId),
+        ]);
+
+        if (companyResult.error) {
+          throw companyResult.error;
+        }
+
+        if (answersResult.error) {
+          throw answersResult.error;
+        }
+
+        if (pipelineResult.error) {
+          throw pipelineResult.error;
+        }
+
+        if (!active) {
+          return;
+        }
+
+        setDashboardData({
+          company:
+            companyResult.data
+            ?? null,
+
+          answersCount:
+            answersResult.data?.length
+            ?? 0,
+
+          pipeline:
+            pipelineResult.data
+            ?? [],
+        });
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+
+        console.error(
+          "Company Dashboard data loading failed:",
+          error,
+        );
+
+        setDashboardData(
+          EMPTY_COMPANY_DASHBOARD_DATA,
+        );
+
+        setDashboardError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load company dashboard data.",
+        );
+      } finally {
+        if (active) {
+          setDashboardLoading(false);
+        }
+      }
+    };
+
+    void loadDashboardData();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const readinessScore =
+    useMemo(
+      () =>
+        calculateReadinessScore(
+          dashboardData.answersCount,
+          dashboardData.company,
+        ),
+      [
+        dashboardData.answersCount,
+        dashboardData.company,
+      ],
+    );
+
+  const corporateBrainScore =
+    useMemo(
+      () =>
+        calculateCorporateBrainScore(
+          dashboardData.answersCount,
+        ),
+      [dashboardData.answersCount],
+    );
+
+  const pipelineMetrics =
+    useMemo(
+      () =>
+        calculatePipelineMetrics(
+          dashboardData.company
+            ? [dashboardData.company]
+            : [],
+          dashboardData.pipeline,
+        ),
+      [
+        dashboardData.company,
+        dashboardData.pipeline,
+      ],
+    );
+
+  const enterpriseIntelligence =
+    useMemo(
+      () =>
+        dashboardData.company
+          ? buildDashboardEnterpriseIntelligence({
+              organizationId:
+                dashboardData.company.id,
+
+              companyName:
+                dashboardData.company.name,
+
+              industry:
+                dashboardData.company.industry,
+
+              country:
+                dashboardData.company.country,
+
+              employeeCount:
+                dashboardData.company.employee_count,
+
+              discoveryAnswersCount:
+                dashboardData.answersCount,
+
+              readinessScore,
+
+              corporateBrainScore,
+
+              overdueLeads:
+                pipelineMetrics.overdueLeads,
+            })
+          : null,
+      [
+        dashboardData.company,
+        dashboardData.answersCount,
+        readinessScore,
+        corporateBrainScore,
+        pipelineMetrics.overdueLeads,
+      ],
+    );
   const [language, setLanguage] = useState<Language>("ar");
 
   const copy = content[language];
   const isArabic = language === "ar";
   const DirectionIcon = isArabic ? ArrowLeft : ArrowRight;
+
+  const [aiRecommendation, setAIRecommendation] =
+    useState("");
+
+  const [aiSourceLabel, setAISourceLabel] =
+    useState("");
+
+  const companyName =
+    dashboardData.company?.name
+    ?? (
+      isArabic
+        ? "المؤسسة الحالية"
+        : "Current organization"
+    );
+
+  const enterpriseHealthScore =
+    enterpriseIntelligence
+      ?.enterpriseHealthScore
+    ?? readinessScore;
+
+  const healthStatusLabel =
+    enterpriseHealthScore >= 75
+      ? (
+          isArabic
+            ? "جاهزية جيدة"
+            : "Ready"
+        )
+      : enterpriseHealthScore >= 50
+        ? (
+            isArabic
+              ? "يحتاج إلى اهتمام"
+              : "Needs Attention"
+          )
+        : (
+            isArabic
+              ? "قيد البناء"
+              : "Building"
+          );
+
+  const pageTitle =
+    isArabic
+      ? `نظرة تنفيذية على ${companyName}`
+      : `${companyName} enterprise health overview`;
+
+  const pageSubtitle =
+    isArabic
+      ? "هذه القراءة مبنية على بيانات المؤسسة الحالية ونتائج الاستكشاف ومسار المبيعات، ولا تعرض أرقام أداء غير متوفرة في مصادر البيانات."
+      : "This view is calculated from current company data, discovery evidence, and the sales pipeline. Metrics without a verified production source are not presented as measured performance.";
+
+  const profileFieldCount =
+    [
+      dashboardData.company?.name,
+      dashboardData.company?.industry,
+      dashboardData.company?.country,
+      dashboardData.company?.employee_count,
+    ].filter(
+      (value) =>
+        value !== null
+        && value !== undefined
+        && value !== "",
+    ).length;
+
+  const profileCompletenessScore =
+    Math.round(
+      (
+        profileFieldCount
+        / 4
+      ) * 100,
+    );
+
+  const discoveryCoverageScore =
+    Math.min(
+      100,
+      dashboardData.answersCount
+      * 10,
+    );
+
+  const commercialExecutionScore =
+    pipelineMetrics.totalLeads > 0
+      ? pipelineMetrics.conversionRate
+      : 0;
+
+  const executionAttentionScore =
+    pipelineMetrics.totalLeads > 0
+      ? Math.max(
+          0,
+          100
+          - pipelineMetrics.overdueLeads
+            * 15,
+        )
+      : 0;
+
+  const getTone = (
+    score: number,
+  ): keyof typeof toneClasses =>
+    score >= 75
+      ? "success"
+      : score >= 50
+        ? "good"
+        : "attention";
+
+  const getStatus = (
+    score: number,
+  ): string =>
+    score >= 75
+      ? (
+          isArabic
+            ? "جاهز"
+            : "Ready"
+        )
+      : score >= 50
+        ? (
+            isArabic
+              ? "متابعة"
+              : "Attention"
+          )
+        : (
+            isArabic
+              ? "قيد البناء"
+              : "Building"
+          );
+
+  const liveDimensions = [
+    {
+      title:
+        isArabic
+          ? "جاهزية المؤسسة"
+          : "Enterprise Readiness",
+
+      score:
+        readinessScore,
+
+      status:
+        getStatus(
+          readinessScore,
+        ),
+
+      insight:
+        isArabic
+          ? "مؤشر مشتق من اكتمال ملف المؤسسة ومدخلات الاستكشاف الحالية."
+          : "Derived from the active company profile and current discovery inputs.",
+
+      metric:
+        isArabic
+          ? `${dashboardData.answersCount} إجابة استكشاف محفوظة`
+          : `${dashboardData.answersCount} discovery answers saved`,
+
+      icon:
+        Building2,
+
+      tone:
+        getTone(
+          readinessScore,
+        ),
+    },
+
+    {
+      title:
+        isArabic
+          ? "التنفيذ التجاري"
+          : "Commercial Execution",
+
+      score:
+        commercialExecutionScore,
+
+      status:
+        getStatus(
+          commercialExecutionScore,
+        ),
+
+      insight:
+        isArabic
+          ? "مؤشر يعتمد على التحويل الفعلي داخل مسار المبيعات الحالي."
+          : "Based on actual conversion activity in the current sales pipeline.",
+
+      metric:
+        isArabic
+          ? `${pipelineMetrics.totalLeads} فرصة، معدل التحويل ${pipelineMetrics.conversionRate}%`
+          : `${pipelineMetrics.totalLeads} opportunities, ${pipelineMetrics.conversionRate}% conversion`,
+
+      icon:
+        TrendingUp,
+
+      tone:
+        getTone(
+          commercialExecutionScore,
+        ),
+    },
+
+    {
+      title:
+        isArabic
+          ? "الانضباط التنفيذي"
+          : "Execution Discipline",
+
+      score:
+        executionAttentionScore,
+
+      status:
+        getStatus(
+          executionAttentionScore,
+        ),
+
+      insight:
+        pipelineMetrics.overdueLeads > 0
+          ? (
+              isArabic
+                ? "توجد عناصر متأخرة في مسار التنفيذ تحتاج إلى مراجعة."
+                : "Current pipeline data contains overdue execution items requiring review."
+            )
+          : (
+              isArabic
+                ? "لا تظهر بيانات المسار الحالية عناصر متأخرة."
+                : "No overdue execution items are currently detected in the pipeline."
+            ),
+
+      metric:
+        isArabic
+          ? `${pipelineMetrics.overdueLeads} عناصر متأخرة`
+          : `${pipelineMetrics.overdueLeads} overdue items`,
+
+      icon:
+        CircleAlert,
+
+      tone:
+        getTone(
+          executionAttentionScore,
+        ),
+    },
+
+    {
+      title:
+        isArabic
+          ? "تغطية الاستكشاف"
+          : "Discovery Coverage",
+
+      score:
+        discoveryCoverageScore,
+
+      status:
+        getStatus(
+          discoveryCoverageScore,
+        ),
+
+      insight:
+        isArabic
+          ? "تعكس مقدار السياق المؤسسي المتوفر حاليًا للتحليل والتوصيات."
+          : "Reflects the amount of current enterprise context available for analysis and recommendations.",
+
+      metric:
+        isArabic
+          ? `${dashboardData.answersCount} إشارات مؤسسية`
+          : `${dashboardData.answersCount} enterprise signals`,
+
+      icon:
+        UsersRound,
+
+      tone:
+        getTone(
+          discoveryCoverageScore,
+        ),
+    },
+
+    {
+      title:
+        isArabic
+          ? "جاهزية المعرفة"
+          : "Knowledge Readiness",
+
+      score:
+        corporateBrainScore,
+
+      status:
+        getStatus(
+          corporateBrainScore,
+        ),
+
+      insight:
+        isArabic
+          ? "مؤشر جاهزية Corporate Brain بناءً على السياق المؤسسي المتوفر حاليًا."
+          : "Corporate Brain knowledge-readiness indicator based on currently available enterprise context.",
+
+      metric:
+        isArabic
+          ? `جاهزية المعرفة ${corporateBrainScore}%`
+          : `Knowledge readiness ${corporateBrainScore}%`,
+
+      icon:
+        BrainCircuit,
+
+      tone:
+        getTone(
+          corporateBrainScore,
+        ),
+    },
+  ];
+
+  const signalValues =
+    liveDimensions.map(
+      (dimension) =>
+        dimension.score,
+    );
+
+  const signalLabels =
+    liveDimensions.map(
+      (dimension) =>
+        dimension.title,
+    );
+
+  const liveSummaries = [
+    {
+      title:
+        isArabic
+          ? "الوضع الحالي"
+          : "Current Position",
+
+      text:
+        isArabic
+          ? `مؤشر صحة المؤسسة الحالي هو ${enterpriseHealthScore} من 100، بناءً على البيانات المتوفرة للمؤسسة النشطة.`
+          : `Current enterprise health is ${enterpriseHealthScore}/100 based on the active organization's available data.`,
+
+      tone:
+        "success" as const,
+
+      icon:
+        CheckCircle2,
+    },
+
+    {
+      title:
+        isArabic
+          ? "ما يحتاج إلى اهتمام"
+          : "Needs Attention",
+
+      text:
+        pipelineMetrics.overdueLeads > 0
+          ? (
+              isArabic
+                ? `هناك ${pipelineMetrics.overdueLeads} عناصر متأخرة في مسار المبيعات تتطلب مراجعة تنفيذية.`
+                : `${pipelineMetrics.overdueLeads} overdue sales-pipeline items require executive review.`
+            )
+          : corporateBrainScore < 70
+            ? (
+                isArabic
+                  ? "رفع جاهزية المعرفة سيحسن جودة التحليل والتوصيات التنفيذية."
+                  : "Increasing knowledge readiness will improve the quality of executive analysis and recommendations."
+              )
+            : (
+                isArabic
+                  ? "لا تظهر المؤشرات الحالية عناصر تنفيذية متأخرة، مع استمرار الحاجة إلى متابعة البيانات."
+                  : "Current signals show no overdue execution items; continued data monitoring remains appropriate."
+              ),
+
+      tone:
+        "attention" as const,
+
+      icon:
+        CircleAlert,
+    },
+
+    {
+      title:
+        isArabic
+          ? "الإجراء التنفيذي التالي"
+          : "Recommended Executive Action",
+
+      text:
+        enterpriseIntelligence
+          ?.nextExecutionStep
+        ?? (
+          isArabic
+            ? "استكمال بيانات المؤسسة قبل اتخاذ قرار تنفيذي."
+            : "Complete enterprise context before taking the next executive action."
+        ),
+
+      tone:
+        "good" as const,
+
+      icon:
+        Target,
+    },
+  ];
+
+  const liveImpactLabel =
+    isArabic
+      ? "المؤشر التشغيلي الحالي"
+      : "Current Operational Signal";
+
+  const liveImpactValue =
+    pipelineMetrics.overdueLeads > 0
+      ? `${pipelineMetrics.overdueLeads}`
+      : `${pipelineMetrics.conversionRate}%`;
+
+  const liveImpactText =
+    pipelineMetrics.overdueLeads > 0
+      ? (
+          isArabic
+            ? "عناصر تنفيذية متأخرة"
+            : "overdue execution items"
+        )
+      : (
+          isArabic
+            ? "معدل التحويل الحالي"
+            : "current pipeline conversion"
+        );
+
+  useEffect(() => {
+    if (
+      dashboardLoading
+      || !dashboardData.company
+      || !enterpriseIntelligence
+    ) {
+      return;
+    }
+
+    const company =
+      dashboardData.company;
+
+    const controller =
+      new AbortController();
+
+    const deterministicFallback =
+      enterpriseIntelligence
+        .recommendationSummary;
+
+    setAIRecommendation(
+      deterministicFallback,
+    );
+
+    setAISourceLabel(
+      isArabic
+        ? "ذكاء مؤسسي حتمي مبني على البيانات الحالية"
+        : "Deterministic enterprise intelligence based on current data",
+    );
+
+    const generateGroundedRecommendation =
+      async () => {
+        try {
+          const response =
+            await fetch(
+              "/api/ai/grounded",
+              {
+                method:
+                  "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+
+                signal:
+                  controller.signal,
+
+                body:
+                  JSON.stringify({
+                    task:
+                      "Generate a concise executive recommendation for the active company using only the supplied evidence.",
+
+                    question:
+                      isArabic
+                        ? "ما الإجراء التنفيذي الأعلى أولوية بناءً على الأدلة الحالية فقط؟"
+                        : "What is the highest-priority executive action based only on the current evidence?",
+
+                    evidence: [
+                      {
+                        id:
+                          "COMPANY-PROFILE",
+
+                        source:
+                          "supabase.companies",
+
+                        label:
+                          "Active company profile",
+
+                        value: {
+                          companyName:
+                            dashboardData.company?.name,
+
+                          industry:
+                            dashboardData.company?.industry,
+
+                          country:
+                            dashboardData.company?.country,
+
+                          employeeCount:
+                            dashboardData.company?.employee_count,
+
+                          profileCompletenessScore,
+                        },
+                      },
+
+                      {
+                        id:
+                          "DISCOVERY",
+
+                        source:
+                          "supabase.discovery_answers",
+
+                        label:
+                          "Discovery evidence coverage",
+
+                        value: {
+                          answersCount:
+                            dashboardData.answersCount,
+
+                          readinessScore,
+
+                          discoveryCoverageScore,
+
+                          corporateBrainScore,
+                        },
+                      },
+
+                      {
+                        id:
+                          "PIPELINE",
+
+                        source:
+                          "supabase.sales_pipeline",
+
+                        label:
+                          "Current sales pipeline",
+
+                        value: {
+                          totalLeads:
+                            pipelineMetrics.totalLeads,
+
+                          wonLeads:
+                            pipelineMetrics.wonLeads,
+
+                          pipelineValue:
+                            pipelineMetrics.pipelineValue,
+
+                          conversionRate:
+                            pipelineMetrics.conversionRate,
+
+                          overdueLeads:
+                            pipelineMetrics.overdueLeads,
+                        },
+                      },
+
+                      {
+                        id:
+                          "ENTERPRISE-HEALTH",
+
+                        source:
+                          "kafu.dashboard-enterprise-intelligence",
+
+                        label:
+                          "Deterministic enterprise health",
+
+                        value: {
+                          enterpriseHealthScore,
+
+                          executionPriority:
+                            enterpriseIntelligence.executionPriority,
+
+                          nextExecutionStep:
+                            enterpriseIntelligence.nextExecutionStep,
+                        },
+                      },
+                    ],
+
+                    context: {
+                      tenantId:
+                        company.id,
+
+                      companyId:
+                        company.id,
+
+                      locale:
+                        language,
+
+                      metadata: {
+                        surface:
+                          "company-dashboard",
+                      },
+                    },
+
+                    instructions:
+                      "Use only supplied evidence. Do not invent revenue growth, cash runway, approval-cycle duration, employee engagement, financial health, AI adoption, estimated impact, forecasts, or other unavailable metrics. Keep the answer concise and executive-ready. Cite material claims using the supplied evidence IDs in square brackets.",
+                  }),
+              },
+            );
+
+          if (!response.ok) {
+            throw new Error(
+              `Grounded AI request failed with status ${response.status}.`,
+            );
+          }
+
+          const payload =
+            await response.json() as {
+              text?: unknown;
+
+              citations?:
+                unknown[];
+
+              result?: {
+                text?: unknown;
+
+                citations?:
+                  unknown[];
+              };
+            };
+
+          const groundedText =
+            typeof payload.text
+              === "string"
+              ? payload.text
+              : typeof payload.result?.text
+                  === "string"
+                ? payload.result.text
+                : "";
+
+          if (
+            groundedText.trim()
+          ) {
+            setAIRecommendation(
+              groundedText.trim(),
+            );
+
+            const citations =
+              Array.isArray(
+                payload.citations,
+              )
+                ? payload.citations
+                : Array.isArray(
+                    payload.result
+                      ?.citations,
+                  )
+                  ? payload.result
+                      ?.citations
+                  : [];
+
+            setAISourceLabel(
+              isArabic
+                ? `Grounded AI • ${citations.length} مصادر مستشهد بها`
+                : `Grounded AI • ${citations.length} cited evidence sources`,
+            );
+          }
+        } catch (error) {
+          if (
+            error instanceof DOMException
+            && error.name
+              === "AbortError"
+          ) {
+            return;
+          }
+
+          console.error(
+            "Company Dashboard Grounded AI generation failed:",
+            error,
+          );
+
+          /*
+           * Keep deterministic enterprise intelligence
+           * as the safe fallback. Never replace failure
+           * with a predefined AI claim.
+           */
+        }
+      };
+
+    void generateGroundedRecommendation();
+
+    return () => {
+      controller.abort();
+    };
+  }, [
+    dashboardLoading,
+    dashboardData.company,
+    dashboardData.answersCount,
+    readinessScore,
+    corporateBrainScore,
+    profileCompletenessScore,
+    discoveryCoverageScore,
+    pipelineMetrics.totalLeads,
+    pipelineMetrics.wonLeads,
+    pipelineMetrics.pipelineValue,
+    pipelineMetrics.conversionRate,
+    pipelineMetrics.overdueLeads,
+    enterpriseIntelligence,
+    enterpriseHealthScore,
+    language,
+    isArabic,
+  ]);
 
   return (
     <main
@@ -315,11 +1092,11 @@ export default function CompanyDashboardPage() {
 
                 <div className="min-w-0">
                   <h1 className="max-w-4xl text-[2rem] font-black leading-tight tracking-[-0.035em] text-[var(--text-primary)] md:text-[2.35rem]">
-                    {copy.title}
+                    {pageTitle}
                   </h1>
 
                   <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--text-secondary)] md:text-base">
-                    {copy.subtitle}
+                    {pageSubtitle}
                   </p>
                 </div>
               </div>
@@ -332,7 +1109,7 @@ export default function CompanyDashboardPage() {
 
               <div className="mt-4 flex items-end gap-2">
                 <span className="text-[2.75rem] font-black tracking-[-0.04em] text-[var(--text-primary)]">
-                  {copy.scoreValue}
+                  {enterpriseHealthScore}
                 </span>
 
                 <span className="pb-1.5 text-sm text-[var(--text-muted)]">
@@ -346,7 +1123,7 @@ export default function CompanyDashboardPage() {
 
               <div className="mt-3 flex items-center gap-2 text-sm font-black text-[var(--success)]">
                 <CheckCircle2 className="h-4 w-4" />
-                {copy.scoreStatus}
+                {healthStatusLabel}
               </div>
             </article>
           </div>
@@ -359,11 +1136,11 @@ export default function CompanyDashboardPage() {
 
               <div>
                 <p className="text-lg font-black text-[var(--text-primary)]">
-                  92
+                  {liveDimensions[0].score}
                 </p>
 
                 <p className="text-xs font-semibold text-[var(--text-muted)]">
-                  {copy.dimensions[0].title}
+                  {liveDimensions[0].title}
                 </p>
               </div>
             </div>
@@ -375,11 +1152,11 @@ export default function CompanyDashboardPage() {
 
               <div>
                 <p className="text-lg font-black text-[var(--text-primary)]">
-                  91
+                  {liveDimensions[3].score}
                 </p>
 
                 <p className="text-xs font-semibold text-[var(--text-muted)]">
-                  {copy.dimensions[3].title}
+                  {liveDimensions[3].title}
                 </p>
               </div>
             </div>
@@ -391,11 +1168,11 @@ export default function CompanyDashboardPage() {
 
               <div>
                 <p className="text-lg font-black text-[var(--text-primary)]">
-                  88
+                  {liveDimensions[4].score}
                 </p>
 
                 <p className="text-xs font-semibold text-[var(--text-muted)]">
-                  {copy.dimensions[4].title}
+                  {liveDimensions[4].title}
                 </p>
               </div>
             </div>
@@ -420,7 +1197,7 @@ export default function CompanyDashboardPage() {
           </div>
 
           <div className="grid items-stretch gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-            {copy.dimensions.map((dimension) => {
+            {liveDimensions.map((dimension) => {
               const Icon = dimension.icon;
               const tone = toneClasses[dimension.tone];
 
@@ -484,17 +1261,17 @@ export default function CompanyDashboardPage() {
                 <LineChart className="h-5 w-5 text-blue-600" />
 
                 <h2 className="text-lg font-black text-slate-950">
-                  {copy.timelineTitle}
+                  {copy.chartTitle}
                 </h2>
               </div>
 
               <span className="text-xs text-slate-500">
-                {copy.timelineHelper}
+                {copy.chartHelper}
               </span>
             </div>
 
             <div className="mt-5 flex h-36 items-end gap-2 sm:gap-3">
-              {copy.timelineValues.map((value, index) => (
+              {signalValues.map((value, index) => (
                 <div
                   key={`${value}-${index}`}
                   className="flex h-full flex-1 flex-col justify-end gap-3"
@@ -511,7 +1288,7 @@ export default function CompanyDashboardPage() {
                   </div>
 
                   <span className="truncate text-center text-[10px] text-slate-500 sm:text-xs">
-                    {copy.timelineLabels[index]}
+                    {signalLabels[index]}
                   </span>
                 </div>
               ))}
@@ -530,25 +1307,25 @@ export default function CompanyDashboardPage() {
             </div>
 
             <p className="mt-4 flex-1 text-sm leading-6.5 text-slate-600">
-              {copy.aiText}
+              {aiRecommendation || enterpriseIntelligence?.recommendationSummary || "No recommendation available yet."}
             </p>
 
             <div className="mt-4 text-xs font-black text-blue-700">
-              {copy.aiConfidence}
+              {aiSourceLabel}
             </div>
 
             <div className="mt-5 rounded-2xl border border-slate-200 bg-white/90 p-4">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">
-                {copy.impactLabel}
+                {liveImpactLabel}
               </p>
 
               <div className="mt-2 flex items-end gap-3">
                 <span className="text-4xl font-black tracking-tight text-emerald-600">
-                  {copy.impactValue}
+                  {liveImpactValue}
                 </span>
 
                 <span className="pb-1 text-sm text-slate-600">
-                  {copy.impactText}
+                  {liveImpactText}
                 </span>
               </div>
             </div>
@@ -577,7 +1354,7 @@ export default function CompanyDashboardPage() {
           </div>
 
           <div className="grid items-stretch gap-3 lg:grid-cols-3">
-            {copy.summaries.map((item) => {
+            {liveSummaries.map((item) => {
               const Icon = item.icon;
               const tone = toneClasses[item.tone];
 
@@ -620,10 +1397,14 @@ export default function CompanyDashboardPage() {
           </Link>
 
           <p className="text-xs text-slate-600">
-            KAFU AI · Enterprise Operating Intelligence
+            KAFU AI آ· Enterprise Operating Intelligence
           </p>
         </footer>
       </section>
     </main>
   );
 }
+
+
+
+

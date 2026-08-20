@@ -1,6 +1,18 @@
-﻿import {
+﻿import type {
+  GroundedAIService,
+} from "../../ai/grounded-ai";
+
+import {
+  getAIServerRuntime,
+} from "../../ai/server-runtime";
+
+import {
   ExecutiveAIInsightEngine,
 } from "./ExecutiveAIInsightEngine";
+
+import {
+  ExecutiveAIInsightGrounding,
+} from "./ExecutiveAIInsightGrounding";
 import {
   assertExecutiveAIInsightRepository,
 } from "./ExecutiveAIInsightRepository";
@@ -59,6 +71,9 @@ export interface ExecutiveAIInsightRuntimeDependencies {
   repository:
     ExecutiveAIInsightRepository;
 
+  groundedAI?:
+    GroundedAIService;
+
   cache?:
     ExecutiveAIInsightCache;
 
@@ -115,6 +130,9 @@ export class ExecutiveAIInsightRuntime {
   private readonly repository:
     ExecutiveAIInsightRepository;
 
+  private readonly grounding?:
+    ExecutiveAIInsightGrounding;
+
   private readonly cache?:
     ExecutiveAIInsightCache;
 
@@ -144,6 +162,14 @@ export class ExecutiveAIInsightRuntime {
       assertExecutiveAIInsightRepository(
         dependencies.repository,
       );
+
+    this.grounding =
+      dependencies.groundedAI
+        ? new ExecutiveAIInsightGrounding({
+            groundedAI:
+              dependencies.groundedAI,
+          })
+        : undefined;
 
     this.cache =
       dependencies.cache;
@@ -279,12 +305,32 @@ export class ExecutiveAIInsightRuntime {
       );
 
     try {
-      const generated =
+      const deterministic =
         this.engine.generate(
           context,
           this.clock.now(),
           request.correlationId,
         );
+
+      const groundingResult =
+        this.grounding
+          ? await this.grounding.ground({
+              briefing:
+                deterministic,
+
+              context,
+
+              requestedBy:
+                request.requestedBy,
+
+              correlationId:
+                request.correlationId,
+            })
+          : undefined;
+
+      const generated =
+        groundingResult?.briefing
+        ?? deterministic;
 
       const briefingId =
         generated.id
@@ -432,6 +478,23 @@ export class ExecutiveAIInsightRuntime {
 
           managementAttentionRequired:
             persisted.managementAttentionRequired,
+
+          groundedAI:
+            Boolean(groundingResult),
+
+          groundedAIProvider:
+            groundingResult?.provider,
+
+          groundedAIModel:
+            groundingResult?.model,
+
+          groundedAICitationCount:
+            groundingResult?.citationCount
+            ?? 0,
+
+          groundedAIEvidenceCount:
+            groundingResult?.evidenceCount
+            ?? 0,
 
           materialChange,
         },
@@ -809,3 +872,26 @@ export const createExecutiveAIInsightRuntime = (
   new ExecutiveAIInsightRuntime(
     dependencies,
   );
+
+export type ExecutiveAIInsightServerRuntimeDependencies =
+  Omit<
+    ExecutiveAIInsightRuntimeDependencies,
+    "groundedAI"
+  >;
+
+export const createExecutiveAIInsightServerRuntime = (
+  dependencies:
+    ExecutiveAIInsightServerRuntimeDependencies,
+): ExecutiveAIInsightRuntime => {
+  const aiRuntime =
+    getAIServerRuntime();
+
+  return new ExecutiveAIInsightRuntime({
+    ...dependencies,
+
+    groundedAI:
+      aiRuntime.groundedAI,
+  });
+};
+
+
