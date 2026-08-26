@@ -410,6 +410,41 @@ export default function EnterpriseHeader() {
       setIsSigningOut(false);
     }
   }
+  if (!user) {
+  return (
+    <header className="kafu-executive-header">
+      <div className="kafu-executive-header__inner kafu-public-header__inner">
+        <Link
+          href="/"
+          className="kafu-executive-brand"
+          aria-label="KAFU AI"
+          title="KAFU AI"
+        >
+          <Image
+            src="/brand/kafu-logo-en.png"
+            alt="KAFU AI"
+            width={1774}
+            height={887}
+            priority
+            className="kafu-executive-brand__logo"
+            sizes="112px"
+          />
+        </Link>
+
+        <div className="kafu-executive-header__actions">
+          <LanguageSwitcher />
+
+          <Link
+            href="/login"
+            className="kafu-public-login"
+          >
+            Log In
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
 
   return (
     <header className="kafu-executive-header">

@@ -260,7 +260,8 @@ export default function DiscoveryResponseComposer({
             onAnswerChange(event.target.value)
           }
           rows={8}
-          placeholder="ط§ظƒطھط¨ ط¥ط¬ط§ط¨طھظƒ ط§ظ„طھظ†ظپظٹط°ظٹط© ظ‡ظ†ط§..."
+          required
+          placeholder="ادخل اجابتك هنا"
           className="min-h-[220px] w-full resize-y rounded-[22px] border border-slate-200 bg-white px-6 py-5 text-base font-medium leading-8 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-70"
         />
 

@@ -29,7 +29,7 @@ function resolveSafeDestination(
     return requestedPath;
   }
 
-  return "/company-dashboard";
+  return "/assessment";
 }
 
 export default function RegistrationForm() {

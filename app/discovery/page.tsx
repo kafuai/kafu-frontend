@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import DiscoveryResponseComposer, {
@@ -22,6 +22,7 @@ import DiscoveryResponseComposer, {
 import { persistDiscoveryCommunication } from "@/components/discovery/discoveryCommunicationPersistence";
 import { getCurrentCompanyId } from "@/lib/companySession";
 import { supabase } from "@/lib/supabase";
+
 
 const QUESTIONS = [
   "ما أكثر ثلاثة تحديات تشغل الإدارة التنفيذية حالياً؟",
@@ -53,6 +54,70 @@ export default function DiscoveryPage() {
   const [message, setMessage] = useState("");
   const [hasError, setHasError] = useState(false);
 
+ useEffect(() => {
+  async function loadExistingAnswers() {
+    const companyId = getCurrentCompanyId();
+
+    console.log(
+      "DISCOVERY CURRENT COMPANY ID:",
+      companyId
+    );
+
+    if (!companyId) {
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("discovery_answers")
+      .select("question_order, answer")
+      .eq("company_id", companyId)
+      .order("question_order", {
+        ascending: true,
+      });
+
+    console.log(
+      "DISCOVERY LOADED ANSWERS:",
+      data
+    );
+
+    console.log(
+      "DISCOVERY LOAD ERROR:",
+      error
+    );
+
+    if (error) {
+      console.error(
+        "Failed to load existing Discovery answers:",
+        error
+      );
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      return;
+    }
+
+    setAnswers((currentAnswers) => {
+      const updatedAnswers = [...currentAnswers];
+
+      data.forEach((item) => {
+        const index = item.question_order - 1;
+
+        if (
+          index >= 0 &&
+          index < updatedAnswers.length
+        ) {
+          updatedAnswers[index] =
+            item.answer ?? "";
+        }
+      });
+
+      return updatedAnswers;
+    });
+  }
+
+  loadExistingAnswers();
+}, []);
   const progress =
     ((currentQuestion + 1) / QUESTIONS.length) * 100;
 
@@ -99,12 +164,27 @@ export default function DiscoveryPage() {
     setMessage("");
     setHasError(false);
 
+    if (!answers[currentQuestion].trim()) {
+    setHasError(true);
+    setMessage("يرجى الإجابة على السؤال قبل الانتقال للسؤال التالي.");
+    return;
+  }
+
     setCurrentQuestion((current) =>
       Math.min(QUESTIONS.length - 1, current + 1)
     );
   }
 
   async function handleFinish() {
+    const hasEmptyAnswer = answers.some(
+    (answer) => !answer.trim()
+  );
+
+  if (hasEmptyAnswer) {
+    setHasError(true);
+    setMessage("يرجى الإجابة على جميع الأسئلة قبل إكمال جلسة الاستكشاف.");
+    return;
+  }
     setLoading(true);
     setMessage(
       "جاري حفظ الإجابات ورفع الملفات والتسجيلات..."
@@ -141,15 +221,52 @@ export default function DiscoveryPage() {
         })
       );
 
-      const { error } = await supabase
-        .from("discovery_answers")
-        .insert(rows);
+      const {
+          data: existingAnswers,
+          error: existingAnswersError,
+        } = await supabase
+          .from("discovery_answers")
+          .select("id, question_order")
+          .eq("company_id", companyId);
 
-      if (error) {
-        throw new Error(
-          `تعذر حفظ الإجابات النصية: ${error.message}`
-        );
-      }
+        if (existingAnswersError) {
+          throw new Error(
+            `تعذر التحقق من إجابات Discovery الموجودة: ${existingAnswersError.message}`
+          );
+        }
+
+        for (const row of rows) {
+          const existingAnswer = existingAnswers?.find(
+            (item) =>
+              item.question_order === row.question_order
+          );
+
+          if (existingAnswer) {
+            const { error: updateError } = await supabase
+              .from("discovery_answers")
+              .update({
+                question: row.question,
+                answer: row.answer,
+              })
+              .eq("id", existingAnswer.id);
+
+            if (updateError) {
+              throw new Error(
+                `تعذر تحديث إجابة Discovery: ${updateError.message}`
+              );
+            }
+          } else {
+            const { error: insertError } = await supabase
+              .from("discovery_answers")
+              .insert(row);
+
+            if (insertError) {
+              throw new Error(
+                `تعذر حفظ إجابة Discovery: ${insertError.message}`
+              );
+            }
+          }
+        }
 
       setMessage(
         `تم حفظ جلسة الاستكشاف بنجاح: ${communicationResult.messageCount} مدخلات و${communicationResult.attachmentCount} مرفقات.`
