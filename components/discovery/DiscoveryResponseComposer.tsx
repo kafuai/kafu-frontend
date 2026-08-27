@@ -179,7 +179,7 @@ export default function DiscoveryResponseComposer({
       setVoiceError(
         error instanceof Error
           ? error.message
-          : "طھط¹ط°ط± ط¨ط¯ط، ط§ظ„طھط³ط¬ظٹظ„ ط§ظ„طµظˆطھظٹ."
+          :".تعذر بدء التسجيل الصوتي"
       );
 
       setIsRecording(false);
@@ -215,7 +215,7 @@ export default function DiscoveryResponseComposer({
       setVoiceError(
         error instanceof Error
           ? error.message
-          : "طھط¹ط°ط± ط¥ظ†ظ‡ط§ط، ط§ظ„طھط³ط¬ظٹظ„ ط§ظ„طµظˆطھظٹ."
+          :"تعذر إنهاء التسجيل الصوتي."
       );
 
       setIsRecording(false);
@@ -266,7 +266,7 @@ export default function DiscoveryResponseComposer({
         />
 
                 <div className="pointer-events-none absolute bottom-4 left-5 text-xs font-bold text-slate-400">
-          {answer.length.toLocaleString("ar")} ط­ط±ظپ
+          {answer.length.toLocaleString("ar")} حرف
         </div>
       </div>
 
@@ -278,7 +278,7 @@ export default function DiscoveryResponseComposer({
               disabled={disabled}
               onClick={() => inputRef.current?.click()}
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="ط¥ط±ظپط§ظ‚ ظ…ظ„ظپ"
+              aria-label="ارفاق ملف"
             >
               <Paperclip size={18} />
             </button>
@@ -290,7 +290,7 @@ export default function DiscoveryResponseComposer({
               disabled={disabled}
               onClick={startRecording}
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="ط¨ط¯ط، ط§ظ„طھط³ط¬ظٹظ„ ط§ظ„طµظˆطھظٹ"
+              aria-label="بدء التسجيل الصوتي"
             >
               <Mic size={18} />
             </button>
@@ -299,7 +299,7 @@ export default function DiscoveryResponseComposer({
               <span className="inline-flex min-w-0 items-center gap-2 text-sm font-black text-red-700">
                 <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-red-500" />
 
-                <span className="truncate">ط¬ط§ط±ظچ ط§ظ„طھط³ط¬ظٹظ„</span>
+                <span className="truncate">جارٍ التسجيل</span>
 
                 <span dir="ltr" className="shrink-0">
                   {formatDuration(recordingSeconds)}
@@ -311,7 +311,7 @@ export default function DiscoveryResponseComposer({
                   type="button"
                   onClick={stopRecording}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-red-600 text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-100"
-                  aria-label="ط¥ظٹظ‚ط§ظپ ط§ظ„طھط³ط¬ظٹظ„"
+                  aria-label="إيقاف التسجيل"
                 >
                   <Square size={15} fill="currentColor" />
                 </button>
@@ -320,7 +320,7 @@ export default function DiscoveryResponseComposer({
                   type="button"
                   onClick={cancelRecording}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-200 bg-white text-red-600 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-100"
-                  aria-label="ط¥ظ„ط؛ط§ط، ط§ظ„طھط³ط¬ظٹظ„"
+                  aria-label="إلغاء التسجيل"
                 >
                   <X size={17} />
                 </button>
@@ -355,7 +355,7 @@ export default function DiscoveryResponseComposer({
               />
 
               <h3 className="text-sm font-black text-slate-900">
-                ط§ظ„ظ…ظˆط§ط¯ ط§ظ„ط¯ط§ط¹ظ…ط©
+               المواد الداعمة
               </h3>
             </div>
 
@@ -382,7 +382,7 @@ export default function DiscoveryResponseComposer({
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-black text-slate-900">
                       {attachment.kind === "voice"
-                        ? "ط¥ط¬ط§ط¨ط© طµظˆطھظٹط©"
+                        ? "إجابة صوتية"
                         : attachment.name}
                     </p>
 
@@ -393,7 +393,7 @@ export default function DiscoveryResponseComposer({
 
                       {attachment.durationSeconds !==
                         undefined &&
-                        ` â€¢ ${formatDuration(
+                        ` . ${formatDuration(
                           attachment.durationSeconds
                         )}`}
                     </p>
@@ -406,7 +406,7 @@ export default function DiscoveryResponseComposer({
                       removeAttachment(attachment.id)
                     }
                     className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                    aria-label="ط­ط°ظپ ط§ظ„ظ…ط±ظپظ‚"
+                    aria-label="حذف المرفق"
                   >
                     <Trash2 size={17} />
                   </button>

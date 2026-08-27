@@ -58,11 +58,6 @@ export default function DiscoveryPage() {
   async function loadExistingAnswers() {
     const companyId = getCurrentCompanyId();
 
-    console.log(
-      "DISCOVERY CURRENT COMPANY ID:",
-      companyId
-    );
-
     if (!companyId) {
       return;
     }
@@ -74,16 +69,6 @@ export default function DiscoveryPage() {
       .order("question_order", {
         ascending: true,
       });
-
-    console.log(
-      "DISCOVERY LOADED ANSWERS:",
-      data
-    );
-
-    console.log(
-      "DISCOVERY LOAD ERROR:",
-      error
-    );
 
     if (error) {
       console.error(

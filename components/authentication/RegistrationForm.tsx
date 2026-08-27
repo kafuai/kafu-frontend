@@ -86,7 +86,7 @@ export default function RegistrationForm() {
           new URLSearchParams({
             registration: "confirmation",
             email: normalizedEmail,
-            next: destination,
+            next: "/assessment",
           });
 
         router.push(
@@ -96,7 +96,7 @@ export default function RegistrationForm() {
         return;
       }
 
-      router.replace(destination);
+      router.replace("/assessment");
       router.refresh();
     } catch (error) {
       setErrorMessage(
