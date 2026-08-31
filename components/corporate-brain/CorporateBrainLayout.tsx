@@ -49,24 +49,125 @@ export default function CorporateBrainLayout({
   const { locale } = useLocalization();
   const isArabic = locale === "ar";
 
-  const [prompt, setPrompt] = useState("");
-  const [submittedPrompt, setSubmittedPrompt] = useState("");
+ const [prompt, setPrompt] = useState("");
+ const [submittedPrompt, setSubmittedPrompt] = useState("");
+ const [aiResponse, setAIResponse] = useState("");
+ const [aiLoading, setAILoading] = useState(false);
+ const [aiError, setAIError] = useState("");
 
   const companyName =
     company.name || (isArabic ? "المؤسسة" : "The organization");
 
   const knowledgeSources = 3 + answers.length;
 
-  function handleSubmit() {
-    const normalizedPrompt = prompt.trim();
+  async function handleSubmit() {
+  const normalizedPrompt = prompt.trim();
 
-    if (!normalizedPrompt) {
-      return;
+  if (!normalizedPrompt || aiLoading) {
+    return;
+  }
+
+  setSubmittedPrompt(normalizedPrompt);
+  setPrompt("");
+  setAIResponse("");
+  setAIError("");
+  setAILoading(true);
+
+  try {
+    const discoveryEvidence = answers
+      .slice(0, 20)
+      .map((answer, index) => ({
+        id: `DISCOVERY-${index + 1}`,
+        source: "Corporate Discovery",
+        label:
+          answer.question ||
+          `Discovery Answer ${index + 1}`,
+        value: answer.answer || "",
+      }));
+
+    const evidence = [
+      {
+        id: "COMPANY-NAME",
+        source: "Company Profile",
+        label: "Company Name",
+        value: company.name ?? "",
+      },
+      {
+        id: "COMPANY-INDUSTRY",
+        source: "Company Profile",
+        label: "Industry",
+        value: company.industry ?? "",
+      },
+      {
+        id: "COMPANY-COUNTRY",
+        source: "Company Profile",
+        label: "Country",
+        value: company.country ?? "",
+      },
+      {
+        id: "COMPANY-EMPLOYEES",
+        source: "Company Profile",
+        label: "Employee Count",
+        value: company.employee_count ?? null,
+      },
+      ...discoveryEvidence,
+    ];
+
+    const response = await fetch(
+      "/api/ai/grounded",
+      {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          task: isArabic
+            ? "أجب عن سؤال المستخدم بالاعتماد حصريًا على أدلة المؤسسة المتاحة. لا تفترض معلومات غير موجودة في الأدلة، وقدم إجابة تنفيذية واضحة ومباشرة."
+            : "Answer the user's question using only the supplied enterprise evidence. Do not assume information that is not present in the evidence. Provide a clear and direct executive answer.",
+
+          question: normalizedPrompt,
+
+          locale,
+
+          evidence,
+        }),
+      },
+    );
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        payload.error ||
+          `Corporate Brain AI request failed with status ${response.status}.`,
+      );
     }
 
-    setSubmittedPrompt(normalizedPrompt);
-    setPrompt("");
+    const text =
+      payload.data?.text?.trim();
+
+    if (!text) {
+      throw new Error(
+        isArabic
+          ? "لم يتم إرجاع إجابة من طبقة الذكاء الاصطناعي."
+          : "The AI intelligence layer returned no answer.",
+      );
+    }
+
+    setAIResponse(text);
+  } catch (error) {
+    setAIError(
+      error instanceof Error
+        ? error.message
+        : isArabic
+          ? "حدث خطأ أثناء تحليل السؤال."
+          : "An error occurred while analyzing the question.",
+    );
+  } finally {
+    setAILoading(false);
   }
+}
 
   const readinessItems = [
     {
@@ -119,8 +220,10 @@ export default function CorporateBrainLayout({
             <CorporateBrainConversation
               companyName={companyName}
               userPrompt={submittedPrompt}
+              aiResponse={aiResponse}
+              aiLoading={aiLoading}
+              aiError={aiError}
             />
-
             <CorporateBrainPromptComposer
               value={prompt}
               onChange={setPrompt}
