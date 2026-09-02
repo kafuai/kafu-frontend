@@ -270,7 +270,7 @@ export default function DiscoveryResponseComposer({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 border-t border-slate-200 px-5 py-3">
+      {/* <div className="flex items-center gap-2 border-t border-slate-200 px-5 py-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {!isRecording && (
             <button
@@ -337,7 +337,7 @@ export default function DiscoveryResponseComposer({
             className="hidden"
           />
         </div>
-      </div>
+      </div> */}
 
       {voiceError && (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">

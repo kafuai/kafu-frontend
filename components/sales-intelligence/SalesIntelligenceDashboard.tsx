@@ -60,7 +60,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("ar-BH", {
 });
 
 function formatCurrency(value: number): string {
-  return `${currencyFormatter.format(value)} ط¯.ط¨`;
+  return `${currencyFormatter.format(value)}  د.ب`;
 }
 
 function getTrendIcon(direction: SalesTrendDirection) {
@@ -77,9 +77,9 @@ function getTrendIcon(direction: SalesTrendDirection) {
 
 function getHealthLabel(health: SalesHealthStatus): string {
   const labels: Record<SalesHealthStatus, string> = {
-    healthy: "طµط­ظٹط©",
-    attention: "طھط­طھط§ط¬ ظ…طھط§ط¨ط¹ط©",
-    critical: "ظ…ط¹ط±ط¶ط© ظ„ظ„ط®ط·ط±",
+    healthy: "صحية",
+    attention: "تحتاج متابعة",
+    critical: "معرضة للخطر",
   };
 
   return labels[health];
@@ -151,8 +151,8 @@ const { snapshot, loading, error } = useSalesIntelligence();
 
         setCommunicationMessage(
           result.created
-            ? `طھظ… ط¥ظ†ط´ط§ط، ظ…ط³ط§ط­ط© ط§ظ„طھظˆط§طµظ„ ط§ظ„ط®ط§طµط© ط¨ظپط±طµط© ${companyName}.`
-            : `طھظ… ط§ط³طھط±ط¬ط§ط¹ ظ…ط³ط§ط­ط© ط§ظ„طھظˆط§طµظ„ ط§ظ„ط­ط§ظ„ظٹط© ظ„ظپط±طµط© ${companyName}.`,
+            ? `تم إنشاء مساحة التواصل الخاصة بفرصة ${companyName}.`
+            : `تم استرجاع مساحة التواصل الحالية لفرصة${companyName}.`,
         );
 
         router.push(
@@ -164,7 +164,7 @@ const { snapshot, loading, error } = useSalesIntelligence();
         setCommunicationError(
           actionError instanceof Error
             ? actionError.message
-            : "طھط¹ط°ط± ظپطھط­ ظ…ط³ط§ط­ط© ط§ظ„طھظˆط§طµظ„ ط§ظ„ط®ط§طµط© ط¨ط§ظ„ظپط±طµط©.",
+            : "تعذر فتح مساحة التواصل الخاصة بالفرصة.",
         );
       } finally {
         setActiveCommunicationOpportunityId(null);
@@ -181,10 +181,10 @@ const { snapshot, loading, error } = useSalesIntelligence();
               <span className={styles.sectionEyebrow}>
                 Sales Intelligence
               </span>
-              <h2>ط¬ط§ط±ظچ طھط­ظ…ظٹظ„ ط°ظƒط§ط، ط§ظ„ظ…ط¨ظٹط¹ط§طھ</h2>
+              <h2>جارٍ تحميل ذكاء المبيعات</h2>
               <p>
-                ظٹطھظ… ط§ظ„ط¢ظ† طھط­ظ„ظٹظ„ ظپط±طµ ط§ظ„ظ…ط¨ظٹط¹ط§طھ ظˆط§ظ„ط£ظ†ط´ط·ط© ظˆط®ط·ظˆط§طھ ط§ظ„ظ…طھط§ط¨ط¹ط©
-                ط§ظ„ط®ط§طµط© ط¨ط§ظ„ط´ط±ظƒط© ط§ظ„ط­ط§ظ„ظٹط©.
+               يتم الآن تحليل فرص المبيعات والأنشطة وخطوات المتابعة
+                الخاصة بالشركة الحالية.
               </p>
             </div>
           </div>
@@ -202,8 +202,8 @@ const { snapshot, loading, error } = useSalesIntelligence();
               <span className={styles.sectionEyebrow}>
                 Sales Intelligence
               </span>
-              <h2>طھط¹ط°ط± طھط­ظ…ظٹظ„ ط°ظƒط§ط، ط§ظ„ظ…ط¨ظٹط¹ط§طھ</h2>
-              <p>{error || "ظ„ظ… طھطھظˆظپط± ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط¨ظٹط¹ط§طھ ط§ظ„ظ…ط·ظ„ظˆط¨ط©."}</p>
+              <h2>تعذر تحميل ذكاء المبيعات</h2>
+              <p>{error || "لم تتوفر بيانات المبيعات المطلوبة."}</p>
             </div>
           </div>
         </section>
@@ -288,17 +288,17 @@ const { snapshot, loading, error } = useSalesIntelligence();
             <span className={styles.eyebrowIcon}>
               <Sparkles size={15} aria-hidden="true" />
             </span>
-            ط°ظƒط§ط، ط§ظ„ظ…ط¨ظٹط¹ط§طھ ط§ظ„ظ…ط¤ط³ط³ظٹ
+             ذكاء المبيعات المؤسسي
           </div>
 
           <h1 className={styles.heroTitle}>
-            ط±ط¤ظٹط© ظ…ظˆط­ظ‘ط¯ط© ظ„ط£ط¯ط§ط، ط§ظ„ظ…ط¨ظٹط¹ط§طھ ظˆط§ظ„ظپط±طµ ط§ظ„ظ‚ط§ط¯ظ…ط©
+           رؤية موحّدة لأداء المبيعات والفرص القادمة
           </h1>
 
           <p className={styles.heroDescription}>
-            ظٹط­ظ„ظ„ KAFU AI ط®ط· ط§ظ„ظ…ط¨ظٹط¹ط§طھطŒ ط¥ط´ط§ط±ط§طھ ط§ظ„ط¹ظ…ظ„ط§ط،طŒ ط§ط­طھظ…ط§ظ„ط§طھ ط§ظ„ط¥ط؛ظ„ط§ظ‚طŒ
-            ظˆط§ظ„ط®ط·ظˆط§طھ ط§ظ„طھط§ظ„ظٹط© ظ„ظ…ط³ط§ط¹ط¯ط© ط§ظ„ظپط±ظٹظ‚ ط¹ظ„ظ‰ طھظˆط¬ظٹظ‡ ط¬ظ‡ط¯ظ‡ ظ†ط­ظˆ ط§ظ„ظپط±طµ
-            ط§ظ„ط£ط¹ظ„ظ‰ ط£ط«ط±ظ‹ط§.
+            يحلل KAFU AI خط المبيعات، إشارات العملاء، احتمالات الإغلاق،
+            والخطوات التالية لمساعدة الفريق على توجيه جهده نحو الفرص
+            الأعلى أثرًا.
           </p>
         </div>
 
@@ -308,7 +308,7 @@ const { snapshot, loading, error } = useSalesIntelligence();
               <Bot size={16} aria-hidden="true" />
             </span>
             <span>
-              <strong>ط§ظ„طھط­ظ„ظٹظ„ ظ…ط­ط¯ط«</strong>
+              <strong>التحليل محدث</strong>
               <small>{dateTimeFormatter.format(new Date(generatedAt))}</small>
             </span>
           </div>
@@ -318,14 +318,14 @@ const { snapshot, loading, error } = useSalesIntelligence();
               <Target size={16} aria-hidden="true" />
             </span>
             <span>
-              <strong>{activeOpportunities.length} ظپط±طµط© ظ†ط´ط·ط©</strong>
-              <small>{highPriorityOpportunities.length} ظپط±طµ ط°ط§طھ ط£ظˆظ„ظˆظٹط© ط¹ط§ظ„ظٹط©</small>
+              <strong>{activeOpportunities.length} فرصة نشطة</strong>
+              <small>{highPriorityOpportunities.length}  فرص ذات أولوية عالية </small>
             </span>
           </div>
         </div>
       </section>
 
-      <section className={styles.metricsGrid} aria-label="ظ…ط¤ط´ط±ط§طھ ط§ظ„ظ…ط¨ظٹط¹ط§طھ">
+      <section className={styles.metricsGrid} aria-label="مؤشرات المبيعات">
         {metrics.map((metric) => (
           <article className={styles.metricCard} key={metric.id}>
             <div className={styles.metricHeader}>
@@ -492,13 +492,13 @@ const { snapshot, loading, error } = useSalesIntelligence();
               <span className={styles.sectionEyebrow}>
                 Pipeline Intelligence
               </span>
-              <h2>طھظˆط²ظٹط¹ ط®ط· ط§ظ„ظ…ط¨ظٹط¹ط§طھ</h2>
-              <p>ط§ظ„ظ‚ظٹظ…ط© ط§ظ„ط­ط§ظ„ظٹط© ظ„ظ„ظپط±طµ ط¨ط­ط³ط¨ ط§ظ„ظ…ط±ط­ظ„ط© ط§ظ„طھط¬ط§ط±ظٹط©.</p>
+              <h2>توزيع خط المبيعات</h2>
+              <p>القيمة الحالية للفرص بحسب المرحلة التجارية</p>
             </div>
 
             <div className={styles.panelHeaderValue}>
               <strong>{formatCurrency(totalPipelineValue)}</strong>
-              <span>ط§ظ„ظ‚ظٹظ…ط© ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹط©</span>
+              <span>القيمة الإجمالية</span>
             </div>
           </div>
 
@@ -507,7 +507,7 @@ const { snapshot, loading, error } = useSalesIntelligence();
               <div className={styles.pipelineRow} key={stage.status}>
                 <div className={styles.pipelineMeta}>
                   <span>{stage.label}</span>
-                  <small>{stage.opportunities} ظپط±طµ</small>
+                  <small>{stage.opportunities} فرص</small>
                 </div>
 
                 <div
@@ -534,7 +534,7 @@ const { snapshot, loading, error } = useSalesIntelligence();
             </span>
             <div>
               <span className={styles.sectionEyebrow}>KAFU AI</span>
-              <h2>طھظˆطµظٹط§طھ ط§ظ„ظٹظˆظ…</h2>
+              <h2>توصيات اليوم</h2>
             </div>
           </div>
 
@@ -569,15 +569,15 @@ const { snapshot, loading, error } = useSalesIntelligence();
             <span className={styles.sectionEyebrow}>
               Opportunity Intelligence
             </span>
-            <h2>ط§ظ„ظپط±طµ ط°ط§طھ ط§ظ„ط£ظˆظ„ظˆظٹط©</h2>
+            <h2>الفرص ذات الأولوية</h2>
             <p>
-              طھط±طھظٹط¨ ط°ظƒظٹ ظٹط¬ظ…ط¹ ط¨ظٹظ† ظ‚ظٹظ…ط© ط§ظ„طµظپظ‚ط©طŒ ط§ط­طھظ…ط§ظ„ظٹط© ط§ظ„ط¥ط؛ظ„ط§ظ‚طŒ ظˆطµط­ط©
-              ط§ظ„ط¹ظ„ط§ظ‚ط© ظ…ط¹ ط§ظ„ط¹ظ…ظٹظ„.
+              ترتيب ذكي يجمع بين قيمة الصفقة، احتمالية الإغلاق، وصحة
+              العلاقة مع العميل.
             </p>
           </div>
 
           <button className={styles.secondaryButton} type="button">
-            ط¹ط±ط¶ ط¬ظ…ظٹط¹ ط§ظ„ظپط±طµ
+            عرض جميع الفرص
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
         </div>
@@ -597,13 +597,14 @@ const { snapshot, loading, error } = useSalesIntelligence();
           <table className={styles.opportunityTable}>
             <thead>
               <tr>
-                <th>ط§ظ„ط¹ظ…ظٹظ„ ظˆط§ظ„ظپط±طµط©</th>
-                <th>ط§ظ„ظ…ط±ط­ظ„ط©</th>
-                <th>ط§ظ„ظ‚ظٹظ…ط©</th>
-                <th>ط§ط­طھظ…ط§ظ„ظٹط© ط§ظ„ط¥ط؛ظ„ط§ظ‚</th>
-                <th>طµط­ط© ط§ظ„ظپط±طµط©</th>
-                <th>ط§ظ„ط¥ط؛ظ„ط§ظ‚ ط§ظ„ظ…طھظˆظ‚ط¹</th>
-                <th>ط§ظ„ط®ط·ظˆط© ط§ظ„طھط§ظ„ظٹط©</th>                <th>ط§ظ„طھظˆط§طµظ„</th>
+                <th>العميل والفرصة</th>
+                <th>المرحلة</th>
+                <th>القيمة</th>
+                <th>احتمالية الإغلاق</th>
+                <th>صحة الفرصة</th>
+                <th>الإغلاق المتوقع</th>
+                <th>الخطوة التالية</th>
+                <th>التواصل</th>
               </tr>
             </thead>
 
@@ -662,7 +663,7 @@ const { snapshot, loading, error } = useSalesIntelligence();
                       <div
                         className={styles.probabilityTrack}
                         role="progressbar"
-                        aria-label={`ط§ط­طھظ…ط§ظ„ظٹط© ط§ظ„ط¥ط؛ظ„ط§ظ‚ ${opportunity.probability}%`}
+                        aria-label={`احتمالية الإغلاق  ${opportunity.probability}%`}
                         aria-valuemin={0}
                         aria-valuemax={100}
                         aria-valuenow={opportunity.probability}
@@ -717,7 +718,7 @@ const { snapshot, loading, error } = useSalesIntelligence();
                       className={styles.communicationButton}
                       type="button"
                       disabled={isCommunicationPending}
-                      aria-label={`ظپطھط­ ط§ظ„طھظˆط§طµظ„ ظ…ط¹ ${opportunity.companyName}`}
+                      aria-label={`فتح التواصل مع${opportunity.companyName}`}
                       onClick={() =>
                         handleOpenCommunication(
                           opportunity.id,
@@ -729,8 +730,8 @@ const { snapshot, loading, error } = useSalesIntelligence();
                       {isCommunicationPending &&
                       activeCommunicationOpportunityId ===
                         opportunity.id
-                        ? "ط¬ط§ط±ظچ ط§ظ„ظپطھط­..."
-                        : "ظپطھط­ ط§ظ„طھظˆط§طµظ„"}
+                        ? "جارٍ الفتح..."
+                        : "فتح التواصل"}
                     </button>
                   </td>
                 </tr>
@@ -756,8 +757,8 @@ const { snapshot, loading, error } = useSalesIntelligence();
               <span className={styles.sectionEyebrow}>
                 Revenue Forecast
               </span>
-              <h2>طھظˆظ‚ط¹ ط§ظ„ط¥ظٹط±ط§ط¯ط§طھ</h2>
-              <p>ظ…ظ‚ط§ط±ظ†ط© ط§ظ„ط§ظ„طھط²ط§ظ…ط§طھ ظˆط§ظ„طھظˆظ‚ط¹ط§طھ ط¨ط§ظ„ظ‡ط¯ظپ ط§ظ„ط´ظ‡ط±ظٹ.</p>
+              <h2>توقع الإيرادات</h2>
+              <p>مقارنة الالتزامات والتوقعات بالهدف الشهري</p>
             </div>
           </div>
 
@@ -777,7 +778,7 @@ const { snapshot, loading, error } = useSalesIntelligence();
                   <div className={styles.forecastHeading}>
                     <strong>{period.label}</strong>
                     <span>
-                      ط§ظ„ظ‡ط¯ظپ: {formatCurrency(period.target)}
+                     الهدف: {formatCurrency(period.target)}
                     </span>
                   </div>
 
@@ -790,34 +791,34 @@ const { snapshot, loading, error } = useSalesIntelligence();
                     <span
                       className={styles.committedBar}
                       style={{ width: `${committedWidth}%` }}
-                      title={`ظ…ظ„طھط²ظ…: ${formatCurrency(period.committed)}`}
+                      title={`ملتزم: ${formatCurrency(period.committed)}`}
                     />
 
                     <span
                       className={styles.probableBar}
                       style={{ width: `${probableWidth}%` }}
-                      title={`ظ…ط±ط¬ط­: ${formatCurrency(period.probable)}`}
+                      title={`مرجح: ${formatCurrency(period.probable)}`}
                     />
 
                     <span
                       className={styles.pipelineBar}
                       style={{ width: `${pipelineWidth}%` }}
-                      title={`ط®ط· ط§ظ„ظ…ط¨ظٹط¹ط§طھ: ${formatCurrency(period.pipeline)}`}
+                      title={`خط المبيعات ${formatCurrency(period.pipeline)}`}
                     />
                   </div>
 
                   <div className={styles.forecastValues}>
                     <span>
                       <i data-kind="committed" />
-                      ظ…ظ„طھط²ظ… {formatCurrency(period.committed)}
+                     ملتزم {formatCurrency(period.committed)}
                     </span>
                     <span>
                       <i data-kind="probable" />
-                      ظ…ط±ط¬ظ‘ط­ {formatCurrency(period.probable)}
+                      مرجّح  {formatCurrency(period.probable)}
                     </span>
                     <span>
                       <i data-kind="pipeline" />
-                      ط¥ط¶ط§ظپظٹ {formatCurrency(period.pipeline)}
+                      إضافي  {formatCurrency(period.pipeline)}
                     </span>
                   </div>
                 </article>
@@ -832,8 +833,8 @@ const { snapshot, loading, error } = useSalesIntelligence();
               <span className={styles.sectionEyebrow}>
                 Sales Activity
               </span>
-              <h2>ط¢ط®ط± ط§ظ„ط£ظ†ط´ط·ط©</h2>
-              <p>طھط³ظ„ط³ظ„ ظ…ظˆط­ظ‘ط¯ ظ„ظ„طھظˆط§طµظ„ ظˆط§ظ„ط§ط¬طھظ…ط§ط¹ط§طھ ظˆط§ظ„ظ…طھط§ط¨ط¹ط§طھ.</p>
+              <h2>آخر الأنشطة</h2>
+              <p>تسلسل موحّد للتواصل والاجتماعات والمتابعات.</p>
             </div>
           </div>
 
