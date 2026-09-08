@@ -23,12 +23,19 @@ const protectedRoutes = [
   "/modules",
   "/sales-intelligence",
   "/workspace",
-];
+  "/communication",
+  "/welcome",
+  ];
 
 const guestRoutes = [
   "/login",
   "/register",
   "/forgot-password",
+];
+
+const onboardingRoutes = [
+  "/assessment",
+  "/discovery",
 ];
 
 function matchesRoute(
@@ -57,205 +64,104 @@ function getSupabasePublicKey(): string {
 }
 
 type MembershipRow = {
+  organization_id: string;
   organizations:
     | {
         id: string;
         company_id: string | null;
+        assessment_completed: boolean | null; // NEW: حالة إكمال Assessment
+        onboarding_completed: boolean | null; // Existing: حالة إكمال Onboarding بالكامل
       }
     | {
         id: string;
         company_id: string | null;
+        assessment_completed: boolean | null; // NEW: حالة إكمال Assessment
+        onboarding_completed: boolean | null; // Existing: حالة إكمال Onboarding بالكامل
       }[]
     | null;
 };
 
-type CompanyRow = {
-  id: string;
-  name: string | null;
-  industry: string | null;
-  country: string | null;
-  employee_count: number | null;
-  contact_name: string | null;
-  contact_email: string | null;
-  contact_phone: string | null;
-  contact_title: string | null;
-};
-
-type DiscoveryAnswerRow = {
-  company_id: string;
-  question_order: number | null;
-};
-
-async function getOnboardingRedirect(
+async function getOnboardingState(
   supabase: ReturnType<typeof createServerClient>,
   userId: string,
-  request: NextRequest,
-): Promise<NextResponse | null> {
+): Promise<{
+  assessmentCompleted: boolean;
+  onboardingCompleted: boolean;
+} | null> {
   const {
     data: memberships,
-    error: membershipError,
+    error,
   } = await supabase
     .from("organization_memberships")
     .select(`
+      organization_id,
       organizations (
         id,
-        company_id
+        company_id,
+        assessment_completed,
+        onboarding_completed
       )
     `)
     .eq("user_id", userId);
 
-  if (membershipError) {
+  if (error) {
+    console.error(
+      "Failed to load organization onboarding state:",
+      error,
+    );
+
     return null;
   }
 
   const typedMemberships =
     (memberships ?? []) as MembershipRow[];
 
-  const companyIds = typedMemberships
-    .flatMap((membership) => {
-      const organization = Array.isArray(
-        membership.organizations,
-      )
+  if (typedMemberships.length === 0) {
+    return {
+      assessmentCompleted: false, // NEW: لا يوجد Organization = Assessment غير مكتمل
+      onboardingCompleted: false, // Existing logic
+    };
+  }
+
+  /*
+   * A user may theoretically have more than one organization
+   * membership. We consider the relevant state completed if
+   * any organization is marked as completed.
+   */
+  let assessmentCompleted = false; // NEW: نحفظ حالة Assessment بشكل مستقل
+  let onboardingCompleted = false; // Existing: نحفظ حالة Onboarding الكاملة
+
+  typedMemberships.forEach((membership) => {
+    const organization =
+      Array.isArray(membership.organizations)
         ? membership.organizations[0]
         : membership.organizations;
 
-      return organization?.company_id
-        ? [organization.company_id]
-        : [];
-    });
+    if (organization?.assessment_completed === true) {
+      assessmentCompleted = true; // NEW: المستخدم أكمل Assessment
+    }
 
-  if (companyIds.length === 0) {
-    const assessmentUrl =
-      request.nextUrl.clone();
+    if (organization?.onboarding_completed === true) {
+      onboardingCompleted = true; // Existing: المستخدم أكمل Discovery أيضًا
+    }
+  });
 
-    assessmentUrl.pathname = "/assessment";
-    assessmentUrl.search = "";
+  return {
+    assessmentCompleted, // NEW
+    onboardingCompleted, // Existing
+  };
+}
 
-    return NextResponse.redirect(
-      assessmentUrl,
-    );
-  }
+function redirectToPath(
+  request: NextRequest,
+  pathname: string,
+): NextResponse {
+  const url = request.nextUrl.clone();
 
-  const {
-    data: companies,
-    error: companyError,
-  } = await supabase
-    .from("companies")
-    .select(`
-      id,
-      name,
-      industry,
-      country,
-      employee_count,
-      contact_name,
-      contact_email,
-      contact_phone,
-      contact_title
-    `)
-    .in("id", companyIds);
+  url.pathname = pathname;
+  url.search = "";
 
-  if (companyError) {
-    return null;
-  }
-
-  const typedCompanies =
-    (companies ?? []) as CompanyRow[];
-
-  const assessmentCompleted =
-    typedCompanies.some(
-      (company) =>
-        Boolean(company.name?.trim()) &&
-        Boolean(company.industry?.trim()) &&
-        Boolean(company.country?.trim()) &&
-        company.employee_count !== null &&
-        Boolean(company.contact_name?.trim()) &&
-        Boolean(company.contact_email?.trim()) &&
-        Boolean(company.contact_phone?.trim()) &&
-        Boolean(company.contact_title?.trim()),
-    );
-
-  if (!assessmentCompleted) {
-    const assessmentUrl =
-      request.nextUrl.clone();
-
-    assessmentUrl.pathname = "/assessment";
-    assessmentUrl.search = "";
-
-    return NextResponse.redirect(
-      assessmentUrl,
-    );
-  }
-
-  const completedCompanyIds =
-    typedCompanies
-      .filter(
-        (company) =>
-          Boolean(company.name?.trim()) &&
-          Boolean(company.industry?.trim()) &&
-          Boolean(company.country?.trim()) &&
-          company.employee_count !== null &&
-          Boolean(company.contact_name?.trim()) &&
-          Boolean(company.contact_email?.trim()) &&
-          Boolean(company.contact_phone?.trim()) &&
-          Boolean(company.contact_title?.trim()),
-      )
-      .map(
-        (company) =>
-          company.id,
-      );
-
-  const {
-    data: discoveryAnswers,
-    error: discoveryError,
-  } = await supabase
-    .from("discovery_answers")
-    .select(
-      "company_id, question_order",
-    )
-    .in(
-      "company_id",
-      completedCompanyIds,
-    );
-
-  if (discoveryError) {
-    return null;
-  }
-
-  const typedDiscoveryAnswers =
-    (discoveryAnswers ?? []) as DiscoveryAnswerRow[];
-
-  const completedQuestionOrders =
-    new Set(
-      typedDiscoveryAnswers.map(
-        (row) =>
-          `${row.company_id}:${row.question_order}`,
-      ),
-    );
-
-  const discoveryCompleted =
-    completedCompanyIds.some(
-      (companyId: string) =>
-        [1, 2, 3, 4, 5].every(
-          (questionOrder) =>
-            completedQuestionOrders.has(
-              `${companyId}:${questionOrder}`,
-            ),
-        ),
-    );
-
-  if (!discoveryCompleted) {
-    const discoveryUrl =
-      request.nextUrl.clone();
-
-    discoveryUrl.pathname = "/discovery";
-    discoveryUrl.search = "";
-
-    return NextResponse.redirect(
-      discoveryUrl,
-    );
-  }
-
-  return null;
+  return NextResponse.redirect(url);
 }
 
 export async function proxy(
@@ -329,6 +235,16 @@ export async function proxy(
       pathname,
       guestRoutes,
     );
+
+  const isOnboardingRoute =
+    matchesRoute(
+      pathname,
+      onboardingRoutes,
+    );
+
+  /*
+   * Unauthenticated users cannot access protected routes.
+   */
   if (
     !data.user &&
     isProtectedRoute
@@ -348,46 +264,86 @@ export async function proxy(
     );
   }
 
+  /*
+   * Authenticated users should not access guest routes.
+   */
   if (
     data.user &&
     isGuestRoute
   ) {
-    const dashboardUrl =
-      request.nextUrl.clone();
-
-    dashboardUrl.pathname =
-      "/company-dashboard";
-
-    dashboardUrl.search = "";
-
-    return NextResponse.redirect(
-      dashboardUrl,
+    return redirectToPath(
+      request,
+      "/company-dashboard",
     );
   }
 
-  const requiresOnboardingCheck =
-    isProtectedRoute &&
-    !pathname.startsWith("/assessment") &&
-    !pathname.startsWith("/discovery");
-
-  // 2. إذا العميل مسجل دخول، والصفحة تحتاج فحص، نفحصه فوراً
+  /*
+   * Onboarding state is now a persisted organization-level
+   * state. The proxy no longer calculates completion from
+   * Assessment or Discovery data.
+   */
   if (
     data.user &&
-    requiresOnboardingCheck
+    isProtectedRoute
   ) {
-    const onboardingRedirect =
-      await getOnboardingRedirect(
-        supabase,
-        data.user.id,
-        request,
-      );
+  const onboardingState =
+  await getOnboardingState(
+    supabase,
+    data.user.id,
+  );
 
-    if (onboardingRedirect) {
-      return onboardingRedirect;
-    }
-  }
-
+if (onboardingState === null) {
   return response;
+}
+
+const {
+  assessmentCompleted,
+  onboardingCompleted,
+} = onboardingState;
+
+/*
+ * STEP 1:
+ * Assessment is NOT completed.
+ *
+ * The user is only allowed to access /assessment.
+ * Discovery and all protected workspace routes
+ * must redirect back to Assessment.
+ */
+if (
+  !assessmentCompleted &&
+  pathname !== "/assessment"
+) {
+  return redirectToPath(
+    request,
+    "/assessment",
+  );
+}
+
+/*
+ * STEP 2:
+ * Assessment is completed, but Discovery is NOT completed.
+ *
+ * The user can access Assessment and Discovery.
+ * Any other protected route must redirect to Discovery.
+ */
+if (
+  assessmentCompleted &&
+  !onboardingCompleted &&
+  !isOnboardingRoute
+) {
+  return redirectToPath(
+    request,
+    "/discovery",
+  );
+}
+
+/*
+ * STEP 3:
+ * Assessment + Discovery are both completed.
+ *
+ * Protected routes are fully accessible.
+ */
+}
 }
 
 export const config = {

@@ -99,15 +99,74 @@ export default function AssessmentPage() {
       data = result.data;
       error = result.error;
     }
+    
     if (error) {
       setLoading(false);
       setMessage("حدث خطأ أثناء الحفظ: " + error.message);
       return;
     }
 
+    const {
+      data: authData,
+      error: authError,
+    } = await supabase.auth.getUser(); // NEW: نحدد المستخدم الحالي
+
+    if (authError || !authData.user) {
+      setLoading(false);
+      setMessage(
+        "تم حفظ بيانات الشركة، لكن تعذر تحديد المستخدم الحالي."
+      );
+      return;
+    }
+
+    const {
+    data: membership,
+    error: membershipError,
+  } = await supabase
+    .from("organization_memberships")
+    .select(`
+      organization_id,
+      organizations!inner (
+        id,
+        company_id
+      )
+    `)
+    .eq("user_id", authData.user.id)
+    .maybeSingle(); // نجيب Organization الخاصة بالمستخدم
+
+    if (membershipError || !membership?.organization_id) {
+      setLoading(false);
+      setMessage(
+        "تم حفظ بيانات الشركة، لكن تعذر تحديد المنظمة المرتبطة بها."
+      );
+      return;
+    }
+
+    const {
+      error: assessmentCompletionError,
+    } = await supabase
+      .from("organizations")
+      .update({
+        assessment_completed: true, // NEW: Assessment أصبح مكتمل
+      })
+      .eq(
+        "id",
+        membership.organization_id,
+      );
+
+    if (assessmentCompletionError) {
+      setLoading(false);
+      setMessage(
+        "تم حفظ بيانات الشركة، لكن تعذر تسجيل اكتمال Assessment: " +
+          assessmentCompletionError.message
+      );
+      return;
+    }
+
     if (data?.id) {
       saveCurrentCompanyId(data.id);
     }
+    
 
     setMessage("✅ تم حفظ بيانات الشركة بنجاح. سيتم نقلك إلى جلسة الاستكشاف...");
 
@@ -204,7 +263,10 @@ export default function AssessmentPage() {
                 className="rounded-xl border p-4"
                 placeholder="رقم الجوال"
                 value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
+                onChange={(e) => {
+                  const onlyNumbers = e.target.value.replace(/[^0-9+]/g, "");
+                  setContactPhone(onlyNumbers);
+                }}
                 required
               />
 

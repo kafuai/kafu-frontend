@@ -68,6 +68,12 @@ export default function RegistrationForm() {
       return;
     }
 
+    const isEnglishOnly = /^[\x20-\x7E]*$/.test(password);
+    if (!isEnglishOnly) {
+      setErrorMessage("يجب أن تكون كلمة المرور باللغة الإنجليزية ولا تحتوي على أحرف عربية.");
+    return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -214,9 +220,10 @@ export default function RegistrationForm() {
               required
               minLength={8}
               value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
-              }
+              onChange={(event) => {
+                const englishOnlyValue = event.target.value.replace(/[^\x20-\x7E]/g, '');
+                setPassword(englishOnlyValue);
+              }}
               className="h-12 w-full rounded-xl border border-slate-200 px-4 pl-12 text-left text-sm outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
               dir="ltr"
             />
