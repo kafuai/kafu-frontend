@@ -107,14 +107,14 @@ export default function CorporateBrainPromptComposer({
         </div>
 
         <button
-          type="button"
-          onClick={onSubmit}
-          disabled={!canSubmit}
-          className="inline-flex min-h-10 min-w-[112px] shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-5 text-xs font-extrabold text-[var(--surface)] shadow-sm transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)] disabled:opacity-100"
-        >
-          {isArabic ? "تحليل" : "Analyze"}
-          <ArrowUp aria-hidden="true" size={16} />
-        </button>
+            type="button"
+            onClick={onSubmit}
+            disabled={!canSubmit}
+            className="inline-flex min-h-10 min-w-[112px] shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-5 text-xs font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)] disabled:opacity-100"
+          >
+            {isArabic ? "تحليل" : "Analyze"}
+            <ArrowUp aria-hidden="true" size={16} />
+          </button>
       </div>
     </section>
   );

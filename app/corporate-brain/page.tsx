@@ -12,6 +12,7 @@ import {
   BrainCircuit,
   Building2,
   RefreshCw,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 
@@ -32,6 +33,7 @@ import {
 import {
   supabase,
 } from "@/lib/supabase";
+import { cleanGroundedAIText } from "@/lib/cleanGroundedAIText";
 
 interface CorporateBrainAIResponse {
   data?: {
@@ -105,6 +107,20 @@ export default function CorporateBrainPage() {
   ] =
     useState("");
 
+  const [
+    aiCitations,
+    setAICitations,
+  ] =
+    useState<
+      Array<{
+        evidenceId: string;
+        source: string;
+        label: string;
+      }>
+    >([]);
+
+
+
   useEffect(() => {
     let isMounted = true;
 
@@ -119,6 +135,7 @@ export default function CorporateBrainPage() {
         setAILoading(true);
         setAIError("");
         setAIInsight("");
+        setAICitations([]);
       }
 
       try {
@@ -267,6 +284,10 @@ export default function CorporateBrainPage() {
         const text =
           payload.data?.text?.trim();
 
+        const citations =
+          payload.data?.citations
+          ?? [];
+
         if (!text) {
           throw new Error(
             isArabic
@@ -276,8 +297,12 @@ export default function CorporateBrainPage() {
         }
 
         if (isMounted) {
+          setAICitations(
+            citations,
+          );
+
           setAIInsight(
-            text,
+            cleanGroundedAIText(text),
           );
         }
       } catch (error) {
@@ -308,6 +333,7 @@ export default function CorporateBrainPage() {
         setMessage("");
         setAIInsight("");
         setAIError("");
+        setAICitations([]);
       }
 
       const companyId =
@@ -445,6 +471,10 @@ export default function CorporateBrainPage() {
 
           setAIInsight(
             "",
+          );
+
+          setAICitations(
+            [],
           );
 
           setAIError(
@@ -675,9 +705,41 @@ export default function CorporateBrainPage() {
                 )
                 : aiInsight
                   ? (
-                    <p className="mt-2 whitespace-pre-line text-sm leading-7 text-[var(--text-secondary)]">
-                      {aiInsight}
-                    </p>
+                    <div className="mt-2">
+                      <p className="whitespace-pre-line text-sm leading-7 text-[var(--text-secondary)]">
+                        {aiInsight}
+                      </p>
+
+                      {aiCitations.length > 0 ? (
+                    <div className="mt-4">
+                      <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                        {isArabic
+                          ? "المصادر والأدلة"
+                          : "Sources & Evidence"}
+                      </p>
+
+                      <div className="flex flex-wrap gap-2">
+                        {aiCitations.map((citation) => (
+                          <span
+                            key={citation.evidenceId}
+                            title={citation.label}
+                            className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface)] px-3 py-1.5 text-[10px] font-bold text-[var(--text-secondary)]"
+                          >
+                            <ShieldCheck
+                              aria-hidden="true"
+                              size={13}
+                              className="shrink-0 text-[var(--success)]"
+                            />
+
+                            <span>
+                              {citation.source}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                    </div>
                   )
                   : (
                     <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
@@ -705,4 +767,3 @@ export default function CorporateBrainPage() {
     </main>
   );
 }
-

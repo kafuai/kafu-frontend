@@ -1,9 +1,11 @@
 "use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { saveCurrentCompanyId } from "@/lib/companySession";
+import {
+  saveCurrentCompanyId,
+  getCurrentCompanyId,
+} from "@/lib/companySession";
 
 export default function AssessmentPage() {
   const router = useRouter();
@@ -21,37 +23,150 @@ export default function AssessmentPage() {
   const [contactPhone, setContactPhone] = useState("");
   const [contactTitle, setContactTitle] = useState("");
 
+  useEffect(() => {
+    async function loadCompany() {
+      const companyId = getCurrentCompanyId();
+
+      if (!companyId) return;
+
+      const { data, error } = await supabase
+        .from("companies")
+        .select(
+          "name, industry, country, employee_count, contact_name, contact_email, contact_phone, contact_title"
+        )
+        .eq("id", companyId)
+        .single();
+
+      if (error || !data) return;
+
+      setCompanyName(data.name ?? "");
+      setIndustry(data.industry ?? "");
+      setCountry(data.country ?? "Saudi Arabia");
+      setEmployeeCount(
+        data.employee_count !== null && data.employee_count !== undefined
+          ? String(data.employee_count)
+          : ""
+      );
+      setContactName(data.contact_name ?? "");
+      setContactEmail(data.contact_email ?? "");
+      setContactPhone(data.contact_phone ?? "");
+      setContactTitle(data.contact_title ?? "");
+    }
+
+    loadCompany();
+  }, []);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setLoading(true);
     setMessage("");
 
-    const { data, error } = await supabase
-      .from("companies")
-      .insert({
-        name: companyName,
-        industry,
-        country,
-        employee_count: employeeCount ? Number(employeeCount) : null,
-        contact_name: contactName,
-        contact_email: contactEmail,
-        contact_phone: contactPhone,
-        contact_title: contactTitle,
-        status: "active",
-      })
-      .select("id")
-      .single();
+    const companyId = getCurrentCompanyId();
 
+    let data;
+    let error;
+
+    const companyData = {
+      name: companyName,
+      industry,
+      country,
+      employee_count: employeeCount ? Number(employeeCount) : null,
+      contact_name: contactName,
+      contact_email: contactEmail,
+      contact_phone: contactPhone,
+      contact_title: contactTitle,
+      status: "active",
+    };
+
+    if (companyId) {
+      const result = await supabase
+        .from("companies")
+        .update(companyData)
+        .eq("id", companyId)
+        .select("id")
+        .single();
+
+      data = result.data;
+      error = result.error;
+    } else {
+      const result = await supabase
+        .from("companies")
+        .insert(companyData)
+        .select("id")
+        .single();
+
+      data = result.data;
+      error = result.error;
+    }
+    
     if (error) {
       setLoading(false);
       setMessage("حدث خطأ أثناء الحفظ: " + error.message);
       return;
     }
 
+    const {
+      data: authData,
+      error: authError,
+    } = await supabase.auth.getUser(); // NEW: نحدد المستخدم الحالي
+
+    if (authError || !authData.user) {
+      setLoading(false);
+      setMessage(
+        "تم حفظ بيانات الشركة، لكن تعذر تحديد المستخدم الحالي."
+      );
+      return;
+    }
+
+    const {
+    data: membership,
+    error: membershipError,
+  } = await supabase
+    .from("organization_memberships")
+    .select(`
+      organization_id,
+      organizations!inner (
+        id,
+        company_id
+      )
+    `)
+    .eq("user_id", authData.user.id)
+    .maybeSingle(); // نجيب Organization الخاصة بالمستخدم
+
+    if (membershipError || !membership?.organization_id) {
+      setLoading(false);
+      setMessage(
+        "تم حفظ بيانات الشركة، لكن تعذر تحديد المنظمة المرتبطة بها."
+      );
+      return;
+    }
+
+    const {
+      error: assessmentCompletionError,
+    } = await supabase
+      .from("organizations")
+      .update({
+        assessment_completed: true, // NEW: Assessment أصبح مكتمل
+      })
+      .eq(
+        "id",
+        membership.organization_id,
+      );
+
+    if (assessmentCompletionError) {
+      setLoading(false);
+      setMessage(
+        "تم حفظ بيانات الشركة، لكن تعذر تسجيل اكتمال Assessment: " +
+          assessmentCompletionError.message
+      );
+      return;
+    }
+
     if (data?.id) {
       saveCurrentCompanyId(data.id);
     }
+    
 
     setMessage("✅ تم حفظ بيانات الشركة بنجاح. سيتم نقلك إلى جلسة الاستكشاف...");
 
@@ -101,6 +216,7 @@ export default function AssessmentPage() {
                 placeholder="القطاع"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
+                required
               />
 
               <input
@@ -108,6 +224,7 @@ export default function AssessmentPage() {
                 placeholder="الدولة"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
+                required
               />
 
               <input
@@ -116,6 +233,7 @@ export default function AssessmentPage() {
                 placeholder="عدد الموظفين"
                 value={employeeCount}
                 onChange={(e) => setEmployeeCount(e.target.value)}
+                required
               />
             </div>
           </div>
@@ -145,7 +263,10 @@ export default function AssessmentPage() {
                 className="rounded-xl border p-4"
                 placeholder="رقم الجوال"
                 value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
+                onChange={(e) => {
+                  const onlyNumbers = e.target.value.replace(/[^0-9+]/g, "");
+                  setContactPhone(onlyNumbers);
+                }}
                 required
               />
 
@@ -154,6 +275,7 @@ export default function AssessmentPage() {
                 placeholder="المسمى الوظيفي"
                 value={contactTitle}
                 onChange={(e) => setContactTitle(e.target.value)}
+                required
               />
             </div>
           </div>

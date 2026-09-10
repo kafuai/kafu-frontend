@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import DiscoveryResponseComposer, {
@@ -31,6 +31,20 @@ const QUESTIONS = [
   "إذا نجحت مبادرة كفو بعد سنة، ما المؤشر الذي سيجعلك تقول إنها كانت ناجحة؟",
 ];
 
+const DISCOVERY_DRAFT_PREFIX =
+  "kafu_discovery_draft_";
+
+type DiscoveryDraft = {
+  answers: string[];
+  savedAt: number;
+};
+
+function getDiscoveryDraftKey(
+  companyId: string,
+): string {
+  return `${DISCOVERY_DRAFT_PREFIX}${companyId}`;
+}
+
 export default function DiscoveryPage() {
   const router = useRouter();
 
@@ -38,51 +52,251 @@ export default function DiscoveryPage() {
     useState(0);
 
   const [answers, setAnswers] = useState<string[]>(
-    Array(QUESTIONS.length).fill("")
+    Array(QUESTIONS.length).fill(""),
   );
 
-  const [attachmentsByQuestion, setAttachmentsByQuestion] =
-    useState<DiscoveryLocalAttachment[][]>(
-      Array.from(
-        { length: QUESTIONS.length },
-        () => []
-      )
-    );
+  const [
+    attachmentsByQuestion,
+    setAttachmentsByQuestion,
+  ] = useState<DiscoveryLocalAttachment[][]>(
+    Array.from(
+      { length: QUESTIONS.length },
+      () => [],
+    ),
+  );
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [hasError, setHasError] = useState(false);
 
-  const progress =
-    ((currentQuestion + 1) / QUESTIONS.length) * 100;
+  /*
+   * Load existing Discovery answers and local draft.
+   *
+   * Priority:
+   * 1. Local draft, if it exists.
+   * 2. Supabase saved answers.
+   */
+  useEffect(() => {
+    async function loadExistingAnswers() {
+      const companyId = getCurrentCompanyId();
 
-  const completedAnswers = answers.filter(
-    (answer) => answer.trim().length > 0
-  ).length;
+      if (!companyId) {
+        return;
+      }
+
+      let supabaseAnswers: string[] =
+        Array(QUESTIONS.length).fill("");
+
+      /*
+       * 1. Load saved answers from Supabase.
+       */
+      const {
+        data,
+        error,
+      } = await supabase
+        .from("discovery_answers")
+        .select("question_order, answer")
+        .eq("company_id", companyId)
+        .order("question_order", {
+          ascending: true,
+        });
+
+      if (error) {
+        console.error(
+          "Failed to load existing Discovery answers:",
+          error,
+        );
+      } else if (data && data.length > 0) {
+        data.forEach((item) => {
+          const index =
+            item.question_order - 1;
+
+          if (
+            index >= 0 &&
+            index < supabaseAnswers.length
+          ) {
+            supabaseAnswers[index] =
+              item.answer ?? "";
+          }
+        });
+      }
+
+      /*
+       * 2. Load local draft.
+       */
+      let localDraft: DiscoveryDraft | null =
+        null;
+
+      try {
+        const draftKey =
+          getDiscoveryDraftKey(companyId);
+
+        const savedDraft =
+          sessionStorage.getItem(draftKey);
+
+        if (savedDraft) {
+          const parsed: unknown =
+            JSON.parse(savedDraft);
+
+          if (
+            parsed &&
+            typeof parsed === "object"
+          ) {
+            const candidate =
+              parsed as Record<string, unknown>;
+
+            if (
+              Array.isArray(
+                candidate.answers,
+              ) &&
+              candidate.answers.length ===
+                QUESTIONS.length
+            ) {
+              localDraft = {
+                answers: candidate.answers.map(
+                  (answer) =>
+                    typeof answer === "string"
+                      ? answer
+                      : "",
+                ),
+                savedAt:
+                  typeof candidate.savedAt ===
+                  "number"
+                    ? candidate.savedAt
+                    : 0,
+              };
+            }
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load Discovery draft:",
+          error,
+        );
+      }
+
+      /*
+       * 3. Draft has priority over Supabase.
+       *
+       * This is important because the user may have
+       * typed new answers but not submitted them yet.
+       */
+      if (localDraft) {
+        setAnswers(localDraft.answers);
+      } else {
+        setAnswers(supabaseAnswers);
+      }
+    }
+
+    loadExistingAnswers();
+  }, []);
+
+  const progress =
+    ((currentQuestion + 1) /
+      QUESTIONS.length) *
+    100;
+
+  const completedAnswers =
+    answers.filter(
+      (answer) =>
+        answer.trim().length > 0,
+    ).length;
 
   const totalAttachments =
     attachmentsByQuestion.reduce(
-      (total, items) => total + items.length,
-      0
+      (total, items) =>
+        total + items.length,
+      0,
     );
 
+  /*
+   * Save the current answers as a local draft.
+   *
+   * sessionStorage survives page refreshes but is cleared
+   * when the browser tab/session is closed.
+   */
+  function saveDraft(
+    updatedAnswers: string[],
+  ) {
+    const companyId =
+      getCurrentCompanyId();
+
+    if (!companyId) {
+      return;
+    }
+
+    try {
+      const draft: DiscoveryDraft = {
+        answers: updatedAnswers,
+        savedAt: Date.now(),
+      };
+
+      sessionStorage.setItem(
+        getDiscoveryDraftKey(companyId),
+        JSON.stringify(draft),
+      );
+    } catch (error) {
+      console.error(
+        "Failed to save Discovery draft:",
+        error,
+      );
+    }
+  }
+
+  /*
+   * Remove the local draft after successful submission.
+   */
+  function clearDraft() {
+    const companyId =
+      getCurrentCompanyId();
+
+    if (!companyId) {
+      return;
+    }
+
+    try {
+      sessionStorage.removeItem(
+        getDiscoveryDraftKey(companyId),
+      );
+    } catch (error) {
+      console.error(
+        "Failed to clear Discovery draft:",
+        error,
+      );
+    }
+  }
+
   function updateAnswer(value: string) {
-    setAnswers((current) =>
-      current.map((answer, index) =>
-        index === currentQuestion ? value : answer
-      )
-    );
+    setAnswers((current) => {
+      const updatedAnswers =
+        current.map(
+          (answer, index) =>
+            index === currentQuestion
+              ? value
+              : answer,
+        );
+
+      /*
+       * Persist immediately so a page refresh
+       * does not lose the user's answer.
+       */
+      saveDraft(updatedAnswers);
+
+      return updatedAnswers;
+    });
   }
 
   function updateAttachments(
-    attachments: DiscoveryLocalAttachment[]
+    attachments: DiscoveryLocalAttachment[],
   ) {
-    setAttachmentsByQuestion((current) =>
-      current.map((items, index) =>
-        index === currentQuestion
-          ? attachments
-          : items
-      )
+    setAttachmentsByQuestion(
+      (current) =>
+        current.map(
+          (items, index) =>
+            index === currentQuestion
+              ? attachments
+              : items,
+        ),
     );
   }
 
@@ -91,7 +305,7 @@ export default function DiscoveryPage() {
     setHasError(false);
 
     setCurrentQuestion((current) =>
-      Math.max(0, current - 1)
+      Math.max(0, current - 1),
     );
   }
 
@@ -99,31 +313,74 @@ export default function DiscoveryPage() {
     setMessage("");
     setHasError(false);
 
+    if (
+      !answers[currentQuestion].trim()
+    ) {
+      setHasError(true);
+
+      setMessage(
+        "يرجى الإجابة على السؤال قبل الانتقال للسؤال التالي.",
+      );
+
+      return;
+    }
+
+    /*
+     * Ensure the latest state is persisted before
+     * moving to the next question.
+     */
+    saveDraft(answers);
+
     setCurrentQuestion((current) =>
-      Math.min(QUESTIONS.length - 1, current + 1)
+      Math.min(
+        QUESTIONS.length - 1,
+        current + 1,
+      ),
     );
   }
 
   async function handleFinish() {
+    const hasEmptyAnswer =
+      answers.some(
+        (answer) => !answer.trim(),
+      );
+
+    if (hasEmptyAnswer) {
+      setHasError(true);
+
+      setMessage(
+        "يرجى الإجابة على جميع الأسئلة قبل إكمال جلسة الاستكشاف.",
+      );
+
+      return;
+    }
+
     setLoading(true);
+
     setMessage(
-      "جاري حفظ الإجابات ورفع الملفات والتسجيلات..."
+      "جاري حفظ الإجابات ورفع الملفات والتسجيلات...",
     );
+
     setHasError(false);
 
-    const companyId = getCurrentCompanyId();
+    const companyId =
+      getCurrentCompanyId();
 
     if (!companyId) {
       setLoading(false);
       setHasError(true);
+
       setMessage(
-        "لم يتم العثور على بيانات الشركة. يرجى الرجوع إلى صفحة Assessment وإدخال بيانات الشركة أولاً."
+        "لم يتم العثور على بيانات الشركة. يرجى الرجوع إلى صفحة Assessment وإدخال بيانات الشركة أولاً.",
       );
 
       return;
     }
 
     try {
+      /*
+       * 1. Persist Discovery communication.
+       */
       const communicationResult =
         await persistDiscoveryCommunication({
           companyId,
@@ -132,39 +389,203 @@ export default function DiscoveryPage() {
           attachmentsByQuestion,
         });
 
+      /*
+       * 2. Prepare Discovery answer rows.
+       */
       const rows = QUESTIONS.map(
         (question, index) => ({
           company_id: companyId,
           question,
-          answer: answers[index] || "",
-          question_order: index + 1,
-        })
+          answer:
+            answers[index] || "",
+          question_order:
+            index + 1,
+        }),
       );
 
-      const { error } = await supabase
+      /*
+       * 3. Load existing answers so we can
+       *    update them instead of creating duplicates.
+       */
+      const {
+        data: existingAnswers,
+        error: existingAnswersError,
+      } = await supabase
         .from("discovery_answers")
-        .insert(rows);
+        .select(
+          "id, question_order",
+        )
+        .eq(
+          "company_id",
+          companyId,
+        );
 
-      if (error) {
+      if (existingAnswersError) {
         throw new Error(
-          `تعذر حفظ الإجابات النصية: ${error.message}`
+          `تعذر التحقق من إجابات Discovery الموجودة: ${existingAnswersError.message}`,
         );
       }
 
+      /*
+       * 4. Update existing answers or insert
+       *    missing answers.
+       */
+      for (const row of rows) {
+        const existingAnswer =
+          existingAnswers?.find(
+            (item) =>
+              item.question_order ===
+              row.question_order,
+          );
+
+        if (existingAnswer) {
+          const {
+            error: updateError,
+          } = await supabase
+            .from("discovery_answers")
+            .update({
+              question:
+                row.question,
+              answer:
+                row.answer,
+            })
+            .eq(
+              "id",
+              existingAnswer.id,
+            );
+
+          if (updateError) {
+            throw new Error(
+              `تعذر تحديث إجابة Discovery: ${updateError.message}`,
+            );
+          }
+        } else {
+          const {
+            error: insertError,
+          } = await supabase
+            .from("discovery_answers")
+            .insert(row);
+
+          if (insertError) {
+            throw new Error(
+              `تعذر حفظ إجابة Discovery: ${insertError.message}`,
+            );
+          }
+        }
+      }
+
+      /*
+       * 5. Resolve the authenticated user's organization
+       *    using the organization membership and company_id.
+       */
+      const {
+        data: authData,
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError) {
+        throw new Error(
+          `تعذر التحقق من المستخدم الحالي: ${authError.message}`,
+        );
+      }
+
+      if (!authData.user) {
+        throw new Error(
+          "لم يتم العثور على المستخدم الحالي.",
+        );
+      }
+
+      const {
+        data: membership,
+        error: membershipError,
+      } = await supabase
+        .from("organization_memberships")
+        .select(`
+          organization_id,
+          organizations!inner (
+            id,
+            company_id
+          )
+        `)
+        .eq(
+          "user_id",
+          authData.user.id,
+        )
+        .eq(
+          "organizations.company_id",
+          companyId,
+        )
+        .maybeSingle();
+
+      if (membershipError) {
+        throw new Error(
+          `تعذر تحديد المنظمة المرتبطة بالشركة: ${membershipError.message}`,
+        );
+      }
+
+      if (
+        !membership?.organization_id
+      ) {
+        throw new Error(
+          "تعذر تحديد المنظمة المرتبطة بالمستخدم والشركة.",
+        );
+      }
+
+      /*
+       * 6. Persist the onboarding completion state.
+       */
+      const {
+        error: onboardingError,
+      } = await supabase
+        .from("organizations")
+        .update({
+          onboarding_completed:
+            true,
+        })
+        .eq(
+          "id",
+          membership.organization_id,
+        );
+
+      if (onboardingError) {
+        throw new Error(
+          `تعذر تسجيل اكتمال Onboarding: ${onboardingError.message}`,
+        );
+      }
+
+      /*
+       * 7. Everything succeeded.
+       *
+       * Remove the local draft because the answers
+       * are now persisted in Supabase.
+       */
+      clearDraft();
+
       setMessage(
-        `تم حفظ جلسة الاستكشاف بنجاح: ${communicationResult.messageCount} مدخلات و${communicationResult.attachmentCount} مرفقات.`
+        `تم حفظ جلسة الاستكشاف بنجاح: ${communicationResult.messageCount} مدخلات و${communicationResult.attachmentCount} مرفقات.`,
       );
 
       window.setTimeout(() => {
-        router.push("/executive-summary");
+        router.push(
+          "/executive-summary",
+        );
       }, 1100);
     } catch (error) {
       setLoading(false);
       setHasError(true);
+
+      /*
+       * Keep the draft when submission fails.
+       *
+       * This is important because the user can retry
+       * without losing their answers.
+       */
+      saveDraft(answers);
+
       setMessage(
         error instanceof Error
           ? `حدث خطأ أثناء حفظ جلسة الاستكشاف: ${error.message}`
-          : "حدث خطأ غير متوقع أثناء حفظ جلسة الاستكشاف."
+          : "حدث خطأ غير متوقع أثناء حفظ جلسة الاستكشاف.",
       );
     }
   }
@@ -256,16 +677,21 @@ export default function DiscoveryPage() {
 
               <h2 className="mt-2 text-2xl font-black text-[var(--text-primary)] sm:text-3xl">
                 {currentQuestion + 1}
+
                 <span className="mx-2 text-base text-[var(--text-muted)]">
                   /
                 </span>
+
                 {QUESTIONS.length}
               </h2>
             </div>
 
             <div className="w-full sm:max-w-[320px]">
               <div className="mb-2 flex items-center justify-between text-xs font-black text-[var(--text-muted)]">
-                <span>تقدم الجلسة</span>
+                <span>
+                  تقدم الجلسة
+                </span>
+
                 <span dir="ltr">
                   {Math.round(progress)}%
                 </span>
@@ -276,7 +702,9 @@ export default function DiscoveryPage() {
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-valuenow={Math.round(progress)}
+                aria-valuenow={Math.round(
+                  progress,
+                )}
               >
                 <div
                   className="h-full rounded-full bg-emerald-600 transition-all duration-500"
@@ -300,25 +728,31 @@ export default function DiscoveryPage() {
                 </p>
 
                 <h3 className="mt-2 text-xl font-black leading-9 text-[var(--text-primary)] sm:text-2xl">
-                  {QUESTIONS[currentQuestion]}
+                  {
+                    QUESTIONS[
+                      currentQuestion
+                    ]
+                  }
                 </h3>
-
-                <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
-                  يمكنك الجمع بين الإجابة النصية
-                  والمستندات والتسجيل الصوتي في السؤال
-                  نفسه.
-                </p>
               </div>
             </div>
 
             <DiscoveryResponseComposer
-              answer={answers[currentQuestion]}
+              answer={
+                answers[currentQuestion]
+              }
               attachments={
-                attachmentsByQuestion[currentQuestion]
+                attachmentsByQuestion[
+                  currentQuestion
+                ]
               }
               disabled={loading}
-              onAnswerChange={updateAnswer}
-              onAttachmentsChange={updateAttachments}
+              onAnswerChange={
+                updateAnswer
+              }
+              onAttachmentsChange={
+                updateAttachments
+              }
             />
           </div>
 
@@ -326,9 +760,12 @@ export default function DiscoveryPage() {
             <button
               type="button"
               disabled={
-                currentQuestion === 0 || loading
+                currentQuestion === 0 ||
+                loading
               }
-              onClick={goToPreviousQuestion}
+              onClick={
+                goToPreviousQuestion
+              }
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 text-sm font-black text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ArrowRight size={17} />
@@ -340,7 +777,9 @@ export default function DiscoveryPage() {
               <button
                 type="button"
                 disabled={loading}
-                onClick={goToNextQuestion}
+                onClick={
+                  goToNextQuestion
+                }
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-7 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 التالي
@@ -350,7 +789,9 @@ export default function DiscoveryPage() {
               <button
                 type="button"
                 disabled={loading}
-                onClick={handleFinish}
+                onClick={
+                  handleFinish
+                }
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-emerald-700 bg-emerald-700 px-7 text-sm font-black text-white shadow-lg shadow-emerald-900/10 transition hover:border-emerald-800 hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
               >
                 <CheckCircle2 size={18} />
@@ -408,6 +849,7 @@ export default function DiscoveryPage() {
           <section className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-6">
             <div className="flex items-center gap-3 text-emerald-900">
               <Mic size={18} />
+
               <h2 className="font-black">
                 مدخلات متعددة
               </h2>
@@ -442,4 +884,3 @@ export default function DiscoveryPage() {
     </main>
   );
 }
-

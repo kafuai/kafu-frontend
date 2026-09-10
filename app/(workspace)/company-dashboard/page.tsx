@@ -1,4 +1,5 @@
 ﻿"use client";
+import { useLocalization } from "@/components/localization/LocalizationContext";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -41,7 +42,6 @@ import {
   StatusBadge,
 } from "../../../src/product/executive-design-system";
 
-type Language = "en" | "ar";
 
 const content = {
   en: {
@@ -365,11 +365,12 @@ export default function CompanyDashboardPage() {
         pipelineMetrics.overdueLeads,
       ],
     );
-  const [language, setLanguage] = useState<Language>("ar");
+const { locale } = useLocalization();
 
-  const copy = content[language];
-  const isArabic = language === "ar";
-  const DirectionIcon = isArabic ? ArrowLeft : ArrowRight;
+const language = locale === "ar" ? "ar" : "en";
+const copy = content[language];
+const isArabic = language === "ar";
+const DirectionIcon = isArabic ? ArrowLeft : ArrowRight;
 
   const [aiRecommendation, setAIRecommendation] =
     useState("");
