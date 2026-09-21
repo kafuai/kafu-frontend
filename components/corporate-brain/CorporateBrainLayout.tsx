@@ -322,23 +322,18 @@ export default function CorporateBrainLayout({
           answers={answers}
         />
 
-        <CorporateBrainDecisionPanel
-          companyName={companyName}
-          discoveryAnswerCount={answers.length}
-        />
-
         <CorporateBrainMemory
           companyName={companyName}
           discoveryAnswerCount={answers.length}
         />
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
+        <section className="grid gap-6]">
           <CorporateBrainKnowledgeGraph companyName={companyName} />
 
-          <CorporateBrainRelatedInsights />
+          {/* <CorporateBrainRelatedInsights /> */}
         </section>
 
-        <CorporateBrainTimeline />
+        {/* <CorporateBrainTimeline /> */}
       </div>
     </main>
   );

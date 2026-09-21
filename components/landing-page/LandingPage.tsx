@@ -6,6 +6,11 @@ import { LandingPlatform } from "./LandingPlatform";
 import { LandingBenefits } from "./LandingBenefits";
 import { LandingOutcomes } from "./LandingOutcomes";
 import { LandingCTA } from "./LandingCTA";
+import BookDemoForm from "@/app/book-demo/page";
+import { LandingFAQ } from "./LandingFAQ";
+import { LandingFooter } from "./LandingFooter";
+import { LandingPilot } from "./LandingPilot";
+import { LandingPricing } from "./LandingPricing";
 
 export function LandingPage() {
   return (
@@ -20,6 +25,8 @@ export function LandingPage() {
       <LandingPlatform />
       <LandingBenefits />
       <LandingOutcomes />
+      <LandingPilot />
+      <LandingFAQ />
       <LandingCTA />
     </main>
   );

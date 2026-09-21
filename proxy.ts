@@ -5,32 +5,31 @@
 import {
   createServerClient,
 } from "@supabase/ssr";
+import {
+  getRoutePermission,
+  hasPermission,
+} from "@/lib/rbac/authorization";
 
 const protectedRoutes = [
   "/assessment",
-  "/command-center",
-  "/commercial",
-  "/company-dashboard",
-  "/company-profile",
-  "/company-workspace",
+
   "/corporate-brain",
-  "/corporate-dna",
-  "/dashboard",
+
   "/digital-workforce",
   "/discovery",
-  "/executive-summary",
-  "/journey",
-  "/modules",
-  "/sales-intelligence",
-  "/workspace",
-  "/communication",
-  "/welcome",
+  "/employee-experience",
+  "/employee-experience/employee",
+  "/employee-experience/requests",
+  "/employee-experience/policies",
+  "/admin",
+  "/profile",
   ];
 
 const guestRoutes = [
   "/login",
   "/register",
   "/forgot-password",
+  "/book-demo",
 ];
 
 const onboardingRoutes = [
@@ -65,6 +64,7 @@ function getSupabasePublicKey(): string {
 
 type MembershipRow = {
   organization_id: string;
+  role: string | null;
   organizations:
     | {
         id: string;
@@ -87,6 +87,7 @@ async function getOnboardingState(
 ): Promise<{
   assessmentCompleted: boolean;
   onboardingCompleted: boolean;
+  role: string | null;
 } | null> {
   const {
     data: memberships,
@@ -95,6 +96,7 @@ async function getOnboardingState(
     .from("organization_memberships")
     .select(`
       organization_id,
+      role,
       organizations (
         id,
         company_id,
@@ -120,6 +122,7 @@ async function getOnboardingState(
     return {
       assessmentCompleted: false, // NEW: لا يوجد Organization = Assessment غير مكتمل
       onboardingCompleted: false, // Existing logic
+      role: null,
     };
   }
 
@@ -130,12 +133,16 @@ async function getOnboardingState(
    */
   let assessmentCompleted = false; // NEW: نحفظ حالة Assessment بشكل مستقل
   let onboardingCompleted = false; // Existing: نحفظ حالة Onboarding الكاملة
+  let role: string | null = null;
 
   typedMemberships.forEach((membership) => {
     const organization =
       Array.isArray(membership.organizations)
         ? membership.organizations[0]
         : membership.organizations;
+    if (!role && membership.role){
+      role = membership.role;
+    }
 
     if (organization?.assessment_completed === true) {
       assessmentCompleted = true; // NEW: المستخدم أكمل Assessment
@@ -149,6 +156,7 @@ async function getOnboardingState(
   return {
     assessmentCompleted, // NEW
     onboardingCompleted, // Existing
+    role,
   };
 }
 
@@ -273,7 +281,7 @@ export async function proxy(
   ) {
     return redirectToPath(
       request,
-      "/company-dashboard",
+      "/employee-experience",
     );
   }
 
@@ -299,6 +307,7 @@ if (onboardingState === null) {
 const {
   assessmentCompleted,
   onboardingCompleted,
+  role,
 } = onboardingState;
 
 /*
@@ -338,13 +347,40 @@ if (
 }
 
 /*
- * STEP 3:
- * Assessment + Discovery are both completed.
+ * STEP 4:
+ * Assessment + Discovery are completed.
  *
- * Protected routes are fully accessible.
+ * Check RBAC permissions for pilot routes.
  */
+const routePermission =
+  getRoutePermission(pathname);
+
+if (
+  routePermission &&
+  !role
+) {
+  return redirectToPath(
+    request,
+    "/unauthorized",
+  );
+}
+
+if (
+  routePermission &&
+  role &&
+  !hasPermission(
+    role,
+    routePermission,
+  )
+) {
+  return redirectToPath(
+    request,
+    "/unauthorized",
+  );
 }
 }
+}
+
 
 export const config = {
   matcher: [

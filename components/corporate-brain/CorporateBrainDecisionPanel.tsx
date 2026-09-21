@@ -2,6 +2,7 @@
 
 import {
   BookOpenCheck,
+  Bot,
   Link2,
   Target,
   Workflow,
@@ -19,7 +20,6 @@ interface CorporateBrainDecisionPanelProps {
   companyName: string;
   discoveryAnswerCount: number;
 }
-
 export default function CorporateBrainDecisionPanel({
   companyName,
   discoveryAnswerCount,
@@ -29,31 +29,31 @@ export default function CorporateBrainDecisionPanel({
 
   const recommendations = [
     {
-      icon: BookOpenCheck,
+      icon: Bot,
       title: isArabic
-        ? "استكمال قاعدة المعرفة الداخلية"
-        : "Complete the internal knowledge base",
+        ? "تفعيل وكيل الذكاء الاصطناعي"
+        : "Activate the AI agent",
       description: isArabic
-        ? "رفع السياسات والإجراءات والنماذج الأكثر استخدامًا وربطها بمصادر موثوقة."
-        : "Upload the most-used policies, procedures, and templates and connect them to verified sources.",
-      priority: "critical" as RecommendationPriority,
+        ? "تفعيل الوكيل الذكاء الاصطناعي المؤسسي لتقديم إجابات دقيقة وموثوقة."
+        : "Activate the enterprise AI agent to provide accurate and reliable answers.",
+      priority: "high" as RecommendationPriority,
       impact: isArabic
-        ? "تقليل الأخطاء وتوحيد القرارات"
-        : "Reduce errors and standardize decisions",
-      confidence: 94,
+        ? "اتمتة العمليات اليومية وتحسين دقة القرارات"
+        : "Automate daily operations and improve decision accuracy",
+      confidence: 90,
       expectedOutcome: isArabic
-        ? "رفع جاهزية المعرفة المؤسسية وتحسين دقة إجابات الذكاء الاصطناعي."
-        : "Increase enterprise knowledge readiness and improve AI response accuracy.",
+        ? "تسريع العمليات اليومية "
+        : "Accelerate daily operations and improve decision accuracy.",
     },
     {
       icon: Workflow,
       title: isArabic
-        ? "ربط القرارات بمسؤولي التنفيذ"
+        ? "رفع السياسيات الداخلية"
         : "Connect decisions to execution owners",
       description: isArabic
-        ? "تحويل الأولويات التنفيذية إلى مهام محددة بمالك وموعد نهائي ومؤشر نجاح."
+        ? "رفع السياسات من لاستخدام تقنية ال RAG"
         : "Convert executive priorities into tasks with owners, deadlines, and success indicators.",
-      priority: "high" as RecommendationPriority,
+      priority: "critical" as RecommendationPriority,
       impact: isArabic
         ? "زيادة سرعة التنفيذ والمساءلة"
         : "Improve execution speed and accountability",
@@ -62,31 +62,31 @@ export default function CorporateBrainDecisionPanel({
         ? "خفض القرارات المعلقة وزيادة وضوح مسؤولية التنفيذ."
         : "Reduce stalled decisions and increase execution ownership clarity.",
     },
-    {
-      icon: Link2,
-      title: isArabic
-        ? "توحيد مؤشرات الأداء"
-        : "Unify performance indicators",
-      description: isArabic
-        ? "ربط مؤشرات الأداء التشغيلية والمالية والاستراتيجية بمركز القيادة."
-        : "Connect operational, financial, and strategic indicators to the command center.",
-      priority: "medium" as RecommendationPriority,
-      impact: isArabic
-        ? "تحسين جودة المتابعة التنفيذية"
-        : "Improve executive performance visibility",
-      confidence: 87,
-      expectedOutcome: isArabic
-        ? "تكوين صورة موحدة للأداء وربط النتائج بالقرارات."
-        : "Create a unified performance view connected directly to decisions.",
-    },
+    // {
+    //   icon: Link2,
+    //   title: isArabic
+    //     ? "توحيد مؤشرات الأداء"
+    //     : "Unify performance indicators",
+    //   description: isArabic
+    //     ? "ربط مؤشرات الأداء التشغيلية والمالية والاستراتيجية بمركز القيادة."
+    //     : "Connect operational, financial, and strategic indicators to the command center.",
+    //   priority: "medium" as RecommendationPriority,
+    //   impact: isArabic
+    //     ? "تحسين جودة المتابعة التنفيذية"
+    //     : "Improve executive performance visibility",
+    //   confidence: 87,
+    //   expectedOutcome: isArabic
+    //     ? "تكوين صورة موحدة للأداء وربط النتائج بالقرارات."
+    //     : "Create a unified performance view connected directly to decisions.",
+    // },
   ];
 
   return (
     <section className="space-y-6">
-      <CorporateBrainExecutiveSummary
+      {/* <CorporateBrainExecutiveSummary
         companyName={companyName}
         discoveryAnswerCount={discoveryAnswerCount}
-      />
+      /> */}
 
       <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
         <div className="border-b border-[var(--border-default)] px-5 py-5 md:px-6">

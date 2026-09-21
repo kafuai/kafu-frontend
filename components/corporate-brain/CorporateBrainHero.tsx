@@ -35,11 +35,11 @@ export default function CorporateBrainHero({
       value: discoveryAnswers,
       label: isArabic ? "إجابات الاستكشاف" : "Discovery Answers",
     },
-    {
-      icon: ShieldCheck,
-      value: "92%",
-      label: isArabic ? "مستوى الثقة" : "Confidence Level",
-    },
+    // {
+    //   icon: ShieldCheck,
+    //   value: "92%",
+    //   label: isArabic ? "مستوى الثقة" : "Confidence Level",
+    // },
   ];
 
   return (

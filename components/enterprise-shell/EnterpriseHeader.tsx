@@ -21,6 +21,7 @@ import {
   ChevronDown,
   Command,
   Dna,
+  FileText,
   Home,
   LayoutDashboard,
   LoaderCircle,
@@ -28,11 +29,13 @@ import {
   LogOut,
   Search,
   Settings,
+  ShieldCheck,
   Sparkles,
   TrendingUp,
   UserRound,
   UsersRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import LanguageSwitcher from "@/components/localization/LanguageSwitcher";
 import { useLocalization } from "@/components/localization/LocalizationContext";
@@ -41,58 +44,80 @@ import WorkspaceScopeSwitcher from "@/components/enterprise-shell/WorkspaceScope
 import { clearWorkspaceSession } from "@/lib/companySession";
 import { supabase } from "@/lib/supabase";
 import { resolveWorkspaceIdentity } from "@/lib/workspace-identity/tenantResolver";
+import {
+  PERMISSIONS,
+  ROLE_PERMISSIONS,
+  type Permission,
+} from "@/lib/rbac/permissions"; // <-- عدّل المسار حسب مكان ملفك
 
-const navigationItems = [
+interface NavigationItem {
+  key: string;
+  href: string;
+  icon: LucideIcon;
+  /** لو undefined -> ظاهر لأي مستخدم مسجّل دخول بدون شرط صلاحية */
+  permission?: Permission;
+}
+
+const navigationItems: readonly NavigationItem[] = [
   {
-    key: "navigation.home",
-    href: "/",
-    icon: Home,
-  },
-  {
-    key: "navigation.workspace",
-    href: "/company-workspace",
-    icon: Building2,
-  },
-  {
-    key: "navigation.dashboard",
-    href: "/company-dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    key: "navigation.corporateBrain",
+    key: "corporateBrain",
     href: "/corporate-brain",
     icon: BrainCircuit,
+    permission: PERMISSIONS.CORPORATE_BRAIN_VIEW,
   },
   {
-    key: "navigation.corporateDNA",
-    href: "/corporate-dna",
-    icon: Dna,
-  },
-  {
-    key: "navigation.digitalWorkforce",
+    key: "digitalWorkforce",
     href: "/digital-workforce",
     icon: UsersRound,
+    permission: PERMISSIONS.DIGITAL_WORKFORCE_VIEW,
   },
   {
-    key: "navigation.commandCenter",
-    href: "/command-center",
-    icon: Command,
-  },
-  {
-    key: "navigation.salesIntelligence",
-    href: "/sales-intelligence",
-    icon: TrendingUp,
-  },
-  {
-    key: "navigation.communication",
-    href: "/communication",
+    key: "employeeExperience",
+    href: "/employee-experience",
     icon: MessagesSquare,
+    permission: PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
+  },
+  {
+    key: "admin",
+    href: "/admin",
+    icon: ShieldCheck,
+    permission: PERMISSIONS.ALL,
   },
 ] as const;
 
-function normalizeText(
-  value: unknown,
-): string | null {
+// --- قاموس الترجمة للنصوص الثابتة في الترويسة ---
+const HEADER_CONTENT = {
+  ar: {
+    login: "تسجيل الدخول",
+    profileTitle: "الملف التعريفي",
+    profileDesc: "بيانات المستخدم والحساب",
+    companyWorkspaceTitle: "مساحة عمل الشركة",
+    companyWorkspaceDesc: "إعدادات المؤسسة والهوية",
+    signingOut: "جارٍ تسجيل الخروج",
+    signOut: "تسجيل الخروج",
+    signOutDesc: "إنهاء الجلسة الحالية بأمان",
+    defaultUser: "مستخدم KAFU",
+    defaultRole: "تنفيذي",
+    userMenuAria: "قائمة المستخدم",
+    userAccountAria: "حساب المستخدم",
+  },
+  en: {
+    login: "Log In",
+    profileTitle: "Profile",
+    profileDesc: "User and account data",
+    companyWorkspaceTitle: "Company Workspace",
+    companyWorkspaceDesc: "Enterprise settings and identity",
+    signingOut: "Signing out...",
+    signOut: "Sign Out",
+    signOutDesc: "Securely end the current session",
+    defaultUser: "KAFU User",
+    defaultRole: "Executive",
+    userMenuAria: "User menu",
+    userAccountAria: "User account",
+  },
+} as const;
+
+function normalizeText(value: unknown): string | null {
   if (typeof value !== "string") {
     return null;
   }
@@ -102,11 +127,9 @@ function normalizeText(
   return normalizedValue || null;
 }
 
-function resolveUserName(
-  user: User | null,
-): string {
+function resolveUserName(user: User | null, defaultName: string): string {
   if (!user) {
-    return "KAFU User";
+    return defaultName;
   }
 
   const metadataName =
@@ -118,29 +141,11 @@ function resolveUserName(
     return metadataName;
   }
 
-  const emailName =
-    user.email?.split("@")[0]?.trim();
-
-  return emailName || "KAFU User";
+  const emailName = user.email?.split("@")[0]?.trim();
+  return emailName || defaultName;
 }
 
-function resolveUserRole(
-  user: User | null,
-): string {
-  if (!user) {
-    return "Executive";
-  }
-
-  return (
-    normalizeText(user.user_metadata?.role) ??
-    normalizeText(user.app_metadata?.role) ??
-    "Executive"
-  );
-}
-
-function resolveInitials(
-  name: string,
-): string {
+function resolveInitials(name: string): string {
   const words = name
     .trim()
     .split(/\s+/)
@@ -151,55 +156,56 @@ function resolveInitials(
   }
 
   if (words.length === 1) {
-    return words[0]
-      .slice(0, 2)
-      .toUpperCase();
+    return words[0].slice(0, 2).toUpperCase();
   }
 
-  return `${words[0][0]}${words[1][0]}`
-    .toUpperCase();
+  return `${words[0][0]}${words[1][0]}`.toUpperCase();
+}
+
+function getPermissionsForRole(
+  role: string | null,
+): readonly Permission[] {
+  if (!role) {
+    return [];
+  }
+
+  return ROLE_PERMISSIONS[role] ?? [];
+}
+
+function hasPermission(
+  userPermissions: readonly Permission[],
+  required: Permission,
+): boolean {
+  return (
+    userPermissions.includes(PERMISSIONS.ALL) ||
+    userPermissions.includes(required)
+  );
 }
 
 export default function EnterpriseHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const { t } = useLocalization();
 
-  const userMenuRef =
-    useRef<HTMLDivElement | null>(null);
+  const { t, locale } = useLocalization();
+  const isArabic = locale === "ar";
+  const localT = isArabic ? HEADER_CONTENT.ar : HEADER_CONTENT.en;
 
-  const firstMenuItemRef =
-    useRef<HTMLAnchorElement | null>(null);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const firstMenuItemRef = useRef<HTMLAnchorElement | null>(null);
 
-  const [user, setUser] =
-    useState<User | null>(null);
-
-  const [companyName, setCompanyName] =
-    useState<string | null>(null);
-
-  const [isUserLoading, setIsUserLoading] =
-    useState(true);
-
-  const [isMenuOpen, setIsMenuOpen] =
-    useState(false);
-
-  const [isSigningOut, setIsSigningOut] =
-    useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [companyName, setCompanyName] = useState<string | null>(null);
+  const [permissionRole, setPermissionRole] = useState<string | null>(null);
+  const [isUserLoading, setIsUserLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const userName = useMemo(
-    () => resolveUserName(user),
-    [user],
+    () => resolveUserName(user, localT.defaultUser),
+    [user, localT.defaultUser],
   );
 
-  const userRole = useMemo(
-    () => resolveUserRole(user),
-    [user],
-  );
-
-  const userInitials = useMemo(
-    () => resolveInitials(userName),
-    [userName],
-  );
+  const userInitials = useMemo(() => resolveInitials(userName), [userName]);
 
   const activeCompanyName =
     companyName ??
@@ -207,97 +213,109 @@ export default function EnterpriseHeader() {
     normalizeText(user?.user_metadata?.company_name) ??
     t("workspace.companyName");
 
+  const userPermissions = useMemo(
+    () => getPermissionsForRole(permissionRole),
+    [permissionRole],
+  );
+
+  const visibleNavigationItems = useMemo(
+    () =>
+      navigationItems.filter((item) => {
+        if (!item.permission) {
+          return true;
+        }
+
+        return hasPermission(userPermissions, item.permission);
+      }),
+    [userPermissions],
+  );
+
   useEffect(() => {
     let isMounted = true;
 
-    async function loadWorkspaceCompany(
-      authenticatedUser: User | null,
-    ) {
+    async function loadWorkspaceCompanyAndRole(authenticatedUser: User | null) {
       if (!authenticatedUser) {
         if (isMounted) {
           setCompanyName(null);
+          setPermissionRole(null);
         }
 
         return;
       }
 
       try {
-        const identity =
-          await resolveWorkspaceIdentity(supabase);
+        const identity = await resolveWorkspaceIdentity(supabase);
 
-        const {
-          data,
-          error,
-        } = await supabase
-          .from("companies")
-          .select("name")
-          .eq("id", identity.companyId)
-          .maybeSingle();
+        const [{ data: companyData, error: companyError }, { data: membershipData, error: membershipError }] =
+          await Promise.all([
+            supabase
+              .from("companies")
+              .select("name")
+              .eq("id", identity.companyId)
+              .maybeSingle(),
 
-        if (error) {
-          throw error;
+            supabase
+              .from("organization_memberships")
+              .select("role")
+              .eq("user_id", authenticatedUser.id)
+              .eq("organization_id", identity.organizationId)
+              .maybeSingle(),
+          ]);
+
+        if (companyError) {
+          throw companyError;
+        }
+
+        if (membershipError) {
+          throw membershipError;
         }
 
         if (!isMounted) {
           return;
         }
 
-        setCompanyName(
-          normalizeText(data?.name),
-        );
+        setCompanyName(normalizeText(companyData?.name));
+        setPermissionRole(normalizeText(membershipData?.role));
       } catch (error) {
-        console.error(
-          "Unable to load active company:",
-          error,
-        );
+        console.error("Unable to load workspace company/role:", error);
 
         if (isMounted) {
           setCompanyName(null);
+          setPermissionRole(null);
         }
       }
     }
 
     async function loadAuthenticatedUser() {
-      const {
-        data,
-        error,
-      } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
 
       if (!isMounted) {
         return;
       }
 
-      const authenticatedUser =
-        error ? null : data.user ?? null;
+      const authenticatedUser = error ? null : data.user ?? null;
 
       setUser(authenticatedUser);
       setIsUserLoading(false);
 
-      await loadWorkspaceCompany(
-        authenticatedUser,
-      );
+      await loadWorkspaceCompanyAndRole(authenticatedUser);
     }
 
     void loadAuthenticatedUser();
 
-    const {
-      data: authenticationListener,
-    } = supabase.auth.onAuthStateChange(
+    const { data: authenticationListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (!isMounted) {
           return;
         }
 
-        const authenticatedUser =
-          session?.user ?? null;
+        const authenticatedUser = session?.user ?? null;
 
         setUser(authenticatedUser);
         setIsUserLoading(false);
 
-        void loadWorkspaceCompany(
-          authenticatedUser,
-        );
-      },
+        void loadWorkspaceCompanyAndRole(authenticatedUser);
+      }
     );
 
     return () => {
@@ -315,9 +333,7 @@ export default function EnterpriseHeader() {
       return;
     }
 
-    function handlePointerDown(
-      event: MouseEvent,
-    ) {
+    function handlePointerDown(event: MouseEvent) {
       const target = event.target;
 
       if (
@@ -328,34 +344,18 @@ export default function EnterpriseHeader() {
       }
     }
 
-    function handleKeyDown(
-      event: KeyboardEvent,
-    ) {
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsMenuOpen(false);
       }
     }
 
-    document.addEventListener(
-      "mousedown",
-      handlePointerDown,
-    );
-
-    document.addEventListener(
-      "keydown",
-      handleKeyDown,
-    );
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handlePointerDown,
-      );
-
-      document.removeEventListener(
-        "keydown",
-        handleKeyDown,
-      );
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isMenuOpen]);
 
@@ -389,8 +389,7 @@ export default function EnterpriseHeader() {
     try {
       clearWorkspaceSession();
 
-      const { error } =
-        await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
 
       if (error) {
         throw error;
@@ -402,52 +401,46 @@ export default function EnterpriseHeader() {
       router.replace("/");
       router.refresh();
     } catch (error) {
-      console.error(
-        "Unable to sign out:",
-        error,
-      );
-
+      console.error("Unable to sign out:", error);
       setIsSigningOut(false);
     }
   }
+
   if (!user) {
-  return (
-    <header className="kafu-executive-header">
-      <div className="kafu-executive-header__inner kafu-public-header__inner">
-        <Link
-          href="/"
-          className="kafu-executive-brand"
-          aria-label="KAFU AI"
-          title="KAFU AI"
-        >
-          <Image
-            src="/brand/kafu-logo-en.png"
-            alt="KAFU AI"
-            width={1774}
-            height={887}
-            priority
-            className="kafu-executive-brand__logo"
-            sizes="112px"
-          />
-        </Link>
-
-        <div className="kafu-executive-header__actions">
-          <LanguageSwitcher />
-
+    return (
+      <header className="kafu-executive-header" dir={isArabic ? "rtl" : "ltr"}>
+        <div className="kafu-executive-header__inner kafu-public-header__inner">
           <Link
-            href="/login"
-            className="kafu-public-login"
+            href="/"
+            className="kafu-executive-brand"
+            aria-label="KAFU AI"
+            title="KAFU AI"
           >
-            Log In
+            <Image
+              src="/brand/kafu-logo-en.png"
+              alt="KAFU AI"
+              width={1774}
+              height={887}
+              priority
+              className="kafu-executive-brand__logo"
+              sizes="112px"
+            />
           </Link>
+
+          <div className="kafu-executive-header__actions">
+            <LanguageSwitcher />
+
+            <Link href="/login" className="kafu-public-login">
+              {localT.login}
+            </Link>
+          </div>
         </div>
-      </div>
-    </header>
-  );
-}
+      </header>
+    );
+  }
 
   return (
-    <header className="kafu-executive-header">
+    <header className="kafu-executive-header" dir={isArabic ? "rtl" : "ltr"}>
       <div className="kafu-executive-header__inner">
         <div className="kafu-executive-header__brand-zone">
           <Link
@@ -478,15 +471,13 @@ export default function EnterpriseHeader() {
           className="kafu-executive-navigation"
           aria-label="Enterprise navigation"
         >
-          {navigationItems.map((item) => {
+          {visibleNavigationItems.map((item) => {
             const Icon = item.icon;
 
             const isActive =
               item.href === "/"
                 ? pathname === "/"
-                : pathname.startsWith(
-                    item.href,
-                  );
+                : pathname.startsWith(item.href);
 
             return (
               <Link
@@ -494,16 +485,11 @@ export default function EnterpriseHeader() {
                 href={item.href}
                 className="kafu-executive-navigation__link"
                 data-active={isActive}
-                aria-current={
-                  isActive ? "page" : undefined
-                }
+                aria-current={isActive ? "page" : undefined}
                 aria-label={t(item.key)}
                 title={t(item.key)}
               >
-                <Icon
-                  size={18}
-                  strokeWidth={1.8}
-                />
+                <Icon size={18} strokeWidth={1.8} />
 
                 <span className="kafu-executive-navigation__label">
                   {t(item.key)}
@@ -514,74 +500,24 @@ export default function EnterpriseHeader() {
         </nav>
 
         <div className="kafu-executive-header__actions">
-          <button
-            type="button"
-            className="kafu-executive-control"
-            aria-label={t("common.search")}
-            title={t("common.search")}
-          >
-            <Search
-              size={18}
-              strokeWidth={1.8}
-            />
-          </button>
-
-          <div
-            className="kafu-ai-status"
-            aria-label={t("common.active")}
-            title={t("common.active")}
-          >
-            <Bot
-              size={18}
-              strokeWidth={1.8}
-            />
-
-            <span className="kafu-ai-status__indicator">
-              <Sparkles
-                size={9}
-                strokeWidth={2.2}
-              />
-            </span>
-          </div>
-
+      
           <ThemeSwitcher />
 
           <LanguageSwitcher />
-
-          <button
-            type="button"
-            className="kafu-executive-control kafu-executive-notification"
-            aria-label={t(
-              "common.notifications",
-            )}
-            title={t("common.notifications")}
-          >
-            <Bell
-              size={18}
-              strokeWidth={1.8}
-            />
-
-            <span className="kafu-executive-notification__badge">
-              2
-            </span>
-          </button>
 
           <span
             className="kafu-executive-header__divider"
             aria-hidden="true"
           />
 
-          <div
-            ref={userMenuRef}
-            className="kafu-executive-user-menu"
-          >
+          <div ref={userMenuRef} className="kafu-executive-user-menu">
             <button
               type="button"
               className="kafu-executive-user"
-              aria-label="User menu"
+              aria-label={localT.userMenuAria}
               aria-haspopup="menu"
               aria-expanded={isMenuOpen}
-              title={`${userName} — ${userRole}`}
+              title={userName}
               data-open={isMenuOpen}
               onClick={toggleUserMenu}
             >
@@ -593,14 +529,9 @@ export default function EnterpriseHeader() {
                     className="kafu-user-spinner"
                   />
                 ) : user ? (
-                  <span aria-hidden="true">
-                    {userInitials}
-                  </span>
+                  <span aria-hidden="true">{userInitials}</span>
                 ) : (
-                  <UserRound
-                    size={17}
-                    strokeWidth={1.9}
-                  />
+                  <UserRound size={17} strokeWidth={1.9} />
                 )}
               </span>
 
@@ -609,7 +540,7 @@ export default function EnterpriseHeader() {
                 data-menu-open={isMenuOpen}
               >
                 <strong>{userName}</strong>
-                <small>{userRole}</small>
+              
               </span>
 
               <ChevronDown
@@ -623,20 +554,17 @@ export default function EnterpriseHeader() {
               <div
                 className="kafu-executive-user-dropdown"
                 role="menu"
-                aria-label="User account"
+                aria-label={localT.userAccountAria}
               >
-                <div className="kafu-user-dropdown__profile">
+                <div className="kafu-user-dropdown__profile text-start">
                   <span className="kafu-user-dropdown__avatar">
                     {userInitials}
                   </span>
 
                   <div className="kafu-user-dropdown__identity">
                     <strong>{userName}</strong>
-                    <span>{userRole}</span>
 
-                    {user?.email && (
-                      <small>{user.email}</small>
-                    )}
+                    {user?.email && <small>{user.email}</small>}
                   </div>
                 </div>
 
@@ -648,68 +576,17 @@ export default function EnterpriseHeader() {
                 <div className="kafu-user-dropdown__section">
                   <Link
                     ref={firstMenuItemRef}
-                    href="/company-profile"
-                    className="kafu-user-dropdown__item"
+                    href="/profile"
+                    className="kafu-user-dropdown__item text-start"
                     role="menuitem"
                   >
                     <span className="kafu-user-dropdown__item-icon">
-                      <UserRound
-                        size={17}
-                        strokeWidth={1.8}
-                      />
+                      <UserRound size={17} strokeWidth={1.8} />
                     </span>
 
                     <span>
-                      <strong>
-                        الملف التعريفي
-                      </strong>
-                      <small>
-                        بيانات المستخدم والحساب
-                      </small>
-                    </span>
-                  </Link>
-
-                  <Link
-                    href="/company-workspace"
-                    className="kafu-user-dropdown__item"
-                    role="menuitem"
-                  >
-                    <span className="kafu-user-dropdown__item-icon">
-                      <Building2
-                        size={17}
-                        strokeWidth={1.8}
-                      />
-                    </span>
-
-                    <span>
-                      <strong>
-                        مساحة عمل الشركة
-                      </strong>
-                      <small>
-                        إعدادات المؤسسة والهوية
-                      </small>
-                    </span>
-                  </Link>
-
-                  <Link
-                    href="/company-profile"
-                    className="kafu-user-dropdown__item"
-                    role="menuitem"
-                  >
-                    <span className="kafu-user-dropdown__item-icon">
-                      <Settings
-                        size={17}
-                        strokeWidth={1.8}
-                      />
-                    </span>
-
-                    <span>
-                      <strong>
-                        إعدادات الحساب
-                      </strong>
-                      <small>
-                        إدارة التفضيلات الشخصية
-                      </small>
+                      <strong>{localT.profileTitle}</strong>
+                      <small>{localT.profileDesc}</small>
                     </span>
                   </Link>
                 </div>
@@ -723,7 +600,7 @@ export default function EnterpriseHeader() {
                   <button
                     type="button"
                     role="menuitem"
-                    className="kafu-user-dropdown__item kafu-user-dropdown__item--danger"
+                    className="kafu-user-dropdown__item kafu-user-dropdown__item--danger text-start"
                     disabled={isSigningOut}
                     onClick={() => {
                       void handleSignOut();
@@ -737,23 +614,16 @@ export default function EnterpriseHeader() {
                           className="kafu-user-spinner"
                         />
                       ) : (
-                        <LogOut
-                          size={17}
-                          strokeWidth={1.8}
-                        />
+                        <LogOut size={17} strokeWidth={1.8} />
                       )}
                     </span>
 
                     <span>
                       <strong>
-                        {isSigningOut
-                          ? "جارٍ تسجيل الخروج"
-                          : "تسجيل الخروج"}
+                        {isSigningOut ? localT.signingOut : localT.signOut}
                       </strong>
 
-                      <small>
-                        إنهاء الجلسة الحالية بأمان
-                      </small>
+                      <small>{localT.signOutDesc}</small>
                     </span>
                   </button>
                 </div>

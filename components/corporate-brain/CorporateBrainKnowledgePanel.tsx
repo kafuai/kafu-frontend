@@ -44,9 +44,11 @@ export default function CorporateBrainKnowledgePanel({
         description: isArabic
           ? "بيانات الشركة الأساسية والقطاع والدولة وحجم القوى العاملة."
           : "Core company details, industry, country, and workforce size.",
-        sourceCount: 4,
-        readiness: 100,
-        status: "ready" as KnowledgeSourceStatus,
+        sourceCount: company.name ? 1 : 0,
+        readiness: company.name ? 100 : 0,
+        status: company.name
+          ? ("ready" as KnowledgeSourceStatus)
+          : ("missing" as KnowledgeSourceStatus),
         searchableText: `${company.name ?? ""} ${company.industry ?? ""} ${company.country ?? ""}`,
       },
       {
@@ -57,7 +59,7 @@ export default function CorporateBrainKnowledgePanel({
           ? "إجابات التقييم والاستكشاف والأولويات التنفيذية المكتشفة."
           : "Assessment responses, discovery answers, and identified executive priorities.",
         sourceCount: answers.length,
-        readiness: answers.length > 0 ? 85 : 30,
+        readiness: answers.length > 0 ? 100 : 0,
         status:
           answers.length > 0
             ? ("ready" as KnowledgeSourceStatus)
@@ -73,52 +75,12 @@ export default function CorporateBrainKnowledgePanel({
         description: isArabic
           ? "المعرفة الداخلية المرتبطة بالسياسات والنماذج وإجراءات العمل."
           : "Internal policies, operating procedures, templates, and process knowledge.",
-        sourceCount: 10,
-        readiness: 45,
-        status: "processing" as KnowledgeSourceStatus,
+        sourceCount: 0,
+        readiness: 0,
+        status: "missing" as KnowledgeSourceStatus,
         searchableText: isArabic
           ? "السياسات الإجراءات النماذج الموارد البشرية"
           : "policies procedures templates human resources",
-      },
-      {
-        id: "regulatory",
-        icon: Globe2,
-        title: isArabic ? "المعرفة التنظيمية" : "Regulatory Knowledge",
-        description: isArabic
-          ? "الأنظمة واللوائح المرتبطة ببيئة عمل المؤسسة."
-          : "Regulations and legal frameworks connected to the operating environment.",
-        sourceCount: company.country ? 4 : 1,
-        readiness: company.country === "Saudi Arabia" ? 70 : 50,
-        status: "processing" as KnowledgeSourceStatus,
-        searchableText: `${company.country ?? ""} regulations compliance labor`,
-      },
-      {
-        id: "performance",
-        icon: Database,
-        title: isArabic ? "بيانات الأداء" : "Performance Data",
-        description: isArabic
-          ? "مؤشرات الأداء والنتائج التشغيلية والمالية والاستراتيجية للمؤسسة."
-          : "Operational, financial, and strategic performance indicators.",
-        sourceCount: 6,
-        readiness: 62,
-        status: "processing" as KnowledgeSourceStatus,
-        searchableText: isArabic
-          ? "الأداء المؤشرات المالية التشغيلية الاستراتيجية"
-          : "performance metrics financial operational",
-      },
-      {
-        id: "graph",
-        icon: Network,
-        title: isArabic ? "الرسم المعرفي" : "Knowledge Graph",
-        description: isArabic
-          ? "الروابط بين المعرفة والقرارات والمخاطر والأهداف المؤسسية."
-          : "Connections across knowledge, decisions, risks, and enterprise objectives.",
-        sourceCount: 18,
-        readiness: 62,
-        status: "processing" as KnowledgeSourceStatus,
-        searchableText: isArabic
-          ? "الرسم المعرفي العلاقات القرارات المخاطر الأهداف"
-          : "knowledge graph relationships decisions risks",
       },
     ],
     [answers, company, isArabic],
@@ -166,24 +128,6 @@ export default function CorporateBrainKnowledgePanel({
               </p>
             </div>
           </div>
-
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-[11px] font-black text-[var(--text-secondary)]">
-              {totalSourceCount} {isArabic ? "مصدرًا" : "Sources"}
-            </span>
-
-            <span className="rounded-full border border-[var(--success)]/20 bg-[var(--success-background)] px-3 py-1.5 text-[11px] font-black text-[var(--success)]">
-              {isArabic ? "المعرفة متصلة" : "Knowledge Connected"}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-5">
-          <CorporateBrainEnterpriseSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            resultCount={filteredSources.length}
-          />
         </div>
       </div>
 

@@ -3,21 +3,6 @@ import Link from "next/link";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-const footerLinks = [
-  {
-    label: "Executive Summary",
-    href: "/executive-summary",
-  },
-  {
-    label: "Corporate Brain",
-    href: "/corporate-brain",
-  },
-  {
-    label: "Sales Intelligence",
-    href: "/sales-intelligence",
-  },
-];
-
 export default function EnterpriseFooter() {
   return (
     <footer
@@ -51,21 +36,6 @@ export default function EnterpriseFooter() {
             </p>
           </div>
         </div>
-
-        <nav
-          className="kafu-enterprise-footer__navigation"
-          aria-label="Enterprise footer navigation"
-        >
-          {footerLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="kafu-enterprise-footer__link"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
 
         <div className="kafu-enterprise-footer__meta">
           <span className="kafu-enterprise-footer__version">
