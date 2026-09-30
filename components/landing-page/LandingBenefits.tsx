@@ -3,7 +3,6 @@
 import React from "react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
-// --- المحتوى العربي ---
 const ARABIC_CONTENT = {
   badge: "الفوائد التنفيذية",
   title: "قيمة مباشرة للقيادة والمؤسسة",

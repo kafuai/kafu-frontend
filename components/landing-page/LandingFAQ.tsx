@@ -3,7 +3,7 @@
 import React from "react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
-// --- المحتوى العربي ---
+
 const ARABIC_CONTENT = {
   badge: "الأسئلة الشائعة",
   title: "كل ما تحتاج معرفته",
@@ -36,7 +36,6 @@ const ARABIC_CONTENT = {
   ],
 } as const;
 
-// --- المحتوى الإنجليزي ---
 const ENGLISH_CONTENT = {
   badge: "FAQ",
   title: "Frequently Asked Questions",

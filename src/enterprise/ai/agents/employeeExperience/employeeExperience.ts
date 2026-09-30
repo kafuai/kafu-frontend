@@ -346,8 +346,8 @@ export class EmployeeExperienceAgent {
     if (!matches || matches.length < 2) {
       throw new Error(
         messageLanguage === "en"
-          ? "Please provide the leave start and end dates."
-          : "الرجاء تحديد تاريخ بداية ونهاية الإجازة.",
+          ? "Please provide the leave start and end dates in the following format: dd/mm/yy."
+          : "الرجاء تحديد تاريخ بداية ونهاية الإجازة بالصيغة التالية: dd/mm/yy.",
       );
     }
 

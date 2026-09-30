@@ -28,20 +28,23 @@ export default function LoginPage() {
   const t = isArabic ? CONTENT.ar : CONTENT.en;
 
   return (
-    <AuthenticationShell
-      eyebrow={t.eyebrow}
-      title={t.title}
-      description={t.description}
-    >
-      <Suspense
-        fallback={
-          <div className="py-16 text-center text-sm text-slate-500">
-            {t.fallback}
-          </div>
-        }
+
+    <div className="min-h-screen bg-white text-slate-900">
+      <AuthenticationShell
+        eyebrow={t.eyebrow}
+        title={t.title}
+        description={t.description}
       >
-        <LoginForm />
-      </Suspense>
-    </AuthenticationShell>
+        <Suspense
+          fallback={
+            <div className="py-16 text-center text-sm text-slate-500">
+              {t.fallback}
+            </div>
+          }
+        >
+          <LoginForm />
+        </Suspense>
+      </AuthenticationShell>
+    </div>
   );
 }

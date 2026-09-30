@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useLocalization } from "@/components/localization/LocalizationContext"; // تأكد من مسار الاستيراد الصحيح
+import { useLocalization } from "@/components/localization/LocalizationContext";
 
 const ARABIC_CONTENT = {
   badge: "مصمم لقادة المؤسسات",

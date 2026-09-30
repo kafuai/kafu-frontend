@@ -3,7 +3,7 @@
 import React from "react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
-// --- المحتوى العربي ---
+
 const ARABIC_CONTENT = {
   badge: "منصة واحدة متصلة",
   title: "من فهم المؤسسة إلى تنفيذ القرار",
@@ -51,7 +51,7 @@ const ARABIC_CONTENT = {
   ],
 } as const;
 
-// --- المحتوى الإنجليزي ---
+
 const ENGLISH_CONTENT = {
   badge: "One Connected Platform",
   title: "From understanding the enterprise to executing decisions",
@@ -130,7 +130,6 @@ export function LandingPlatform() {
               </p>
 
               <p
-                // إزالة dir="ltr" الثابتة لتعتمد على اتجاه الصفحة (حتى تظهر الأسهم بشكل سليم في العربية)
                 className="mt-3 text-start text-sm leading-7 text-[var(--landing-text-secondary)] sm:text-base"
               >
                 {content.loopSequence}

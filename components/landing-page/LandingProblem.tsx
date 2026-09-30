@@ -82,7 +82,7 @@ export function LandingProblem() {
               key={problem.title}
               className="group flex min-h-56 flex-col rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-surface)] p-6 text-start transition duration-200 hover:border-[var(--landing-border-strong)] hover:bg-[var(--landing-surface-hover)]"
             >
-              {/* تم وضع dir="ltr" للحفاظ على شكل الأرقام 01, 02, 03 */}
+              
               <div 
                 dir="ltr"
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--landing-border)] bg-[var(--landing-surface-muted)] text-xs font-semibold text-[var(--landing-accent-strong)]"

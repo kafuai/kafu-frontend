@@ -48,13 +48,12 @@ import {
   PERMISSIONS,
   ROLE_PERMISSIONS,
   type Permission,
-} from "@/lib/rbac/permissions"; // <-- عدّل المسار حسب مكان ملفك
+} from "@/lib/rbac/permissions"; 
 
 interface NavigationItem {
-  key: string;
+  key: "corporateBrain" | "digitalWorkforce" | "employeeExperience" | "admin";
   href: string;
   icon: LucideIcon;
-  /** لو undefined -> ظاهر لأي مستخدم مسجّل دخول بدون شرط صلاحية */
   permission?: Permission;
 }
 
@@ -85,7 +84,6 @@ const navigationItems: readonly NavigationItem[] = [
   },
 ] as const;
 
-// --- قاموس الترجمة للنصوص الثابتة في الترويسة ---
 const HEADER_CONTENT = {
   ar: {
     login: "تسجيل الدخول",
@@ -100,6 +98,12 @@ const HEADER_CONTENT = {
     defaultRole: "تنفيذي",
     userMenuAria: "قائمة المستخدم",
     userAccountAria: "حساب المستخدم",
+    nav: {
+      corporateBrain: "العقل المؤسسي",
+      digitalWorkforce: "القوى العاملة الرقمية",
+      employeeExperience: "تجربة الموظف",
+      admin: "لوحة الإدارة",
+    }
   },
   en: {
     login: "Log In",
@@ -114,6 +118,12 @@ const HEADER_CONTENT = {
     defaultRole: "Executive",
     userMenuAria: "User menu",
     userAccountAria: "User account",
+    nav: {
+      corporateBrain: "Corporate Brain",
+      digitalWorkforce: "Digital Workforce",
+      employeeExperience: "Employee Experience",
+      admin: "Admin",
+    }
   },
 } as const;
 
@@ -486,13 +496,13 @@ export default function EnterpriseHeader() {
                 className="kafu-executive-navigation__link"
                 data-active={isActive}
                 aria-current={isActive ? "page" : undefined}
-                aria-label={t(item.key)}
-                title={t(item.key)}
+                aria-label={localT.nav[item.key]}
+                title={localT.nav[item.key]}
               >
                 <Icon size={18} strokeWidth={1.8} />
 
                 <span className="kafu-executive-navigation__label">
-                  {t(item.key)}
+                  {localT.nav[item.key]}
                 </span>
               </Link>
             );
@@ -540,7 +550,6 @@ export default function EnterpriseHeader() {
                 data-menu-open={isMenuOpen}
               >
                 <strong>{userName}</strong>
-              
               </span>
 
               <ChevronDown

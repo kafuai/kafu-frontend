@@ -10,7 +10,6 @@ import {
 
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
-import CorporateBrainExecutiveSummary from "./CorporateBrainExecutiveSummary";
 import CorporateBrainReasoning from "./CorporateBrainReasoning";
 import CorporateBrainRecommendationCard, {
   type RecommendationPriority,
@@ -62,31 +61,10 @@ export default function CorporateBrainDecisionPanel({
         ? "خفض القرارات المعلقة وزيادة وضوح مسؤولية التنفيذ."
         : "Reduce stalled decisions and increase execution ownership clarity.",
     },
-    // {
-    //   icon: Link2,
-    //   title: isArabic
-    //     ? "توحيد مؤشرات الأداء"
-    //     : "Unify performance indicators",
-    //   description: isArabic
-    //     ? "ربط مؤشرات الأداء التشغيلية والمالية والاستراتيجية بمركز القيادة."
-    //     : "Connect operational, financial, and strategic indicators to the command center.",
-    //   priority: "medium" as RecommendationPriority,
-    //   impact: isArabic
-    //     ? "تحسين جودة المتابعة التنفيذية"
-    //     : "Improve executive performance visibility",
-    //   confidence: 87,
-    //   expectedOutcome: isArabic
-    //     ? "تكوين صورة موحدة للأداء وربط النتائج بالقرارات."
-    //     : "Create a unified performance view connected directly to decisions.",
-    // },
   ];
 
   return (
     <section className="space-y-6">
-      {/* <CorporateBrainExecutiveSummary
-        companyName={companyName}
-        discoveryAnswerCount={discoveryAnswerCount}
-      /> */}
 
       <section className="overflow-hidden rounded-3xl border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
         <div className="border-b border-[var(--border-default)] px-5 py-5 md:px-6">

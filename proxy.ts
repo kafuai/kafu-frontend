@@ -12,15 +12,10 @@ import {
 
 const protectedRoutes = [
   "/assessment",
-
   "/corporate-brain",
-
   "/digital-workforce",
   "/discovery",
   "/employee-experience",
-  "/employee-experience/employee",
-  "/employee-experience/requests",
-  "/employee-experience/policies",
   "/admin",
   "/profile",
   ];

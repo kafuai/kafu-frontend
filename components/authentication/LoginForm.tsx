@@ -8,7 +8,7 @@ import { useLocalization } from "@/components/localization/LocalizationContext";
 
 import { getBrowserAuthenticationService } from "../../src/enterprise/authentication/authenticationRuntime";
 
-// --- قاموس الترجمة ---
+
 const CONTENT = {
   ar: {
     badge: "تسجيل الدخول",

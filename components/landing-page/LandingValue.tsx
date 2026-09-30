@@ -2,7 +2,7 @@
 
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
-// --- المحتوى العربي ---
+
 const ARABIC_CONTENT = {
   badge: "لماذا KAFU AI",
   title: "نظام تشغيل ذكي للمعرفة والقرار والتنفيذ",
@@ -30,7 +30,7 @@ const ARABIC_CONTENT = {
   ],
 } as const;
 
-// --- المحتوى الإنجليزي ---
+
 const ENGLISH_CONTENT = {
   badge: "Why KAFU AI",
   title: "An intelligent operating system for knowledge, decisions, and execution",

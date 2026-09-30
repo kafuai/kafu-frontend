@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
-// --- المحتوى العربي ---
+
 const ARABIC_CONTENT = {
   badge: "منصة الذكاء والتنفيذ المؤسسي",
   title: "حوّل معرفة مؤسستك إلى قرارات وتنفيذ",
@@ -34,7 +34,7 @@ const ARABIC_CONTENT = {
   },
 } as const;
 
-// --- المحتوى الإنجليزي ---
+
 const ENGLISH_CONTENT = {
   badge: "Enterprise Intelligence & Execution Platform",
   title: "Transform your organization's knowledge into decisions and execution",
@@ -165,7 +165,6 @@ function MetricCard({ label, value }: MetricCardProps) {
       <p className="text-xs font-medium text-[var(--landing-text-secondary)]">
         {label}
       </p>
-      {/* القيمة الرقمية تُترك كـ ltr لكي تظهر النسبة المئوية والأرقام بشكل صحيح دائماً */}
       <p
         className="mt-2 text-2xl font-bold leading-none text-[var(--landing-text-primary)]"
         dir="ltr" 

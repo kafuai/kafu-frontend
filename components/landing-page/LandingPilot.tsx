@@ -3,7 +3,7 @@
 import React from "react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
-// --- المحتوى العربي ---
+
 const ARABIC_CONTENT = {
   badge: "تجربة مؤسسية موجهة (Pilot)",
   title: "ابدأ بتجربة تنفيذية واضحة خلال 3–6 أسابيع",
@@ -38,7 +38,7 @@ const ARABIC_CONTENT = {
   ],
 } as const;
 
-// --- المحتوى الإنجليزي ---
+
 const ENGLISH_CONTENT = {
   badge: "Controlled Enterprise Pilot",
   title: "Start with a clear executive pilot in 3–6 weeks",
@@ -115,7 +115,7 @@ export function LandingPilot() {
                 key={item.step}
                 className="group flex gap-5 rounded-3xl border border-[var(--landing-border)] bg-[var(--landing-surface)] p-6 text-start transition duration-200 hover:border-[var(--landing-accent-border)] hover:bg-[var(--landing-surface-hover)]"
               >
-                {/* تم وضع dir="ltr" للأرقام لكي تحافظ على شكلها 01 و 02 دائماً بدون أن تنعكس */}
+                
                 <div 
                   dir="ltr"
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-surface-muted)] text-sm font-semibold text-[var(--landing-accent-strong)] transition-colors group-hover:border-[var(--landing-accent-border)]"
