@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { Suspense } from "react";
+import { useRouter } from "next/navigation";
 import AuthenticationShell from "../../components/authentication/AuthenticationShell";
 import LoginForm from "../../components/authentication/LoginForm";
 import { useLocalization } from "@/components/localization/LocalizationContext";
@@ -23,28 +24,27 @@ const CONTENT = {
 } as const;
 
 export default function LoginPage() {
+  const router = useRouter();
   const { locale } = useLocalization();
   const isArabic = locale === "ar";
   const t = isArabic ? CONTENT.ar : CONTENT.en;
 
   return (
-
-    <div className="min-h-screen bg-white text-slate-900">
-      <AuthenticationShell
-        eyebrow={t.eyebrow}
-        title={t.title}
-        description={t.description}
+    <AuthenticationShell
+      onBack={() => router.back()}
+      eyebrow={t.eyebrow}
+      title={t.title}
+      description={t.description}
+    >
+      <Suspense
+        fallback={
+          <div className="py-16 text-center text-sm text-slate-500">
+            {t.fallback}
+          </div>
+        }
       >
-        <Suspense
-          fallback={
-            <div className="py-16 text-center text-sm text-slate-500">
-              {t.fallback}
-            </div>
-          }
-        >
-          <LoginForm />
-        </Suspense>
-      </AuthenticationShell>
-    </div>
+        <LoginForm />
+      </Suspense>
+    </AuthenticationShell>
   );
 }

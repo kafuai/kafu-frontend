@@ -395,18 +395,10 @@ export default function WorkspaceScopeSwitcher() {
     >
       <button
         type="button"
-        className="kafu-workspace-selector"
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
+        className="kafu-workspace-selector cursor-default pointer-events-none"
         aria-label={`مساحة العمل الحالية: ${activeLabel}`}
         title={activeLabel}
-        data-open={isOpen}
-        disabled={isSwitching}
-        onClick={() => {
-          setIsOpen((currentValue) => {
-            return !currentValue;
-          });
-        }}
+        disabled={true} 
       >
         {scope?.mode === "portfolio" ? (
           <Layers3
@@ -423,140 +415,7 @@ export default function WorkspaceScopeSwitcher() {
         <span className="kafu-workspace-selector__name">
           {activeLabel}
         </span>
-
-        {isSwitching ? (
-          <LoaderCircle
-            size={14}
-            strokeWidth={1.9}
-            className="kafu-workspace-switcher__spinner"
-          />
-        ) : (
-          <ChevronDown
-            size={13}
-            strokeWidth={2}
-            className="kafu-workspace-selector__chevron"
-          />
-        )}
       </button>
-
-      {isOpen && (
-        <div
-          className="kafu-workspace-dropdown"
-          role="menu"
-          aria-label="اختيار مساحة العمل"
-        >
-          <div className="kafu-workspace-dropdown__header">
-            <strong>مساحات العمل</strong>
-
-            <span>
-              {companies.length}
-              {" "}
-              شركات متاحة
-            </span>
-          </div>
-
-          {canUsePortfolio && (
-            <>
-              <button
-                type="button"
-                role="menuitem"
-                className="kafu-workspace-dropdown__item"
-                data-selected={
-                  scope?.mode === "portfolio"
-                }
-                onClick={() => {
-                  void handlePortfolioSelection();
-                }}
-              >
-                <span className="kafu-workspace-dropdown__icon">
-                  <Layers3
-                    size={17}
-                    strokeWidth={1.8}
-                  />
-                </span>
-
-                <span className="kafu-workspace-dropdown__content">
-                  <strong>
-                    جميع الشركات
-                  </strong>
-
-                  <small>
-                    Executive Portfolio View
-                  </small>
-                </span>
-
-                {scope?.mode === "portfolio" && (
-                  <Check
-                    size={16}
-                    strokeWidth={2.2}
-                    className="kafu-workspace-dropdown__check"
-                  />
-                )}
-              </button>
-
-              <div
-                className="kafu-workspace-dropdown__divider"
-                aria-hidden="true"
-              />
-            </>
-          )}
-
-          <div className="kafu-workspace-dropdown__companies">
-            {companies.map((company) => {
-              const isSelected =
-                scope?.mode === "company" &&
-                scope.activeCompanyId ===
-                  company.id;
-
-              return (
-                <button
-                  key={company.id}
-                  type="button"
-                  role="menuitem"
-                  className="kafu-workspace-dropdown__item"
-                  data-selected={isSelected}
-                  onClick={() => {
-                    void handleCompanySelection(
-                      company.id,
-                    );
-                  }}
-                >
-                  <span className="kafu-workspace-dropdown__icon">
-                    <Building2
-                      size={17}
-                      strokeWidth={1.8}
-                    />
-                  </span>
-
-                  <span className="kafu-workspace-dropdown__content">
-                    <strong>
-                      {company.name}
-                    </strong>
-
-                    <small>
-                      {company.role}
-                    </small>
-                  </span>
-
-                  {isSelected && (
-                    <Check
-                      size={16}
-                      strokeWidth={2.2}
-                      className="kafu-workspace-dropdown__check"
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {errorMessage && (
-            <p className="kafu-workspace-dropdown__error">
-              {errorMessage}
-            </p>
-          )}
-        </div>
-      )}
     </div>
   );
 }

@@ -59,7 +59,7 @@ Conceptually, the exact implementation is controlled by the permission definitio
 | Role | Assessment | Discovery | Corporate Brain | Digital Workforce | Requests | Policies | Employee |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- | :---: |
 | **Admin** | All | All | All | All | All | All | All |
-| **Owner** | ✓ | ✓ | ✓ | ✓ | Based on config | Based on config | — |
+| **Owner** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | **Manager** | — | — | — | — | ✓ | ✓ | — |
 | **Member** | — | — | — | — | — | — | ✓ |
 | **Viewer** | — | — | — | — | — | — | — |
