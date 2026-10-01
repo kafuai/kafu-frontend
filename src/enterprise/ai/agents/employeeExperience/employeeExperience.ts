@@ -10,6 +10,7 @@ import {
   LeaveManager,
   LeaveValidationError,
   LeaveValidator,
+  evaluateLeaveAllowance,
 } from "@/src/enterprise/business/leave";
 import { PolicyManager } from "@/src/enterprise/business/policies/policyManager";
 import { EmploymentLetterManager } from "@/src/enterprise/business/employmentLetters/employmentLetterManager";
@@ -21,6 +22,7 @@ import {
   classifyEmployeeMessage,
   type EmployeeMessageClassification,
 } from "./employeeExperienceClassification";
+import { resolveAnnualLeaveAllowanceFromPolicy } from "./leavePolicyAllowance";
 
 interface EmployeeExperienceRequest {
   message: string;
@@ -298,6 +300,35 @@ export class EmployeeExperienceAgent {
 
     if (!validation.valid) {
       throw new LeaveValidationError(validation.errors);
+    }
+
+    const allowance = await resolveAnnualLeaveAllowanceFromPolicy({
+      policyManager: this.policyManager,
+      organizationId: request.organizationId,
+      companyId: request.companyId,
+      employeeId: request.employeeId,
+    });
+
+    if (allowance !== null) {
+      const existing = await this.leaveManager.list(
+        request.organizationId,
+        request.employeeId,
+      );
+
+      const evaluation = evaluateLeaveAllowance(
+        {
+          type: "annual",
+          startDate: dates.startDate,
+          endDate: dates.endDate,
+        },
+        allowance,
+        existing,
+        messageLanguage,
+      );
+
+      if (!evaluation.allowed) {
+        throw new LeaveValidationError([evaluation.message!]);
+      }
     }
 
     const task: AIAgentTask = {
