@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { getCurrentCompanyId } from "@/lib/companySession";
+import { useLocalization } from "@/components/localization/LocalizationContext";
 
 type Company = {
   id: string;
@@ -26,32 +27,36 @@ type WorkforceMember = {
   code: string;
   title: string;
   subtitle: string;
-  priority: WorkforcePriority;
   readiness: string;
   description: string;
   tasks: string[];
-};
-
-const priorityLabels: Record<WorkforcePriority, string> = {
-  Critical: "أولوية حرجة",
-  High: "أولوية عالية",
-  Medium: "أولوية متوسطة",
-};
-
-const priorityClasses: Record<WorkforcePriority, string> = {
-  Critical:
-    "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300",
-  High:
-    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300",
-  Medium:
-    "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-300",
+  href: string;
 };
 
 export default function DigitalWorkforcePage() {
+  const { locale } = useLocalization();
+
+  const isArabic = locale === "ar";
+
   const [company, setCompany] = useState<Company | null>(null);
   const [answers, setAnswers] = useState<DiscoveryAnswer[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+
+  // const priorityLabels: Record<WorkforcePriority, string> = {
+  //   Critical: isArabic ? "أولوية حرجة" : "Critical Priority",
+  //   High: isArabic ? "أولوية عالية" : "High Priority",
+  //   Medium: isArabic ? "أولوية متوسطة" : "Medium Priority",
+  // };
+
+  const priorityClasses: Record<WorkforcePriority, string> = {
+    Critical:
+      "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300",
+    High:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300",
+    Medium:
+      "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-300",
+  };
 
   useEffect(() => {
     async function loadDigitalWorkforce() {
@@ -59,7 +64,9 @@ export default function DigitalWorkforcePage() {
 
       if (!companyId) {
         setMessage(
-          "لم يتم العثور على بيانات المؤسسة. يرجى العودة إلى صفحة التقييم وإكمال بيانات المؤسسة.",
+          isArabic
+            ? "لم يتم العثور على بيانات المؤسسة. يرجى العودة إلى صفحة التقييم وإكمال بيانات المؤسسة."
+            : "No company data was found. Please return to the Assessment page and complete the company information.",
         );
         setLoading(false);
         return;
@@ -73,7 +80,9 @@ export default function DigitalWorkforcePage() {
 
       if (companyError) {
         setMessage(
-          `حدث خطأ أثناء تحميل بيانات المؤسسة: ${companyError.message}`,
+          isArabic
+            ? `حدث خطأ أثناء تحميل بيانات المؤسسة: ${companyError.message}`
+            : `An error occurred while loading company data: ${companyError.message}`,
         );
         setLoading(false);
         return;
@@ -87,7 +96,9 @@ export default function DigitalWorkforcePage() {
 
       if (answersError) {
         setMessage(
-          `حدث خطأ أثناء تحميل إجابات الاستكشاف: ${answersError.message}`,
+          isArabic
+            ? `حدث خطأ أثناء تحميل إجابات الاستكشاف: ${answersError.message}`
+            : `An error occurred while loading Discovery answers: ${answersError.message}`,
         );
         setLoading(false);
         return;
@@ -99,7 +110,7 @@ export default function DigitalWorkforcePage() {
     }
 
     loadDigitalWorkforce();
-  }, []);
+  }, [isArabic, locale]);
 
   const hasDiscovery = answers.length > 0;
 
@@ -110,149 +121,156 @@ export default function DigitalWorkforcePage() {
   const impactCards = [
     {
       code: "01",
-      label: "المؤسسة الحالية",
-      value: company?.name || "غير محددة",
-      note: "ملف المؤسسة",
+      label: isArabic ? "المؤسسة الحالية" : "Current Company",
+      value: company?.name || (isArabic ? "غير محددة" : "Not specified"),
+      note: isArabic ? "ملف المؤسسة" : "Company Profile",
     },
     {
       code: "02",
-      label: "الفريق الرقمي المقترح",
-      value: "6",
-      suffix: "وكلاء",
-      note: "القوة العاملة الموصى بها",
+      label: isArabic ? "الفريق الرقمي" : "Digital Team",
+      value: "3",
+      suffix: isArabic ? "وكلاء" : "Agents",
+      note: isArabic
+        ? "القوة العاملة الرقمية"
+        : "Digital Workforce",
     },
     {
       code: "03",
-      label: "فرص الأتمتة",
+      label: isArabic ? "فرص الأتمتة" : "Automation Opportunities",
       value: hasDiscovery ? "40+" : "15+",
-      note: "مسارات عمل محتملة",
+      note: isArabic ? "مسارات عمل محتملة" : "Potential Workflows",
     },
     {
       code: "04",
-      label: "توفير الوقت المتوقع",
+      label: isArabic ? "توفير الوقت المتوقع" : "Expected Time Savings",
       value: hasDiscovery ? "60%" : "35%",
-      note: "من الجهد الإداري",
+      note: isArabic ? "من الجهد الإداري" : "of Administrative Effort",
     },
   ];
 
   const team: WorkforceMember[] = [
     {
       code: "EX",
-      title: "مدير تجربة الموظف الذكي",
+      title: isArabic
+        ? "مدير تجربة الموظف الذكي"
+        : "Intelligent Employee Experience Manager",
       subtitle: "Employee Experience Manager",
-      priority: "High",
-      readiness: "92%",
-      description:
-        "يعالج الطلبات اليومية والمتكررة للموظفين، ويمنح فريق الموارد البشرية تجربة تشغيلية أسرع وأكثر اتساقًا.",
-      tasks: [
-        "طلبات الإجازات",
-        "خطابات التعريف",
-        "استفسارات الموظفين",
-        "تحديث البيانات",
-      ],
+      readiness: "95%",
+      description: isArabic
+        ? "يعالج الطلبات اليومية والمتكررة للموظفين، ويمنح فريق الموارد البشرية تجربة تشغيلية أسرع وأكثر اتساقًا."
+        : "Handles recurring employee requests and enables HR teams to deliver a faster and more consistent operational experience.",
+      tasks: isArabic
+        ? [
+            "طلبات الإجازات",
+            "خطابات التعريف",
+            "استفسارات الموظفين",
+          ]
+        : [
+            "Leave requests",
+            "Employment letters",
+            "Employee inquiries",
+            "Data updates",
+          ],
+        href: "employee-experience",
     },
     {
       code: "DP",
-      title: "مستشار الوثائق والسياسات",
+      title: isArabic
+        ? "مستشار الوثائق والسياسات"
+        : "Documents & Policies Advisor",
       subtitle: "Documents & Policies Advisor",
-      priority: "Critical",
-      readiness: "90%",
-      description:
-        "يربط الموظفين والإدارة بمصادر المعرفة والسياسات والنماذج الداخلية المعتمدة داخل المؤسسة.",
-      tasks: [
-        "السياسات الداخلية",
-        "النماذج المعتمدة",
-        "العقود",
-        "الخطابات الرسمية",
-      ],
+      readiness: "30%",
+      description: isArabic
+        ? "يربط الموظفين والإدارة بمصادر المعرفة والسياسات والنماذج الداخلية المعتمدة داخل المؤسسة."
+        : "Connects employees and management with approved internal knowledge sources, policies, and forms.",
+      tasks: isArabic
+        ? [
+            "السياسات الداخلية",
+            "النماذج المعتمدة",
+            "العقود",
+            "الخطابات الرسمية",
+          ]
+        : [
+            "Internal policies",
+            "Approved forms",
+            "Contracts",
+            "Official letters",
+          ],
+          href: "",
     },
     {
       code: "HR",
-      title: "المستشار التنفيذي للموارد البشرية",
+      title: isArabic
+        ? "المستشار التنفيذي للموارد البشرية"
+        : "Executive HR Advisor",
       subtitle: "Executive HR Advisor",
-      priority: "High",
-      readiness: "86%",
-      description:
-        "يحوّل بيانات الاستكشاف وCorporate DNA إلى ملخصات تنفيذية ومؤشرات وتوصيات قابلة للمراجعة.",
-      tasks: [
-        "الملخص التنفيذي",
-        "مؤشرات الأداء",
-        "التوصيات",
-        "دعم الاجتماعات",
-      ],
+      readiness: "10%",
+      description: isArabic
+        ? "يحوّل بيانات الاستكشاف إلى ملخصات تنفيذية ومؤشرات وتوصيات قابلة للمراجعة."
+        : "Transforms Discovery data into executive summaries, indicators, and reviewable recommendations.",
+      tasks: isArabic
+        ? [
+            "الملخص التنفيذي",
+            "مؤشرات الأداء",
+            "التوصيات",
+            "دعم الاجتماعات",
+          ]
+        : [
+            "Executive summary",
+            "Performance indicators",
+            "Recommendations",
+            "Meeting support",
+          ],
+          href: "",
     },
-    {
-      code: "TA",
-      title: "مستشار استقطاب المواهب",
-      subtitle: "Talent Acquisition Advisor",
-      priority:
-        company?.employee_count && company.employee_count > 100
-          ? "High"
-          : "Medium",
-      readiness: "82%",
-      description:
-        "يدعم فرز المرشحين وتحليل السير الذاتية وتجهيز الملخصات عند توسع المؤسسة في عمليات التوظيف.",
-      tasks: [
-        "فرز المرشحين",
-        "تحليل السير الذاتية",
-        "ملخصات المقابلات",
-        "القوائم القصيرة",
-      ],
-    },
-    {
-      code: "CO",
-      title: "مستشار الامتثال الذكي",
-      subtitle: "Compliance Intelligence Advisor",
-      priority: "Medium",
-      readiness: "78%",
-      description:
-        "يتابع الالتزام بالسياسات الداخلية والمتطلبات التنظيمية، ويعرض التنبيهات والمخاطر ذات الأولوية.",
-      tasks: [
-        "متابعة الامتثال",
-        "التنبيهات",
-        "مراجعة السياسات",
-        "تقارير المخاطر",
-      ],
-    },
-    {
-      code: "LO",
-      title: "مستشار التوطين الذكي",
-      subtitle: "Localization Intelligence Advisor",
-      priority: isSaudiCompany ? "High" : "Medium",
-      readiness: isSaudiCompany ? "84%" : "70%",
-      description:
-        "يتابع مؤشرات التوطين والمتطلبات المرتبطة بسوق العمل، ويقدم قراءة تنفيذية للمخاطر والفرص.",
-      tasks: [
-        "مؤشرات التوطين",
-        "التنبيهات التنظيمية",
-        "تحليل المخاطر",
-        "تقارير الإدارة",
-      ],
-    },
+
   ];
 
-  const roadmap = [
-    {
-      title: "تجربة الموظف",
-      description:
-        "تفعيل مدير تجربة الموظف لمعالجة الطلبات اليومية المتكررة.",
-    },
-    {
-      title: "المعرفة المؤسسية",
-      description:
-        "ربط مستشار الوثائق والسياسات مع Corporate Brain.",
-    },
-    {
-      title: "الدعم التنفيذي",
-      description:
-        "إطلاق المستشار التنفيذي لتقديم الملخصات والتوصيات للإدارة.",
-    },
-    {
-      title: "التوسع المنضبط",
-      description:
-        "إضافة الامتثال والتوطين بعد اكتمال مصادر المعرفة الأساسية.",
-    },
-  ];
+  const roadmap = isArabic
+    ? [
+        {
+          title: "تجربة الموظف",
+          description:
+            "تفعيل مدير تجربة الموظف لمعالجة الطلبات اليومية المتكررة.",
+        },
+        {
+          title: "المعرفة المؤسسية",
+          description:
+            "ربط مستشار الوثائق والسياسات مع Corporate Brain.",
+        },
+        {
+          title: "الدعم التنفيذي",
+          description:
+            "إطلاق المستشار التنفيذي لتقديم الملخصات والتوصيات للإدارة.",
+        },
+        {
+          title: "التوسع المنضبط",
+          description:
+            "إضافة الامتثال والتوطين بعد اكتمال مصادر المعرفة الأساسية.",
+        },
+      ]
+    : [
+        {
+          title: "Employee Experience",
+          description:
+            "Activate the Employee Experience Manager to handle recurring daily requests.",
+        },
+        {
+          title: "Enterprise Knowledge",
+          description:
+            "Connect the Documents & Policies Advisor with Corporate Brain.",
+        },
+        {
+          title: "Executive Support",
+          description:
+            "Launch the Executive Advisor to provide management with summaries and recommendations.",
+        },
+        {
+          title: "Controlled Expansion",
+          description:
+            "Add compliance and localization capabilities after core knowledge sources are complete.",
+        },
+      ];
 
   const discoverySignals =
     answers.length > 0
@@ -260,19 +278,24 @@ export default function DigitalWorkforcePage() {
           .slice(0, 4)
           .map((item) => item.answer || item.question)
           .filter(Boolean)
-      : [
-          "لا توجد إجابات استكشاف محفوظة حتى الآن.",
-          "يمكن تحسين دقة التوصيات بعد استكمال جلسة الاستكشاف.",
-        ];
+      : isArabic
+        ? [
+            "لا توجد إجابات استكشاف محفوظة حتى الآن.",
+            "يمكن تعزيز أداء فريقك بعد استكمال جلسة الاستكشاف.",
+          ]
+        : [
+            "No saved Discovery answers are available yet.",
+            "Agent performance can improve after completing the Discovery session.",
+          ];
 
   return (
     <main
       className="min-h-[calc(100vh-64px)] bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8"
-      dir="rtl"
+      dir={isArabic ? "rtl" : "ltr"}
     >
       <div className="mx-auto max-w-[1540px]">
         <section className="relative overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
-          <div className="absolute inset-y-0 right-0 w-1 bg-[var(--brand-primary)]" />
+          <div className="absolute inset-y-0 start-0 w-1 bg-[var(--brand-primary)]" />
 
           <div className="grid gap-6 px-6 py-7 md:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:py-8">
             <div className="min-w-0">
@@ -283,43 +306,36 @@ export default function DigitalWorkforcePage() {
                 </span>
 
                 <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-[11px] font-bold text-[var(--text-secondary)]">
-                  توصية مخصصة للمؤسسة
+                  {isArabic
+                    ? "فريقك الرقمي المخصص"
+                    : "Your Custom Digital Workforce"}
                 </span>
               </div>
 
               <h1 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">
-                فريقك الرقمي المقترح
+                {isArabic
+                  ? "فريقك الرقمي"
+                  : "Your Digital Workforce"}
               </h1>
 
               <p className="mt-3 max-w-4xl text-sm leading-7 text-[var(--text-secondary)] md:text-base md:leading-8">
-                بناءً على بيانات المؤسسة ونتائج الاستكشاف وCorporate DNA
-                وCorporate Brain، تقترح KAFU AI فريقًا رقميًا مرحليًا يتوافق
-                مع الأولويات التشغيلية للمؤسسة.
+                {isArabic
+                  ? "تم تهيئة فريقك الرقمي المرحلي ليتوافق مع الأوليات التشغيلة للمؤسسة "
+                  : "Your phased digital workforce is configured to align with with your organization's operational priorities."}
               </p>
 
               <div className="mt-5 flex flex-wrap gap-2">
                 <span className="rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]">
-                  تشغيل مرحلي
+                  {isArabic ? "تشغيل مرحلي" : "Phased Operation"}
                 </span>
-                <span className="rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]">
-                  حوكمة ومراجعة
-                </span>
-                <span className="rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]">
-                  قياس الأثر
-                </span>
-              </div>
-            </div>
 
-            <div className="grid min-w-[260px] grid-cols-[64px_1fr] items-center gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--brand-subtle)] p-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--surface)] text-2xl font-black text-[var(--brand-primary)] shadow-sm">
-                6
-              </div>
+                <span className="rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]">
+                  {isArabic ? "حوكمة ومراجعة" : "Governance & Review"}
+                </span>
 
-              <div>
-                <p className="text-sm font-black">وكلاء رقميون مقترحون</p>
-                <p className="mt-1 text-xs font-bold leading-6 text-[var(--text-secondary)]">
-                  جاهزون للتفعيل المرحلي وفق الأولوية
-                </p>
+                <span className="rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]">
+                  {isArabic ? "قياس الأثر" : "Impact Measurement"}
+                </span>
               </div>
             </div>
           </div>
@@ -332,11 +348,15 @@ export default function DigitalWorkforcePage() {
             </div>
 
             <p className="mt-4 text-base font-black">
-              جارٍ بناء توصية الفريق الرقمي
+              {isArabic
+                ? "جارٍ تهيئة فريقك الرقمي"
+                : "Initializing your digital workforce"}
             </p>
 
             <p className="mt-2 text-sm text-[var(--text-secondary)]">
-              يتم تحليل بيانات المؤسسة ونتائج الاستكشاف.
+              {isArabic
+                ? "يتم تحليل بيانات المؤسسة ونتائج الاستكشاف."
+                : "Analyzing company data and Discovery results."}
             </p>
           </section>
         )}
@@ -348,7 +368,9 @@ export default function DigitalWorkforcePage() {
             </div>
 
             <h2 className="mt-4 text-xl font-black">
-              تعذر تحميل توصية الفريق
+              {isArabic
+                ? "تعذر تحميل مساحة عمل الفريق"
+                : "Unable to load workforce workspace"}
             </h2>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-7">
@@ -359,7 +381,7 @@ export default function DigitalWorkforcePage() {
               href="/assessment"
               className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--text-primary)] px-6 text-sm font-black text-[var(--surface)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--text-primary)] focus-visible:ring-offset-2"
             >
-              العودة إلى التقييم
+              {isArabic ? "العودة إلى التقييم" : "Back to Assessment"}
             </Link>
           </section>
         )}
@@ -372,7 +394,7 @@ export default function DigitalWorkforcePage() {
                   key={card.code}
                   className="group relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
                 >
-                  <div className="absolute inset-x-0 top-0 h-0.5 origin-right scale-x-0 bg-[var(--brand-primary)] transition-transform duration-200 group-hover:scale-x-100" />
+                  <div className="absolute inset-x-0 top-0 h-0.5 origin-start scale-x-0 bg-[var(--brand-primary)] transition-transform duration-200 group-hover:scale-x-100" />
 
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -409,34 +431,52 @@ export default function DigitalWorkforcePage() {
 
             <section className="mt-5 overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
               <div className="grid lg:grid-cols-[340px_minmax(0,1fr)]">
-                <div className="border-b border-[var(--border-default)] bg-[var(--brand-subtle)] p-6 lg:border-b-0 lg:border-l lg:p-7">
+                <div className="border-b border-[var(--border-default)] bg-[var(--brand-subtle)] p-6 lg:border-b-0 lg:border-e lg:p-7">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-sm font-black text-white shadow-sm">
                     AI
                   </div>
 
                   <p className="mt-5 text-xs font-black text-[var(--brand-primary)]">
-                    EXECUTIVE RECOMMENDATION
+                    EXECUTIVE STRATEGY
                   </p>
 
                   <h2 className="mt-3 text-2xl font-black tracking-tight">
-                    توصية KAFU AI التنفيذية
+                    {isArabic
+                      ? "استراتيجية KAFU AI للتشغيل"
+                      : "KAFU AI Operating Strategy"}
                   </h2>
 
                   <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
-                    تفعيل مرحلي يبدأ بالأعمال الأكثر تكرارًا وتأثيرًا، ثم
-                    التوسع بناءً على النتائج الفعلية.
+                    {isArabic
+                      ? "تفعيل مرحلي يبدأ بالأعمال الأكثر تكرارًا وتأثيرًا، ثم التوسع بناءً على النتائج الفعلية."
+                      : "Start with the highest-frequency and highest-impact work, then expand based on actual results."}
                   </p>
                 </div>
 
                 <div className="p-6 lg:p-7">
                   <p className="max-w-5xl text-sm leading-8 text-[var(--text-secondary)] md:text-base">
-                    لا نوصي بتفعيل جميع الوكلاء دفعة واحدة. بالنسبة إلى{" "}
-                    <span className="font-black text-[var(--text-primary)]">
-                      {company?.name || "هذه المؤسسة"}
-                    </span>
-                    ، فإن البداية المثلى هي تشغيل الوكلاء الذين يعالجون
-                    الأعمال الأعلى تكرارًا وتأثيرًا، ثم توسيع الفريق بعد بناء
-                    المعرفة وقياس النتائج.
+                    {isArabic ? (
+                      <>
+                       لضمان أعلى كفاءة تشغيلية ل {" "}
+                        <span className="font-black text-[var(--text-primary)]">
+                          {company?.name || "هذه المؤسسة"}
+                        </span>
+                        , يبدأ فريقك بمعالجة 
+                        الأعمال الأعلى تكرارًا وتأثيرًا، ثم توسيع الفريق بعد
+                        بناء المعرفة وقياس النتائج.
+                      </>
+                    ) : (
+                      <>
+                        We do not recommend activating all agents at once. For{" "}
+                        <span className="font-black text-[var(--text-primary)]">
+                          {company?.name || "this company"}
+                        </span>
+                        , the optimal starting point is to activate agents
+                        that handle the most frequent and impactful work, then
+                        expand the team after building knowledge and measuring
+                        results.
+                      </>
+                    )}
                   </p>
 
                   <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -451,7 +491,9 @@ export default function DigitalWorkforcePage() {
                           </span>
 
                           <span className="text-[10px] font-black text-[var(--text-muted)]">
-                            المرحلة {index + 1}
+                            {isArabic
+                              ? `المرحلة ${index + 1}`
+                              : `Phase ${index + 1}`}
                           </span>
                         </div>
 
@@ -473,36 +515,34 @@ export default function DigitalWorkforcePage() {
               <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p className="text-xs font-black text-[var(--brand-primary)]">
-                    RECOMMENDED AGENTS
+                    YOUR DIGITAL AGENTS
                   </p>
 
                   <h2 className="mt-2 text-2xl font-black tracking-tight md:text-3xl">
-                    الوكلاء الرقميون المقترحون
+                    {isArabic
+                      ? "وكلاؤك الرقميون"
+                      : "Your Digital Agents"}
                   </h2>
                 </div>
 
                 <p className="max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
-                  فريق مرحلي مصمم لدعم العمليات اليومية والمعرفة المؤسسية
-                  والقرارات التنفيذية والامتثال.
+                  {isArabic
+                    ? "فريق مرحلي مصمم لدعم العمليات اليومية والمعرفة المؤسسية والقرارات التنفيذية والامتثال."
+                    : "A phased team designed to support daily operations, enterprise knowledge, executive decisions, and compliance."}
                 </p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {team.map((member) => (
-                  <article
-                    key={member.subtitle}
-                    className="group flex min-h-full flex-col overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
+                  <Link
+                    key={member.code}
+                    href={member.href}
+                    className="group flex min-h-full flex-col overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)] cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)] bg-[var(--surface-muted)] px-5 py-4">
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-sm font-black text-white shadow-sm">
                         {member.code}
                       </div>
-
-                      <span
-                        className={`rounded-full border px-3 py-1.5 text-[11px] font-black ${priorityClasses[member.priority]}`}
-                      >
-                        {priorityLabels[member.priority]}
-                      </span>
                     </div>
 
                     <div className="flex flex-1 flex-col p-5">
@@ -521,7 +561,9 @@ export default function DigitalWorkforcePage() {
                       <div className="mt-5 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
                         <div className="mb-2.5 flex items-center justify-between text-xs font-black">
                           <span className="text-[var(--text-secondary)]">
-                            جاهزية التفعيل
+                            {isArabic
+                              ? "جاهزية التفعيل"
+                              : "Activation Readiness"}
                           </span>
 
                           <span className="text-[var(--brand-primary)]">
@@ -543,57 +585,18 @@ export default function DigitalWorkforcePage() {
                             key={task}
                             className="flex min-h-10 items-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]"
                           >
-                            <span className="ml-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--brand-primary)]" />
+                            <span className="me-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--brand-primary)]" />
                             {task}
                           </div>
                         ))}
                       </div>
-
-                      <div className="mt-auto pt-5">
-                        <div className="border-t border-[var(--border-default)] pt-4">
-                          <div className="flex items-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-400">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                            جاهز للتفعيل المرحلي
-                          </div>
-                        </div>
-                      </div>
                     </div>
-                  </article>
+                  </Link>
                 ))}
               </div>
             </section>
 
-            <section className="mt-8 grid gap-4 lg:grid-cols-2">
-              <article className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)]">
-                <p className="text-xs font-black text-[var(--brand-primary)]">
-                  DISCOVERY SIGNALS
-                </p>
-
-                <h2 className="mt-2 text-2xl font-black tracking-tight">
-                  إشارات من جلسة الاستكشاف
-                </h2>
-
-                <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
-                  أهم المدخلات المستخدمة لتخصيص توصية الفريق الرقمي.
-                </p>
-
-                <div className="mt-5 space-y-3">
-                  {discoverySignals.map((item, index) => (
-                    <div
-                      key={`${item}-${index}`}
-                      className="flex items-start gap-3 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4"
-                    >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--surface)] text-xs font-black text-[var(--brand-primary)] shadow-sm">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-
-                      <p className="text-sm leading-7 text-[var(--text-secondary)]">
-                        {item}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </article>
+            <section className="mt-8 grid gap-4">
 
               <article className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-6 shadow-[var(--shadow-small)]">
                 <p className="text-xs font-black text-[var(--brand-primary)]">
@@ -601,23 +604,32 @@ export default function DigitalWorkforcePage() {
                 </p>
 
                 <h2 className="mt-2 text-2xl font-black tracking-tight">
-                  كيف سيعمل هذا الفريق؟
+                  {isArabic
+                    ? "كيف سيعمل هذا الفريق؟"
+                    : "How Will This Team Operate?"}
                 </h2>
 
                 <p className="mt-4 text-sm leading-8 text-[var(--text-secondary)] md:text-base">
-                  يعمل كل وكيل رقمي فوق Corporate Brain، ويستخدم Corporate DNA
-                  لفهم سياق المؤسسة. وبذلك يقدم الفريق توصيات وإجراءات مرتبطة
-                  بواقع المؤسسة وسياساتها وأولوياتها، بدلًا من تقديم إجابات
-                  عامة غير مخصصة.
+                  {isArabic
+                    ? "يستند كل وكيل رقمي إلى فهم شامل لسياق المؤسسة، مما يمكّنه من تنفيذ المهام واتخاذ إجراءات مرتبطة بواقع المؤسسة وسياساتها وأولوياتها، بدلًا من تقديم إجابات عامة وغير مخصصة."
+                    : "Each digital agent operates on top of Corporate Brain and uses Corporate DNA to understand the organization's context. This enables the team to execute tasks and take actions tied to the company's actual policies, priorities, and operating environment instead of generic responses."}
                 </p>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {[
-                    "معرفة مؤسسية موحدة",
-                    "سياق تشغيلي مخصص",
-                    "تنفيذ مرحلي قابل للقياس",
-                    "حوكمة ومراجعة تنفيذية",
-                  ].map((item) => (
+                  {(isArabic
+                    ? [
+                        "معرفة مؤسسية موحدة",
+                        "سياق تشغيلي مخصص",
+                        "تنفيذ مرحلي قابل للقياس",
+                        "حوكمة ومراجعة تنفيذية",
+                      ]
+                    : [
+                        "Unified enterprise knowledge",
+                        "Customized operational context",
+                        "Measurable phased execution",
+                        "Executive governance and review",
+                      ]
+                  ).map((item) => (
                     <div
                       key={item}
                       className="flex items-center gap-3 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-4 py-3.5"
@@ -633,35 +645,6 @@ export default function DigitalWorkforcePage() {
                   ))}
                 </div>
               </article>
-            </section>
-
-            <section className="mt-8 overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--brand-subtle)] shadow-[var(--shadow-small)]">
-              <div className="flex flex-col gap-6 p-6 md:p-8 lg:flex-row lg:items-center lg:justify-between">
-                <div className="max-w-4xl">
-                  <p className="text-xs font-black text-[var(--brand-primary)]">
-                    NEXT STEP
-                  </p>
-
-                  <h2 className="mt-2 text-2xl font-black tracking-tight md:text-3xl">
-                    الخطوة التالية: مركز القيادة
-                  </h2>
-
-                  <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)] md:text-base">
-                    بعد تحديد الفريق الرقمي، انتقل إلى مركز القيادة لمراجعة
-                    الوكلاء والمهام والتنبيهات والأنشطة التنفيذية.
-                  </p>
-                </div>
-
-                <Link
-                  href="/command-center"
-                  className="inline-flex min-h-11 w-fit shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] px-6 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-                >
-                  فتح مركز القيادة
-                  <span className="mr-2" aria-hidden="true">
-                    ←
-                  </span>
-                </Link>
-              </div>
             </section>
           </>
         )}
