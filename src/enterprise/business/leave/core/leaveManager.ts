@@ -1,11 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  LeaveValidationError,
+  LeaveValidator,
+} from "../utils/leaveValidator";
 
 import { LeaveRequest } from "../models/leaveModel";
 import {
   LeaveRequestInput,
   LeaveType,
 } from "../types/leaveTypes";
-import { LeaveValidator } from "../utils/leaveValidator";
 
 type EmployeeRequestRow = {
   id: string;
@@ -32,19 +35,26 @@ export class LeaveManager {
       companyId: string;
     },
   ): Promise<LeaveRequest> {
-    if (
-      !this.validator.validateRequest(
-        input,
-      )
-    ) {
-      throw new Error(
-        "Invalid leave request.",
-      );
-    }
+    // if (
+    //   !this.validator.validateRequest(
+    //     input,
+    //   )
+    // ) {
+    //   throw new Error(
+    //     "Invalid leave request.",
+    //   );
+    // }
 
     if (!input.companyId) {
       throw new Error(
         "Company context is required.",
+      );
+    }
+    const validation = this.validator.validate(input);
+
+    if (!validation.valid) {
+      throw new LeaveValidationError(
+        validation.errors
       );
     }
 

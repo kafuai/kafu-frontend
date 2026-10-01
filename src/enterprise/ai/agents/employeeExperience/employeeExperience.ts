@@ -1,10 +1,16 @@
+import { randomUUID } from "node:crypto";
+
 import { AIAgentExecutor } from "../aiAgentExecutor";
 import { AIAgentRuntime } from "../aiAgentRuntime";
 import { AIAgentExecution } from "../aiAgentExecution";
 import { AIAgentProfile } from "../aiAgentTypes";
 import { AIAgentTask } from "../aiAgentWorkTypes";
 
-import { LeaveManager } from "@/src/enterprise/business/leave";
+import {
+  LeaveManager,
+  LeaveValidationError,
+  LeaveValidator,
+} from "@/src/enterprise/business/leave";
 import { PolicyManager } from "@/src/enterprise/business/policies/policyManager";
 import { EmploymentLetterManager } from "@/src/enterprise/business/employmentLetters/employmentLetterManager";
 
@@ -35,6 +41,21 @@ export interface EmployeeExperienceResult {
   requestId?: string;
   classification: EmployeeMessageClassification;
   citedPolicyIds?: string[];
+}
+
+/**
+ * Generates a collision-safe identifier with a readable prefix.
+ */
+const newId = (prefix: string): string => `${prefix}-${randomUUID()}`;
+
+/**
+ * Converts Arabic-Indic (٠-٩) and Eastern Arabic-Indic / Persian (۰-۹)
+ * digits to ASCII digits so date parsing works regardless of keyboard.
+ */
+function normalizeDigits(text: string): string {
+  return text
+    .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
 }
 
 /**
@@ -177,8 +198,8 @@ export class EmployeeExperienceAgent {
     messageLanguage: "ar" | "en",
   ): Promise<EmployeeExperienceResult> {
     const task: AIAgentTask = {
-      id: `task-${Date.now()}`,
-      goalId: `goal-${Date.now()}`,
+      id: newId("task"),
+      goalId: newId("goal"),
       agentId: this.profile.id,
       organizationId: request.organizationId,
       title: "Employment letter request",
@@ -194,7 +215,7 @@ export class EmployeeExperienceAgent {
     };
 
     const execution: AIAgentExecution = {
-      id: `execution-${Date.now()}`,
+      id: newId("execution"),
       organizationId: request.organizationId,
       agentId: this.profile.id,
       taskId: task.id,
@@ -225,7 +246,11 @@ export class EmployeeExperienceAgent {
       },
     );
 
-    if (result.status !== "completed" || !result.output) {
+    if (
+      result.status !== "completed" ||
+      !result.output ||
+      !result.output.requestId
+    ) {
       throw new Error(
         result.errorMessage ??
           (messageLanguage === "en"
@@ -253,9 +278,31 @@ export class EmployeeExperienceAgent {
     classification: EmployeeMessageClassification,
     messageLanguage: "ar" | "en",
   ): Promise<EmployeeExperienceResult> {
+    // Extract and validate dates OUTSIDE the executor so the error type
+    // (LeaveValidationError) is preserved and the route can return 400
+    // instead of 500.
+    const dates = this.extractDates(request.message, messageLanguage);
+
+    const validation = new LeaveValidator().validate(
+      {
+        employeeId: request.employeeId,
+        organizationId: request.organizationId,
+        type: "annual",
+        startDate: dates.startDate,
+        endDate: dates.endDate,
+        reason: request.message,
+      },
+      Date.now(),
+      messageLanguage
+    );
+
+    if (!validation.valid) {
+      throw new LeaveValidationError(validation.errors);
+    }
+
     const task: AIAgentTask = {
-      id: `task-${Date.now()}`,
-      goalId: `goal-${Date.now()}`,
+      id: newId("task"),
+      goalId: newId("goal"),
       agentId: this.profile.id,
       organizationId: request.organizationId,
       title: "Employee leave request",
@@ -271,7 +318,7 @@ export class EmployeeExperienceAgent {
     };
 
     const execution: AIAgentExecution = {
-      id: `execution-${Date.now()}`,
+      id: newId("execution"),
       organizationId: request.organizationId,
       agentId: this.profile.id,
       taskId: task.id,
@@ -283,11 +330,6 @@ export class EmployeeExperienceAgent {
     const result = await this.executor.execute(
       execution,
       async () => {
-        const dates = this.extractDates(
-          request.message,
-          messageLanguage,
-        );
-
         const leave = await this.leaveManager.request({
           employeeId: request.employeeId,
           organizationId: request.organizationId,
@@ -309,7 +351,11 @@ export class EmployeeExperienceAgent {
       },
     );
 
-    if (result.status !== "completed" || !result.output) {
+    if (
+      result.status !== "completed" ||
+      !result.output ||
+      !result.output.requestId
+    ) {
       throw new Error(
         result.errorMessage ??
           (messageLanguage === "en"
@@ -339,35 +385,36 @@ export class EmployeeExperienceAgent {
     startDate: number;
     endDate: number;
   } {
-    const matches = message.match(
+    // Convert Arabic-Indic / Persian digits to ASCII before matching.
+    const normalized = normalizeDigits(message);
+
+    const matches = normalized.match(
       /\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})\b/g,
     );
 
     if (!matches || matches.length < 2) {
-      throw new Error(
+      throw new LeaveValidationError([
         messageLanguage === "en"
-          ? "Please provide the leave start and end dates in the following format: dd/mm/yy."
-          : "الرجاء تحديد تاريخ بداية ونهاية الإجازة بالصيغة التالية: dd/mm/yy.",
-      );
+          ? "Please provide the leave start and end dates in the format dd/mm/yyyy."
+          : "الرجاء تحديد تاريخ بداية ونهاية الإجازة بالصيغة التالية: dd/mm/yyyy.",
+      ]);
     }
 
     const parseDate = (value: string): number => {
-      const [day, month, year] = value
-        .split(/[\/-]/)
-        .map(Number);
+      const [day, month, year] = value.split(/[\/-]/).map(Number);
 
-      const date = new Date(year, month - 1, day);
+      const date = new Date(Date.UTC(year, month - 1, day));
 
       if (
-        date.getFullYear() !== year ||
-        date.getMonth() !== month - 1 ||
-        date.getDate() !== day
+        date.getUTCFullYear() !== year ||
+        date.getUTCMonth() !== month - 1 ||
+        date.getUTCDate() !== day
       ) {
-        throw new Error(
+        throw new LeaveValidationError([
           messageLanguage === "en"
             ? `Invalid date: ${value}`
-            : `تاريخ غير صحيح: ${value}`,
-        );
+            : `تاريخ غير صالح: ${value}`,
+        ]);
       }
 
       return date.getTime();
@@ -376,14 +423,8 @@ export class EmployeeExperienceAgent {
     const startDate = parseDate(matches[0]);
     const endDate = parseDate(matches[1]);
 
-    if (endDate < startDate) {
-      throw new Error(
-        messageLanguage === "en"
-          ? "The leave end date cannot be before the start date."
-          : "لا يمكن أن يكون تاريخ نهاية الإجازة قبل تاريخ البداية.",
-      );
-    }
-
+    // The "end before start" check is handled by LeaveValidator
+    // (with a localized message).
     return { startDate, endDate };
   }
 }

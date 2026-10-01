@@ -32,6 +32,9 @@ import {
 } from "@/src/enterprise/business/employmentLetters/employmentLetterManager";
 
 import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
+import {
+  LeaveValidationError,
+} from "@/src/enterprise/business/leave";
 
 export async function GET(request: Request) {
   try {
@@ -178,6 +181,12 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof LeaveValidationError) {
+      return NextResponse.json(
+        { error: error.message, errors: error.errors },
+        { status: 400 },
+      );
+    }
     console.error("Employee Experience Agent failed:", error);
 
     return NextResponse.json(
