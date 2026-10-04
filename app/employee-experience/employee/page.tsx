@@ -51,14 +51,12 @@ type HRRequestStatus = "pending" | "approved" | "rejected";
 type HRRequest = {
   id: string;
   category: RequestCategory;
-  title: string;
   status: HRRequestStatus;
-  createdAt: string;
-  reviewerName?: string | null;
+  createdAt: number;
   reviewedByName: string | null;
   reviewedAt: number | null;
-  startDate?: string | null;
-  endDate?: string | null
+  startDate: number | null;
+  endDate: number | null;
 };
 
 export default function EmployeeExperiencePage() {
@@ -371,30 +369,25 @@ export default function EmployeeExperiencePage() {
         (payload.data ?? []) as Array<{
           id: string;
           requestType: "leave" | "employment_letter";
-          status:
-            | "pending"
-            | "approved"
-            | "rejected"
-            | "cancelled";
+          status: "pending" | "approved" | "rejected" | "cancelled";
           createdAt: number;
           reviewedByName: string | null;
           reviewedAt: number | null;
-          startDate?: string; 
-          endDate?: string;
+          startDate?: number;
+          endDate?: number;
         }>
       ).map((item) => ({
         id: item.id,
         category: item.requestType,
-        title: categoryLabels[item.requestType],
         status: mapApiStatusToHRStatus(item.status),
-        createdAt: formatRequestDate(item.createdAt),
+        createdAt: item.createdAt,
         reviewedByName: item.reviewedByName ?? null,
         reviewedAt: item.reviewedAt ?? null,
-        startDate: item.startDate ? formatRequestDate(Number(item.startDate)) : null,
-        endDate: item.endDate ? formatRequestDate(Number(item.endDate)) : null,
+        startDate: item.startDate ? Number(item.startDate) : null,
+        endDate: item.endDate ? Number(item.endDate) : null,
       }));
 
-      setRequests(mapped);
+setRequests(mapped);
     } catch (error) {
       console.error(
         "Failed to load employee requests:",
@@ -853,20 +846,17 @@ export default function EmployeeExperiencePage() {
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-medium text-slate-700">
-                          {request.title}
+                          {categoryLabels[request.category]}
                         </p>
                         <p className="mt-1 text-[10px] text-slate-400">
-                          {formatShortReference(request.id)}
-                          {" "}
-                          ·{" "}
-                          {request.createdAt}
+                           {formatShortReference(request.id)} · {formatRequestDate(request.createdAt)}
                       </p>
                       {request.category === "leave" && request.startDate && request.endDate && (
                       <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-slate-100/70 px-2 py-1 text-[10px] font-medium text-slate-600">
                         <CalendarDays size={10} className="text-slate-400" />
-                        <span>{request.startDate}</span>
+                        <span>{formatRequestDate(request.startDate)}</span>
                         <span className="text-slate-300">➔</span>
-                        <span>{request.endDate}</span>
+                        <span>{formatRequestDate(request.endDate)}</span>
                       </div>
                     )}
                       </div>

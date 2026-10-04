@@ -260,6 +260,35 @@ async reject(
     );
   }
 
+  async hasPendingRequest(
+  organizationId: string,
+  employeeId: string,
+  ):
+  Promise<boolean> {
+  const { data, error } = await this.supabase
+    .from("employee_requests")
+    .select("id")
+    .eq("request_type", "leave")
+    .eq("status", "pending")
+    .eq("organization_id", organizationId)
+    .eq("user_id", employeeId)
+    .limit(1);
+
+  if (error) {
+  if (error.code === "23505") {
+    throw new LeaveValidationError([
+      "You already have a pending leave request. Please wait for HR to review it.",
+    ]);
+  }
+
+  throw new Error(
+    `Unable to create leave request: ${error.message}`,
+  );
+}
+
+  return (data ?? []).length > 0;
+}
+
   private mapToLeaveRequest(
     row: EmployeeRequestRow,
   ): LeaveRequest {

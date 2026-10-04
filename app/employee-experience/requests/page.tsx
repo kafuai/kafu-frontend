@@ -3,20 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
-  BarChart3,
   Bot,
-  BrainCircuit,
   CalendarDays,
   Check,
   CheckCircle2,
   ChevronRight,
   CircleAlert,
-  Clock3,
   Inbox,
   Loader2,
   MessageSquareText,
   Search,
-  ShieldCheck,
   Sparkles,
   UserRound,
   X,
@@ -67,14 +63,17 @@ export default function EmployeeExperienceRequestsPage() {
   const { locale } = useLocalization();
   const isArabic = locale === "ar";
 
-  const [requests, setRequests] = useState<EmployeeRequest[]>([]);
+  // Raw API data. Translated text is derived at render time (see `requests`).
+  const [rawRequests, setRawRequests] = useState<ApiLeaveRequest[]>([]);
   const [loadState, setLoadState] = useState<"loading" | "loaded" | "error">(
     "loading",
   );
   const [loadError, setLoadError] = useState<string>("");
 
   const [selectedRequestId, setSelectedRequestId] = useState<string>("");
-  const [actionState, setActionState] = useState<"idle" | "working" | "error">("idle");
+  const [actionState, setActionState] = useState<"idle" | "working" | "error">(
+    "idle",
+  );
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<RequestStatus | "all">(
@@ -85,31 +84,42 @@ export default function EmployeeExperienceRequestsPage() {
     return new Intl.DateTimeFormat(isArabic ? "ar-SA" : "en-US", {
       day: "2-digit",
       month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
+      year: "numeric",
     }).format(new Date(timestamp));
   }
 
   function mapApiRequest(item: ApiLeaveRequest): EmployeeRequest {
-  const isLeave = item.requestType === "leave";
+    const isLeave = item.requestType === "leave";
 
-  return {
-    id: item.id,
-    employeeId: item.employeeId,
-    employeeName: item.employeeName, 
-    requestType: item.requestType,
-    title: isLeave
-      ? (isArabic ? "طلب إجازة" : "Leave request")
-      : (isArabic ? "طلب خطاب تعريف" : "Employment letter request"),
-    description: item.reason,
-    status: item.status,
-    createdAt: formatDate(item.createdAt),
-    requestedDates:
-      isLeave && item.startDate && item.endDate
-        ? `${formatDate(item.startDate)} — ${formatDate(item.endDate)}`
-        : undefined,
-  };
-}
+    return {
+      id: item.id,
+      employeeId: item.employeeId,
+      employeeName: item.employeeName,
+      requestType: item.requestType,
+      title: isLeave
+        ? isArabic
+          ? "طلب إجازة"
+          : "Leave request"
+        : isArabic
+          ? "طلب خطاب تعريف"
+          : "Employment letter request",
+      description: item.reason,
+      status: item.status,
+      createdAt: formatDate(item.createdAt),
+      requestedDates:
+        isLeave && item.startDate && item.endDate
+          ? `${formatDate(item.startDate)} — ${formatDate(item.endDate)}`
+          : undefined,
+    };
+  }
+
+  // Hook at component level (not inside mapApiRequest).
+  // Re-computed whenever the language changes, without refetching.
+  const requests = useMemo(
+    () => rawRequests.map(mapApiRequest),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rawRequests, isArabic],
+  );
 
   async function loadRequests() {
     setLoadState("loading");
@@ -131,12 +141,10 @@ export default function EmployeeExperienceRequestsPage() {
         );
       }
 
-      const mapped: EmployeeRequest[] = (payload.data ?? []).map(
-        mapApiRequest,
-      );
+      const raw = (payload.data ?? []) as ApiLeaveRequest[];
+      setRawRequests(raw);
 
-      setRequests(mapped);
-      setSelectedRequestId((current) => current || mapped[0]?.id || "");
+      setSelectedRequestId((current) => current || raw[0]?.id || "");
       setLoadState("loaded");
     } catch (error) {
       setLoadError(
@@ -175,8 +183,8 @@ export default function EmployeeExperienceRequestsPage() {
       ? "الطلبات التي تحتاج موافقة أو رفض من الموارد البشرية."
       : "Requests requiring HR approval or rejection.",
     searchPlaceholder: isArabic
-      ? "ابحث برقم الموظف أو رقم الطلب..."
-      : "Search employee ID or request ID...",
+      ? "ابحث باسم الموظف أو رقم الطلب..."
+      : "Search employee name or request ID...",
     all: isArabic ? "الكل" : "All",
     pending: isArabic ? "بانتظار المراجعة" : "Pending",
     approved: isArabic ? "تمت الموافقة" : "Approved",
@@ -221,9 +229,13 @@ export default function EmployeeExperienceRequestsPage() {
       if (!matchesStatus) return false;
       if (!normalizedSearch) return true;
 
-      return [request.id, request.employeeId, request.description].some(
-        (value) => value.toLowerCase().includes(normalizedSearch),
-      );
+      return [
+        request.id,
+        formatShortReference(request.id),
+        request.employeeId,
+        request.employeeName,
+        request.description,
+      ].some((value) => value.toLowerCase().includes(normalizedSearch));
     });
   }, [requests, search, statusFilter]);
 
@@ -236,37 +248,36 @@ export default function EmployeeExperienceRequestsPage() {
   }, [requests]);
 
   async function handleDecision(
-  requestId: string,
-  decision: "approve" | "reject",
-) {
-  setActionState("working");
+    requestId: string,
+    decision: "approve" | "reject",
+  ) {
+    setActionState("working");
 
-  const currentRequest = requests.find((r) => r.id === requestId);
+    const currentRequest = requests.find((r) => r.id === requestId);
 
-  const basePath =
-    currentRequest?.requestType === "employment_letter"
-      ? "/api/employee-experience/letters"
-      : "/api/employee-experience/requests";
+    const basePath =
+      currentRequest?.requestType === "employment_letter"
+        ? "/api/employee-experience/letters"
+        : "/api/employee-experience/requests";
 
-  try {
-    const response = await fetch(
-      `${basePath}/${requestId}/${decision}`,
-      { method: "POST" },
-    );
+    try {
+      const response = await fetch(`${basePath}/${requestId}/${decision}`, {
+        method: "POST",
+      });
 
-    const payload = await response.json();
+      const payload = await response.json();
 
-    if (!response.ok) {
-      throw new Error(payload.error ?? "Action failed.");
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Action failed.");
+      }
+
+      await loadRequests();
+      setActionState("idle");
+    } catch (error) {
+      console.error(`Failed to ${decision} request:`, error);
+      setActionState("error");
     }
-
-    await loadRequests();
-    setActionState("idle");
-  } catch (error) {
-    console.error(`Failed to ${decision} request:`, error);
-    setActionState("error");
   }
-}
 
   return (
     <main
@@ -382,9 +393,7 @@ export default function EmployeeExperienceRequestsPage() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={copy.searchPlaceholder}
-                  className={`h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:bg-[var(--surface)] ${
-                    isArabic ? "pr-4 pl-4" : "pl-4 pr-4"
-                  }`}
+                  className="h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-4 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:bg-[var(--surface)]"
                 />
 
                 <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -448,7 +457,6 @@ export default function EmployeeExperienceRequestsPage() {
                       request={request}
                       selected={selectedRequest?.id === request.id}
                       locale={locale}
-                      copy={copy}
                       onClick={() => setSelectedRequestId(request.id)}
                     />
                   ))}
@@ -470,13 +478,19 @@ export default function EmployeeExperienceRequestsPage() {
           {selectedRequest ? (
             <article className="min-w-0 overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
               <div className="border-b border-[var(--border-default)] px-5 py-5 sm:px-6">
-                <span className="text-xs font-extrabold text-[var(--brand-primary)]"
-                title={selectedRequest.id}
-                >
-                  {formatShortReference(selectedRequest.id)}
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className="text-xs font-extrabold text-[var(--brand-primary)]"
+                    title={selectedRequest.id}
+                  >
+                    {formatShortReference(selectedRequest.id)}
+                  </span>
 
-                <StatusBadge status={selectedRequest.status} locale={locale} />
+                  <StatusBadge
+                    status={selectedRequest.status}
+                    locale={locale}
+                  />
+                </div>
 
                 <h2 className="mt-2 text-xl font-black tracking-tight text-[var(--text-primary)]">
                   {selectedRequest.title}
@@ -547,7 +561,9 @@ export default function EmployeeExperienceRequestsPage() {
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <button
                       type="button"
-                      onClick={() => handleDecision(selectedRequest.id, "approve")}
+                      onClick={() =>
+                        handleDecision(selectedRequest.id, "approve")
+                      }
                       disabled={
                         selectedRequest.status === "approved" ||
                         actionState === "working"
@@ -560,7 +576,9 @@ export default function EmployeeExperienceRequestsPage() {
 
                     <button
                       type="button"
-                      onClick={() => handleDecision(selectedRequest.id, "reject")}
+                      onClick={() =>
+                        handleDecision(selectedRequest.id, "reject")
+                      }
                       disabled={
                         selectedRequest.status === "rejected" ||
                         actionState === "working"
@@ -620,7 +638,9 @@ function KpiCard({
 
   return (
     <article className="flex min-h-[118px] min-w-0 flex-col justify-between rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-4 shadow-[var(--shadow-small)]">
-      <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClasses[tone]}`}>
+      <span
+        className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClasses[tone]}`}
+      >
         {icon}
       </span>
       <div className="mt-3 min-w-0">
@@ -663,16 +683,13 @@ function RequestListItem({
   request,
   selected,
   locale,
-  copy,
   onClick,
 }: {
   request: EmployeeRequest;
   selected: boolean;
   locale: "ar" | "en";
-  copy: { createdAt: string };
   onClick: () => void;
 }) {
-
   return (
     <button
       type="button"
@@ -701,7 +718,7 @@ function RequestListItem({
                 {request.employeeName}
               </p>
               <p className="mt-0.5 truncate text-[11px] text-[var(--text-muted)]">
-                {request.id} . {formatShortReference(request.id)}
+                {formatShortReference(request.id)}
               </p>
             </div>
 

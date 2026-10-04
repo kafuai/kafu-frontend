@@ -276,13 +276,22 @@ export class EmployeeExperienceAgent {
   }
 
   private async createLeaveRequest(
-    request: EmployeeExperienceRequest,
+   request: EmployeeExperienceRequest,
     classification: EmployeeMessageClassification,
     messageLanguage: "ar" | "en",
   ): Promise<EmployeeExperienceResult> {
-    // Extract and validate dates OUTSIDE the executor so the error type
-    // (LeaveValidationError) is preserved and the route can return 400
-    // instead of 500.
+    const hasPending = await this.leaveManager.hasPendingRequest(
+      request.organizationId,
+      request.employeeId,
+    );
+
+    if (hasPending) {
+      throw new LeaveValidationError([
+        messageLanguage === "en"
+          ? "You already have a pending leave request. Please wait for HR to review it before submitting a new one."
+          : "لديك طلب إجازة قيد المراجعة بالفعل. يرجى الانتظار حتى تتم مراجعته من الموارد البشرية قبل تقديم طلب جديد.",
+      ]);
+    }
     const dates = this.extractDates(request.message, messageLanguage);
 
     const validation = new LeaveValidator().validate(

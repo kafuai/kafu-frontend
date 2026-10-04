@@ -80,6 +80,13 @@ export default function PoliciesPage() {
     errUnableDelete: isArabic
       ? "تعذر حذف السياسة."
       : "Unable to delete policy.",
+
+    errTitleRequired: isArabic
+     ? "عنوان السياسة مطلوب" : 
+     "Policy title is required",
+    errContentRequired: isArabic 
+    ? "نص السياسة مطلوب" : 
+    "Policy content is required",
   };
 
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -93,11 +100,13 @@ export default function PoliciesPage() {
   const [formContent, setFormContent] = useState("");
   const [formCategory, setFormCategory] = useState("general");
   const [saving, setSaving] = useState(false);
+  const [formErrors, setFormErrors] = useState({ title: false, content: false });
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editCategory, setEditCategory] = useState("general");
+  const [editErrors, setEditErrors] = useState({ title: false, content: false });
 
   async function loadPolicies() {
     setLoadState("loading");
@@ -135,9 +144,16 @@ export default function PoliciesPage() {
   }, []);
 
   async function handleCreate() {
-    if (!formTitle.trim() || !formContent.trim()) return;
+    const isTitleEmpty = !formTitle.trim();
+    const isContentEmpty = !formContent.trim();
+
+    if (isTitleEmpty || isContentEmpty) {
+      setFormErrors({ title: isTitleEmpty, content: isContentEmpty });
+      return;
+    }
 
     setSaving(true);
+    setFormErrors({ title: false, content: false });
 
     try {
       const response = await fetch(
@@ -178,10 +194,20 @@ export default function PoliciesPage() {
     setEditTitle(policy.title);
     setEditContent(policy.content);
     setEditCategory(policy.category);
+    setEditErrors({ title: false, content: false });
   }
 
   async function handleUpdate(id: string) {
+    const isTitleEmpty = !editTitle.trim();
+    const isContentEmpty = !editContent.trim();
+
+    if (isTitleEmpty || isContentEmpty) {
+      setEditErrors({ title: isTitleEmpty, content: isContentEmpty });
+      return;
+    }
+
     setSaving(true);
+    setEditErrors({ title: false, content: false });
 
     try {
       const response = await fetch(
@@ -321,10 +347,18 @@ export default function PoliciesPage() {
                   </label>
                   <input
                     value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
+                    onChange={(e) => {
+                      setFormTitle(e.target.value);
+                      if (formErrors.title) setFormErrors((prev) => ({ ...prev, title: false }));
+                    }}
                     placeholder={copy.policyTitlePlaceholder}
-                    className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 py-2 text-sm"
+                    className={`w-full rounded-lg border bg-[var(--background)] px-3 py-2 text-sm ${
+                      formErrors.title ? "border-[var(--critical)]" : "border-[var(--border-default)]"
+                    }`}
                   />
+                  {formErrors.title && (
+                    <p className="mt-1 text-xs text-[var(--critical)]">{copy.errTitleRequired}</p>
+                  )}
                 </div>
 
                 <div className="mb-4">
@@ -333,11 +367,19 @@ export default function PoliciesPage() {
                   </label>
                   <textarea
                     value={formContent}
-                    onChange={(e) => setFormContent(e.target.value)}
+                    onChange={(e) => {
+                      setFormContent(e.target.value);
+                      if (formErrors.content) setFormErrors((prev) => ({ ...prev, content: false }));
+                    }}
                     rows={5}
                     placeholder={copy.policyContentPlaceholder}
-                    className="w-full resize-none rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 py-2 text-sm"
+                    className={`w-full resize-none rounded-lg border bg-[var(--background)] px-3 py-2 text-sm ${
+                      formErrors.content ? "border-[var(--critical)]" : "border-[var(--border-default)]"
+                    }`}
                   />
+                  {formErrors.content && (
+                    <p className="mt-1 text-xs text-[var(--critical)]">{copy.errContentRequired}</p>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -392,18 +434,33 @@ export default function PoliciesPage() {
 
                       <input
                         value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        className="mb-2 w-full rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 py-2 text-sm"
+                        onChange={(e) => {
+                          setEditTitle(e.target.value);
+                          if (editErrors.title) setEditErrors((prev) => ({ ...prev, title: false }));
+                        }}
+                        className={`w-full rounded-lg border bg-[var(--background)] px-3 py-2 text-sm ${
+                          editErrors.title ? "border-[var(--critical)] mb-1" : "border-[var(--border-default)] mb-2"
+                        }`}
                       />
+                      {editErrors.title && (
+                        <p className="mb-2 text-xs text-[var(--critical)]">{copy.errTitleRequired}</p>
+                      )}
 
+                     
                       <textarea
                         value={editContent}
-                        onChange={(e) =>
-                          setEditContent(e.target.value)
-                        }
+                        onChange={(e) => {
+                          setEditContent(e.target.value);
+                          if (editErrors.content) setEditErrors((prev) => ({ ...prev, content: false }));
+                        }}
                         rows={4}
-                        className="mb-2 w-full resize-none rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 py-2 text-sm"
+                        className={`w-full resize-none rounded-lg border bg-[var(--background)] px-3 py-2 text-sm ${
+                          editErrors.content ? "border-[var(--critical)] mb-1" : "border-[var(--border-default)] mb-2"
+                        }`}
                       />
+                      {editErrors.content && (
+                        <p className="mb-2 text-xs text-[var(--critical)]">{copy.errContentRequired}</p>
+                      )}
 
                       <div className="flex gap-2">
                         <button
