@@ -12,6 +12,9 @@ export interface EmploymentLetterRequest {
   status: EmploymentLetterStatus;
   reason: string;
   createdAt: number;
+
+  reviewedBy: string | null;
+  reviewedAt: number | null;
 }
 
 type EmployeeRequestRow = {
@@ -23,6 +26,8 @@ type EmployeeRequestRow = {
   status: string;
   description: string | null;
   created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
 };
 
 export interface CreateEmploymentLetterInput {
@@ -34,6 +39,21 @@ export interface CreateEmploymentLetterInput {
 
 export class EmploymentLetterManager {
   constructor(private readonly supabase: SupabaseClient) {}
+
+  private async getCurrentUserId(): Promise<string> {
+  const {
+    data: { user },
+    error,
+  } = await this.supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new Error(
+      "Authenticated user is required to review requests.",
+    );
+  }
+
+  return user.id;
+}
 
   async request(
     input: CreateEmploymentLetterInput,
@@ -86,6 +106,7 @@ export class EmploymentLetterManager {
       .from("employee_requests")
       .update({
         status: "approved",
+        reviewed_by: await this.getCurrentUserId(),
         reviewed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -120,6 +141,7 @@ export class EmploymentLetterManager {
       .update({
         status: "rejected",
         response_data: reason ? { reason } : {},
+        reviewed_by: await this.getCurrentUserId(),
         reviewed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -127,7 +149,7 @@ export class EmploymentLetterManager {
       .eq("request_type", "employment_letter")
       .eq("organization_id", organizationId)
       .select(
-        "id,user_id,organization_id,company_id,request_type,status,description,created_at",
+        "id,user_id,organization_id,company_id,request_type,status,description,created_at,reviewed_by,reviewed_at",
       )
       .single();
 
@@ -151,7 +173,7 @@ export class EmploymentLetterManager {
     let query = this.supabase
       .from("employee_requests")
       .select(
-        "id,user_id,organization_id,company_id,request_type,status,description,created_at",
+        "id,user_id,organization_id,company_id,request_type,status,description,created_at, reviewed_by,reviewed_at",
       )
       .eq("request_type", "employment_letter")
       .order("created_at", { ascending: false });
@@ -187,6 +209,11 @@ export class EmploymentLetterManager {
       status: row.status as EmploymentLetterStatus,
       reason: row.description ?? "",
       createdAt: new Date(row.created_at).getTime(),
+      reviewedBy: row.reviewed_by ?? null,
+
+      reviewedAt: row.reviewed_at
+        ? new Date(row.reviewed_at).getTime()
+        : null,
     };
   }
 }

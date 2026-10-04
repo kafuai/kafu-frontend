@@ -20,6 +20,8 @@ type EmployeeRequestRow = {
   description: string | null;
   request_data: Record<string, unknown>;
   created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
 };
 
 export class LeaveManager {
@@ -30,20 +32,26 @@ export class LeaveManager {
     private readonly supabase: SupabaseClient,
   ) {}
 
+
+  private async getCurrentUserId(): Promise<string> {
+    const {
+      data: { user },
+      error,
+    } = await this.supabase.auth.getUser();
+
+    if (error || !user) {
+      throw new Error(
+        "Authenticated user is required to review requests.",
+      );
+    }
+
+    return user.id;
+  }
   async request(
     input: LeaveRequestInput & {
       companyId: string;
     },
   ): Promise<LeaveRequest> {
-    // if (
-    //   !this.validator.validateRequest(
-    //     input,
-    //   )
-    // ) {
-    //   throw new Error(
-    //     "Invalid leave request.",
-    //   );
-    // }
 
     if (!input.companyId) {
       throw new Error(
@@ -132,6 +140,7 @@ export class LeaveManager {
     .from("employee_requests")
     .update({
       status: "approved",
+      reviewed_by: await this.getCurrentUserId(),
       reviewed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
@@ -139,7 +148,7 @@ export class LeaveManager {
     .eq("request_type", "leave")
     .eq("organization_id", organizationId) // <-- NEW: org scoping
     .select(
-      "id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at",
+      "id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at, reviewed_by, reviewed_at",
     )
     .single();
 
@@ -173,6 +182,7 @@ async reject(
     .update({
       status: "rejected",
       response_data: reason ? { reason } : {},
+      reviewed_by: await this.getCurrentUserId(),
       reviewed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
@@ -180,7 +190,7 @@ async reject(
     .eq("request_type", "leave")
     .eq("organization_id", organizationId) // <-- NEW: org scoping
     .select(
-      "id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at",
+      "id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at, reviewed_by, reviewed_at",
     )
     .single();
 
@@ -208,7 +218,7 @@ async reject(
     let query = this.supabase
       .from("employee_requests")
       .select(
-        "id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at",
+        "id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at, reviewed_by, reviewed_at",
       )
       .eq(
         "request_type",
@@ -303,6 +313,14 @@ async reject(
         new Date(
           row.created_at,
         ).getTime(),
+
+      reviewedBy:
+        row.reviewed_by,
+
+      reviewedAt:
+        row.reviewed_at
+          ? new Date(row.reviewed_at).getTime()
+          : null,
     };
   }
 }

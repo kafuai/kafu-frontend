@@ -9,6 +9,8 @@ import {
   ShieldAlert,
   User as UserIcon,
   UserCog,
+  EyeOff,
+  Eye,
 } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
@@ -50,6 +52,10 @@ const CONTENT = {
       genericError: "تعذر إنشاء المستخدم.",
       success: "تم إنشاء المستخدم بنجاح:",
     },
+    form: {
+      showPassword: "إظهار كلمة المرور",
+      hidePassword: "إخفاء كلمة المرور",
+    }
   },
   en: {
     title: "Add User to Existing Organization",
@@ -73,6 +79,10 @@ const CONTENT = {
       genericError: "Failed to create user.",
       success: "User created successfully:",
     },
+    form: {
+      showPassword: "Show password",
+      hidePassword: "Hide password",
+    }
   },
 } as const;
 
@@ -89,6 +99,7 @@ export default function AdminUsersPage() {
   const [password, setPassword] = useState("");
   const [selectedOrgId, setSelectedOrgId] = useState("");
   const [selectedRole, setSelectedRole] = useState("member");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -237,15 +248,28 @@ export default function AdminUsersPage() {
               <label className="mb-1.5 block text-xs font-bold text-[var(--text-muted)]">
                 {t.labels.password}
               </label>
-              <input
-                type="password"
-                dir="ltr"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                className={`h-11 w-full rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand-primary)] ${isArabic ? "text-right" : "text-left"}`}
-              />
+              
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  dir="ltr"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className={`h-11 w-full rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm outline-none focus:border-[var(--brand-primary)] ${isArabic ? "text-right" : "text-left"}`}
+                />
+                
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  aria-label={showPassword ? t.form.hidePassword : t.form.showPassword}
+                  aria-pressed={showPassword}
+                  className={`absolute top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${isArabic ? "left-3" : "right-3"}`}
+                >
+                  {showPassword ? <Eye className="h-5 w-5" />: <EyeOff className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
 
             <div>

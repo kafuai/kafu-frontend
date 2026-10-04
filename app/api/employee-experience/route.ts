@@ -64,6 +64,8 @@ export async function GET(request: Request) {
         startDate: leave.startDate,
         endDate: leave.endDate,
         createdAt: leave.createdAt,
+        reviewedBy: leave.reviewedBy,
+        reviewedAt: leave.reviewedAt,
       })),
       ...letterRequests.map((letter) => ({
         id: letter.id,
@@ -74,6 +76,8 @@ export async function GET(request: Request) {
         startDate: undefined,
         endDate: undefined,
         createdAt: letter.createdAt,
+        reviewedBy: letter.reviewedBy,
+        reviewedAt: letter.reviewedAt,
       })),
     ].sort((a, b) => b.createdAt - a.createdAt);
 
@@ -81,18 +85,36 @@ export async function GET(request: Request) {
       new Set(combined.map((item) => item.employeeId)),
     );
 
+    const uniqueReviewerIds = Array.from(
+      new Set(
+        combined
+          .map((item) => item.reviewedBy)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+
+    // ADDED: Load both employee and reviewer profiles.
+    // The previous implementation only loaded employee IDs,
+    // so reviewer names could not be resolved.
+    const profileIds = Array.from(
+      new Set([
+        ...uniqueEmployeeIds,
+        ...uniqueReviewerIds,
+      ]),
+    );
+
     let profilesById = new Map<string, string>();
 
-    if (uniqueEmployeeIds.length > 0) {
+    if (profileIds.length > 0) {
       const adminClient = createSupabaseAdminClient();
 
       const { data: profiles, error: profilesError } = await adminClient
         .from("profiles")
         .select("id, full_name, email")
-        .in("id", uniqueEmployeeIds);
+        .in("id", profileIds);
 
       if (profilesError) {
-        console.error("Failed to load employee profiles:", profilesError);
+        console.error("Failed to load employee/reviewer profiles:", profilesError);
       } else {
         profilesById = new Map(
           (profiles ?? []).map((profile) => [
@@ -105,8 +127,13 @@ export async function GET(request: Request) {
 
     const withNames = combined.map((item) => ({
       ...item,
+
       employeeName:
         profilesById.get(item.employeeId) ?? item.employeeId,
+      reviewedByName:
+        item.reviewedBy
+          ? profilesById.get(item.reviewedBy) ?? item.reviewedBy
+          : null,
     }));
 
     return NextResponse.json({ data: withNames });

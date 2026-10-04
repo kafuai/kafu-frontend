@@ -54,6 +54,11 @@ type HRRequest = {
   title: string;
   status: HRRequestStatus;
   createdAt: string;
+  reviewerName?: string | null;
+  reviewedByName: string | null;
+  reviewedAt: number | null;
+  startDate?: string | null;
+  endDate?: string | null
 };
 
 export default function EmployeeExperiencePage() {
@@ -133,6 +138,10 @@ export default function EmployeeExperiencePage() {
     requestReceivedFallback: isArabic
       ? "تم استلام طلبك."
       : "Your request has been received.",
+    decisionBy: isArabic ? "تم اتخاذ القرار بواسطة": "Decision by",
+    decisionDate: isArabic ? "تاريخ الإجراء" : "Action date",
+    decisionPending: isArabic ? "لم يتم اتخاذ قرار بعد": "No decision has been taken yet",
+
     capabilities: [
       {
         category: "leave" as const,
@@ -178,6 +187,7 @@ export default function EmployeeExperiencePage() {
           ? "أريد تحديث بياناتي"
           : "I'd like to update my data",
       },
+      
     ],
   };
 
@@ -367,6 +377,10 @@ export default function EmployeeExperiencePage() {
             | "rejected"
             | "cancelled";
           createdAt: number;
+          reviewedByName: string | null;
+          reviewedAt: number | null;
+          startDate?: string; 
+          endDate?: string;
         }>
       ).map((item) => ({
         id: item.id,
@@ -374,6 +388,10 @@ export default function EmployeeExperiencePage() {
         title: categoryLabels[item.requestType],
         status: mapApiStatusToHRStatus(item.status),
         createdAt: formatRequestDate(item.createdAt),
+        reviewedByName: item.reviewedByName ?? null,
+        reviewedAt: item.reviewedAt ?? null,
+        startDate: item.startDate ? formatRequestDate(Number(item.startDate)) : null,
+        endDate: item.endDate ? formatRequestDate(Number(item.endDate)) : null,
       }));
 
       setRequests(mapped);
@@ -384,6 +402,25 @@ export default function EmployeeExperiencePage() {
       );
     }
   }
+
+  function formatDecisionDate(
+  timestamp: number,
+) {
+  return new Intl.DateTimeFormat(
+    isArabic
+      ? "ar-SA"
+      : "en-US",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+  ).format(
+    new Date(timestamp),
+  );
+}
 
   useEffect(() => {
     loadMyRequests();
@@ -824,9 +861,17 @@ export default function EmployeeExperiencePage() {
                           ·{" "}
                           {request.createdAt}
                       </p>
+                      {request.category === "leave" && request.startDate && request.endDate && (
+                      <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-slate-100/70 px-2 py-1 text-[10px] font-medium text-slate-600">
+                        <CalendarDays size={10} className="text-slate-400" />
+                        <span>{request.startDate}</span>
+                        <span className="text-slate-300">➔</span>
+                        <span>{request.endDate}</span>
+                      </div>
+                    )}
                       </div>
                     </div>
-
+                    {request.status == "pending" && (
                     <div className="mt-3 flex items-center justify-between border-t border-slate-50 pt-2.5">
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-medium ${statusBadgeClasses(
@@ -836,11 +881,50 @@ export default function EmployeeExperiencePage() {
                         <StatusIcon status={request.status} />
                         {statusLabel(request.status)}
                       </span>
-
-                      <span className="text-[9px] text-slate-400">
-                        {copy.employeeRequestLabel}
-                      </span>
                     </div>
+                    )}
+                  {request.status !== "pending" && (
+                  <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                    <div className="flex items-start gap-2.5">
+                      
+                      <span
+                        className={
+                          request.status === "approved"
+                            ? "text-emerald-600"
+                            : "text-rose-600"
+                        }
+                      >
+                        <StatusIcon status={request.status} />
+                      </span>
+
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold text-slate-500">
+                          {request.status === "approved"
+                            ? copy.statusApproved
+                            : copy.statusRejected}
+                        </p>
+
+                        <p className="mt-1 text-[11px] font-semibold text-slate-700">
+                          {copy.decisionBy}:{" "}
+                          {request.reviewedByName ?? "—"}
+                        </p>
+
+                        {request.reviewedAt ? (
+                          <p className="mt-0.5 text-[10px] text-slate-400">
+                            {copy.decisionDate}:{" "}
+                            {formatDecisionDate(
+                              request.reviewedAt,
+                            )}
+                          </p>
+                        ) : (
+                          <p className="mt-0.5 text-[10px] text-slate-400">
+                            {copy.decisionPending}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
                   </div>
                 ))}
 
