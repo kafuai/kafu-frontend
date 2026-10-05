@@ -10,7 +10,10 @@ import {
   resolveWorkspaceIdentity,
 } from "@/lib/workspace-identity/tenantResolver";
 
-import { PolicyManager } from "@/src/enterprise/business/policies/policyManager";
+import {
+   PolicyManager,
+   PolicyDuplicateError,
+ } from "@/src/enterprise/business/policies/policyManager";
 
 import {
   hasPermission,
@@ -114,10 +117,14 @@ export async function POST(request: Request) {
 
     const policyManager = new PolicyManager(supabase);
 
+    const policyType =
+      typeof body.policyType === "string" ? body.policyType : null; // CHANGED
+
     const policy = await policyManager.create({
       organizationId: identity.organizationId,
       companyId: identity.companyId,
       category,
+      policyType, // CHANGED
       title,
       content,
     });
@@ -132,6 +139,13 @@ export async function POST(request: Request) {
     }
 
     console.error("Policy creation failed:", error);
+
+    if (error instanceof PolicyDuplicateError) { 
+      return NextResponse.json(
+        { error: error.message, code: "POLICY_DUPLICATE" },
+        { status: 409 },
+      );
+    }
 
     return NextResponse.json(
       {

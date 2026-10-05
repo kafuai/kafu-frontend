@@ -17,7 +17,10 @@ import {
   PERMISSIONS
 } from "@/lib/rbac/permissions";
 
-import { PolicyManager } from "@/src/enterprise/business/policies/policyManager";
+import { 
+  PolicyManager,
+  PolicyDuplicateError,
+} from "@/src/enterprise/business/policies/policyManager";
 
 
 function extractId(request: Request): string {
@@ -60,27 +63,29 @@ export async function PATCH(request: Request) {
 
     const policyManager = new PolicyManager(supabase);
 
-    const policy = await policyManager.update(
-      id,
-      identity.organizationId,
-      {
-        title:
-          typeof body.title === "string" ? body.title : undefined,
-        content:
-          typeof body.content === "string"
-            ? body.content
+    const policy = await policyManager.update(id, identity.organizationId, {
+      title: typeof body.title === "string" ? body.title : undefined,
+      content: typeof body.content === "string" ? body.content : undefined,
+      category: typeof body.category === "string" ? body.category : undefined,
+      // CHANGED: undefined = unchanged, ""/null = clear, string = set
+      policyType:
+        typeof body.policyType === "string"
+          ? body.policyType
+          : body.policyType === null
+            ? null
             : undefined,
-        category:
-          typeof body.category === "string"
-            ? body.category
-            : undefined,
-      },
-    );
+    });
 
     return NextResponse.json({ data: policy });
   } catch (error) {
     console.error("Policy update failed:", error);
 
+    if (error instanceof PolicyDuplicateError) { // CHANGED
+      return NextResponse.json(
+        { error: error.message, code: "POLICY_DUPLICATE" },
+        { status: 409 },
+      );
+    }
     return NextResponse.json(
       {
         error:

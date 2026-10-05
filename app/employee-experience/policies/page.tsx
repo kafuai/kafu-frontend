@@ -17,6 +17,7 @@ import { useLocalization } from "@/components/localization/LocalizationContext";
 type Policy = {
   id: string;
   category: string;
+  policyType: string | null; // null = legacy / untyped policy
   title: string;
   content: string;
   createdAt: string;
@@ -40,6 +41,36 @@ export default function PoliciesPage() {
     { value: "general", label: isArabic ? "عام" : "General" },
   ];
 
+  // Type options per category.
+  // Keep in sync with TYPE_KEYWORDS in policyManager.ts
+  const POLICY_TYPE_OPTIONS: Record<
+    string,
+    { value: string; label: string }[]
+  > = {
+    leave: [
+      {
+        value: "annual_leave",
+        label: isArabic ? "إجازة سنوية" : "Annual Leave",
+      },
+      {
+        value: "sick_leave",
+        label: isArabic ? "إجازة مرضية" : "Sick Leave",
+      },
+      {
+        value: "emergency_leave",
+        label: isArabic ? "إجازة طارئة" : "Emergency Leave",
+      },
+      {
+        value: "unpaid_leave",
+        label: isArabic ? "إجازة بدون راتب" : "Unpaid Leave",
+      },
+      {
+        value: "maternity_leave",
+        label: isArabic ? "إجازة أمومة" : "Maternity Leave",
+      },
+    ],
+  };
+
   const copy = {
     pageTitle: isArabic ? "سياسات الشركة" : "Company Policies",
     pageDescription: isArabic
@@ -52,6 +83,8 @@ export default function PoliciesPage() {
       : "This page is available to HR only.",
     retry: isArabic ? "إعادة المحاولة" : "Retry",
     category: isArabic ? "الفئة" : "Category",
+    policyTypeLabel: isArabic ? "النوع (اختياري)" : "Type (optional)",
+    noType: isArabic ? "— بدون نوع —" : "— No type —",
     policyTitle: isArabic ? "عنوان السياسة" : "Policy Title",
     policyTitlePlaceholder: isArabic
       ? "مثال: سياسة الإجازة السنوية"
@@ -80,6 +113,9 @@ export default function PoliciesPage() {
     errUnableDelete: isArabic
       ? "تعذر حذف السياسة."
       : "Unable to delete policy.",
+    errDuplicate: isArabic
+      ? "توجد سياسة بنفس الفئة والنوع مسبقًا."
+      : "A policy with the same category and type already exists.",
 
     errTitleRequired: isArabic
      ? "عنوان السياسة مطلوب" : 
@@ -99,6 +135,7 @@ export default function PoliciesPage() {
   const [formTitle, setFormTitle] = useState("");
   const [formContent, setFormContent] = useState("");
   const [formCategory, setFormCategory] = useState("general");
+  const [formPolicyType, setFormPolicyType] = useState("");
   const [saving, setSaving] = useState(false);
   const [formErrors, setFormErrors] = useState({ title: false, content: false });
 
@@ -106,7 +143,13 @@ export default function PoliciesPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
   const [editCategory, setEditCategory] = useState("general");
+  const [editPolicyType, setEditPolicyType] = useState("");
   const [editErrors, setEditErrors] = useState({ title: false, content: false });
+
+  // inline error messages )
+  const [formError, setFormError] = useState("");
+  const [editError, setEditError] = useState("");
+  const [actionError, setActionError] = useState("");
 
   async function loadPolicies() {
     setLoadState("loading");
@@ -154,6 +197,7 @@ export default function PoliciesPage() {
 
     setSaving(true);
     setFormErrors({ title: false, content: false });
+    setFormError(""); 
 
     try {
       const response = await fetch(
@@ -165,6 +209,7 @@ export default function PoliciesPage() {
             title: formTitle,
             content: formContent,
             category: formCategory,
+            policyType: formPolicyType,
           }),
         },
       );
@@ -172,16 +217,23 @@ export default function PoliciesPage() {
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error ?? copy.errUnableCreate);
+        throw new Error(
+          payload.code === "POLICY_DUPLICATE"
+            ? copy.errDuplicate
+            : payload.error ?? copy.errUnableCreate,
+        );
       }
 
       setFormTitle("");
       setFormContent("");
       setFormCategory("general");
+      setFormPolicyType("");
+      setFormError("");
       setShowForm(false);
       await loadPolicies();
     } catch (error) {
-      alert(
+      // inline message instead of alert()
+      setFormError(
         error instanceof Error ? error.message : copy.errUnableCreate,
       );
     } finally {
@@ -194,7 +246,9 @@ export default function PoliciesPage() {
     setEditTitle(policy.title);
     setEditContent(policy.content);
     setEditCategory(policy.category);
+    setEditPolicyType(policy.policyType ?? "");
     setEditErrors({ title: false, content: false });
+    setEditError(""); // CHANGED
   }
 
   async function handleUpdate(id: string) {
@@ -208,6 +262,7 @@ export default function PoliciesPage() {
 
     setSaving(true);
     setEditErrors({ title: false, content: false });
+    setEditError(""); // CHANGED
 
     try {
       const response = await fetch(
@@ -219,6 +274,7 @@ export default function PoliciesPage() {
             title: editTitle,
             content: editContent,
             category: editCategory,
+            policyType: editPolicyType, // "" clears the type
           }),
         },
       );
@@ -226,13 +282,19 @@ export default function PoliciesPage() {
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error ?? copy.errUnableUpdate);
+        throw new Error(
+          payload.code === "POLICY_DUPLICATE"
+            ? copy.errDuplicate
+            : payload.error ?? copy.errUnableUpdate,
+        );
       }
 
       setEditingId(null);
+      setEditError("");
       await loadPolicies();
     } catch (error) {
-      alert(
+      // CHANGED: inline message instead of alert()
+      setEditError(
         error instanceof Error ? error.message : copy.errUnableUpdate,
       );
     } finally {
@@ -242,6 +304,8 @@ export default function PoliciesPage() {
 
   async function handleDelete(id: string) {
     if (!confirm(copy.confirmDelete)) return;
+
+    setActionError(""); // CHANGED
 
     try {
       const response = await fetch(
@@ -257,7 +321,8 @@ export default function PoliciesPage() {
 
       await loadPolicies();
     } catch (error) {
-      alert(
+      // CHANGED: inline message instead of alert()
+      setActionError(
         error instanceof Error ? error.message : copy.errUnableDelete,
       );
     }
@@ -330,7 +395,11 @@ export default function PoliciesPage() {
                   </label>
                   <select
                     value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
+                    onChange={(e) => {
+                      setFormCategory(e.target.value);
+                      setFormPolicyType(""); // type belongs to the category
+                      setFormError(""); // CHANGED
+                    }}
                     className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 py-2 text-sm"
                   >
                     {CATEGORY_OPTIONS.map((opt) => (
@@ -340,6 +409,30 @@ export default function PoliciesPage() {
                     ))}
                   </select>
                 </div>
+
+                {/* Type select (only for categories that define types) */}
+                {POLICY_TYPE_OPTIONS[formCategory] && (
+                  <div className="mb-3">
+                    <label className="mb-1 block text-xs font-bold text-[var(--text-muted)]">
+                      {copy.policyTypeLabel}
+                    </label>
+                    <select
+                      value={formPolicyType}
+                      onChange={(e) => {
+                        setFormPolicyType(e.target.value);
+                        setFormError(""); // CHANGED
+                      }}
+                      className="w-full rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 py-2 text-sm"
+                    >
+                      <option value="">{copy.noType}</option>
+                      {POLICY_TYPE_OPTIONS[formCategory].map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="mb-3">
                   <label className="mb-1 block text-xs font-bold text-[var(--text-muted)]">
@@ -382,6 +475,17 @@ export default function PoliciesPage() {
                   )}
                 </div>
 
+                {/* CHANGED: inline error (replaces alert) */}
+                {formError && (
+                  <div
+                    role="alert"
+                    className="mb-3 flex items-start gap-2 rounded-lg border border-red-200 bg-[var(--critical-background)] px-3 py-2 text-xs font-bold text-[var(--critical)]"
+                  >
+                    <ShieldAlert size={14} className="mt-0.5 shrink-0" />
+                    <span>{formError}</span>
+                  </div>
+                )}
+
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -394,12 +498,25 @@ export default function PoliciesPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowForm(false)}
+                    onClick={() => {
+                      setShowForm(false);
+                      setFormError(""); // CHANGED
+                    }}
                     className="rounded-lg border border-[var(--border-default)] px-4 py-2 text-sm font-bold"
                   >
                     {copy.cancel}
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* CHANGED: inline error for delete failures */}
+            {actionError && (
+              <div
+                role="alert"
+                className="mb-3 rounded-lg border border-red-200 bg-[var(--critical-background)] px-3 py-2 text-xs font-bold text-[var(--critical)]"
+              >
+                {actionError}
               </div>
             )}
 
@@ -420,9 +537,11 @@ export default function PoliciesPage() {
                     <div>
                       <select
                         value={editCategory}
-                        onChange={(e) =>
-                          setEditCategory(e.target.value)
-                        }
+                        onChange={(e) => {
+                          setEditCategory(e.target.value);
+                          setEditPolicyType(""); // type belongs to the category
+                          setEditError(""); // CHANGED
+                        }}
                         className="mb-2 w-full rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 py-2 text-sm"
                       >
                         {CATEGORY_OPTIONS.map((opt) => (
@@ -431,6 +550,25 @@ export default function PoliciesPage() {
                           </option>
                         ))}
                       </select>
+
+                      {/* Type select in edit mode */}
+                      {POLICY_TYPE_OPTIONS[editCategory] && (
+                        <select
+                          value={editPolicyType}
+                          onChange={(e) => {
+                            setEditPolicyType(e.target.value);
+                            setEditError(""); // CHANGED
+                          }}
+                          className="mb-2 w-full rounded-lg border border-[var(--border-default)] bg-[var(--background)] px-3 py-2 text-sm"
+                        >
+                          <option value="">{copy.noType}</option>
+                          {POLICY_TYPE_OPTIONS[editCategory].map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
 
                       <input
                         value={editTitle}
@@ -462,6 +600,17 @@ export default function PoliciesPage() {
                         <p className="mb-2 text-xs text-[var(--critical)]">{copy.errContentRequired}</p>
                       )}
 
+                      {/* CHANGED: inline error (replaces alert) */}
+                      {editError && (
+                        <div
+                          role="alert"
+                          className="mb-2 flex items-start gap-2 rounded-lg border border-red-200 bg-[var(--critical-background)] px-3 py-2 text-xs font-bold text-[var(--critical)]"
+                        >
+                          <ShieldAlert size={14} className="mt-0.5 shrink-0" />
+                          <span>{editError}</span>
+                        </div>
+                      )}
+
                       <div className="flex gap-2">
                         <button
                           type="button"
@@ -474,7 +623,10 @@ export default function PoliciesPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setEditingId(null)}
+                          onClick={() => {
+                            setEditingId(null);
+                            setEditError(""); // CHANGED
+                          }}
                           className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-default)] px-3 py-1.5 text-xs font-bold"
                         >
                           <X size={13} />
@@ -491,6 +643,16 @@ export default function PoliciesPage() {
                               (c) => c.value === policy.category,
                             )?.label ?? policy.category}
                           </span>
+
+                          {/* Type badge next to the category badge */}
+                          {policy.policyType && (
+                            <span className="ms-1 inline-block rounded-full bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] font-bold text-[var(--text-secondary)]">
+                              {POLICY_TYPE_OPTIONS[policy.category]?.find(
+                                (t) => t.value === policy.policyType,
+                              )?.label ?? policy.policyType}
+                            </span>
+                          )}
+
                           <h3 className="mt-1.5 text-sm font-black text-[var(--text-primary)]">
                             {policy.title}
                           </h3>

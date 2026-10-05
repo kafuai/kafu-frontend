@@ -138,11 +138,18 @@ export class EmployeeExperienceAgent {
     classification: EmployeeMessageClassification,
     messageLanguage: "ar" | "en",
   ): Promise<EmployeeExperienceResult> {
-    const relevantPolicies =
-      await this.policyManager.searchRelevant(
+    const retrieval = await this.policyManager.retrieve(
         request.organizationId,
         request.message,
+        {
+          // Classifier is only a lower-priority hint; keyword detection wins
+          categoryHint:
+            classification.confidence >= 0.6
+              ? classification.category
+              : undefined,
+        },
       );
+      const relevantPolicies = retrieval.policies;
 
     if (relevantPolicies.length === 0) {
       return {
