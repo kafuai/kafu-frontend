@@ -61,6 +61,7 @@ export default function BookDemoForm() {
         setStatus("success");
         setMessage(isArabic ? "تم الإرسال بنجاح! سنتواصل معك قريباً." : "Request sent successfully! We will contact you soon.");
         form.reset();
+        setPhoneNumber("");
       } else {
         setStatus("error");
         setMessage(isArabic ? "حدث خطأ أثناء الإرسال." : "An error occurred while sending.");
@@ -154,7 +155,6 @@ export default function BookDemoForm() {
                   name="workEmail"
                   type="email"
                   dir="ltr"
-                  placeholder="name@company.com"
                   required
                   className="p-3 bg-[var(--landing-bg-primary)] border border-[var(--landing-border)] rounded-xl text-[var(--landing-text-primary)] placeholder-[var(--landing-text-muted)] focus:outline-none focus:border-[var(--landing-accent)] focus:ring-1 focus:ring-[var(--landing-accent)] transition-all text-left"
                 />

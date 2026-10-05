@@ -39,7 +39,7 @@ import type { LucideIcon } from "lucide-react";
 
 import LanguageSwitcher from "@/components/localization/LanguageSwitcher";
 import { useLocalization } from "@/components/localization/LocalizationContext";
-import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
+// import ThemeSwitcher from "@/components/theme/ThemeSwitcher";
 import WorkspaceScopeSwitcher from "@/components/enterprise-shell/WorkspaceScopeSwitcher";
 import { clearWorkspaceSession } from "@/lib/companySession";
 import { supabase } from "@/lib/supabase";
@@ -510,8 +510,6 @@ export default function EnterpriseHeader() {
         </nav>
 
         <div className="kafu-executive-header__actions">
-      
-          <ThemeSwitcher />
 
           <LanguageSwitcher />
 

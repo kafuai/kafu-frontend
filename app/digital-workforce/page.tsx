@@ -43,21 +43,6 @@ export default function DigitalWorkforcePage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  // const priorityLabels: Record<WorkforcePriority, string> = {
-  //   Critical: isArabic ? "أولوية حرجة" : "Critical Priority",
-  //   High: isArabic ? "أولوية عالية" : "High Priority",
-  //   Medium: isArabic ? "أولوية متوسطة" : "Medium Priority",
-  // };
-
-  const priorityClasses: Record<WorkforcePriority, string> = {
-    Critical:
-      "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300",
-    High:
-      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-300",
-    Medium:
-      "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-300",
-  };
-
   useEffect(() => {
     async function loadDigitalWorkforce() {
       const companyId = getCurrentCompanyId();
@@ -515,7 +500,7 @@ export default function DigitalWorkforcePage() {
               <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p className="text-xs font-black text-[var(--brand-primary)]">
-                    YOUR DIGITAL AGENTS
+                    Automate Your Workflow
                   </p>
 
                   <h2 className="mt-2 text-2xl font-black tracking-tight md:text-3xl">
