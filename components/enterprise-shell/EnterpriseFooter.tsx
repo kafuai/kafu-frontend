@@ -12,7 +12,7 @@ export default function EnterpriseFooter() {
       <div className="kafu-enterprise-footer__inner">
         <div className="kafu-enterprise-footer__brand">
           <Link
-            href="/dashboard"
+            href="/"
             className="kafu-enterprise-footer__logo-link"
             aria-label="KAFU AI dashboard"
           >

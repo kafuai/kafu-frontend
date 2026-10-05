@@ -63,11 +63,11 @@ export async function resolveAnnualLeaveAllowanceFromPolicy(params: {
   }
 
   try {
-    const policies = await params.policyManager.searchRelevant(
+    const { policies } = await params.policyManager.retrieve(
       params.organizationId,
       "annual leave days entitlement per year الإجازة السنوية عدد الأيام",
+      { category: "leave", policyType: "annual_leave" },
     );
-
     if (policies.length === 0) {
       cache.set(params.organizationId, {
         value: null,

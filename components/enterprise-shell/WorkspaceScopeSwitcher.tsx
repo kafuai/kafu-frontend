@@ -393,29 +393,42 @@ export default function WorkspaceScopeSwitcher() {
       ref={containerRef}
       className="kafu-workspace-switcher"
     >
-      <button
-        type="button"
-        className="kafu-workspace-selector cursor-default pointer-events-none"
-        aria-label={`مساحة العمل الحالية: ${activeLabel}`}
+      <div 
+        className="kafu-workspace-selector"
         title={activeLabel}
-        disabled={true} 
+        style={{ 
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          flexShrink: 0, 
+        }}
       >
         {scope?.mode === "portfolio" ? (
           <Layers3
             size={17}
             strokeWidth={1.8}
+            style={{ flexShrink: 0 }}
           />
         ) : (
           <Building2
             size={17}
             strokeWidth={1.8}
+            style={{ flexShrink: 0 }}
           />
         )}
 
-        <span className="kafu-workspace-selector__name">
+        <span 
+          className="kafu-workspace-selector__name"
+          style={{
+            wordBreak: "break-word",
+            overflow: "visible", 
+            lineHeight: "1.3",
+            textAlign: "right"
+          }}
+        >
           {activeLabel}
         </span>
-      </button>
+      </div>
     </div>
   );
 }
