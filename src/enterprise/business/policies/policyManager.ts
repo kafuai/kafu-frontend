@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { LeaveType } from "@/src/enterprise/business/leave";
 
 export interface CompanyPolicy {
   id: string;
@@ -11,6 +12,15 @@ export interface CompanyPolicy {
   createdAt: string;
   updatedAt: string;
 }
+// Must stay in sync with the policy_type values in TYPE_KEYWORDS.leave
+const LEAVE_TYPE_TO_POLICY_TYPE: Record<LeaveType, string | null> = {
+  annual: "annual_leave",
+  sick: "sick_leave",
+  emergency: "emergency_leave",
+  unpaid: "unpaid_leave",
+  maternity: "maternity_leave",
+  other: null,
+};
 
 type PolicyRow = {
   id: string;
@@ -39,6 +49,15 @@ export interface UpdatePolicyInput {
   title?: string;
   content?: string;
 }
+// Terms used ONLY to locate relevant policy text written by HR (ar/en).
+const LEAVE_TYPE_POLICY_TERMS: Record<LeaveType, string[]> = {
+  annual: ["annual", "vacation", "سنوي"],
+  sick: ["sick", "medical", "مرض", "مريض"],
+  emergency: ["emergency", "طارئ", "طوارئ"],
+  unpaid: ["unpaid", "without pay", "بدون راتب", "بدون أجر", "غير مدفوعة"],
+  maternity: ["maternity", "parental", "أمومة", "ولادة"],
+  other: [],
+};
 
 // CHANGED: single place for the column list (policy_type added)
 const POLICY_COLUMNS =
@@ -454,6 +473,72 @@ export class PolicyManager {
 
     // STEP 3: nothing sufficient -> caller must not guess
     return { policies: [], source: "none", category, policyType };
+  }
+    /**
+   * Leave-aware policy search (same organization only).
+   * Priority: specific leave-type match in title > in content > general
+   * "leave" category policy > user-message keywords (ranking only).
+   * A general leave policy is a fallback; it never implies "annual".
+   */
+  async searchRelevantLeavePolicy(
+    organizationId: string,
+    leaveType: LeaveType,
+    userMessage: string,
+    limit = 5,
+  ): Promise<CompanyPolicy[]> {
+    const policies = await this.listForOrganization(organizationId);
+    const typeTerms = LEAVE_TYPE_POLICY_TERMS[leaveType];
+    const policyType = LEAVE_TYPE_TO_POLICY_TYPE[leaveType];
+
+    // 1) Exact category + type match is authoritative on its own.
+    if (policyType) {
+      const typed = policies.filter(
+        (p) => p.category === "leave" && p.policyType === policyType,
+      );
+      if (typed.length > 0) return typed.slice(0, limit);
+    }
+
+    // 2) Fallback pool: untyped (legacy/general) policies only.
+    //    Policies explicitly typed as ANOTHER leave type are excluded.
+    const pool = policies.filter(
+      (p) => p.policyType === null || p.policyType === policyType,
+    );
+
+    const keywords = userMessage
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((word) => word.length > 2);
+
+      
+    const scored = policies.map((policy) => {
+      const title = policy.title.toLowerCase();
+      const content = policy.content.toLowerCase();
+
+      const isLeaveCategory = policy.category === "leave";
+      const typeInTitle = typeTerms.some((t) => title.includes(t));
+      const typeInContent = typeTerms.some((t) => content.includes(t));
+      const messageInTitle = keywords.some((w) => title.includes(w));
+      const messageHits = keywords.filter(
+        (w) => title.includes(w) || content.includes(w),
+      ).length;
+
+      const score =
+        (isLeaveCategory ? 100 : 0) +
+        (typeInTitle ? 1000 : 0) +
+        (typeInContent ? 300 : 0) +
+        Math.min(messageHits, 50);
+
+      const relevant =
+        isLeaveCategory || typeInTitle || typeInContent || messageInTitle;
+
+      return { policy, score, relevant };
+    });
+
+    return scored
+      .filter((item) => item.relevant)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+      .map((item) => item.policy);
   }
 
   private mapRow(row: PolicyRow): CompanyPolicy {

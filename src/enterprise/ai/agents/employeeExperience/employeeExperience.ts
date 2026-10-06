@@ -11,6 +11,7 @@ import {
   LeaveValidationError,
   LeaveValidator,
   evaluateLeaveAllowance,
+  type LeaveType,
 } from "@/src/enterprise/business/leave";
 import { PolicyManager } from "@/src/enterprise/business/policies/policyManager";
 import { EmploymentLetterManager } from "@/src/enterprise/business/employmentLetters/employmentLetterManager";
@@ -22,7 +23,8 @@ import {
   classifyEmployeeMessage,
   type EmployeeMessageClassification,
 } from "./employeeExperienceClassification";
-import { resolveAnnualLeaveAllowanceFromPolicy } from "./leavePolicyAllowance";
+import { resolveLeavePolicyAllowance } from "./leavePolicyAllowance";
+import { resolveLeaveType } from "@/src/enterprise/business/leave/types/leaveTypeResolver";
 
 interface EmployeeExperienceRequest {
   message: string;
@@ -37,9 +39,10 @@ export interface EmployeeExperienceResult {
     | "leave_request"
     | "employment_letter_request"
     | "policy_answer"
-    | "unsupported_category";
+    | "unsupported_category"
+    | "clarification_needed";
   message: string;
-  status: "pending" | "answered" | "not_supported";
+  status: "pending" | "answered" | "not_supported" | "needs_info";
   requestId?: string;
   classification: EmployeeMessageClassification;
   citedPolicyIds?: string[];
@@ -70,6 +73,15 @@ function detectMessageLanguage(message: string): "ar" | "en" {
   const arabicPattern = /[\u0600-\u06FF]/;
   return arabicPattern.test(message) ? "ar" : "en";
 }
+
+const LEAVE_TYPE_LABELS: Record<LeaveType, { ar: string; en: string }> = {
+  annual: { ar: "الإجازة السنوية", en: "annual leave" },
+  sick: { ar: "الإجازة المرضية", en: "sick leave" },
+  emergency: { ar: "الإجازة الطارئة", en: "emergency leave" },
+  unpaid: { ar: "الإجازة بدون راتب", en: "unpaid leave" },
+  maternity: { ar: "إجازة الأمومة", en: "maternity leave" },
+  other: { ar: "هذا النوع من الإجازات", en: "this type of leave" },
+};
 
 export class EmployeeExperienceAgent {
   private readonly executor: AIAgentExecutor;
@@ -139,17 +151,17 @@ export class EmployeeExperienceAgent {
     messageLanguage: "ar" | "en",
   ): Promise<EmployeeExperienceResult> {
     const retrieval = await this.policyManager.retrieve(
-        request.organizationId,
-        request.message,
-        {
-          // Classifier is only a lower-priority hint; keyword detection wins
-          categoryHint:
-            classification.confidence >= 0.6
-              ? classification.category
-              : undefined,
-        },
-      );
-      const relevantPolicies = retrieval.policies;
+      request.organizationId,
+      request.message,
+      {
+        // Classifier is only a lower-priority hint; keyword detection wins
+        categoryHint:
+          classification.confidence >= 0.6
+            ? classification.category
+            : undefined,
+      },
+    );
+    const relevantPolicies = retrieval.policies;
 
     if (relevantPolicies.length === 0) {
       return {
@@ -283,10 +295,11 @@ export class EmployeeExperienceAgent {
   }
 
   private async createLeaveRequest(
-   request: EmployeeExperienceRequest,
+    request: EmployeeExperienceRequest,
     classification: EmployeeMessageClassification,
     messageLanguage: "ar" | "en",
   ): Promise<EmployeeExperienceResult> {
+    // 0) Existing rule: no duplicate while a request is pending.
     const hasPending = await this.leaveManager.hasPendingRequest(
       request.organizationId,
       request.employeeId,
@@ -299,33 +312,75 @@ export class EmployeeExperienceAgent {
           : "لديك طلب إجازة قيد المراجعة بالفعل. يرجى الانتظار حتى تتم مراجعته من الموارد البشرية قبل تقديم طلب جديد.",
       ]);
     }
+
+    // 1) Resolve leave type from the message. Never default to "annual".
+    const { leaveType: resolvedLeaveType } = await resolveLeaveType(
+      request.message,
+      {
+        organizationId: request.organizationId,
+        companyId: request.companyId,
+        userId: request.employeeId,
+        locale: messageLanguage,
+      },
+    );
+
+    if (!resolvedLeaveType) {
+      return {
+        type: "clarification_needed",
+        message:
+          messageLanguage === "en"
+            ? "Which type of leave would you like to request (for example annual, sick, emergency, or other)? Please send your request again including the leave type and the start and end dates (dd/mm/yyyy)."
+            : "ما نوع الإجازة التي ترغب بتقديمها؟ مثل إجازة سنوية، مرضية، طارئة أو غيرها. أعد إرسال طلبك مع ذكر نوع الإجازة وتاريخ البداية والنهاية (dd/mm/yyyy).",
+        status: "needs_info",
+        classification,
+      };
+    }
+
+    // 2) Dates + existing validation (past dates, end < start, ...)
     const dates = this.extractDates(request.message, messageLanguage);
 
     const validation = new LeaveValidator().validate(
       {
         employeeId: request.employeeId,
         organizationId: request.organizationId,
-        type: "annual",
+        type: resolvedLeaveType,
         startDate: dates.startDate,
         endDate: dates.endDate,
         reason: request.message,
       },
       Date.now(),
-      messageLanguage
+      messageLanguage,
     );
 
     if (!validation.valid) {
       throw new LeaveValidationError(validation.errors);
     }
 
-    const allowance = await resolveAnnualLeaveAllowanceFromPolicy({
+    // 3) Company policy is the source of truth. No policy => no request.
+    const policy = await resolveLeavePolicyAllowance({
       policyManager: this.policyManager,
       organizationId: request.organizationId,
       companyId: request.companyId,
       employeeId: request.employeeId,
+      leaveType: resolvedLeaveType,
+      userMessage: request.message,
     });
 
-    if (allowance !== null) {
+    if (!policy.covered) {
+      const label = LEAVE_TYPE_LABELS[resolvedLeaveType];
+      return {
+        type: "unsupported_category",
+        message:
+          messageLanguage === "en"
+            ? `I couldn't find a company policy that covers ${label.en}, so your request was not created. Please contact HR.`
+            : `لم أجد سياسة في الشركة تغطي ${label.ar}، لذلك لم يتم إنشاء الطلب. يرجى التواصل مع الموارد البشرية.`,
+        status: "not_supported",
+        classification,
+      };
+    }
+
+    // 4) Enforce the balance only if the policy explicitly states a days limit.
+    if (policy.days !== null) {
       const existing = await this.leaveManager.list(
         request.organizationId,
         request.employeeId,
@@ -333,11 +388,11 @@ export class EmployeeExperienceAgent {
 
       const evaluation = evaluateLeaveAllowance(
         {
-          type: "annual",
+          type: resolvedLeaveType,
           startDate: dates.startDate,
           endDate: dates.endDate,
         },
-        allowance,
+        policy.days,
         existing,
         messageLanguage,
       );
@@ -381,7 +436,7 @@ export class EmployeeExperienceAgent {
           employeeId: request.employeeId,
           organizationId: request.organizationId,
           companyId: request.companyId,
-          type: "annual",
+          type: resolvedLeaveType,
           startDate: dates.startDate,
           endDate: dates.endDate,
           reason: request.message,

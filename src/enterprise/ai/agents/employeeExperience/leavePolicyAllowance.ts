@@ -1,111 +1,129 @@
 import type { PolicyManager } from "@/src/enterprise/business/policies/policyManager";
+import type { LeaveType } from "@/src/enterprise/business/leave";
 import { getAIServerRuntime } from "@/src/enterprise/ai/server-runtime";
 
 const CACHE_TTL_MS = 10 * 60 * 1000;
 
+export interface LeavePolicyResolution {
+  /** true only if company policies explicitly address this leave type (or state rules for all leave types). */
+  covered: boolean;
+  /** Days per year for THIS leave type, only if explicitly written in the policy. */
+  days: number | null;
+}
+
 const cache = new Map<
   string,
-  { value: number | null; expiresAt: number }
+  { value: LeavePolicyResolution; expiresAt: number }
 >();
 
-const EXTRACTION_TASK = `
-Read the attached company policies and extract the number of ANNUAL LEAVE
-days an employee is entitled to per year.
+const LEAVE_TYPE_DESCRIPTIONS: Record<LeaveType, string> = {
+  annual: "annual leave / vacation",
+  sick: "sick / medical leave",
+  emergency: "emergency leave",
+  unpaid: "unpaid leave",
+  maternity: "maternity leave",
+  other: "the specific leave type the employee describes in the question",
+};
+
+function buildExtractionTask(leaveType: LeaveType): string {
+  return `
+Read the attached company policies and determine how they treat this leave type: ${LEAVE_TYPE_DESCRIPTIONS[leaveType]}.
 
 Return ONLY a JSON object, with no extra text, no markdown and no evidence
 identifiers, in exactly this shape:
-{"found": boolean, "annualLeaveDays": number | null}
+{"covered": boolean, "days": number | null}
 
 Rules:
-- Set "found" to true only if a policy explicitly states a number of annual
-  leave days per year.
-- If the policy gives different values depending on conditions (for example
-  years of service), return the base/default value.
-- If the policies do not state a number clearly, return
-  {"found": false, "annualLeaveDays": null}.
-- Never guess or infer a number that is not written in the policies.
+- "covered" is true only if a policy explicitly addresses this leave type, or
+  explicitly states rules that apply to ALL leave types.
+- "days" is the number of days per year for THIS leave type, only if explicitly
+  written. If it varies by conditions (e.g. years of service), return the
+  base/default value. Otherwise null.
+- Never use another leave type's number. Never guess or infer. Do not use
+  general knowledge or labor-law defaults; only the attached policies.
+- If not covered, return {"covered": false, "days": null}.
 `.trim();
+}
 
-function parseAllowance(text: string): number | null {
+function parseResolution(text: string): LeavePolicyResolution {
+  const notCovered = { covered: false, days: null };
   const match = text.match(/\{[\s\S]*\}/);
-
-  if (!match) return null;
+  if (!match) return notCovered;
 
   try {
     const parsed = JSON.parse(match[0]) as {
-      found?: unknown;
-      annualLeaveDays?: unknown;
+      covered?: unknown;
+      days?: unknown;
     };
 
-    if (parsed.found !== true) return null;
+    if (parsed.covered !== true) return notCovered;
 
-    const days = Number(parsed.annualLeaveDays);
+    const days =
+      typeof parsed.days === "number" &&
+      Number.isFinite(parsed.days) &&
+      parsed.days >= 0 &&
+      parsed.days <= 365
+        ? Math.floor(parsed.days)
+        : null;
 
-    if (!Number.isFinite(days) || days < 0 || days > 365) return null;
-
-    return Math.floor(days);
+    return { covered: true, days };
   } catch {
-    return null;
+    return notCovered;
   }
 }
 
-
-export async function resolveAnnualLeaveAllowanceFromPolicy(params: {
+export async function resolveLeavePolicyAllowance(params: {
   policyManager: PolicyManager;
   organizationId: string;
   companyId: string;
   employeeId: string;
-}): Promise<number | null> {
-  const cached = cache.get(params.organizationId);
+  leaveType: LeaveType;
+  userMessage: string;
+}): Promise<LeavePolicyResolution> {
+  // "other" depends on what the employee wrote, so it is not cached.
+  const cacheable = params.leaveType !== "other";
+  const cacheKey = `${params.organizationId}:${params.leaveType}`;
 
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.value;
+  if (cacheable) {
+    const cached = cache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) return cached.value;
   }
 
-  try {
-    const { policies } = await params.policyManager.retrieve(
-      params.organizationId,
-      "annual leave days entitlement per year الإجازة السنوية عدد الأيام",
-      { category: "leave", policyType: "annual_leave" },
-    );
-    if (policies.length === 0) {
-      cache.set(params.organizationId, {
-        value: null,
-        expiresAt: Date.now() + CACHE_TTL_MS,
-      });
-      return null;
-    }
+  const policies = await params.policyManager.searchRelevantLeavePolicy(
+    params.organizationId,
+    params.leaveType,
+    params.userMessage,
+  );
 
-    const runtime = getAIServerRuntime();
+  // No policy: do not cache, so a newly added policy takes effect immediately.
+  if (policies.length === 0) return { covered: false, days: null };
 
-    
-    const result = await runtime.groundedAI.generate({
-      task: EXTRACTION_TASK,
-      evidence: policies.map((policy) => ({
-        id: policy.id,
-        source: "Company Policy",
-        label: policy.title,
-        value: policy.content,
-      })),
-      context: {
-        tenantId: params.companyId,
-        companyId: params.companyId,
-        userId: params.employeeId,
-        locale: "en",
-        metadata: { organizationId: params.organizationId },
-      },
-    });
+  const runtime = getAIServerRuntime();
 
-    const value = parseAllowance(result.text);
+  // Errors propagate on purpose: an AI failure must not look like "no policy".
+  const result = await runtime.groundedAI.generate({
+    task: buildExtractionTask(params.leaveType),
+    question: params.userMessage,
+    evidence: policies.map((policy) => ({
+      id: policy.id,
+      source: "Company Policy",
+      label: policy.title,
+      value: policy.content,
+    })),
+    context: {
+      tenantId: params.companyId,
+      companyId: params.companyId,
+      userId: params.employeeId,
+      locale: "en",
+      metadata: { organizationId: params.organizationId },
+    },
+  });
 
-    cache.set(params.organizationId, {
-      value,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-    });
+  const value = parseResolution(result.text);
 
-    return value;
-  } catch (error) {
-    console.error("Failed to resolve leave allowance from policy:", error);
-    return null;
+  if (cacheable) {
+    cache.set(cacheKey, { value, expiresAt: Date.now() + CACHE_TTL_MS });
   }
+
+  return value;
 }
