@@ -13,6 +13,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
+import {validatePassword} from "@/lib/passwordValidation";
 
 type Organization = {
   id: string;
@@ -20,7 +21,7 @@ type Organization = {
   company_id: string;
 };
 
-// تم ترك الصلاحيات كما هي بدون أي تعديل بناءً على طلبك
+
 const ROLE_OPTIONS = [
   { value: "owner", label: "Owner" },
   { value: "manager", label: "Manager" },
@@ -28,7 +29,6 @@ const ROLE_OPTIONS = [
   { value: "viewer", label: "Viewer" },
 ];
 
-// --- قاموس الترجمة ---
 const CONTENT = {
   ar: {
     title: "إضافة مستخدم لمؤسسة موجودة",
@@ -38,7 +38,7 @@ const CONTENT = {
     labels: {
       fullName: "الاسم الكامل",
       email: "البريد الإلكتروني",
-      password: "كلمة المرور (٨ أحرف على الأقل)",
+      password: "كلمة المرور",
       organization: "المؤسسة",
       selectOrg: "اختر مؤسسة...",
       role: "الدور",
@@ -51,6 +51,13 @@ const CONTENT = {
       forbidden: "هذه الصفحة متاحة فقط لمسؤول المنصة.",
       genericError: "تعذر إنشاء المستخدم.",
       success: "تم إنشاء المستخدم بنجاح:",
+      requiredFields: "جميع الحقول مطلوبة.",
+      invalidEmail: "صيغة البريد الإلكتروني غير صحيحة.",
+      paaswordLength: "يجب أن تتكون كلمة المرور من ٨ أحرف على الأقل.",
+      passwordLetter: "يجب أن تحتوي كلمة المرور على حرف واحد على الأقل.",
+      passwordNumber: "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.",
+      passwordWhitespace: "لا يمكن أن تحتوي كلمة المرور على مسافات.",
+      passwordEnglishOnly: "يجب أن تحتوي كلمة المرور على أحرف إنجليزية فقط.",
     },
     form: {
       showPassword: "إظهار كلمة المرور",
@@ -65,7 +72,7 @@ const CONTENT = {
     labels: {
       fullName: "Full Name",
       email: "Email Address",
-      password: "Password (min 8 characters)",
+      password: "Password",
       organization: "Organization",
       selectOrg: "Select an organization...",
       role: "Role",
@@ -78,6 +85,13 @@ const CONTENT = {
       forbidden: "This page is restricted to platform administrators.",
       genericError: "Failed to create user.",
       success: "User created successfully:",
+      requiredFields: "All fields are required.",
+      invalidEmail: "Invalid email format.",
+      paaswordLength: "Password must be at least 8 characters.",
+      passwordLetter: "Password must contain at least one letter.",
+      passwordNumber: "Password must contain at least one number.",
+      passwordWhitespace: "Password cannot contain spaces.",
+      passwordEnglishOnly: "Password must contain only English characters.",
     },
     form: {
       showPassword: "Show password",
@@ -132,12 +146,53 @@ export default function AdminUsersPage() {
     setErrorMessage("");
     setSuccessMessage("");
 
+    if (!fullName.trim() || !email.trim() || !password || !selectedOrgId || !selectedRole) {
+      setErrorMessage(t.messages.requiredFields);
+      return;
+    }
+
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMessage(t.messages.invalidEmail);
+      return;
+    }
+
     const selectedOrg = organizations.find(
       (org) => org.id === selectedOrgId,
     );
 
     if (!selectedOrg) {
       setErrorMessage(t.messages.selectOrgError);
+      return;
+    }
+
+
+    const passwordValidation = validatePassword(password);
+
+    if (!passwordValidation.valid) {
+      switch (passwordValidation.reason) {
+        case "too_short":
+          setErrorMessage(t.messages.paaswordLength);
+          break;
+
+        case "letter_required":
+          setErrorMessage(t.messages.passwordLetter);
+          break;
+
+        case "number_required":
+          setErrorMessage(t.messages.passwordNumber);
+          break;
+
+        case "whitespace_not_allowed":
+          setErrorMessage(t.messages.passwordWhitespace);
+          break;
+          
+        case "english_only":
+          setErrorMessage(t.messages.passwordEnglishOnly);
+          break;
+      }
+
       return;
     }
 
@@ -215,6 +270,7 @@ export default function AdminUsersPage() {
           <form
             onSubmit={handleSubmit}
             className="space-y-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-6"
+            noValidate
           >
             <div>
               <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]">

@@ -7,6 +7,8 @@ import { ArrowLeft, ArrowRight, Eye, EyeOff, CheckCircle2, ShieldAlert } from "l
 import { supabase } from "@/lib/supabase";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
+import {validatePassword} from "@/lib/passwordValidation";
+
 const CONTENT = {
   ar: {
     back: "الرجوع للملف الشخصي",
@@ -16,17 +18,22 @@ const CONTENT = {
     currentPassword: "كلمة المرور الحالية",
     newPassword: "كلمة المرور الجديدة",
     confirmPassword: "تأكيد كلمة المرور",
-    match: "كلمتا المرور متطابقتان.",
-    noMatch: "كلمتا المرور غير متطابقتين.",
-    tooShort: "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
-    samePassword: "كلمة المرور الجديدة يجب أن تختلف عن الحالية.",
-    wrongCurrentPassword: "كلمة المرور الحالية غير صحيحة.",
     genericError: "تعذر تحديث كلمة المرور.",
     noSession: "لم يتم العثور على جلسة مستخدم نشطة.",
     success: "تم تحديث كلمة المرور بنجاح.",
     submit: "تحديث كلمة المرور",
     submitting: "جارٍ تحديث كلمة المرور...",
-    englishOnly: "يجب أن تكون كلمة المرور باللغة الإنجليزية ولا تحتوي على أحرف عربية.",
+    messages:{
+      requiredFields: "جميع الحقول مطلوبة.",
+      noMatch: "كلمتا المرور غير متطابقتين.",
+      samePassword: "كلمة المرور الجديدة يجب أن تختلف عن الحالية.",
+      wrongCurrentPassword: "كلمة المرور الحالية غير صحيحة.",
+      passwordWhitespace: "كلمة المرور لا يمكن أن تحتوي على مسافات.",
+      passwordEnglishOnly: "يجب أن تكون كلمة المرور باللغة الإنجليزية ولا تحتوي على أحرف عربية.",
+      passwordTooShort: "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
+      passwordLetterRequired: "يجب أن تحتوي كلمة المرور على حرف واحد على الأقل.",
+      passwordNumberRequired: "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.",
+    },
   },
   en: {
     back: "Back to profile",
@@ -37,16 +44,22 @@ const CONTENT = {
     newPassword: "New Password",
     confirmPassword: "Confirm Password",
     match: "Passwords match.",
-    noMatch: "Passwords do not match.",
-    tooShort: "Password must be at least 8 characters.",
-    samePassword: "New password must be different from the current one.",
-    wrongCurrentPassword: "Current password is incorrect.",
     genericError: "Unable to update password.",
     noSession: "No active user session found.",
     success: "Password updated successfully.",
     submit: "Update Password",
     submitting: "Updating password...",
-     englishOnly: "Password must be in English and cannot contain Arabic characters.",
+    messages:{
+      requiredFields: "All fields are required.",
+      noMatch: "Passwords do not match.",
+      samePassword: "New password must be different from the current one.",
+      wrongCurrentPassword: "Current password is incorrect.",
+      passwordWhitespace: "Password cannot contain spaces.",
+      passwordEnglishOnly: "Password must be in English and cannot contain Arabic characters.",
+      passwordTooShort: "Password must be at least 8 characters.",
+      passwordLetterRequired: "Password must contain at least one letter.",
+      passwordNumberRequired: "Password must contain at least one number.",
+    }
   },
 } as const;
 
@@ -66,36 +79,62 @@ export default function ChangePasswordPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setErrorMessage("");
     setSuccessMessage("");
 
-    if (password.length < 8) {
-      setErrorMessage(t.tooShort);
+    const passwordValidation = validatePassword(password);
+
+    if (!currentPassword || !password || !confirmPassword) {
+      setErrorMessage(t.messages.requiredFields);
+      return;
+    }
+
+    if (currentPassword === password) {
+      setErrorMessage(t.messages.samePassword);
+      return;
+    }
+
+    if (!passwordValidation.valid) {
+      switch (passwordValidation.reason) {
+        case "too_short":
+          setErrorMessage(t.messages.passwordTooShort);
+          break;
+
+        case "letter_required":
+          setErrorMessage(t.messages.passwordLetterRequired);
+          break;
+
+        case "number_required":
+          setErrorMessage(t.messages.passwordNumberRequired);
+          break;
+
+        case "whitespace_not_allowed":
+          setErrorMessage(t.messages.passwordWhitespace);
+          break;
+
+        case "english_only":
+          setErrorMessage(t.messages.passwordEnglishOnly);
+          break;
+      }
       return;
     }
 
     const isEnglishOnly = /^[\x20-\x7E]*$/.test(password);
     if (!isEnglishOnly) {
-       setErrorMessage(t.englishOnly);
+       setErrorMessage(t.messages.passwordEnglishOnly);
        return;
     }
 
-    if (password !== confirmPassword) {
-      setErrorMessage(t.noMatch);
-      return;
-    }
-
     if (currentPassword === password) {
-      setErrorMessage(t.samePassword);
+      setErrorMessage(t.messages.samePassword);
       return;
     }
 
     setIsSubmitting(true);
-
+    
     try {
       const {
         data: { session },
@@ -119,12 +158,11 @@ export default function ChangePasswordPage() {
         });
 
       if (verifyError) {
-        setErrorMessage(t.wrongCurrentPassword);
+        setErrorMessage(t.messages.wrongCurrentPassword);
         setIsSubmitting(false);
         return;
       }
 
-      // بعد التحقق، نحدّث كلمة المرور فعليًا
       const { error: updateError } = await supabase.auth.updateUser({
         password,
       });
@@ -175,7 +213,9 @@ export default function ChangePasswordPage() {
             {t.description}
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+          <form 
+          onSubmit={handleSubmit} className="mt-7 space-y-4"
+          noValidate>
             <div>
               <label
                 htmlFor="currentPassword"
@@ -201,11 +241,7 @@ export default function ChangePasswordPage() {
                   onClick={() => setShowCurrentPassword((v) => !v)}
                   className="absolute end-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--background)]"
                 >
-                  {showCurrentPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
+                  {showCurrentPassword ? <Eye size={18} /> : <EyeOff size={18} /> }
                 </button>
               </div>
             </div>
@@ -239,11 +275,7 @@ export default function ChangePasswordPage() {
                   onClick={() => setShowPassword((v) => !v)}
                   className="absolute end-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--background)]"
                 >
-                  {showPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
+                  {showPassword ? <Eye size={18} /> : <EyeOff size={18} /> }
                 </button>
               </div>
             </div>
@@ -277,11 +309,7 @@ export default function ChangePasswordPage() {
                   onClick={() => setShowConfirmPassword((v) => !v)}
                   className="absolute end-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-[var(--background)]"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
+                  {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} /> }
                 </button>
               </div>
 
@@ -293,7 +321,7 @@ export default function ChangePasswordPage() {
                       : "text-red-700"
                   }`}
                 >
-                  {password === confirmPassword ? t.match : t.noMatch}
+                  {/* {password === confirmPassword ? t.messages.match : t.messages.noMatch} */}
                 </p>
               ) : null}
             </div>

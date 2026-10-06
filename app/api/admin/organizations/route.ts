@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-auth/server";
 import { resolveWorkspaceIdentity } from "@/lib/workspace-identity/tenantResolver";
 import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
+import { validatePassword } from "@/lib/passwordValidation";
 
 export async function POST(request: Request) {
   try {
@@ -37,9 +38,14 @@ export async function POST(request: Request) {
       );
     }
 
-    if (password.length < 8) {
+    const passwordValidation = validatePassword(password);
+
+    if (!passwordValidation.valid) {
       return NextResponse.json(
-        { error: "Password must be at least 8 characters." },
+        {
+          error: "Invalid password.",
+          reason: passwordValidation.reason,
+        },
         { status: 400 },
       );
     }

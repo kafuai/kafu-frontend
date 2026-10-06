@@ -248,7 +248,7 @@ export default function PoliciesPage() {
     setEditCategory(policy.category);
     setEditPolicyType(policy.policyType ?? "");
     setEditErrors({ title: false, content: false });
-    setEditError(""); // CHANGED
+    setEditError(""); 
   }
 
   async function handleUpdate(id: string) {
@@ -527,7 +527,6 @@ export default function PoliciesPage() {
                   {copy.noPolicies}
                 </div>
               )}
-
               {policies.map((policy) => (
                 <div
                   key={policy.id}
@@ -535,6 +534,9 @@ export default function PoliciesPage() {
                 >
                   {editingId === policy.id ? (
                     <div>
+                      <label className="mb-1 block text-xs font-bold text-[var(--text-muted)]">
+                    {copy.category}
+                    </label>
                       <select
                         value={editCategory}
                         onChange={(e) => {
@@ -553,6 +555,10 @@ export default function PoliciesPage() {
 
                       {/* Type select in edit mode */}
                       {POLICY_TYPE_OPTIONS[editCategory] && (
+                        <div className="mb-3">
+                          <label className="mb-1 block text-xs font-bold text-[var(--text-muted)]">
+                            {copy.policyTypeLabel}
+                          </label>
                         <select
                           value={editPolicyType}
                           onChange={(e) => {
@@ -568,8 +574,14 @@ export default function PoliciesPage() {
                             </option>
                           ))}
                         </select>
+                        </div>
                       )}
+                      
 
+                      <div className="mb-3">
+                        <label className="mb-1 block text-xs font-bold text-[var(--text-muted)]">
+                          {copy.policyTitle}
+                        </label>
                       <input
                         value={editTitle}
                         onChange={(e) => {
@@ -583,8 +595,12 @@ export default function PoliciesPage() {
                       {editErrors.title && (
                         <p className="mb-2 text-xs text-[var(--critical)]">{copy.errTitleRequired}</p>
                       )}
+                      </div>
 
-                     
+                     <div className="mb-3">
+                      <label className="mb-1 block text-xs font-bold text-[var(--text-muted)]">
+                        {copy.policyContent}
+                      </label>
                       <textarea
                         value={editContent}
                         onChange={(e) => {
@@ -599,6 +615,7 @@ export default function PoliciesPage() {
                       {editErrors.content && (
                         <p className="mb-2 text-xs text-[var(--critical)]">{copy.errContentRequired}</p>
                       )}
+                      </div>
 
                       {/* CHANGED: inline error (replaces alert) */}
                       {editError && (
@@ -657,7 +674,7 @@ export default function PoliciesPage() {
                             {policy.title}
                           </h3>
                         </div>
-
+                       
                         <div className="flex shrink-0 gap-1.5">
                           <button
                             type="button"
@@ -675,6 +692,7 @@ export default function PoliciesPage() {
                           </button>
                         </div>
                       </div>
+
 
                       <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
                         {policy.content}

@@ -12,6 +12,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
+import { validatePassword } from "@/lib/passwordValidation";
 
 const CONTENT = {
   ar: {
@@ -32,6 +33,13 @@ const CONTENT = {
       forbidden: "هذه الصفحة متاحة فقط لمسؤول المنصة.",
       genericError: "تعذر إنشاء المؤسسة.",
       success: "تم إنشاء المؤسسة والمستخدم بنجاح. البريد:",
+      requiredFields: "جميع الحقول مطلوبة.",
+      invalidEmail: "صيغة البريد الإلكتروني غير صحيحة.",
+      paaswordLength: "يجب أن تتكون كلمة المرور من ٨ أحرف على الأقل.",
+      passwordLetter: "يجب أن تحتوي كلمة المرور على حرف واحد على الأقل.",
+      passwordNumber: "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل.",
+      passwordWhitespace: "لا يمكن أن تحتوي كلمة المرور على مسافات.",
+      englishOnly: "يجب أن تحتوي كلمة المرور على أحرف إنجليزية فقط.",
     },
     form: {
       showPassword: "إظهار كلمة المرور",
@@ -56,6 +64,13 @@ const CONTENT = {
       forbidden: "This page is restricted to platform administrators.",
       genericError: "Failed to create organization.",
       success: "Organization and user created successfully. Email:",
+      requiredFields: "All fields are required.",
+      invalidEmail: "Invalid email format.",
+      paaswordLength: "Password must be at least 8 characters.",
+      passwordLetter: "Password must contain at least one letter.",
+      passwordNumber: "Password must contain at least one number.",
+      passwordWhitespace: "Password cannot contain spaces.",
+      englishOnly: "Password must contain only English characters.",
     },
     form: {
       showPassword: "Show password",
@@ -84,6 +99,42 @@ export default function AdminOrganizationsPage() {
 
     setErrorMessage("");
     setSuccessMessage("");
+
+    if (!fullName || !companyName || !email || !password) {
+      setErrorMessage(t.messages.requiredFields);
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErrorMessage(t.messages.invalidEmail);
+      return;
+    }
+    
+    const passwordValidation = validatePassword(password);
+
+    if (!passwordValidation.valid) {
+      switch (passwordValidation.reason) {
+        case "too_short":
+          setErrorMessage(t.messages.paaswordLength);
+          break;
+
+        case "letter_required":
+          setErrorMessage(t.messages.passwordLetter);
+          break;
+
+        case "number_required":
+          setErrorMessage(t.messages.passwordNumber);
+          break;
+
+        case "whitespace_not_allowed":
+          setErrorMessage(t.messages.passwordWhitespace);
+          break;
+
+        case "english_only":
+          setErrorMessage(t.messages.englishOnly);
+          break;
+      }
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -141,6 +192,7 @@ export default function AdminOrganizationsPage() {
         <form
           onSubmit={handleSubmit}
           className="space-y-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-6"
+          noValidate
         >
           <div>
             <label className="mb-1.5 flex items-center gap-1.5 text-xs font-bold text-[var(--text-muted)]">
