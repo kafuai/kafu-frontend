@@ -89,7 +89,7 @@ export default function EmployeeExperiencePage() {
     welcomeMessage: isArabic
       ? "مرحبًا 👋\nأنا Employee Experience Manager. أقدر أساعدك في استفساراتك اليومية أو أستقبل طلباتك وأوجّهها لفريق الموارد البشرية."
       : "Hello 👋\n I'm the Employee Experience Manager. I can help with your daily inquiries or take your requests and route them to HR.",
-    headerTitle: "Employee Experience Manager",
+    headerTitle: isArabic ? "مدير تجربة الموظف" :"Employee Experience Manager",
     headerReady: isArabic ? "جاهز" : "Ready",
     headerSubtitle: isArabic
       ? "مساعد الموظفين الذكي للطلبات والاستفسارات اليومية"
@@ -199,16 +199,16 @@ export default function EmployeeExperiencePage() {
           ? "لدي استفسار للموارد البشرية"
           : "I have a question for HR",
       },
-      {
-        category: "data_update" as const,
-        title: isArabic ? "تحديث البيانات" : "Data Update",
-        description: isArabic
-          ? "طلب تعديل البيانات الشخصية"
-          : "Request personal data changes",
-        prompt: isArabic
-          ? "أريد تحديث بياناتي"
-          : "I'd like to update my data",
-      },
+      // {
+      //   category: "data_update" as const,
+      //   title: isArabic ? "تحديث البيانات" : "Data Update",
+      //   description: isArabic
+      //     ? "طلب تعديل البيانات الشخصية"
+      //     : "Request personal data changes",
+      //   prompt: isArabic
+      //     ? "أريد تحديث بياناتي"
+      //     : "I'd like to update my data",
+      // },
       
     ],
   };
@@ -659,13 +659,13 @@ setBalance(payload.balance ?? null);
                 </div>
               </div>
 
-              <button
+              {/* <button
                 type="button"
                 className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
               >
                 <Info size={15} />
                 {copy.howItWorks}
-              </button>
+              </button> */}
             </div>
 
             {/* Messages */}

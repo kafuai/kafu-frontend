@@ -427,7 +427,7 @@ export default function DigitalWorkforcePage() {
 
                   <h2 className="mt-3 text-2xl font-black tracking-tight">
                     {isArabic
-                      ? "استراتيجية KAFU AI للتشغيل"
+                      ? "استراتيجية كفو للتشغيل"
                       : "KAFU AI Operating Strategy"}
                   </h2>
 
@@ -452,7 +452,7 @@ export default function DigitalWorkforcePage() {
                       </>
                     ) : (
                       <>
-                        We do not recommend activating all agents at once. For{" "}
+                        We do not recommend activating all agents at once. For {" "}
                         <span className="font-black text-[var(--text-primary)]">
                           {company?.name || "this company"}
                         </span>
