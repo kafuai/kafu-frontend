@@ -239,7 +239,6 @@ export default function EmployeeExperienceRequestsPage() {
     retry: isArabic ? "إعادة المحاولة" : "Retry",
     createdAt: isArabic ? "تاريخ الإنشاء" : "Created",
     leaveType: isArabic ? "نوع الإجازة" : "Leave type",
-        balanceTitle: isArabic ? "رصيد الإجازة السنوية للموظف" : "Employee annual leave balance",
     balanceAllowance: isArabic ? "المسموح" : "Allowance",
     balanceUsed: isArabic ? "المستخدم" : "Used",
     balancePending: isArabic ? "معلّق (طلبات أخرى)" : "Other pending",
@@ -557,6 +556,9 @@ export default function EmployeeExperienceRequestsPage() {
                   />
                   {selectedRequest.requestType === "leave" && (
                     <div className="mt-3 rounded-2xl border border-[var(--border-default)] bg-[var(--background)] p-4">
+                      <p className="text-[11px] font-bold text-[var(--text-muted)]">
+                          {copy.leaveType}
+                      </p>
                       {selectedRequest.leaveTypeLabel && (
                         <p className="font-bold">
                           {selectedRequest.leaveTypeLabel}
@@ -589,7 +591,10 @@ export default function EmployeeExperienceRequestsPage() {
                       {selectedRequest.leaveBalance ? (
                       <div className="mt-4 border-t border-[var(--border-default)] pt-4">
                         <p className="text-[11px] font-bold text-[var(--text-muted)]">
-                          {copy.balanceTitle} ({selectedRequest.leaveBalance.year})
+                          {isArabic 
+                            ? `رصيد ${selectedRequest.leaveTypeLabel} للموظف` 
+                            : `Employee ${selectedRequest.leaveTypeLabel} balance`
+                          }
                         </p>
 
                         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">

@@ -17,7 +17,7 @@ export class LeaveValidationError extends Error {
 
 const BUSINESS_TIME_ZONE = "Asia/Riyadh";
 
-function toDateKey(timestamp: number): string {
+export function toDateKey(timestamp: number): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: BUSINESS_TIME_ZONE,
     year: "numeric",

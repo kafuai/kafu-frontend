@@ -9,6 +9,7 @@ import {
   LeaveRequestInput,
   LeaveType,
 } from "../types/leaveTypes";
+import { toDateKey } from "../utils/leaveValidator";
 
 type EmployeeRequestRow = {
   id: string;
@@ -23,6 +24,21 @@ type EmployeeRequestRow = {
   reviewed_by: string | null;
   reviewed_at: string | null;
 };
+
+const OVERLAP_MESSAGE = {
+    en: "A leave request already exists for the selected date range.",
+    ar: "يوجد طلب إجازة مسجّل مسبقًا ضمن الفترة المحددة.",
+    } as const;
+
+/** Inclusive calendar-date overlap. Inputs are "YYYY-MM-DD" keys (lexicographic order == date order). */
+export function datesOverlap(
+  existingStart: string,
+  existingEnd: string,
+  newStart: string,
+  newEnd: string,
+): boolean {
+  return existingStart <= newEnd && existingEnd >= newStart;
+}
 
 export class LeaveManager {
   private readonly validator =
@@ -51,6 +67,7 @@ export class LeaveManager {
     input: LeaveRequestInput & {
       companyId: string;
     },
+    messageLanguage: "ar" | "en" = "en",
   ): Promise<LeaveRequest> {
 
     if (!input.companyId) {
@@ -65,6 +82,8 @@ export class LeaveManager {
         validation.errors
       );
     }
+    // Backend guard: must run BEFORE the INSERT.
+    await this.assertNoApprovedOverlap(input, messageLanguage);
 
     const {
       data,
@@ -127,6 +146,58 @@ export class LeaveManager {
     return this.mapToLeaveRequest(
       data as EmployeeRequestRow,
     );
+  }
+
+    /**
+   * Throws LeaveValidationError if the same employee already has an APPROVED
+   * leave overlapping [startDate, endDate] (inclusive, calendar-date comparison).
+   * pending / rejected / cancelled never block.
+   */
+  async assertNoApprovedOverlap(
+    input: {
+      employeeId: string;
+      organizationId: string;
+      startDate: number;
+      endDate: number;
+    },
+    messageLanguage: "ar" | "en" = "en",
+  ): Promise<void> {
+    const { data, error } = await this.supabase
+      .from("employee_requests")
+      .select(
+        "id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at,reviewed_by,reviewed_at",
+      )
+      .eq("user_id", input.employeeId)
+      .eq("organization_id", input.organizationId)
+      .eq("request_type", "leave")
+      .eq("status", "approved");
+
+    if (error) {
+      throw new Error(
+        `Unable to verify existing leave requests: ${error.message}`,
+      );
+    }
+
+    const newStart = toDateKey(input.startDate);
+    const newEnd = toDateKey(input.endDate);
+
+    const overlaps = ((data ?? []) as EmployeeRequestRow[])
+      .map((row) => this.mapToLeaveRequest(row))
+      .some(
+        (leave) =>
+          Number.isFinite(leave.startDate) &&
+          Number.isFinite(leave.endDate) &&
+          datesOverlap(
+            toDateKey(leave.startDate),
+            toDateKey(leave.endDate),
+            newStart,
+            newEnd,
+          ),
+      );
+
+    if (overlaps) {
+      throw new LeaveValidationError([OVERLAP_MESSAGE[messageLanguage]]);
+    }
   }
 
   async approve(

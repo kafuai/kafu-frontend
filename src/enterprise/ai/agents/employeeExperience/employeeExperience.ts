@@ -356,6 +356,18 @@ export class EmployeeExperienceAgent {
       throw new LeaveValidationError(validation.errors);
     }
 
+    // Approved-leave overlap check. Done OUTSIDE the executor so the
+    // LeaveValidationError type is preserved (route returns 400, not 500).
+    await this.leaveManager.assertNoApprovedOverlap(
+      {
+        employeeId: request.employeeId,
+        organizationId: request.organizationId,
+        startDate: dates.startDate,
+        endDate: dates.endDate,
+      },
+      messageLanguage,
+    );
+
     // 3) Company policy is the source of truth. No policy => no request.
     const policy = await resolveLeavePolicyAllowance({
       policyManager: this.policyManager,
@@ -440,7 +452,8 @@ export class EmployeeExperienceAgent {
           startDate: dates.startDate,
           endDate: dates.endDate,
           reason: request.message,
-        });
+        }, messageLanguage);
+        
 
         return {
           message:
