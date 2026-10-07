@@ -1,12 +1,13 @@
-﻿import type {
-  ReactNode,
-} from "react";
+﻿"use client";
+
+import type { ReactNode } from "react";
 
 interface AuthenticationShellProps {
   readonly eyebrow: string;
   readonly title: string;
   readonly description: string;
   readonly children: ReactNode;
+  readonly onBack?: () => void;
 }
 
 export default function AuthenticationShell({
@@ -14,14 +15,20 @@ export default function AuthenticationShell({
   title,
   description,
   children,
+  onBack,
 }: AuthenticationShellProps) {
   return (
     <main
       dir="rtl"
-      className="min-h-screen bg-slate-950 px-4 py-10 sm:px-6 lg:px-8"
+      onClick={onBack}
+      className="min-h-screen bg-slate-950 px-4 py-10 sm:px-6 lg:px-8 cursor-pointer"
     >
-      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center justify-center">
-        <section className="grid w-full overflow-hidden rounded-3xl border border-white/10 bg-white shadow-2xl lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center justify-center pointer-events-none">
+        {/* البوكس فقط: تفعيل التفاعل وإيقاف الرجوع عند الضغط داخله */}
+        <section 
+          onClick={(e) => e.stopPropagation()}
+          className="pointer-events-auto grid w-full overflow-hidden rounded-3xl border border-white/10 bg-white shadow-2xl lg:grid-cols-[1.05fr_0.95fr] cursor-default"
+        >
           <div className="order-2 p-6 sm:p-10 lg:order-1 lg:p-14">
             {children}
           </div>

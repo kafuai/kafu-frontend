@@ -116,7 +116,7 @@ export default function CorporateBrainReasoning() {
               {!isLast && (
                 <ArrowDown
                   size={18}
-                  className="mx-auto mt-4 text-[var(--brand-primary)] lg:absolute lg:-inset-inline-end-[22px] lg:top-1/2 lg:mt-0 lg:-translate-y-1/2 lg:-rotate-90"
+                  className="mx-auto mt-4 text-[var(--brand-primary)] lg:absolute lg:top-1/2 lg:mt-0 lg:-translate-y-1/2 ltr:lg:-right-[-6px] ltr:lg:left-auto rtl:lg:-left-[-6px] rtl:lg:right-auto ltr:lg:-rotate-90 rtl:lg:rotate-90"
                   aria-hidden="true"
                 />
               )}

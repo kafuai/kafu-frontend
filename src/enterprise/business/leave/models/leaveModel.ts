@@ -10,4 +10,6 @@ export interface LeaveRequest {
   endDate: number;
   reason: string;
   createdAt: number;
+  reviewedBy: string | null;
+  reviewedAt: number | null;
 }

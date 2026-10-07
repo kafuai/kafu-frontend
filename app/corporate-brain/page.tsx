@@ -12,6 +12,7 @@ import {
   BrainCircuit,
   Building2,
   RefreshCw,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 
@@ -32,6 +33,10 @@ import {
 import {
   supabase,
 } from "@/lib/supabase";
+
+import {
+  cleanGroundedAIText,
+} from "@/lib/cleanGroundedAIText";
 
 interface CorporateBrainAIResponse {
   data?: {
@@ -105,202 +110,237 @@ export default function CorporateBrainPage() {
   ] =
     useState("");
 
+  const [
+    aiCitations,
+    setAICitations,
+  ] =
+    useState<
+      Array<{
+        evidenceId: string;
+        source: string;
+        label: string;
+      }>
+    >([]);
+
+  //  Keep the executive summary scoped to the current company and locale.
+  function getExecutiveSummaryStorageKey(
+    companyId: string,
+  ) {
+    return `corporate_brain_executive_summary:${companyId}:${locale}`;
+  }
+
+  // Generate the executive summary only when the user explicitly requests it.
+  async function generateCorporateBrainInsight() {
+    if (!company) {
+      return;
+    }
+
+    setAILoading(true);
+    setAIError("");
+    setAIInsight("");
+    setAICitations([]);
+
+    try {
+      const discoveryEvidence =
+        answers
+          .slice(0, 20)
+          .map(
+            (
+              answer,
+              index,
+            ) => ({
+              id:
+                `DISCOVERY-${index + 1}`,
+
+              source:
+                "Corporate Discovery",
+
+              label:
+                String(
+                  answer.question
+                  ?? `Discovery Answer ${index + 1}`,
+                ),
+
+              value:
+                String(
+                  answer.answer
+                  ?? "",
+                ),
+            }),
+          );
+
+      const evidence = [
+        {
+          id:
+            "COMPANY-NAME",
+
+          source:
+            "Company Profile",
+
+          label:
+            "Company Name",
+
+          value:
+            String(
+              company.name
+              ?? "",
+            ),
+        },
+
+        {
+          id:
+            "COMPANY-INDUSTRY",
+
+          source:
+            "Company Profile",
+
+          label:
+            "Industry",
+
+          value:
+            String(
+              company.industry
+              ?? "",
+            ),
+        },
+
+        {
+          id:
+            "COMPANY-COUNTRY",
+
+          source:
+            "Company Profile",
+
+          label:
+            "Country",
+
+          value:
+            String(
+              company.country
+              ?? "",
+            ),
+        },
+
+        {
+          id:
+            "COMPANY-EMPLOYEES",
+
+          source:
+            "Company Profile",
+
+          label:
+            "Employee Count",
+
+          value:
+            company.employee_count
+            ?? null,
+        },
+
+        ...discoveryEvidence,
+      ];
+
+      const response =
+        await fetch(
+          "/api/ai/grounded",
+          {
+            method:
+              "POST",
+
+            credentials:
+              "same-origin",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                task:
+                  isArabic
+                    ? "قدّم ملخصًا تنفيذيًا موجزًا عن المؤسسة بالاعتماد حصريًا على الأدلة المتاحة، وحدد أهم الأولويات أو المخاطر أو الفرص التي تستحق انتباه الإدارة."
+                    : "Provide a concise executive intelligence summary of the company using only the supplied evidence. Identify the most important priorities, risks, or opportunities that deserve management attention.",
+
+                question:
+                  isArabic
+                    ? "ما أهم ما يجب على الإدارة معرفته واتخاذ قرار بشأنه الآن؟"
+                    : "What should management understand and act on now?",
+
+                locale,
+
+                evidence,
+              }),
+          },
+        );
+
+      const payload =
+        (await response.json()) as CorporateBrainAIResponse;
+
+      if (!response.ok) {
+        throw new Error(
+          payload.error
+          ?? `Corporate Brain AI request failed with status ${response.status}.`,
+        );
+      }
+
+      const text =
+        payload.data?.text?.trim();
+
+      const citations =
+        payload.data?.citations
+        ?? [];
+
+      if (!text) {
+        throw new Error(
+          isArabic
+            ? "لم يتم إرجاع تحليل من طبقة الذكاء الاصطناعي."
+            : "The AI intelligence layer returned no analysis.",
+        );
+      }
+
+      const cleanedText =
+        cleanGroundedAIText(text);
+
+      setAICitations(
+        citations,
+      );
+
+      setAIInsight(
+        cleanedText,
+      );
+
+      // Persist the generated summary for the current browser session.
+      sessionStorage.setItem(
+        getExecutiveSummaryStorageKey(
+          company.id,
+        ),
+        JSON.stringify({
+          text:
+            cleanedText,
+
+          citations,
+        }),
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : isArabic
+            ? "تعذر إنشاء التحليل التنفيذي المدعوم بالذكاء الاصطناعي."
+            : "Unable to generate AI-powered executive intelligence.";
+
+      setAIError(
+        errorMessage,
+      );
+    } finally {
+      setAILoading(
+        false,
+      );
+    }
+  }
+
   useEffect(() => {
     let isMounted = true;
-
-    async function generateCorporateBrainInsight(
-      companyData:
-        CorporateBrainCompany,
-
-      answersData:
-        CorporateBrainDiscoveryAnswer[],
-    ) {
-      if (isMounted) {
-        setAILoading(true);
-        setAIError("");
-        setAIInsight("");
-      }
-
-      try {
-        const discoveryEvidence =
-          answersData
-            .slice(0, 20)
-            .map(
-              (
-                answer,
-                index,
-              ) => ({
-                id:
-                  `DISCOVERY-${index + 1}`,
-
-                source:
-                  "Corporate Discovery",
-
-                label:
-                  String(
-                    answer.question
-                    ?? `Discovery Answer ${index + 1}`,
-                  ),
-
-                value:
-                  String(
-                    answer.answer
-                    ?? "",
-                  ),
-              }),
-            );
-
-        const evidence = [
-          {
-            id:
-              "COMPANY-NAME",
-
-            source:
-              "Company Profile",
-
-            label:
-              "Company Name",
-
-            value:
-              String(
-                companyData.name
-                ?? "",
-              ),
-          },
-
-          {
-            id:
-              "COMPANY-INDUSTRY",
-
-            source:
-              "Company Profile",
-
-            label:
-              "Industry",
-
-            value:
-              String(
-                companyData.industry
-                ?? "",
-              ),
-          },
-
-          {
-            id:
-              "COMPANY-COUNTRY",
-
-            source:
-              "Company Profile",
-
-            label:
-              "Country",
-
-            value:
-              String(
-                companyData.country
-                ?? "",
-              ),
-          },
-
-          {
-            id:
-              "COMPANY-EMPLOYEES",
-
-            source:
-              "Company Profile",
-
-            label:
-              "Employee Count",
-
-            value:
-              companyData.employee_count
-              ?? null,
-          },
-
-          ...discoveryEvidence,
-        ];
-
-        const response =
-          await fetch(
-            "/api/ai/grounded",
-            {
-              method:
-                "POST",
-
-              credentials:
-                "same-origin",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-
-              body:
-                JSON.stringify({
-                  task:
-                    isArabic
-                      ? "قدّم ملخصًا تنفيذيًا موجزًا عن المؤسسة بالاعتماد حصريًا على الأدلة المتاحة، وحدد أهم الأولويات أو المخاطر أو الفرص التي تستحق انتباه الإدارة."
-                      : "Provide a concise executive intelligence summary of the company using only the supplied evidence. Identify the most important priorities, risks, or opportunities that deserve management attention.",
-
-                  question:
-                    isArabic
-                      ? "ما أهم ما يجب على الإدارة معرفته واتخاذ قرار بشأنه الآن؟"
-                      : "What should management understand and act on now?",
-
-                  locale,
-
-                  evidence,
-                }),
-            },
-          );
-
-        const payload =
-          (await response.json()) as CorporateBrainAIResponse;
-
-        if (!response.ok) {
-          throw new Error(
-            payload.error
-            ?? `Corporate Brain AI request failed with status ${response.status}.`,
-          );
-        }
-
-        const text =
-          payload.data?.text?.trim();
-
-        if (!text) {
-          throw new Error(
-            isArabic
-              ? "لم يتم إرجاع تحليل من طبقة الذكاء الاصطناعي."
-              : "The AI intelligence layer returned no analysis.",
-          );
-        }
-
-        if (isMounted) {
-          setAIInsight(
-            text,
-          );
-        }
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : isArabic
-              ? "تعذر إنشاء التحليل التنفيذي المدعوم بالذكاء الاصطناعي."
-              : "Unable to generate AI-powered executive intelligence.";
-
-        if (isMounted) {
-          setAIError(
-            errorMessage,
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setAILoading(
-            false,
-          );
-        }
-      }
-    }
 
     async function loadCorporateBrain() {
       if (isMounted) {
@@ -308,6 +348,7 @@ export default function CorporateBrainPage() {
         setMessage("");
         setAIInsight("");
         setAIError("");
+        setAICitations([]);
       }
 
       const companyId =
@@ -408,18 +449,52 @@ export default function CorporateBrainPage() {
             normalizedAnswers,
           );
 
+          // Restore the previously generated summary from sessionStorage.
+          if (companyData) {
+            const savedSummary =
+              sessionStorage.getItem(
+                getExecutiveSummaryStorageKey(
+                  companyData.id,
+                ),
+              );
+
+            if (savedSummary) {
+              try {
+                const parsed =
+                  JSON.parse(
+                    savedSummary,
+                  ) as {
+                    text?: string;
+
+                    citations?: Array<{
+                      evidenceId: string;
+                      source: string;
+                      label: string;
+                    }>;
+                  };
+
+                setAIInsight(
+                  parsed.text
+                  ?? "",
+                );
+
+                setAICitations(
+                  parsed.citations
+                  ?? [],
+                );
+              } catch {
+                // Remove invalid session data instead of breaking page initialization.
+                sessionStorage.removeItem(
+                  getExecutiveSummaryStorageKey(
+                    companyData.id,
+                  ),
+                );
+              }
+            }
+          }
+
           setLoading(
             false,
-          );
-        }
-
-        if (
-          companyData
-          && isMounted
-        ) {
-          await generateCorporateBrainInsight(
-            companyData,
-            normalizedAnswers,
           );
         }
       } catch (error) {
@@ -445,6 +520,10 @@ export default function CorporateBrainPage() {
 
           setAIInsight(
             "",
+          );
+
+          setAICitations(
+            [],
           );
 
           setAIError(
@@ -526,9 +605,10 @@ export default function CorporateBrainPage() {
               />
 
               <span>
+                {/* Page initialization now loads data only; AI runs from the explicit button. */}
                 {isArabic
-                  ? "تجهيز طبقة الذكاء التنفيذي"
-                  : "Preparing executive intelligence layer"}
+                  ? "تحميل بيانات المؤسسة"
+                  : "Loading company data"}
               </span>
             </div>
           </div>
@@ -653,6 +733,45 @@ export default function CorporateBrainPage() {
                     : "KAFU AI — Live Executive Intelligence"}
                 </p>
 
+                {/* Explicit control so AI runs only when the user requests it. */}
+                {!aiLoading
+                  ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void generateCorporateBrainInsight();
+                      }}
+                      className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 text-[10px] font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+                    >
+                      {aiInsight
+                        ? (
+                          <RefreshCw
+                            aria-hidden="true"
+                            size={13}
+                          />
+                        )
+                        : (
+                          <Sparkles
+                            aria-hidden="true"
+                            size={13}
+                          />
+                        )}
+
+                      {aiInsight
+                        ? (
+                          isArabic
+                            ? "إعادة الإنشاء"
+                            : "Regenerate"
+                        )
+                        : (
+                          isArabic
+                            ? "إنشاء الملخص التنفيذي"
+                            : "Generate Executive Summary"
+                        )}
+                    </button>
+                  )
+                  : null}
+
                 {!aiLoading
                   && aiInsight
                   ? (
@@ -675,17 +794,59 @@ export default function CorporateBrainPage() {
                 )
                 : aiInsight
                   ? (
-                    <p className="mt-2 whitespace-pre-line text-sm leading-7 text-[var(--text-secondary)]">
-                      {aiInsight}
-                    </p>
+                    <div className="mt-2">
+                      <p className="whitespace-pre-line text-sm leading-7 text-[var(--text-secondary)]">
+                        {aiInsight}
+                      </p>
+
+                      {aiCitations.length > 0 ? (
+                        <div className="mt-4">
+                          <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.1em] text-[var(--text-muted)]">
+                            {isArabic
+                              ? "المصادر والأدلة"
+                              : "Sources & Evidence"}
+                          </p>
+
+                          <div className="flex flex-wrap gap-2">
+                            {aiCitations.map(
+                              (
+                                citation,
+                              ) => (
+                                <span
+                                  key={
+                                    citation.evidenceId
+                                  }
+                                  title={
+                                    citation.label
+                                  }
+                                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface)] px-3 py-1.5 text-[10px] font-bold text-[var(--text-secondary)]"
+                                >
+                                  <ShieldCheck
+                                    aria-hidden="true"
+                                    size={13}
+                                    className="shrink-0 text-[var(--success)]"
+                                  />
+
+                                  <span>
+                                    {
+                                      citation.source
+                                    }
+                                  </span>
+                                </span>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
                   )
                   : (
                     <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
                       {aiError
                         || (
                           isArabic
-                            ? "تعذر إنشاء التحليل التنفيذي المباشر حاليًا."
-                            : "Live executive intelligence is temporarily unavailable."
+                            ? "اضغط على «إنشاء الملخص التنفيذي» لتحليل بيانات المؤسسة."
+                            : "Click “Generate Executive Summary” to analyze the company evidence."
                         )}
                     </p>
                   )}
@@ -705,4 +866,3 @@ export default function CorporateBrainPage() {
     </main>
   );
 }
-
