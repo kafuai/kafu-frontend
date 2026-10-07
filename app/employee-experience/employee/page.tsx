@@ -57,6 +57,16 @@ type HRRequest = {
   reviewedAt: number | null;
   startDate: number | null;
   endDate: number | null;
+  leaveType?: string | null;
+};
+
+type LeaveBalance = {
+  year: number;
+  allowance: number;
+  approved: number;
+  pending: number;
+  used: number;
+  remaining: number;
 };
 
 export default function EmployeeExperiencePage() {
@@ -104,6 +114,14 @@ export default function EmployeeExperiencePage() {
     poweredByAI: isArabic
       ? "مدعوم بالذكاء الاصطناعي"
       : "Powered by AI",
+    leaveTypeLabels: {
+      annual: isArabic ? "إجازة سنوية" : "Annual leave",
+      sick: isArabic ? "إجازة مرضية" : "Sick leave",
+      emergency: isArabic ? "إجازة طارئة" : "Emergency leave",
+      unpaid: isArabic ? "إجازة بدون راتب" : "Unpaid leave",
+      maternity: isArabic ? "إجازة أمومة" : "Maternity leave",
+      other: isArabic ? "إجازة أخرى" : "Other leave",
+    } as Record<string, string>,
     capabilitiesTitle: isArabic
       ? "ماذا أستطيع أن أفعل؟"
       : "What can I do?",
@@ -139,6 +157,12 @@ export default function EmployeeExperiencePage() {
     decisionBy: isArabic ? "تم اتخاذ القرار بواسطة": "Decision by",
     decisionDate: isArabic ? "تاريخ الإجراء" : "Action date",
     decisionPending: isArabic ? "لم يتم اتخاذ قرار بعد": "No decision has been taken yet",
+    balanceTitle: isArabic ? "رصيد الإجازة السنوية" : "Annual Leave Balance",
+    balanceAllowance: isArabic ? "المسموح" : "Allowance",
+    balanceUsed: isArabic ? "المستخدم" : "Used",
+    balancePending: isArabic ? "معلّق" : "Pending",
+    balanceRemaining: isArabic ? "المتبقي" : "Remaining",
+    daysUnit: isArabic ? "يوم" : "days",
 
     capabilities: [
       {
@@ -219,9 +243,8 @@ export default function EmployeeExperiencePage() {
   const [requests, setRequests] = useState<HRRequest[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState
-    <RequestCategory | "all">
-  ("all");
+  const [selectedCategory, setSelectedCategory] = useState<RequestCategory | "all">("all");
+  const [balance, setBalance] = useState<LeaveBalance | null>(null);
 
   const visibleRequests = useMemo(() => {
     if (selectedCategory === "all") return requests;
@@ -375,6 +398,7 @@ export default function EmployeeExperiencePage() {
           reviewedAt: number | null;
           startDate?: number;
           endDate?: number;
+          leaveType?: string;  
         }>
       ).map((item) => ({
         id: item.id,
@@ -385,9 +409,11 @@ export default function EmployeeExperiencePage() {
         reviewedAt: item.reviewedAt ?? null,
         startDate: item.startDate ? Number(item.startDate) : null,
         endDate: item.endDate ? Number(item.endDate) : null,
+        leaveType: item.leaveType ?? null,
       }));
 
 setRequests(mapped);
+setBalance(payload.balance ?? null);
     } catch (error) {
       console.error(
         "Failed to load employee requests:",
@@ -505,6 +531,11 @@ setRequests(mapped);
     }
   }
 
+    const usedPct =
+    balance && balance.allowance > 0
+      ? Math.min(100, Math.round((balance.used / balance.allowance) * 100))
+      : 0;
+
   return (
     <main
       dir={isArabic ? "rtl" : "ltr"}
@@ -558,10 +589,59 @@ setRequests(mapped);
           </div>
         </section>
 
+        {/* Leave Balance */}
+            {balance && (
+              <div className="rounded-[26px] border border-[var(--border)] bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {copy.balanceTitle}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      {balance.year}
+                    </p>
+                  </div>
+                  <CalendarDays
+                    size={17}
+                    className="text-[var(--brand-primary)]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  {[
+                    { label: copy.balanceAllowance, value: balance.allowance },
+                    { label: copy.balanceUsed, value: balance.approved },
+                    { label: copy.balancePending, value: balance.pending },
+                    { label: copy.balanceRemaining, value: balance.remaining },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-xl bg-slate-50 px-1 py-2.5"
+                    >
+                      <p className="text-base font-bold text-slate-800">
+                        {item.value}
+                      </p>
+                      <p className="mt-0.5 text-[10px] text-slate-400">
+                        {item.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-[var(--brand-primary)] transition-all"
+                    style={{ width: `${usedPct}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+
         {/* Main Workspace */}
         <section className="grid min-h-[680px] grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
           {/* Chat */}
-          <div className="flex min-h-[680px] flex-col overflow-hidden rounded-[26px] border border-[var(--border)] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+          <div className="flex h-[680px] self-start sticky top-6 flex-col overflow-hidden rounded-[26px] border border-[var(--border)] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
               <div className="flex items-center gap-3">
                 <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-[var(--brand-primary)]">
@@ -851,6 +931,11 @@ setRequests(mapped);
                         <p className="mt-1 text-[10px] text-slate-400">
                            {formatShortReference(request.id)} · {formatRequestDate(request.createdAt)}
                       </p>
+                      {request.category === "leave" && request.leaveType && (
+                        <span className="mt-1.5 me-1.5 inline-flex items-center rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-semibold text-[var(--brand-primary)]">
+                          {copy.leaveTypeLabels[request.leaveType] ?? request.leaveType}
+                        </span>
+                      )}
                       {request.category === "leave" && request.startDate && request.endDate && (
                       <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-slate-100/70 px-2 py-1 text-[10px] font-medium text-slate-600">
                         <CalendarDays size={10} className="text-slate-400" />

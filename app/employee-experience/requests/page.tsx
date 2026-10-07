@@ -41,6 +41,8 @@ type EmployeeRequest = {
   status: RequestStatus;
   createdAt: string;
   requestedDates?: string;
+  leaveTypeLabel?: string;
+  leaveBalance?: LeaveBalanceInfo | null;
 };
 
 type ApiLeaveRequest = {
@@ -53,6 +55,19 @@ type ApiLeaveRequest = {
   startDate: number;
   endDate: number;
   createdAt: number;
+  leaveType?: string;
+  leaveBalance?: LeaveBalanceInfo | null;
+};
+
+type LeaveBalanceInfo = {
+  year: number;
+  allowance: number;
+  approved: number;
+  pending: number;
+  used: number;
+  remaining: number;
+  requested: number;
+  remainingAfter: number;
 };
 
 /* -------------------------------------------------------------------------- */
@@ -87,8 +102,16 @@ export default function EmployeeExperienceRequestsPage() {
       year: "numeric",
     }).format(new Date(timestamp));
   }
+  const leaveTypeLabels: Record<string, string> = {
+    annual: isArabic ? "إجازة سنوية" : "Annual leave",
+    sick: isArabic ? "إجازة مرضية" : "Sick leave",
+    emergency: isArabic ? "إجازة طارئة" : "Emergency leave",
+    unpaid: isArabic ? "إجازة بدون راتب" : "Unpaid leave",
+    maternity: isArabic ? "إجازة أمومة" : "Maternity leave",
+    other: isArabic ? "إجازة أخرى" : "Other leave",
+  };
 
-  function mapApiRequest(item: ApiLeaveRequest): EmployeeRequest {
+ function mapApiRequest(item: ApiLeaveRequest): EmployeeRequest {
     const isLeave = item.requestType === "leave";
 
     return {
@@ -97,12 +120,8 @@ export default function EmployeeExperienceRequestsPage() {
       employeeName: item.employeeName,
       requestType: item.requestType,
       title: isLeave
-        ? isArabic
-          ? "طلب إجازة"
-          : "Leave request"
-        : isArabic
-          ? "طلب خطاب تعريف"
-          : "Employment letter request",
+        ? (isArabic ? "طلب إجازة" : "Leave request")
+        : (isArabic ? "طلب خطاب تعريف" : "Employment letter request"),
       description: item.reason,
       status: item.status,
       createdAt: formatDate(item.createdAt),
@@ -110,6 +129,13 @@ export default function EmployeeExperienceRequestsPage() {
         isLeave && item.startDate && item.endDate
           ? `${formatDate(item.startDate)} — ${formatDate(item.endDate)}`
           : undefined,
+      leaveTypeLabel:
+        isLeave && item.leaveType
+          ? leaveTypeLabels[item.leaveType] ?? item.leaveType
+          : undefined,
+      leaveBalance:
+      isLeave && item.status === "pending" ? item.leaveBalance ?? null : null,
+      
     };
   }
 
@@ -212,6 +238,13 @@ export default function EmployeeExperienceRequestsPage() {
       : "Couldn't load requests",
     retry: isArabic ? "إعادة المحاولة" : "Retry",
     createdAt: isArabic ? "تاريخ الإنشاء" : "Created",
+    leaveType: isArabic ? "نوع الإجازة" : "Leave type",
+        balanceTitle: isArabic ? "رصيد الإجازة السنوية للموظف" : "Employee annual leave balance",
+    balanceAllowance: isArabic ? "المسموح" : "Allowance",
+    balanceUsed: isArabic ? "المستخدم" : "Used",
+    balancePending: isArabic ? "معلّق (طلبات أخرى)" : "Other pending",
+    balanceRequested: isArabic ? "المطلوب الآن" : "Requested now",
+    balanceAfter: isArabic ? "المتبقي بعد الموافقة" : "Remaining if approved",
   };
 
   const selectedRequest =
@@ -522,6 +555,16 @@ export default function EmployeeExperienceRequestsPage() {
                     icon={<CalendarDays size={17} />}
                     title={copy.request}
                   />
+                  {selectedRequest.requestType === "leave" && (
+                    <div className="mt-3 rounded-2xl border border-[var(--border-default)] bg-[var(--background)] p-4">
+                      {selectedRequest.leaveTypeLabel && (
+                        <p className="font-bold">
+                          {selectedRequest.leaveTypeLabel}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
                   <div className="mt-3 rounded-2xl border border-[var(--border-default)] bg-[var(--background)] p-4">
                     <p className="text-sm leading-7 text-[var(--text-secondary)]">
                       {selectedRequest.description}
@@ -539,6 +582,38 @@ export default function EmployeeExperienceRequestsPage() {
                           <p className="mt-0.5 text-sm font-extrabold text-[var(--text-primary)]">
                             {selectedRequest.requestedDates}
                           </p>
+                        </div>
+                      </div>
+                    ) : null}
+
+                      {selectedRequest.leaveBalance ? (
+                      <div className="mt-4 border-t border-[var(--border-default)] pt-4">
+                        <p className="text-[11px] font-bold text-[var(--text-muted)]">
+                          {copy.balanceTitle} ({selectedRequest.leaveBalance.year})
+                        </p>
+
+                        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                          <BalanceStat
+                            label={copy.balanceAllowance}
+                            value={selectedRequest.leaveBalance.allowance}
+                          />
+                          <BalanceStat
+                            label={copy.balanceUsed}
+                            value={selectedRequest.leaveBalance.approved}
+                          />
+                          <BalanceStat
+                            label={copy.balancePending}
+                            value={selectedRequest.leaveBalance.pending}
+                          />
+                          <BalanceStat
+                            label={copy.balanceRequested}
+                            value={selectedRequest.leaveBalance.requested}
+                          />
+                          <BalanceStat
+                            label={copy.balanceAfter}
+                            value={selectedRequest.leaveBalance.remainingAfter}
+                            critical={selectedRequest.leaveBalance.remainingAfter < 0}
+                          />
                         </div>
                       </div>
                     ) : null}
@@ -733,6 +808,11 @@ function RequestListItem({
           <p className="mt-3 line-clamp-1 text-sm font-bold text-[var(--text-primary)]">
             {request.title}
           </p>
+            {request.leaveTypeLabel && (
+            <span className="mt-2 inline-flex items-center rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-extrabold text-[var(--brand-primary)]">
+              {request.leaveTypeLabel}
+            </span>
+          )}
 
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <StatusBadge status={request.status} locale={locale} />
@@ -757,6 +837,31 @@ function SectionHeading({
     <div className="flex items-center gap-2 text-[var(--text-primary)]">
       <span className="text-[var(--brand-primary)]">{icon}</span>
       <h3 className="text-sm font-black">{title}</h3>
+    </div>
+  );
+}
+
+function BalanceStat({
+  label,
+  value,
+  critical = false,
+}: {
+  label: string;
+  value: number;
+  critical?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-2 py-2.5 text-center">
+      <p
+        className={`text-base font-black ${
+          critical ? "text-[var(--critical)]" : "text-[var(--text-primary)]"
+        }`}
+      >
+        {value}
+      </p>
+      <p className="mt-0.5 text-[10px] font-bold text-[var(--text-muted)]">
+        {label}
+      </p>
     </div>
   );
 }
