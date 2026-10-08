@@ -26,6 +26,22 @@ export function toDateKey(timestamp: number): string {
   }).format(new Date(timestamp));
 }
 
+/** "YYYY-MM-DD" -> UTC-midnight timestamp (same convention as the agent's extractDates). */
+export function parseDateKey(value: string): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!m) return null;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const date = new Date(Date.UTC(y, mo - 1, d));
+  if (
+    date.getUTCFullYear() !== y ||
+    date.getUTCMonth() !== mo - 1 ||
+    date.getUTCDate() !== d
+  ) {
+    return null;
+  }
+  return date.getTime();
+}
+
 export class LeaveValidator {
   validate(
     input: LeaveRequestInput,

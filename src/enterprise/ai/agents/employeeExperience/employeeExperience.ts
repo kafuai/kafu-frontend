@@ -25,6 +25,11 @@ import {
 } from "./employeeExperienceClassification";
 import { resolveLeavePolicyAllowance } from "./leavePolicyAllowance";
 import { resolveLeaveType } from "@/src/enterprise/business/leave/types/leaveTypeResolver";
+import {
+  validateLeaveAttachment,
+  uploadLeaveAttachment,
+  removeLeaveAttachment,
+} from "@/src/enterprise/business/leave/utils/leaveAttachment";
 
 interface EmployeeExperienceRequest {
   message: string;
@@ -46,6 +51,7 @@ export interface EmployeeExperienceResult {
   requestId?: string;
   classification: EmployeeMessageClassification;
   citedPolicyIds?: string[];
+  nextAction?: "sick_leave_form";
 }
 
 /**
@@ -82,6 +88,8 @@ const LEAVE_TYPE_LABELS: Record<LeaveType, { ar: string; en: string }> = {
   maternity: { ar: "إجازة الأمومة", en: "maternity leave" },
   other: { ar: "هذا النوع من الإجازات", en: "this type of leave" },
 };
+
+
 
 export class EmployeeExperienceAgent {
   private readonly executor: AIAgentExecutor;
@@ -142,6 +150,134 @@ export class EmployeeExperienceAgent {
           : "تم تصنيف طلبك، لكن المعالجة الآلية لهذا النوع غير مفعّلة بعد. سيتم تحويله لفريق الموارد البشرية.",
       status: "not_supported",
       classification,
+    };
+  }
+
+    async submitSickLeave(params: {
+    employeeId: string;
+    organizationId: string;
+    companyId: string;
+    startDate: number;
+    endDate: number;
+    reason: string;
+    file: unknown;
+    locale: "ar" | "en";
+  }): Promise<{ requestId: string; status: string; message: string }> {
+    const lang = params.locale;
+
+    if (await this.leaveManager.hasPendingRequest(params.organizationId, params.employeeId)) {
+      throw new LeaveValidationError([
+        lang === "en"
+          ? "You already have a pending leave request. Please wait for HR to review it before submitting a new one."
+          : "لديك طلب إجازة قيد المراجعة بالفعل. يرجى الانتظار حتى تتم مراجعته من الموارد البشرية قبل تقديم طلب جديد.",
+      ]);
+    }
+
+    const validation = new LeaveValidator().validate(
+      {
+        employeeId: params.employeeId,
+        organizationId: params.organizationId,
+        type: "sick",
+        startDate: params.startDate,
+        endDate: params.endDate,
+        reason: params.reason,
+      },
+      Date.now(),
+      lang,
+    );
+    if (!validation.valid) throw new LeaveValidationError(validation.errors);
+
+    const file = await validateLeaveAttachment(params.file, lang);
+
+    await this.leaveManager.assertNoApprovedOverlap(
+      {
+        employeeId: params.employeeId,
+        organizationId: params.organizationId,
+        startDate: params.startDate,
+        endDate: params.endDate,
+      },
+      lang,
+    );
+
+    const blocked = await this.evaluatePolicyForLeave(
+      { ...params, message: "Sick leave request" },
+      "sick",
+      params,
+      lang,
+    );
+    if (blocked) throw new LeaveValidationError([blocked.message]);
+
+    const task: AIAgentTask = {
+      id: newId("task"),
+      goalId: newId("goal"),
+      agentId: this.profile.id,
+      organizationId: params.organizationId,
+      title: "Sick leave request",
+      description: "Structured sick leave request with medical certificate.",
+      priority: "medium",
+      status: "queued",
+      requiredCapabilities: ["leave-request"],
+      dependencies: [],
+      expectedOutcome: "Create a pending sick leave request for the authenticated employee.",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const execution: AIAgentExecution = {
+      id: newId("execution"),
+      organizationId: params.organizationId,
+      agentId: this.profile.id,
+      taskId: task.id,
+      status: "queued",
+      profile: this.profile,
+      task,
+    };
+
+    const result = await this.executor.execute(execution, async () => {
+      const requestId = randomUUID();
+      const attachment = await uploadLeaveAttachment({
+        companyId: params.companyId,
+        employeeId: params.employeeId,
+        requestId,
+        file,
+      });
+
+      try {
+        const leave = await this.leaveManager.request(
+          {
+            id: requestId,
+            employeeId: params.employeeId,
+            organizationId: params.organizationId,
+            companyId: params.companyId,
+            type: "sick",
+            startDate: params.startDate,
+            endDate: params.endDate,
+            reason: params.reason,
+            attachment,
+          },
+          lang,
+        );
+        return {
+          message:
+            lang === "en"
+              ? "Your sick leave request has been received and is now pending HR approval."
+              : "تم استلام طلب الإجازة المرضية وهو الآن بانتظار موافقة الموارد البشرية.",
+          status: leave.status,
+          requestId: leave.id,
+        };
+      } catch (error) {
+        await removeLeaveAttachment(attachment.path); // no orphan file
+        throw error;
+      }
+    });
+
+    if (result.status !== "completed" || !result.output?.requestId) {
+      throw new Error(result.errorMessage ?? "Sick leave request failed.");
+    }
+
+    return {
+      requestId: String(result.output.requestId),
+      status: "pending",
+      message: String(result.output.message),
     };
   }
 
@@ -294,6 +430,47 @@ export class EmployeeExperienceAgent {
     };
   }
 
+    private async evaluatePolicyForLeave(
+    p: { organizationId: string; companyId: string; employeeId: string; message: string },
+    leaveType: LeaveType,
+    dates: { startDate: number; endDate: number },
+    lang: "ar" | "en",
+  ): Promise<{ blocked: "not_covered" | "allowance_exceeded"; message: string } | null> {
+    const policy = await resolveLeavePolicyAllowance({
+      policyManager: this.policyManager,
+      organizationId: p.organizationId,
+      companyId: p.companyId,
+      employeeId: p.employeeId,
+      leaveType,
+      userMessage: p.message,
+    });
+
+    if (!policy.covered) {
+      const label = LEAVE_TYPE_LABELS[leaveType];
+      return {
+        blocked: "not_covered",
+        message:
+          lang === "en"
+            ? `I couldn't find a company policy that covers ${label.en}, so your request was not created. Please contact HR.`
+            : `لم أجد سياسة في الشركة تغطي ${label.ar}، لذلك لم يتم إنشاء الطلب. يرجى التواصل مع الموارد البشرية.`,
+      };
+    }
+
+    if (policy.days !== null) {
+      const existing = await this.leaveManager.list(p.organizationId, p.employeeId);
+      const evaluation = evaluateLeaveAllowance(
+        { type: leaveType, startDate: dates.startDate, endDate: dates.endDate },
+        policy.days,
+        existing,
+        lang,
+      );
+      if (!evaluation.allowed) {
+        return { blocked: "allowance_exceeded", message: evaluation.message! };
+      }
+    }
+    return null;
+  }
+
   private async createLeaveRequest(
     request: EmployeeExperienceRequest,
     classification: EmployeeMessageClassification,
@@ -335,6 +512,20 @@ export class EmployeeExperienceAgent {
         classification,
       };
     }
+        // Sick leave needs structured dates + a mandatory certificate.
+    // The AI only identifies intent; it never creates this request.
+    if (resolvedLeaveType === "sick") {
+      return {
+        type: "clarification_needed",
+        message:
+          messageLanguage === "en"
+            ? "Sick leave requires a medical certificate. Please fill in the sick leave form below with the dates and attach your certificate."
+            : "الإجازة المرضية تتطلب شهادة طبية. يرجى تعبئة نموذج الإجازة المرضية أدناه وإرفاق الشهادة.",
+        status: "needs_info",
+        nextAction: "sick_leave_form",
+        classification,
+      };
+    }
 
     // 2) Dates + existing validation (past dates, end < start, ...)
     const dates = this.extractDates(request.message, messageLanguage);
@@ -369,50 +560,23 @@ export class EmployeeExperienceAgent {
     );
 
     // 3) Company policy is the source of truth. No policy => no request.
-    const policy = await resolveLeavePolicyAllowance({
-      policyManager: this.policyManager,
-      organizationId: request.organizationId,
-      companyId: request.companyId,
-      employeeId: request.employeeId,
-      leaveType: resolvedLeaveType,
-      userMessage: request.message,
-    });
-
-    if (!policy.covered) {
-      const label = LEAVE_TYPE_LABELS[resolvedLeaveType];
+       const blocked = await this.evaluatePolicyForLeave(
+      { ...request, message: request.message },
+      resolvedLeaveType,
+      dates,
+      messageLanguage,
+    );
+    if (blocked?.blocked === "not_covered") {
       return {
         type: "unsupported_category",
-        message:
-          messageLanguage === "en"
-            ? `I couldn't find a company policy that covers ${label.en}, so your request was not created. Please contact HR.`
-            : `لم أجد سياسة في الشركة تغطي ${label.ar}، لذلك لم يتم إنشاء الطلب. يرجى التواصل مع الموارد البشرية.`,
+        message: blocked.message,
         status: "not_supported",
         classification,
       };
     }
+    if (blocked) throw new LeaveValidationError([blocked.message]);
 
-    // 4) Enforce the balance only if the policy explicitly states a days limit.
-    if (policy.days !== null) {
-      const existing = await this.leaveManager.list(
-        request.organizationId,
-        request.employeeId,
-      );
-
-      const evaluation = evaluateLeaveAllowance(
-        {
-          type: resolvedLeaveType,
-          startDate: dates.startDate,
-          endDate: dates.endDate,
-        },
-        policy.days,
-        existing,
-        messageLanguage,
-      );
-
-      if (!evaluation.allowed) {
-        throw new LeaveValidationError([evaluation.message!]);
-      }
-    }
+    
 
     const task: AIAgentTask = {
       id: newId("task"),

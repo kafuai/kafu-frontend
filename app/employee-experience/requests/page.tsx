@@ -43,6 +43,8 @@ type EmployeeRequest = {
   requestedDates?: string;
   leaveTypeLabel?: string;
   leaveBalance?: LeaveBalanceInfo | null;
+  hasAttachment?: boolean;
+  attachmentName?: string | null;
 };
 
 type ApiLeaveRequest = {
@@ -57,6 +59,8 @@ type ApiLeaveRequest = {
   createdAt: number;
   leaveType?: string;
   leaveBalance?: LeaveBalanceInfo | null;
+  hasAttachment?: boolean;
+attachmentName?: string | null;
 };
 
 type LeaveBalanceInfo = {
@@ -135,6 +139,9 @@ export default function EmployeeExperienceRequestsPage() {
           : undefined,
       leaveBalance:
       isLeave && item.status === "pending" ? item.leaveBalance ?? null : null,
+
+      hasAttachment: isLeave && Boolean(item.hasAttachment),
+      attachmentName: item.attachmentName ?? null, 
       
     };
   }
@@ -244,6 +251,9 @@ export default function EmployeeExperienceRequestsPage() {
     balancePending: isArabic ? "معلّق (طلبات أخرى)" : "Other pending",
     balanceRequested: isArabic ? "المطلوب الآن" : "Requested now",
     balanceAfter: isArabic ? "المتبقي بعد الموافقة" : "Remaining if approved",
+    attachment: isArabic ? "المرفق" : "Attachment",
+    viewAttachment: isArabic ? "تحميل المرفق" : "Download Attachment",
+    attachmentError: isArabic ? "تعذر فتح المرفق." : "Unable to open the attachment.",
   };
 
   const selectedRequest =
@@ -278,6 +288,28 @@ export default function EmployeeExperienceRequestsPage() {
       rejected: requests.filter((r) => r.status === "rejected").length,
     };
   }, [requests]);
+
+  const [attachmentError, setAttachmentError] = useState("");
+
+   async function openAttachment(requestId: string) {
+    setAttachmentError("");
+    try {
+      const res = await fetch(`/api/employee-experience/requests/${requestId}/attachment`);
+      const payload = await res.json();
+      if (!res.ok || !payload.data?.url) {
+        throw new Error(payload.error ?? copy.attachmentError);
+      }
+      // Navigating to an "attachment" response downloads without leaving the page.
+      const a = document.createElement("a");
+      a.href = payload.data.url;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      setAttachmentError(e instanceof Error ? e.message : copy.attachmentError);
+    }
+  }
 
   async function handleDecision(
     requestId: string,
@@ -587,6 +619,27 @@ export default function EmployeeExperienceRequestsPage() {
                         </div>
                       </div>
                     ) : null}
+
+                    {selectedRequest.hasAttachment && (
+                        <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--border-default)] pt-4">
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.attachment}</p>
+                            <p className="mt-0.5 truncate text-sm font-extrabold text-[var(--text-primary)]">
+                              📎 {selectedRequest.attachmentName}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => openAttachment(selectedRequest.id)}
+                            className="shrink-0 rounded-lg border border-[var(--border-default)] px-3 py-1.5 text-xs font-bold text-[var(--text-primary)] hover:bg-[var(--surface-muted)]"
+                          >
+                            {copy.viewAttachment}
+                          </button>
+                        </div>
+                      )}
+                      {attachmentError && (
+                        <p role="alert" className="mt-2 text-xs font-bold text-[var(--critical)]">{attachmentError}</p>
+                      )}
 
                       {selectedRequest.leaveBalance ? (
                       <div className="mt-4 border-t border-[var(--border-default)] pt-4">

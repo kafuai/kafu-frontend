@@ -2,11 +2,11 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 
-import { PolicyManager } from "@/src/enterprise/business/policies/policyManager";
-
 import { createSupabaseServerClient } from "@/lib/supabase-auth/server";
 
 import { resolveWorkspaceIdentity } from "@/lib/workspace-identity/tenantResolver";
+
+import { PolicyManager } from "@/src/enterprise/business/policies/policyManager";
 
 import { EmployeeExperienceAgent } from "@/src/enterprise/ai/agents/employeeExperience/employeeExperience";
 
@@ -26,10 +26,19 @@ import { EmploymentLetterManager } from "@/src/enterprise/business/employmentLet
 
 import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
 
+import { hasPermission } from "@/lib/rbac/authorization"; // NEW
+import { PERMISSIONS } from "@/lib/rbac/permissions"; // NEW
+
 export async function GET(request: Request) {
   try {
     const supabase = await createSupabaseServerClient();
     const identity = await resolveWorkspaceIdentity(supabase);
+
+    // NEW: only HR/managers (or the request owner) may see attachment info.
+    const canManage = hasPermission(
+      identity.role ?? "",
+      PERMISSIONS.REQUESTS_MANAGE,
+    );
 
     const url = new URL(request.url);
     const mineOnly = url.searchParams.get("mine") === "true";
@@ -123,6 +132,11 @@ export async function GET(request: Request) {
           };
         }
 
+        // NEW: never expose bucket/path, only a flag + display name,
+        // and only to HR/managers or the owner of the request.
+        const canSeeAttachment =
+          canManage || leave.employeeId === identity.userId;
+
         return {
           id: leave.id,
           employeeId: leave.employeeId,
@@ -136,6 +150,10 @@ export async function GET(request: Request) {
           reviewedBy: leave.reviewedBy,
           reviewedAt: leave.reviewedAt,
           leaveBalance,
+          hasAttachment: canSeeAttachment ? Boolean(leave.attachment) : false, // NEW
+          attachmentName: canSeeAttachment // NEW
+            ? leave.attachment?.fileName ?? null
+            : null,
         };
       }),
       ...letterRequests.map((letter) => ({
@@ -151,6 +169,8 @@ export async function GET(request: Request) {
         reviewedBy: letter.reviewedBy,
         reviewedAt: letter.reviewedAt,
         leaveBalance: null,
+        hasAttachment: false, // NEW: keeps the shape uniform
+        attachmentName: null as string | null, // NEW
       })),
     ].sort((a, b) => b.createdAt - a.createdAt);
 
@@ -166,9 +186,7 @@ export async function GET(request: Request) {
       ),
     );
 
-    // ADDED: Load both employee and reviewer profiles.
-    // The previous implementation only loaded employee IDs,
-    // so reviewer names could not be resolved.
+    // Load both employee and reviewer profiles.
     const profileIds = Array.from(
       new Set([
         ...uniqueEmployeeIds,
@@ -249,6 +267,7 @@ export async function GET(request: Request) {
     );
   }
 }
+
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseServerClient();

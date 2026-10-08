@@ -27,6 +27,8 @@ import {
 
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
+const SICK_MAX_BYTES = 4 * 1024 * 1024;
+
 type MessageType = "assistant" | "user";
 type RequestType = "inquiry" | "request";
 
@@ -245,6 +247,7 @@ export default function EmployeeExperiencePage() {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<RequestCategory | "all">("all");
   const [balance, setBalance] = useState<LeaveBalance | null>(null);
+  const [showSickForm, setShowSickForm] = useState(false)
 
   const visibleRequests = useMemo(() => {
     if (selectedCategory === "all") return requests;
@@ -510,6 +513,7 @@ setBalance(payload.balance ?? null);
       };
 
       setMessages((current) => [...current, assistantMessage]);
+      if (payload.data?.nextAction === "sick_leave_form") setShowSickForm(true);
 
       if (payload.data?.requestId) {
         await loadMyRequests();
@@ -1019,6 +1023,8 @@ setBalance(payload.balance ?? null);
           </aside>
         </section>
 
+        
+
         {/* Footer Note */}
         <div className="flex items-center justify-center gap-2 pb-2 text-[10px] text-slate-400">
           <CheckCircle2
@@ -1028,6 +1034,196 @@ setBalance(payload.balance ?? null);
           {copy.footerNote}
         </div>
       </div>
+
+      {showSickForm && (
+        <SickLeaveForm
+          isArabic={isArabic}
+          onCancel={() => setShowSickForm(false)}
+          onSuccess={async (message) => {
+            setShowSickForm(false);
+            setMessages((c) => [
+              ...c,
+              {
+                id: `assistant-${Date.now()}`,
+                type: "assistant",
+                content: message,
+                category: "leave",
+                requestType: "request",
+                time: getTime(),
+              },
+            ]);
+            await loadMyRequests();
+          }}
+        />
+      )}
     </main>
+  );
+}
+function SickLeaveForm({
+  isArabic,
+  onCancel,
+  onSuccess,
+}: {
+  isArabic: boolean;
+  onCancel: () => void;
+  onSuccess: (message: string) => void | Promise<void>;
+}) {
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const t = {
+    title: isArabic ? "طلب إجازة مرضية" : "Sick leave request",
+    type: isArabic ? "نوع الإجازة: إجازة مرضية" : "Leave type: Sick leave",
+    start: isArabic ? "تاريخ البداية" : "Start date",
+    end: isArabic ? "تاريخ النهاية" : "End date",
+    cert: isArabic ? "شهادة الإجازة المرضية (PDF / JPG / PNG)" : "Sick leave certificate (PDF / JPG / PNG)",
+    submit: isArabic ? "إرسال الطلب" : "Submit request",
+    cancel: isArabic ? "إلغاء" : "Cancel",
+    tooLarge: isArabic ? "حجم الملف كبير جدًا (الحد 4 ميجابايت)." : "The selected file is too large (max 4 MB).",
+    generic: isArabic ? "تعذر إرسال الطلب." : "Unable to submit the request.",
+  };
+
+  const canSubmit = Boolean(startDate && endDate && file) && !submitting;
+
+  async function submit() {
+    if (!canSubmit || !file) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("leaveType", "sick");
+      fd.append("startDate", startDate);
+      fd.append("endDate", endDate);
+      fd.append("certificate", file);
+      fd.append("locale", isArabic ? "ar" : "en");
+
+      const res = await fetch("/api/employee-experience/requests/leave", { method: "POST", body: fd });
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.error ?? t.generic);
+      await onSuccess(String(payload.data?.message ?? ""));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t.generic);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+    return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+      onClick={() => !submitting && onCancel()}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        dir={isArabic ? "rtl" : "ltr"}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-[24px] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.25)]"
+      >
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">
+              {t.title}
+            </h2>
+            <span className="mt-1.5 inline-block rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-semibold text-[var(--brand-primary)]">
+              {t.type}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+            aria-label={t.cancel}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 disabled:opacity-40"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-xs font-medium text-slate-600">
+              {t.start}
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[var(--brand-primary)] focus:bg-white"
+              />
+            </label>
+            <label className="block text-xs font-medium text-slate-600">
+              {t.end}
+              <input
+                type="date"
+                value={endDate}
+                min={startDate || undefined}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[var(--brand-primary)] focus:bg-white"
+              />
+            </label>
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-slate-600">
+              {t.cert}
+            </p>
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center transition hover:border-[var(--brand-primary)] hover:bg-white">
+              <span className="text-sm font-medium text-slate-700">
+                {file ? `📎 ${file.name}` : isArabic ? "اضغط لاختيار ملف" : "Click to choose a file"}
+              </span>
+              <span className="text-[10px] text-slate-400">
+                PDF / JPG / PNG · {isArabic ? "حتى 4 ميجابايت" : "up to 4 MB"}
+              </span>
+              <input
+                type="file"
+                className="hidden"
+                accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  if (f && f.size > SICK_MAX_BYTES) {
+                    setFile(null);
+                    setError(t.tooLarge);
+                    return;
+                  }
+                  setError("");
+                  setFile(f);
+                }}
+              />
+            </label>
+          </div>
+
+          {error && (
+            <p
+              role="alert"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600"
+            >
+              {error}
+            </p>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={submit}
+              disabled={!canSubmit}
+              className="flex-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {submitting ? (isArabic ? "جارِ الإرسال..." : "Submitting...") : t.submit}
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={submitting}
+              className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+            >
+              {t.cancel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

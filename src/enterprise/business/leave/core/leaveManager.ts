@@ -8,6 +8,7 @@ import { LeaveRequest } from "../models/leaveModel";
 import {
   LeaveRequestInput,
   LeaveType,
+  LeaveAttachment,
 } from "../types/leaveTypes";
 import { toDateKey } from "../utils/leaveValidator";
 
@@ -38,6 +39,30 @@ export function datesOverlap(
   newEnd: string,
 ): boolean {
   return existingStart <= newEnd && existingEnd >= newStart;
+}
+
+const ATTACHMENT_REQUIRED_MESSAGE = {
+  en: "Sick leave certificate is required.",
+  ar: "شهادة الإجازة المرضية مطلوبة.",
+} as const;
+
+function parseAttachment(requestData: Record<string, unknown>): LeaveAttachment | null {
+  const a = requestData.attachment as Record<string, unknown> | undefined;
+  if (
+    !a ||
+    typeof a.bucket !== "string" ||
+    typeof a.path !== "string" ||
+    typeof a.file_name !== "string"
+  ) {
+    return null;
+  }
+  return {
+    bucket: a.bucket,
+    path: a.path,
+    fileName: a.file_name,
+    mimeType: typeof a.mime_type === "string" ? a.mime_type : "",
+    sizeBytes: typeof a.size_bytes === "number" ? a.size_bytes : 0,
+  };
 }
 
 export class LeaveManager {
@@ -77,6 +102,10 @@ export class LeaveManager {
     }
     const validation = this.validator.validate(input);
 
+    if (input.type === "sick" && !input.attachment) {
+      throw new LeaveValidationError([ATTACHMENT_REQUIRED_MESSAGE[messageLanguage]]);
+    }
+
     if (!validation.valid) {
       throw new LeaveValidationError(
         validation.errors
@@ -90,40 +119,31 @@ export class LeaveManager {
       error,
     } = await this.supabase
       .from("employee_requests")
-      .insert({
+        .insert({
+        ...(input.id ? { id: input.id } : {}),
         user_id: input.employeeId,
-
-        organization_id:
-          input.organizationId,
-
-        company_id:
-          input.companyId,
-
+        organization_id: input.organizationId,
+        company_id: input.companyId,
         request_type: "leave",
-
         status: "pending",
-
-        title:
-          "Employee leave request",
-
-        description:
-          input.reason,
-
+        title: "Employee leave request",
+        description: input.reason,
         request_data: {
           leave_type: input.type,
-
-          start_date:
-            new Date(
-              input.startDate,
-            ).toISOString(),
-
-          end_date:
-            new Date(
-              input.endDate,
-            ).toISOString(),
-
-          reason:
-            input.reason,
+          start_date: new Date(input.startDate).toISOString(),
+          end_date: new Date(input.endDate).toISOString(),
+          reason: input.reason,
+          ...(input.attachment
+            ? {
+                attachment: {
+                  bucket: input.attachment.bucket,
+                  path: input.attachment.path,
+                  file_name: input.attachment.fileName,
+                  mime_type: input.attachment.mimeType,
+                  size_bytes: input.attachment.sizeBytes,
+                },
+              }
+            : {}),
         },
       })
       .select(
@@ -148,6 +168,32 @@ export class LeaveManager {
     );
   }
 
+    async getAttachmentRef(id: string, organizationId: string) {
+    const { data, error } = await this.supabase
+      .from("employee_requests")
+      .select("id,user_id,company_id,request_data")
+      .eq("id", id)
+      .eq("organization_id", organizationId)
+      .eq("request_type", "leave")
+      .maybeSingle();
+
+    if (error) throw new Error(`Unable to load leave request: ${error.message}`);
+    if (!data) return null;
+
+    const requestData = (data.request_data ?? {}) as Record<string, unknown>;
+
+    return {
+      employeeId: data.user_id as string,
+      companyId: data.company_id as string,
+      leaveType:
+        typeof requestData.leave_type === "string"
+          ? requestData.leave_type
+          : "other",
+      startDate: new Date(String(requestData.start_date)).getTime(),
+      endDate: new Date(String(requestData.end_date)).getTime(),
+      attachment: parseAttachment(requestData),
+    };
+  }
     /**
    * Throws LeaveValidationError if the same employee already has an APPROVED
    * leave overlapping [startDate, endDate] (inclusive, calendar-date comparison).
@@ -421,6 +467,7 @@ async reject(
         row.reviewed_at
           ? new Date(row.reviewed_at).getTime()
           : null,
+      attachment: parseAttachment(requestData),
     };
   }
 }
