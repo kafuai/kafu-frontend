@@ -248,6 +248,7 @@ export default function EmployeeExperiencePage() {
   const [selectedCategory, setSelectedCategory] = useState<RequestCategory | "all">("all");
   const [balance, setBalance] = useState<LeaveBalance | null>(null);
   const [showSickForm, setShowSickForm] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true); // NEW
 
   const visibleRequests = useMemo(() => {
     if (selectedCategory === "all") return requests;
@@ -415,13 +416,15 @@ export default function EmployeeExperiencePage() {
         leaveType: item.leaveType ?? null,
       }));
 
-setRequests(mapped);
-setBalance(payload.balance ?? null);
+    setRequests(mapped);
+    setBalance(payload.balance ?? null);
     } catch (error) {
       console.error(
         "Failed to load employee requests:",
         error,
       );
+    }finally {
+      setInitialLoading(false); // NEW: success or failure, never stuck
     }
   }
 
@@ -594,7 +597,10 @@ setBalance(payload.balance ?? null);
         </section>
 
         {/* Leave Balance */}
-            {balance && (
+        {initialLoading ? (
+          <LeaveBalanceSkeleton />
+         ) : (
+            balance && (
               <div className="rounded-[26px] border border-[var(--border)] bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
@@ -639,7 +645,7 @@ setBalance(payload.balance ?? null);
                   />
                 </div>
               </div>
-            )}
+         ))}
 
 
         {/* Main Workspace */}
@@ -662,14 +668,6 @@ setBalance(payload.balance ?? null);
                   </p>
                 </div>
               </div>
-
-              {/* <button
-                type="button"
-                className="flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 px-3 text-xs font-medium text-slate-500 transition hover:bg-slate-50"
-              >
-                <Info size={15} />
-                {copy.howItWorks}
-              </button> */}
             </div>
 
             {/* Messages */}
@@ -915,7 +913,18 @@ setBalance(payload.balance ?? null);
                 ))}
               </div>
 
+        <div className="space-y-2.5" aria-busy={initialLoading}>
+          {initialLoading ? (
+            <>
+              <RequestCardSkeleton />
+              <RequestCardSkeleton />
+              <RequestCardSkeleton />
+            </>
+          ) : (
+            <> {/* ✅ 1. تم تعديلها لتصبح فتحة Fragment فقط */}
               <div className="space-y-2.5">
+                
+                {/* ✅ 2. تم إضافة الأقواس المتعرجة { } حول الكود */}
                 {visibleRequests.slice(0, 4).map((request) => (
                   <div
                     key={request.id}
@@ -923,9 +932,7 @@ setBalance(payload.balance ?? null);
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-[var(--brand-primary)]">
-                        <CategoryIcon
-                          category={request.category}
-                        />
+                        <CategoryIcon category={request.category} />
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -933,92 +940,90 @@ setBalance(payload.balance ?? null);
                           {categoryLabels[request.category]}
                         </p>
                         <p className="mt-1 text-[10px] text-slate-400">
-                           {formatShortReference(request.id)} · {formatRequestDate(request.createdAt)}
-                      </p>
-                      {request.category === "leave" && request.leaveType && (
-                        <span className="mt-1.5 me-1.5 inline-flex items-center rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-semibold text-[var(--brand-primary)]">
-                          {copy.leaveTypeLabels[request.leaveType] ?? request.leaveType}
-                        </span>
-                      )}
-                      {request.category === "leave" && request.startDate && request.endDate && (
-                      <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-slate-100/70 px-2 py-1 text-[10px] font-medium text-slate-600">
-                        <CalendarDays size={10} className="text-slate-400" />
-                        <span>{formatRequestDate(request.startDate)}</span>
-                        <span className="text-slate-300">➔</span>
-                        <span>{formatRequestDate(request.endDate)}</span>
-                      </div>
-                    )}
-                      </div>
-                    </div>
-                    {request.status == "pending" && (
-                    <div className="mt-3 flex items-center justify-between border-t border-slate-50 pt-2.5">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-medium ${statusBadgeClasses(
-                          request.status,
-                        )}`}
-                      >
-                        <StatusIcon status={request.status} />
-                        {statusLabel(request.status)}
-                      </span>
-                    </div>
-                    )}
-                  {request.status !== "pending" && (
-                  <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                    <div className="flex items-start gap-2.5">
-                      
-                      <span
-                        className={
-                          request.status === "approved"
-                            ? "text-emerald-600"
-                            : "text-rose-600"
-                        }
-                      >
-                        <StatusIcon status={request.status} />
-                      </span>
-
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-semibold text-slate-500">
-                          {request.status === "approved"
-                            ? copy.statusApproved
-                            : copy.statusRejected}
+                          {formatShortReference(request.id)} · {formatRequestDate(request.createdAt)}
                         </p>
-
-                        <p className="mt-1 text-[11px] font-semibold text-slate-700">
-                          {copy.decisionBy}:{" "}
-                          {request.reviewedByName ?? "—"}
-                        </p>
-
-                        {request.reviewedAt ? (
-                          <p className="mt-0.5 text-[10px] text-slate-400">
-                            {copy.decisionDate}:{" "}
-                            {formatDecisionDate(
-                              request.reviewedAt,
-                            )}
-                          </p>
-                        ) : (
-                          <p className="mt-0.5 text-[10px] text-slate-400">
-                            {copy.decisionPending}
-                          </p>
+                        {request.category === "leave" && request.leaveType && (
+                          <span className="mt-1.5 me-1.5 inline-flex items-center rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-semibold text-[var(--brand-primary)]">
+                            {copy.leaveTypeLabels[request.leaveType] ?? request.leaveType}
+                          </span>
+                        )}
+                        {request.category === "leave" && request.startDate && request.endDate && (
+                          <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-slate-100/70 px-2 py-1 text-[10px] font-medium text-slate-600">
+                            <CalendarDays size={10} className="text-slate-400" />
+                            <span>{formatRequestDate(request.startDate)}</span>
+                            <span className="text-slate-300">➔</span>
+                            <span>{formatRequestDate(request.endDate)}</span>
+                          </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                )}
+
+                    {request.status == "pending" && (
+                      <div className="mt-3 flex items-center justify-between border-t border-slate-50 pt-2.5">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-medium ${statusBadgeClasses(
+                            request.status,
+                          )}`}
+                        >
+                          <StatusIcon status={request.status} />
+                          {statusLabel(request.status)}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {request.status !== "pending" && (
+                      <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                        <div className="flex items-start gap-2.5">
+                          <span
+                            className={
+                              request.status === "approved"
+                                ? "text-emerald-600"
+                                : "text-rose-600"
+                            }
+                          >
+                            <StatusIcon status={request.status} />
+                          </span>
+
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-semibold text-slate-500">
+                              {request.status === "approved"
+                                ? copy.statusApproved
+                                : copy.statusRejected}
+                            </p>
+
+                            <p className="mt-1 text-[11px] font-semibold text-slate-700">
+                              {copy.decisionBy}: {request.reviewedByName ?? "—"}
+                            </p>
+
+                            {request.reviewedAt ? (
+                              <p className="mt-0.5 text-[10px] text-slate-400">
+                                {copy.decisionDate}:{" "}
+                                {formatDecisionDate(request.reviewedAt)}
+                              </p>
+                            ) : (
+                              <p className="mt-0.5 text-[10px] text-slate-400">
+                                {copy.decisionPending}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
 
                 {visibleRequests.length === 0 && (
                   <div className="flex flex-col items-center justify-center rounded-2xl bg-slate-50 px-4 py-8 text-center">
-                    <UsersRound
-                      size={22}
-                      className="text-slate-300"
-                    />
+                    <UsersRound size={22} className="text-slate-300" />
                     <p className="mt-2 text-xs font-medium text-slate-500">
                       {copy.noRequests}
                     </p>
                   </div>
                 )}
               </div>
+            </>
+          )}
+        </div>
             </div>
           </aside>
         </section>
@@ -1110,11 +1115,18 @@ function SickLeaveForm({
       setSubmitting(false);
     }
   }
+  
+    const minStart = (() => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      const p = (n: number) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    })();
 
     return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
-      onClick={() => !submitting && onCancel()}
+      // onClick={() => !submitting && onCancel()}
       role="dialog"
       aria-modal="true"
     >
@@ -1150,6 +1162,7 @@ function SickLeaveForm({
               <input
                 type="date"
                 value={startDate}
+                min={minStart}
                 onChange={(e) => setStartDate(e.target.value)}
                 className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[var(--brand-primary)] focus:bg-white"
               />
@@ -1223,6 +1236,63 @@ function SickLeaveForm({
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonBlock({ className = "" }: { className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={`animate-pulse rounded-lg bg-slate-100 ${className}`}
+    />
+  );
+}
+
+function LeaveBalanceSkeleton() {
+  // Same wrapper/padding/grid as the real balance card => no layout shift.
+  return (
+    <div
+      aria-busy="true"
+      className="rounded-[26px] border border-[var(--border)] bg-white p-5 shadow-[0_8px_30px_rgba(15,23,42,0.04)]"
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <SkeletonBlock className="h-4 w-36" />
+          <SkeletonBlock className="mt-2 h-3 w-10" />
+        </div>
+        <SkeletonBlock className="h-4 w-4" />
+      </div>
+
+      <div className="grid grid-cols-4 gap-2">
+        {[0, 1, 2, 3].map((i) => (
+          <SkeletonBlock key={i} className="h-[58px] rounded-xl" />
+        ))}
+      </div>
+
+      <SkeletonBlock className="mt-4 h-1.5 w-full rounded-full" />
+    </div>
+  );
+}
+
+function RequestCardSkeleton() {
+  // Mirrors the real request card: icon, title, ref line, chips, status.
+  return (
+    <div className="rounded-2xl border border-slate-100 p-3">
+      <div className="flex items-start gap-3">
+        <SkeletonBlock className="h-8 w-8 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <SkeletonBlock className="h-3 w-24" />
+          <SkeletonBlock className="mt-2 h-2.5 w-32" />
+          <div className="mt-2 flex gap-2">
+            <SkeletonBlock className="h-5 w-20" />
+            <SkeletonBlock className="h-5 w-28" />
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 border-t border-slate-50 pt-2.5">
+        <SkeletonBlock className="h-5 w-20 rounded-full" />
       </div>
     </div>
   );

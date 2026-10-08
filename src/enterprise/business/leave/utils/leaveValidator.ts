@@ -42,6 +42,20 @@ export function parseDateKey(value: string): number | null {
   return date.getTime();
 }
 
+/** Returns the "YYYY-MM-DD" key exactly one calendar month before `now`. */
+function oneMonthAgoKey(now: number): string {
+  const [y, m, d] = toDateKey(now).split("-").map(Number);
+  // Day 0 of next month = last day of target month, so 31 Mar -> 28/29 Feb (clamped).
+  const lastDayOfTarget = new Date(Date.UTC(y, m - 1, 0)).getUTCDate();
+  const target = new Date(Date.UTC(y, m - 2, Math.min(d, lastDayOfTarget)));
+  return target.toISOString().slice(0, 10);
+}
+
+const SICK_BACKDATE_MESSAGE = {
+  en: "Sick leave can only be submitted for dates within the last month.",
+  ar: "يمكن تقديم الإجازة المرضية فقط عن تواريخ خلال آخر شهر.",
+} as const;
+
 export class LeaveValidator {
   validate(
     input: LeaveRequestInput,
@@ -67,10 +81,17 @@ export class LeaveValidator {
         );
       }
 
-      if (toDateKey(input.startDate) < toDateKey(now)) {
+      const startKey = toDateKey(input.startDate);
+
+      if (input.type === "sick") {
+        // Sick leave may be backdated, but no further than one month.
+        if (startKey < oneMonthAgoKey(now)) {
+          errors.push(SICK_BACKDATE_MESSAGE[isAr ? "ar" : "en"]);
+        }
+      } else if (startKey < toDateKey(now)) {
         errors.push(
-          isAr 
-            ? "لا يمكن أن يكون تاريخ بداية الإجازة في الماضي." 
+          isAr
+            ? "لا يمكن أن يكون تاريخ بداية الإجازة في الماضي."
             : "The leave start date cannot be in the past."
         );
       }

@@ -199,13 +199,19 @@ export class EmployeeExperienceAgent {
       lang,
     );
 
+    // Sick leave: a missing policy never blocks the request.
+    // If a policy states a days limit, the balance is still enforced.
+        // Sick leave: a missing policy never blocks the request.
+    // If a policy states a days limit, the balance is still enforced.
     const blocked = await this.evaluatePolicyForLeave(
       { ...params, message: "Sick leave request" },
       "sick",
       params,
       lang,
     );
-    if (blocked) throw new LeaveValidationError([blocked.message]);
+    if (blocked && blocked.blocked !== "not_covered") {
+      throw new LeaveValidationError([blocked.message]);
+    }
 
     const task: AIAgentTask = {
       id: newId("task"),
