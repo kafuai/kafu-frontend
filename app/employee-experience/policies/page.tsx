@@ -30,14 +30,6 @@ export default function PoliciesPage() {
 
   const CATEGORY_OPTIONS = [
     { value: "leave", label: isArabic ? "الإجازات" : "Leave" },
-    {
-      value: "employment_letter",
-      label: isArabic ? "خطابات التعريف" : "Employment Letters",
-    },
-    {
-      value: "data_update",
-      label: isArabic ? "تحديث البيانات" : "Data Update",
-    },
     { value: "general", label: isArabic ? "عام" : "General" },
   ];
 
@@ -51,10 +43,6 @@ export default function PoliciesPage() {
       {
         value: "annual_leave",
         label: isArabic ? "إجازة سنوية" : "Annual Leave",
-      },
-      {
-        value: "sick_leave",
-        label: isArabic ? "إجازة مرضية" : "Sick Leave",
       },
       {
         value: "emergency_leave",

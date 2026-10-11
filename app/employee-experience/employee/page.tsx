@@ -1080,13 +1080,16 @@ function SickLeaveForm({
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  
+  // حالة جديدة لتتبع السحب والإفلات
+  const [isDragging, setIsDragging] = useState(false);
 
   const t = {
     type: isArabic ? "إجازة مرضية" : "Sick leave",
     start: isArabic ? "تاريخ البداية" : "Start date",
     end: isArabic ? "تاريخ النهاية" : "End date",
     cert: isArabic ? "شهادة الإجازة المرضية" : "Sick leave certificate",
-    choose: isArabic ? "اضغط لاختيار ملف" : "Click to choose a file",
+    choose: isArabic ? "اضغط أو اسحب الملف هنا" : "Click or drag file here",
     hint: isArabic ? "PDF / JPG / PNG · حتى 4 ميجابايت" : "PDF / JPG / PNG · up to 4 MB",
     submit: isArabic ? "إرسال الطلب" : "Submit request",
     sending: isArabic ? "جارِ الإرسال..." : "Submitting...",
@@ -1105,6 +1108,35 @@ function SickLeaveForm({
   })();
 
   const canSubmit = Boolean(startDate && endDate && file) && !submitting;
+
+  // دالة موحدة لمعالجة الملف المختار (سواء بالنقر أو السحب)
+  const handleFileSelect = (f: File | null) => {
+    if (f && f.size > SICK_MAX_BYTES) { // تأكد من تعريف SICK_MAX_BYTES
+      setFile(null);
+      setError(t.tooLarge);
+      return;
+    }
+    setError("");
+    setFile(f);
+  };
+
+  // دوال السحب والإفلات
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // ضروري للسماح بالإفلات
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0] ?? null;
+    handleFileSelect(droppedFile);
+  };
 
   async function submit() {
     if (!canSubmit || !file) return;
@@ -1137,7 +1169,6 @@ function SickLeaveForm({
     }
   }
 
-  // Read-only summary after submit / cancel.
   if (state !== "open") {
     return (
       <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
@@ -1183,7 +1214,16 @@ function SickLeaveForm({
 
       <div>
         <p className="mb-1 text-[11px] font-medium text-slate-600">{t.cert}</p>
-        <label className="flex cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center transition hover:border-[var(--brand-primary)] hover:bg-white">
+        <label
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`flex cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-dashed px-3 py-4 text-center transition ${
+            isDragging
+              ? "border-[var(--brand-primary)] bg-[var(--brand-subtle)]" // تصميم عند سحب الملف فوق المنطقة
+              : "border-slate-200 bg-slate-50 hover:border-[var(--brand-primary)] hover:bg-white"
+          }`}
+        >
           <span className="max-w-full truncate text-xs font-medium text-slate-700">
             {file ? `📎 ${file.name}` : t.choose}
           </span>
@@ -1192,16 +1232,7 @@ function SickLeaveForm({
             type="file"
             className="hidden"
             accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png"
-            onChange={(e) => {
-              const f = e.target.files?.[0] ?? null;
-              if (f && f.size > SICK_MAX_BYTES) {
-                setFile(null);
-                setError(t.tooLarge);
-                return;
-              }
-              setError("");
-              setFile(f);
-            }}
+            onChange={(e) => handleFileSelect(e.target.files?.[0] ?? null)}
           />
         </label>
       </div>
