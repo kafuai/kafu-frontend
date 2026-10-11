@@ -31,19 +31,23 @@ Read the attached company policies and determine how they treat this leave type:
 
 Return ONLY a JSON object, with no extra text, no markdown and no evidence
 identifiers, in exactly this shape:
-{"covered": boolean, "days": number | null}
+{"covered": boolean, "amount": number | null, "unit": "days" | "weeks" | "months" | null}
 
 Rules:
 - "covered" is true only if a policy explicitly addresses this leave type, or
   explicitly states rules that apply to ALL leave types.
-- "days" is the number of days per year for THIS leave type, only if explicitly
-  written. If it varies by conditions (e.g. years of service), return the
-  base/default value. Otherwise null.
+- "amount" and "unit" are the yearly entitlement for THIS leave type, exactly
+  as written in the policy (e.g. "4 weeks" => amount 4, unit "weeks").
+  Do NOT convert units yourself. Arabic units: أيام/يوم => days,
+  أسابيع/أسبوع => weeks, أشهر/شهر => months.
+- If it varies by conditions (e.g. years of service), return the base/default value.
 - Never use another leave type's number. Never guess or infer. Do not use
   general knowledge or labor-law defaults; only the attached policies.
-- If not covered, return {"covered": false, "days": null}.
+- If not covered, return {"covered": false, "amount": null, "unit": null}.
 `.trim();
 }
+
+const DAYS_PER_UNIT = { days: 1, weeks: 7, months: 30 } as const;
 
 function parseResolution(text: string): LeavePolicyResolution {
   const notCovered = { covered: false, days: null };
@@ -53,18 +57,30 @@ function parseResolution(text: string): LeavePolicyResolution {
   try {
     const parsed = JSON.parse(match[0]) as {
       covered?: unknown;
-      days?: unknown;
+      amount?: unknown;
+      unit?: unknown;
+      days?: unknown; // backward compat with the old shape
     };
 
     if (parsed.covered !== true) return notCovered;
 
-    const days =
-      typeof parsed.days === "number" &&
-      Number.isFinite(parsed.days) &&
-      parsed.days >= 0 &&
-      parsed.days <= 365
-        ? Math.floor(parsed.days)
-        : null;
+    let days: number | null = null;
+
+    if (
+      typeof parsed.amount === "number" &&
+      Number.isFinite(parsed.amount) &&
+      parsed.amount >= 0 &&
+      typeof parsed.unit === "string" &&
+      parsed.unit in DAYS_PER_UNIT
+    ) {
+      days = Math.floor(
+        parsed.amount * DAYS_PER_UNIT[parsed.unit as keyof typeof DAYS_PER_UNIT],
+      );
+    } else if (typeof parsed.days === "number" && Number.isFinite(parsed.days) && parsed.days >= 0) {
+      days = Math.floor(parsed.days);
+    }
+
+    if (days !== null && days > 365) days = null;
 
     return { covered: true, days };
   } catch {
