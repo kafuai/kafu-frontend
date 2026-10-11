@@ -39,6 +39,8 @@ type RequestCategory =
   | "data_update"
   | "general";
 
+type SickFormState = "open" | "submitted" | "cancelled"; // NEW
+
 type ChatMessage = {
   id: string;
   type: MessageType;
@@ -46,6 +48,7 @@ type ChatMessage = {
   category?: RequestCategory;
   requestType?: RequestType;
   time: string;
+   sickForm?: SickFormState; 
 };
 
 type HRRequestStatus = "pending" | "approved" | "rejected";
@@ -201,19 +204,31 @@ export default function EmployeeExperiencePage() {
           ? "لدي استفسار للموارد البشرية"
           : "I have a question for HR",
       },
-      // {
-      //   category: "data_update" as const,
-      //   title: isArabic ? "تحديث البيانات" : "Data Update",
-      //   description: isArabic
-      //     ? "طلب تعديل البيانات الشخصية"
-      //     : "Request personal data changes",
-      //   prompt: isArabic
-      //     ? "أريد تحديث بياناتي"
-      //     : "I'd like to update my data",
-      // },
       
     ],
   };
+
+  function setSickFormState(messageId: string, state: SickFormState) {
+  setMessages((current) =>
+    current.map((m) => (m.id === messageId ? { ...m, sickForm: state } : m)),
+  );
+}
+
+async function handleSickSuccess(messageId: string, text: string) {
+  setSickFormState(messageId, "submitted");
+  setMessages((c) => [
+    ...c,
+    {
+      id: `assistant-${Date.now()}`,
+      type: "assistant",
+      content: text,
+      category: "leave",
+      requestType: "request",
+      time: getTime(),
+    },
+  ]);
+  await loadMyRequests();
+}
 
   const initialMessages: ChatMessage[] = [
     {
@@ -247,7 +262,6 @@ export default function EmployeeExperiencePage() {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<RequestCategory | "all">("all");
   const [balance, setBalance] = useState<LeaveBalance | null>(null);
-  const [showSickForm, setShowSickForm] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true); // NEW
 
   const visibleRequests = useMemo(() => {
@@ -507,16 +521,15 @@ export default function EmployeeExperiencePage() {
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         type: "assistant",
-        content: String(
-          payload.data?.message ?? copy.requestReceivedFallback,
-        ),
+        content: String(payload.data?.message ?? copy.requestReceivedFallback),
         category: realCategory,
         requestType: realRequestType,
         time: getTime(),
+        sickForm:
+          payload.data?.nextAction === "sick_leave_form" ? "open" : undefined, // NEW
       };
 
       setMessages((current) => [...current, assistantMessage]);
-      if (payload.data?.nextAction === "sick_leave_form") setShowSickForm(true);
 
       if (payload.data?.requestId) {
         await loadMyRequests();
@@ -689,7 +702,7 @@ export default function EmployeeExperiencePage() {
                         </div>
                       )}
 
-                      <div className="order-1 max-w-[85%] sm:max-w-[72%]">
+                      <div className={`order-1 ${message.sickForm ? "w-full max-w-[85%] sm:max-w-[480px]" : "max-w-[85%] sm:max-w-[72%]"}`}>
                         <div
                           className={`rounded-[20px] px-4 py-3.5 text-sm leading-7 ${
                             isUser
@@ -708,6 +721,15 @@ export default function EmployeeExperiencePage() {
                                     1 && <br />}
                               </span>
                             ))}
+
+                            {message.sickForm && (
+                              <SickLeaveForm
+                                isArabic={isArabic}
+                                state={message.sickForm}
+                                onCancel={() => setSickFormState(message.id, "cancelled")}
+                                onSuccess={(text) => handleSickSuccess(message.id, text)}
+                              />
+                            )}
                         </div>
 
                         <div
@@ -1039,37 +1061,17 @@ export default function EmployeeExperiencePage() {
           {copy.footerNote}
         </div>
       </div>
-
-      {showSickForm && (
-        <SickLeaveForm
-          isArabic={isArabic}
-          onCancel={() => setShowSickForm(false)}
-          onSuccess={async (message) => {
-            setShowSickForm(false);
-            setMessages((c) => [
-              ...c,
-              {
-                id: `assistant-${Date.now()}`,
-                type: "assistant",
-                content: message,
-                category: "leave",
-                requestType: "request",
-                time: getTime(),
-              },
-            ]);
-            await loadMyRequests();
-          }}
-        />
-      )}
     </main>
   );
 }
 function SickLeaveForm({
   isArabic,
+  state,
   onCancel,
   onSuccess,
 }: {
   isArabic: boolean;
+  state: SickFormState;
   onCancel: () => void;
   onSuccess: (message: string) => void | Promise<void>;
 }) {
@@ -1080,16 +1082,27 @@ function SickLeaveForm({
   const [error, setError] = useState("");
 
   const t = {
-    title: isArabic ? "طلب إجازة مرضية" : "Sick leave request",
-    type: isArabic ? "نوع الإجازة: إجازة مرضية" : "Leave type: Sick leave",
+    type: isArabic ? "إجازة مرضية" : "Sick leave",
     start: isArabic ? "تاريخ البداية" : "Start date",
     end: isArabic ? "تاريخ النهاية" : "End date",
-    cert: isArabic ? "شهادة الإجازة المرضية (PDF / JPG / PNG)" : "Sick leave certificate (PDF / JPG / PNG)",
+    cert: isArabic ? "شهادة الإجازة المرضية" : "Sick leave certificate",
+    choose: isArabic ? "اضغط لاختيار ملف" : "Click to choose a file",
+    hint: isArabic ? "PDF / JPG / PNG · حتى 4 ميجابايت" : "PDF / JPG / PNG · up to 4 MB",
     submit: isArabic ? "إرسال الطلب" : "Submit request",
+    sending: isArabic ? "جارِ الإرسال..." : "Submitting...",
     cancel: isArabic ? "إلغاء" : "Cancel",
     tooLarge: isArabic ? "حجم الملف كبير جدًا (الحد 4 ميجابايت)." : "The selected file is too large (max 4 MB).",
     generic: isArabic ? "تعذر إرسال الطلب." : "Unable to submit the request.",
+    submitted: isArabic ? "تم إرسال الطلب" : "Request submitted",
+    cancelled: isArabic ? "تم إلغاء النموذج" : "Form cancelled",
   };
+
+  const minStart = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  })();
 
   const canSubmit = Boolean(startDate && endDate && file) && !submitting;
 
@@ -1105,137 +1118,117 @@ function SickLeaveForm({
       fd.append("certificate", file);
       fd.append("locale", isArabic ? "ar" : "en");
 
-      const res = await fetch("/api/employee-experience/requests/leave", { method: "POST", body: fd });
-      const payload = await res.json();
+      const res = await fetch("/api/employee-experience/requests/leave", {
+        method: "POST",
+        body: fd,
+      });
+      const raw = await res.text();
+      let payload: { error?: string; data?: { message?: string } };
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        throw new Error(t.generic);
+      }
       if (!res.ok) throw new Error(payload.error ?? t.generic);
       await onSuccess(String(payload.data?.message ?? ""));
     } catch (e) {
       setError(e instanceof Error ? e.message : t.generic);
-    } finally {
       setSubmitting(false);
     }
   }
-  
-    const minStart = (() => {
-      const d = new Date();
-      d.setMonth(d.getMonth() - 1);
-      const p = (n: number) => String(n).padStart(2, "0");
-      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-    })();
 
+  // Read-only summary after submit / cancel.
+  if (state !== "open") {
     return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
-      // onClick={() => !submitting && onCancel()}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        dir={isArabic ? "rtl" : "ltr"}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-[24px] bg-white p-6 shadow-[0_20px_60px_rgba(15,23,42,0.25)]"
-      >
-        <div className="mb-5 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-slate-800">
-              {t.title}
-            </h2>
-            <span className="mt-1.5 inline-block rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-semibold text-[var(--brand-primary)]">
-              {t.type}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={submitting}
-            aria-label={t.cancel}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 disabled:opacity-40"
-          >
-            ✕
-          </button>
-        </div>
+      <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
+        {state === "submitted" ? "✅ " : "✕ "}
+        {state === "submitted" ? t.submitted : t.cancelled}
+        {state === "submitted" && startDate && endDate && (
+          <span className="ms-1 font-medium text-slate-700">
+            ({startDate} → {endDate})
+          </span>
+        )}
+      </div>
+    );
+  }
 
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-xs font-medium text-slate-600">
-              {t.start}
-              <input
-                type="date"
-                value={startDate}
-                min={minStart}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[var(--brand-primary)] focus:bg-white"
-              />
-            </label>
-            <label className="block text-xs font-medium text-slate-600">
-              {t.end}
-              <input
-                type="date"
-                value={endDate}
-                min={startDate || undefined}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none focus:border-[var(--brand-primary)] focus:bg-white"
-              />
-            </label>
-          </div>
+  return (
+    <div className="mt-3 space-y-3 border-t border-slate-100 pt-3">
+      <span className="inline-block rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-semibold text-[var(--brand-primary)]">
+        {t.type}
+      </span>
 
-          <div>
-            <p className="mb-1.5 text-xs font-medium text-slate-600">
-              {t.cert}
-            </p>
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-center transition hover:border-[var(--brand-primary)] hover:bg-white">
-              <span className="text-sm font-medium text-slate-700">
-                {file ? `📎 ${file.name}` : isArabic ? "اضغط لاختيار ملف" : "Click to choose a file"}
-              </span>
-              <span className="text-[10px] text-slate-400">
-                PDF / JPG / PNG · {isArabic ? "حتى 4 ميجابايت" : "up to 4 MB"}
-              </span>
-              <input
-                type="file"
-                className="hidden"
-                accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png"
-                onChange={(e) => {
-                  const f = e.target.files?.[0] ?? null;
-                  if (f && f.size > SICK_MAX_BYTES) {
-                    setFile(null);
-                    setError(t.tooLarge);
-                    return;
-                  }
-                  setError("");
-                  setFile(f);
-                }}
-              />
-            </label>
-          </div>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block text-[11px] font-medium text-slate-600">
+          {t.start}
+          <input
+            type="date"
+            value={startDate}
+            min={minStart}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs outline-none focus:border-[var(--brand-primary)] focus:bg-white"
+          />
+        </label>
+        <label className="block text-[11px] font-medium text-slate-600">
+          {t.end}
+          <input
+            type="date"
+            value={endDate}
+            min={startDate || undefined}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs outline-none focus:border-[var(--brand-primary)] focus:bg-white"
+          />
+        </label>
+      </div>
 
-          {error && (
-            <p
-              role="alert"
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600"
-            >
-              {error}
-            </p>
-          )}
+      <div>
+        <p className="mb-1 text-[11px] font-medium text-slate-600">{t.cert}</p>
+        <label className="flex cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center transition hover:border-[var(--brand-primary)] hover:bg-white">
+          <span className="max-w-full truncate text-xs font-medium text-slate-700">
+            {file ? `📎 ${file.name}` : t.choose}
+          </span>
+          <span className="text-[10px] text-slate-400">{t.hint}</span>
+          <input
+            type="file"
+            className="hidden"
+            accept="application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              if (f && f.size > SICK_MAX_BYTES) {
+                setFile(null);
+                setError(t.tooLarge);
+                return;
+              }
+              setError("");
+              setFile(f);
+            }}
+          />
+        </label>
+      </div>
 
-          <div className="flex gap-2 pt-1">
-            <button
-              type="button"
-              onClick={submit}
-              disabled={!canSubmit}
-              className="flex-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {submitting ? (isArabic ? "جارِ الإرسال..." : "Submitting...") : t.submit}
-            </button>
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={submitting}
-              className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
-            >
-              {t.cancel}
-            </button>
-          </div>
-        </div>
+      {error && (
+        <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-medium text-red-600">
+          {error}
+        </p>
+      )}
+
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={submit}
+          disabled={!canSubmit}
+          className="flex-1 rounded-xl bg-[var(--brand-primary)] px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {submitting ? t.sending : t.submit}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={submitting}
+          className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+        >
+          {t.cancel}
+        </button>
       </div>
     </div>
   );
