@@ -11,7 +11,6 @@ import EnterpriseFooter from "@/components/enterprise-shell/EnterpriseFooter";
 import EnterpriseHeader from "@/components/enterprise-shell/EnterpriseHeader";
 
 import AppProviders from "./AppProviders";
-import DemoExperienceNavigationBar from "./DemoExperienceNavigationBar";
 import DemoNavigationGuard from "./DemoNavigationGuard";
 
 interface AppShellProps {
@@ -53,7 +52,6 @@ export default function AppShell({
   return (
     <AppProviders>
       <DemoNavigationGuard>
-        <DemoExperienceNavigationBar />
 
         {isImmersivePage ? (
           children

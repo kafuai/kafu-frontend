@@ -1109,3 +1109,35 @@ html[dir="rtl"] .kafu-executive-user__identity {
 }
 
 /* KAFU ENTERPRISE HEADER FINAL POLISH END */
+
+.kafu-public-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: var(--brand-primary);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+/* .kafu-public-login:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.06);
+} */
+
+.kafu-public-login:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-subtle);
+}

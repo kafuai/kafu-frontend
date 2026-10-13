@@ -6,6 +6,8 @@ import { LandingPlatform } from "./LandingPlatform";
 import { LandingBenefits } from "./LandingBenefits";
 import { LandingOutcomes } from "./LandingOutcomes";
 import { LandingCTA } from "./LandingCTA";
+import { LandingFAQ } from "./LandingFAQ";
+import { LandingPilot } from "./LandingPilot";
 
 export function LandingPage() {
   return (
@@ -20,6 +22,8 @@ export function LandingPage() {
       <LandingPlatform />
       <LandingBenefits />
       <LandingOutcomes />
+      <LandingPilot />
+      <LandingFAQ />
       <LandingCTA />
     </main>
   );
