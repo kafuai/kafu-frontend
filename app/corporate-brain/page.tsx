@@ -1,868 +1,143 @@
 ﻿"use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
+import { useLocalization } from "@/components/localization/LocalizationContext";
+import { getCurrentCompanyId } from "@/lib/companySession";
+import { supabase } from "@/lib/supabase";
+import { cleanGroundedAIText } from "@/lib/cleanGroundedAIText";
+import type { Company, DiscoveryAnswer, AIResponse } from "@/components/corporate-brain/types";
+import { useAppCopy } from "@/components/corporate-brain/useAppCopy";
 
-import Link from "next/link";
-
-import {
-  AlertTriangle,
-  BrainCircuit,
-  Building2,
-  RefreshCw,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
-
-import {
-  CorporateBrainLayout,
-  type CorporateBrainCompany,
-  type CorporateBrainDiscoveryAnswer,
-} from "@/components/corporate-brain";
-
-import {
-  useLocalization,
-} from "@/components/localization/LocalizationContext";
-
-import {
-  getCurrentCompanyId,
-} from "@/lib/companySession";
-
-import {
-  supabase,
-} from "@/lib/supabase";
-
-import {
-  cleanGroundedAIText,
-} from "@/lib/cleanGroundedAIText";
-
-interface CorporateBrainAIResponse {
-  data?: {
-    text?: string;
-    provider?: string;
-    model?: string;
-    evidenceCount?: number;
-
-    citations?: Array<{
-      evidenceId: string;
-      source: string;
-      label: string;
-    }>;
-  };
-
-  error?: string;
-  code?: string;
-}
+import PageLoading from "@/components/corporate-brain/PageLoading";
+import PageError from "@/components/corporate-brain/PageError";
+import LiveInsight from "@/components/corporate-brain/LiveInsight";
+import Layout from "@/components/corporate-brain/Layout";
 
 export default function CorporateBrainPage() {
-  const {
-    locale,
-  } = useLocalization();
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+  const aiPromptsCopy = useAppCopy(locale).aiPrompts;
 
-  const isArabic =
-    locale === "ar";
+  const [company, setCompany] = useState<Company | null>(null);
+  const [answers, setAnswers] = useState<DiscoveryAnswer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
 
-  const [
-    company,
-    setCompany,
-  ] =
-    useState<
-      CorporateBrainCompany | null
-    >(null);
+  const [aiInsight, setAIInsight] = useState("");
+  const [aiLoading, setAILoading] = useState(false);
+  const [aiError, setAIError] = useState("");
+  const [aiCitations, setAICitations] = useState<Array<{ evidenceId: string; source: string; label: string }>>([]);
 
-  const [
-    answers,
-    setAnswers,
-  ] =
-    useState<
-      CorporateBrainDiscoveryAnswer[]
-    >([]);
+  const getExecutiveSummaryStorageKey = (companyId: string) => `corporate_brain_executive_summary:${companyId}:${locale}`;
 
-  const [
-    loading,
-    setLoading,
-  ] =
-    useState(true);
-
-  const [
-    message,
-    setMessage,
-  ] =
-    useState("");
-
-  const [
-    aiInsight,
-    setAIInsight,
-  ] =
-    useState("");
-
-  const [
-    aiLoading,
-    setAILoading,
-  ] =
-    useState(false);
-
-  const [
-    aiError,
-    setAIError,
-  ] =
-    useState("");
-
-  const [
-    aiCitations,
-    setAICitations,
-  ] =
-    useState<
-      Array<{
-        evidenceId: string;
-        source: string;
-        label: string;
-      }>
-    >([]);
-
-  //  Keep the executive summary scoped to the current company and locale.
-  function getExecutiveSummaryStorageKey(
-    companyId: string,
-  ) {
-    return `corporate_brain_executive_summary:${companyId}:${locale}`;
-  }
-
-  // Generate the executive summary only when the user explicitly requests it.
-  async function generateCorporateBrainInsight() {
-    if (!company) {
-      return;
-    }
-
-    setAILoading(true);
-    setAIError("");
-    setAIInsight("");
-    setAICitations([]);
+  async function generateExecutiveInsight() {
+    if (!company) return;
+    setAILoading(true); setAIError(""); setAIInsight(""); setAICitations([]);
 
     try {
-      const discoveryEvidence =
-        answers
-          .slice(0, 20)
-          .map(
-            (
-              answer,
-              index,
-            ) => ({
-              id:
-                `DISCOVERY-${index + 1}`,
-
-              source:
-                "Corporate Discovery",
-
-              label:
-                String(
-                  answer.question
-                  ?? `Discovery Answer ${index + 1}`,
-                ),
-
-              value:
-                String(
-                  answer.answer
-                  ?? "",
-                ),
-            }),
-          );
+      const discoveryEvidence = answers.slice(0, 20).map((answer, index) => ({
+        id: `DISCOVERY-${index + 1}`, source: "Corporate Discovery",
+        label: String(answer.question ?? `Discovery Answer ${index + 1}`),
+        value: String(answer.answer ?? ""),
+      }));
 
       const evidence = [
-        {
-          id:
-            "COMPANY-NAME",
-
-          source:
-            "Company Profile",
-
-          label:
-            "Company Name",
-
-          value:
-            String(
-              company.name
-              ?? "",
-            ),
-        },
-
-        {
-          id:
-            "COMPANY-INDUSTRY",
-
-          source:
-            "Company Profile",
-
-          label:
-            "Industry",
-
-          value:
-            String(
-              company.industry
-              ?? "",
-            ),
-        },
-
-        {
-          id:
-            "COMPANY-COUNTRY",
-
-          source:
-            "Company Profile",
-
-          label:
-            "Country",
-
-          value:
-            String(
-              company.country
-              ?? "",
-            ),
-        },
-
-        {
-          id:
-            "COMPANY-EMPLOYEES",
-
-          source:
-            "Company Profile",
-
-          label:
-            "Employee Count",
-
-          value:
-            company.employee_count
-            ?? null,
-        },
-
+        { id: "COMPANY-NAME", source: "Company Profile", label: "Company Name", value: String(company.name ?? "") },
+        { id: "COMPANY-INDUSTRY", source: "Company Profile", label: "Industry", value: String(company.industry ?? "") },
+        { id: "COMPANY-COUNTRY", source: "Company Profile", label: "Country", value: String(company.country ?? "") },
+        { id: "COMPANY-EMPLOYEES", source: "Company Profile", label: "Employee Count", value: company.employee_count ?? null },
         ...discoveryEvidence,
       ];
 
-      const response =
-        await fetch(
-          "/api/ai/grounded",
-          {
-            method:
-              "POST",
+      const response = await fetch("/api/ai/grounded", {
+        method: "POST", credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: aiPromptsCopy.task, question: aiPromptsCopy.question, locale, evidence }),
+      });
 
-            credentials:
-              "same-origin",
+      const payload = (await response.json()) as AIResponse;
+      if (!response.ok) throw new Error(payload.error ?? `Corporate Brain AI request failed with status ${response.status}.`);
+      
+      const text = payload.data?.text?.trim();
+      const citations = payload.data?.citations ?? [];
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+      if (!text) throw new Error(isArabic ? "لم يتم إرجاع تحليل من طبقة الذكاء الاصطناعي." : "The AI intelligence layer returned no analysis.");
 
-            body:
-              JSON.stringify({
-                task:
-                  isArabic
-                    ? "قدّم ملخصًا تنفيذيًا موجزًا عن المؤسسة بالاعتماد حصريًا على الأدلة المتاحة، وحدد أهم الأولويات أو المخاطر أو الفرص التي تستحق انتباه الإدارة."
-                    : "Provide a concise executive intelligence summary of the company using only the supplied evidence. Identify the most important priorities, risks, or opportunities that deserve management attention.",
+      const cleanedText = cleanGroundedAIText(text);
+      setAICitations(citations);
+      setAIInsight(cleanedText);
 
-                question:
-                  isArabic
-                    ? "ما أهم ما يجب على الإدارة معرفته واتخاذ قرار بشأنه الآن؟"
-                    : "What should management understand and act on now?",
-
-                locale,
-
-                evidence,
-              }),
-          },
-        );
-
-      const payload =
-        (await response.json()) as CorporateBrainAIResponse;
-
-      if (!response.ok) {
-        throw new Error(
-          payload.error
-          ?? `Corporate Brain AI request failed with status ${response.status}.`,
-        );
-      }
-
-      const text =
-        payload.data?.text?.trim();
-
-      const citations =
-        payload.data?.citations
-        ?? [];
-
-      if (!text) {
-        throw new Error(
-          isArabic
-            ? "لم يتم إرجاع تحليل من طبقة الذكاء الاصطناعي."
-            : "The AI intelligence layer returned no analysis.",
-        );
-      }
-
-      const cleanedText =
-        cleanGroundedAIText(text);
-
-      setAICitations(
-        citations,
-      );
-
-      setAIInsight(
-        cleanedText,
-      );
-
-      // Persist the generated summary for the current browser session.
-      sessionStorage.setItem(
-        getExecutiveSummaryStorageKey(
-          company.id,
-        ),
-        JSON.stringify({
-          text:
-            cleanedText,
-
-          citations,
-        }),
-      );
+      sessionStorage.setItem(getExecutiveSummaryStorageKey(company.id), JSON.stringify({ text: cleanedText, citations }));
     } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : isArabic
-            ? "تعذر إنشاء التحليل التنفيذي المدعوم بالذكاء الاصطناعي."
-            : "Unable to generate AI-powered executive intelligence.";
-
-      setAIError(
-        errorMessage,
-      );
+      setAIError(error instanceof Error ? error.message : (isArabic ? "تعذر إنشاء التحليل التنفيذي المدعوم بالذكاء الاصطناعي." : "Unable to generate AI-powered executive intelligence."));
     } finally {
-      setAILoading(
-        false,
-      );
+      setAILoading(false);
     }
   }
 
   useEffect(() => {
     let isMounted = true;
-
-    async function loadCorporateBrain() {
-      if (isMounted) {
-        setLoading(true);
-        setMessage("");
-        setAIInsight("");
-        setAIError("");
-        setAICitations([]);
-      }
-
-      const companyId =
-        getCurrentCompanyId();
-
+    async function loadData() {
+      const companyId = getCurrentCompanyId();
       if (!companyId) {
-        if (isMounted) {
-          setMessage(
-            isArabic
-              ? "لم يتم العثور على بيانات المؤسسة. يرجى إكمال التقييم أولًا."
-              : "Company data was not found. Please complete the assessment first.",
-          );
-
-          setLoading(false);
-        }
-
+        if (isMounted) { setMessage(isArabic ? "لم يتم العثور على بيانات المؤسسة. يرجى إكمال التقييم أولًا." : "Company data was not found. Please complete the assessment first."); setLoading(false); }
         return;
       }
 
       try {
-        const [
-          {
-            data:
-              companyData,
+        const [ { data: companyData, error: companyError }, { data: answersData, error: answersError } ] = await Promise.all([
+          supabase.from("companies").select("id, name, industry, country, employee_count").eq("id", companyId).single(),
+          supabase.from("discovery_answers").select("id, question, answer, question_order").eq("company_id", companyId).order("question_order", { ascending: true }),
+        ]);
 
-            error:
-              companyError,
-          },
-
-          {
-            data:
-              answersData,
-
-            error:
-              answersError,
-          },
-        ] =
-          await Promise.all([
-            supabase
-              .from(
-                "companies",
-              )
-              .select(
-                "id, name, industry, country, employee_count",
-              )
-              .eq(
-                "id",
-                companyId,
-              )
-              .single(),
-
-            supabase
-              .from(
-                "discovery_answers",
-              )
-              .select(
-                "id, question, answer, question_order",
-              )
-              .eq(
-                "company_id",
-                companyId,
-              )
-              .order(
-                "question_order",
-                {
-                  ascending:
-                    true,
-                },
-              ),
-          ]);
-
-        if (companyError) {
-          throw new Error(
-            isArabic
-              ? `تعذر تحميل بيانات المؤسسة: ${companyError.message}`
-              : `Failed to load company data: ${companyError.message}`,
-          );
-        }
-
-        if (answersError) {
-          throw new Error(
-            isArabic
-              ? `تعذر تحميل بيانات الاستكشاف: ${answersError.message}`
-              : `Failed to load discovery data: ${answersError.message}`,
-          );
-        }
-
-        const normalizedAnswers =
-          answersData
-          ?? [];
+        if (companyError) throw new Error(isArabic ? `تعذر تحميل بيانات المؤسسة: ${companyError.message}` : `Failed to load company data: ${companyError.message}`);
+        if (answersError) throw new Error(isArabic ? `تعذر تحميل بيانات الاستكشاف: ${answersError.message}` : `Failed to load discovery data: ${answersError.message}`);
 
         if (isMounted) {
-          setCompany(
-            companyData,
-          );
+          setCompany(companyData);
+          setAnswers(answersData ?? []);
 
-          setAnswers(
-            normalizedAnswers,
-          );
-
-          // Restore the previously generated summary from sessionStorage.
           if (companyData) {
-            const savedSummary =
-              sessionStorage.getItem(
-                getExecutiveSummaryStorageKey(
-                  companyData.id,
-                ),
-              );
-
+            const savedSummary = sessionStorage.getItem(getExecutiveSummaryStorageKey(companyData.id));
             if (savedSummary) {
               try {
-                const parsed =
-                  JSON.parse(
-                    savedSummary,
-                  ) as {
-                    text?: string;
-
-                    citations?: Array<{
-                      evidenceId: string;
-                      source: string;
-                      label: string;
-                    }>;
-                  };
-
-                setAIInsight(
-                  parsed.text
-                  ?? "",
-                );
-
-                setAICitations(
-                  parsed.citations
-                  ?? [],
-                );
+                const parsed = JSON.parse(savedSummary);
+                setAIInsight(parsed.text ?? "");
+                setAICitations(parsed.citations ?? []);
               } catch {
-                // Remove invalid session data instead of breaking page initialization.
-                sessionStorage.removeItem(
-                  getExecutiveSummaryStorageKey(
-                    companyData.id,
-                  ),
-                );
+                sessionStorage.removeItem(getExecutiveSummaryStorageKey(companyData.id));
               }
             }
           }
-
-          setLoading(
-            false,
-          );
         }
       } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : isArabic
-              ? "حدث خطأ غير متوقع أثناء تشغيل العقل المؤسسي."
-              : "An unexpected error occurred while initializing Corporate Brain.";
-
         if (isMounted) {
-          setMessage(
-            errorMessage,
-          );
-
-          setCompany(
-            null,
-          );
-
-          setAnswers(
-            [],
-          );
-
-          setAIInsight(
-            "",
-          );
-
-          setAICitations(
-            [],
-          );
-
-          setAIError(
-            "",
-          );
+          setMessage(error instanceof Error ? error.message : (isArabic ? "حدث خطأ غير متوقع أثناء تشغيل العقل المؤسسي." : "An unexpected error occurred while initializing Corporate Brain."));
+          setCompany(null); setAnswers([]);
         }
       } finally {
-        if (isMounted) {
-          setLoading(
-            false,
-          );
-        }
+        if (isMounted) setLoading(false);
       }
     }
+    loadData();
+    return () => { isMounted = false; };
+  }, [isArabic, locale]);
 
-    void loadCorporateBrain();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [
-    isArabic,
-    locale,
-  ]);
-
-  if (loading) {
-    return (
-      <main
-        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-10 md:px-8"
-        dir={
-          isArabic
-            ? "rtl"
-            : "ltr"
-        }
-      >
-        <section
-          className="relative w-full max-w-md overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] px-8 py-10 text-center shadow-[var(--shadow-medium)]"
-          role="status"
-          aria-live="polite"
-        >
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 top-0 h-1 bg-[var(--brand-primary)]"
-          />
-
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -start-20 -top-20 h-52 w-52 rounded-full bg-[color-mix(in_srgb,var(--brand-primary)_6%,transparent)]"
-          />
-
-          <div className="relative">
-            <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--brand-primary)_16%,var(--border-default))] bg-[var(--brand-subtle)] text-[var(--brand-primary)] shadow-[var(--shadow-small)]">
-              <RefreshCw
-                aria-hidden="true"
-                className="animate-spin"
-                size={25}
-              />
-            </span>
-
-            <p className="mt-5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-              Corporate Brain
-            </p>
-
-            <h1 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-[var(--text-primary)]">
-              {isArabic
-                ? "جاري تشغيل العقل المؤسسي"
-                : "Initializing Corporate Brain"}
-            </h1>
-
-            <p className="mx-auto mt-3 max-w-sm text-sm leading-7 text-[var(--text-secondary)]">
-              {isArabic
-                ? "يتم تحميل بيانات المؤسسة ومصادر المعرفة وإشارات الاستكشاف."
-                : "Loading company context, enterprise knowledge, and discovery signals."}
-            </p>
-
-            <div className="mt-7 flex items-center justify-center gap-2 text-xs font-bold text-[var(--text-muted)]">
-              <BrainCircuit
-                size={15}
-              />
-
-              <span>
-                {/* Page initialization now loads data only; AI runs from the explicit button. */}
-                {isArabic
-                  ? "تحميل بيانات المؤسسة"
-                  : "Loading company data"}
-              </span>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  if (
-    message
-    || !company
-  ) {
-    return (
-      <main
-        className="flex min-h-[calc(100vh-76px)] items-center justify-center bg-[var(--background)] px-5 py-10 md:px-8"
-        dir={
-          isArabic
-            ? "rtl"
-            : "ltr"
-        }
-      >
-        <section
-          className="relative w-full max-w-xl overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] px-8 py-10 text-center shadow-[var(--shadow-medium)] md:px-10"
-          role="alert"
-        >
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 top-0 h-1 bg-[var(--warning)]"
-          />
-
-          <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--warning-background)] text-[var(--warning)]">
-            <AlertTriangle
-              size={26}
-            />
-          </span>
-
-          <p className="mt-5 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-            Corporate Brain
-          </p>
-
-          <h1 className="mt-2 text-2xl font-extrabold tracking-[-0.03em] text-[var(--text-primary)]">
-            {isArabic
-              ? "تعذر تشغيل العقل المؤسسي"
-              : "Corporate Brain unavailable"}
-          </h1>
-
-          <p className="mx-auto mt-4 max-w-lg break-words text-sm leading-7 text-[var(--text-secondary)]">
-            {message
-              || (
-                isArabic
-                  ? "لم يتم العثور على بيانات المؤسسة المطلوبة."
-                  : "Required company data was not found."
-              )}
-          </p>
-
-          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/assessment"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-6 text-sm font-extrabold text-white shadow-[var(--shadow-small)] transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-            >
-              <Building2
-                aria-hidden="true"
-                size={17}
-              />
-
-              {isArabic
-                ? "العودة إلى التقييم"
-                : "Go to assessment"}
-            </Link>
-
-            <Link
-              href="/company-workspace"
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-6 text-sm font-extrabold text-[var(--text-secondary)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-            >
-              {isArabic
-                ? "فتح مساحة العمل"
-                : "Open company workspace"}
-            </Link>
-          </div>
-        </section>
-      </main>
-    );
-  }
+  if (loading) return <PageLoading />;
+  if (message || !company) return <PageError message={message} />;
 
   return (
-    <main
-      className="bg-[var(--background)]"
-      dir={
-        isArabic
-          ? "rtl"
-          : "ltr"
-      }
-    >
-      <section className="mx-auto w-full max-w-[1500px] px-5 pt-6 md:px-8">
-        <div className="relative overflow-hidden rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] px-6 py-5 shadow-[var(--shadow-small)]">
-          <div
-            aria-hidden="true"
-            className="absolute inset-y-0 start-0 w-1 bg-[var(--brand-primary)]"
-          />
-
-          <div className="flex items-start gap-4">
-            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
-              {aiLoading
-                ? (
-                  <RefreshCw
-                    className="animate-spin"
-                    size={20}
-                  />
-                )
-                : (
-                  <Sparkles
-                    size={20}
-                  />
-                )}
-            </span>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-extrabold text-[var(--text-primary)]">
-                  {isArabic
-                    ? "KAFU AI — التحليل التنفيذي المباشر"
-                    : "KAFU AI — Live Executive Intelligence"}
-                </p>
-
-                {/* Explicit control so AI runs only when the user requests it. */}
-                {!aiLoading
-                  ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        void generateCorporateBrainInsight();
-                      }}
-                      className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 text-[10px] font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-                    >
-                      {aiInsight
-                        ? (
-                          <RefreshCw
-                            aria-hidden="true"
-                            size={13}
-                          />
-                        )
-                        : (
-                          <Sparkles
-                            aria-hidden="true"
-                            size={13}
-                          />
-                        )}
-
-                      {aiInsight
-                        ? (
-                          isArabic
-                            ? "إعادة الإنشاء"
-                            : "Regenerate"
-                        )
-                        : (
-                          isArabic
-                            ? "إنشاء الملخص التنفيذي"
-                            : "Generate Executive Summary"
-                        )}
-                    </button>
-                  )
-                  : null}
-
-                {!aiLoading
-                  && aiInsight
-                  ? (
-                    <span className="rounded-full bg-[var(--success-background)] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[var(--success)]">
-                      {isArabic
-                        ? "مباشر"
-                        : "LIVE"}
-                    </span>
-                  )
-                  : null}
-              </div>
-
-              {aiLoading
-                ? (
-                  <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
-                    {isArabic
-                      ? "يتم تحليل أدلة المؤسسة من خلال طبقة KAFU Grounded AI..."
-                      : "Analyzing enterprise evidence through the KAFU Grounded AI layer..."}
-                  </p>
-                )
-                : aiInsight
-                  ? (
-                    <div className="mt-2">
-                      <p className="whitespace-pre-line text-sm leading-7 text-[var(--text-secondary)]">
-                        {aiInsight}
-                      </p>
-
-                      {aiCitations.length > 0 ? (
-                        <div className="mt-4">
-                          <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.1em] text-[var(--text-muted)]">
-                            {isArabic
-                              ? "المصادر والأدلة"
-                              : "Sources & Evidence"}
-                          </p>
-
-                          <div className="flex flex-wrap gap-2">
-                            {aiCitations.map(
-                              (
-                                citation,
-                              ) => (
-                                <span
-                                  key={
-                                    citation.evidenceId
-                                  }
-                                  title={
-                                    citation.label
-                                  }
-                                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface)] px-3 py-1.5 text-[10px] font-bold text-[var(--text-secondary)]"
-                                >
-                                  <ShieldCheck
-                                    aria-hidden="true"
-                                    size={13}
-                                    className="shrink-0 text-[var(--success)]"
-                                  />
-
-                                  <span>
-                                    {
-                                      citation.source
-                                    }
-                                  </span>
-                                </span>
-                              ),
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  )
-                  : (
-                    <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">
-                      {aiError
-                        || (
-                          isArabic
-                            ? "اضغط على «إنشاء الملخص التنفيذي» لتحليل بيانات المؤسسة."
-                            : "Click “Generate Executive Summary” to analyze the company evidence."
-                        )}
-                    </p>
-                  )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <CorporateBrainLayout
-        company={
-          company
-        }
-        answers={
-          answers
-        }
+    <main className="bg-[var(--background)] pb-10" dir={isArabic ? "rtl" : "ltr"}>
+      <LiveInsight 
+        aiInsight={aiInsight} 
+        aiLoading={aiLoading} 
+        aiError={aiError} 
+        aiCitations={aiCitations} 
+        onGenerate={generateExecutiveInsight} 
       />
+      <div className="pt-6">
+        <Layout company={company} answers={answers} />
+      </div>
     </main>
   );
 }
