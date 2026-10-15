@@ -5,14 +5,14 @@ import { supabase } from "@/lib/supabase";
 import { getCurrentCompanyId } from "@/lib/companySession";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
-import { Company, DiscoveryAnswer } from "@/components/digetal-workforce/types";
-import { useAppCopy } from "@/components/digetal-workforce/useAppCopy";
-import HeroSection from "@/components/digetal-workforce/HeroSection";
-import { LoadingView, ErrorView } from "@/components/digetal-workforce/StatusViews";
-import ImpactCardsSection from "@/components/digetal-workforce/ImpactCardsSection";
-import StrategySection from "@/components/digetal-workforce/StrategySection";
-import DigitalAgentsSection from "@/components/digetal-workforce/DigitalAgentsSection";
-import OperatingModelSection from "@/components/digetal-workforce/OperatingModelSection";
+import { Company, DiscoveryAnswer } from "@/components/digital-workforce/types";
+import { useAppCopy } from "@/components/digital-workforce/useAppCopy";
+import HeroSection from "@/components/digital-workforce/HeroSection";
+import { LoadingView, ErrorView } from "@/components/digital-workforce/StatusViews";
+import ImpactCardsSection from "@/components/digital-workforce/ImpactCardsSection";
+import StrategySection from "@/components/digital-workforce/StrategySection";
+import DigitalAgentsSection from "@/components/digital-workforce/DigitalAgentsSection";
+import OperatingModelSection from "@/components/digital-workforce/OperatingModelSection";
 
 export default function DigitalWorkforcePage() {
   const { locale } = useLocalization();
