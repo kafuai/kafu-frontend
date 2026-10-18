@@ -51,7 +51,12 @@ import {
 } from "@/lib/rbac/permissions"; 
 
 interface NavigationItem {
-  key: "corporateBrain" | "digitalWorkforce" | "employeeExperience" | "admin";
+  key:
+    | "corporateBrain"
+    | "digitalWorkforce"
+    | "employeeExperience"
+    | "employees"
+    | "admin";
   href: string;
   icon: LucideIcon;
   permission?: Permission;
@@ -76,6 +81,12 @@ const navigationItems: readonly NavigationItem[] = [
     icon: MessagesSquare,
     permission: PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
   },
+  {
+  key: "employees",
+  href: "/payroll/employees",
+  icon: UsersRound,
+  permission: PERMISSIONS.PAYROLL_VIEW,
+},
   {
     key: "admin",
     href: "/admin",
@@ -103,6 +114,7 @@ const HEADER_CONTENT = {
       digitalWorkforce: "القوى العاملة الرقمية",
       employeeExperience: "تجربة الموظف",
       admin: "لوحة الإدارة",
+      employees: "الموظفون",
     }
   },
   en: {
@@ -123,6 +135,7 @@ const HEADER_CONTENT = {
       digitalWorkforce: "Digital Workforce",
       employeeExperience: "Employee Experience",
       admin: "Admin",
+      employees: "Employees",
     }
   },
 } as const;

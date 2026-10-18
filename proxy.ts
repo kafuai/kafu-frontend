@@ -18,6 +18,7 @@ const protectedRoutes = [
   "/employee-experience",
   "/admin",
   "/profile",
+  "/payroll",
   ];
 
 const guestRoutes = [
