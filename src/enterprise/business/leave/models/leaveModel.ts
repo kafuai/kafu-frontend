@@ -1,4 +1,4 @@
-import { LeaveStatus, LeaveType } from "../types/leaveTypes";
+import { LeaveStatus, LeaveType, LeaveAttachment } from "../types/leaveTypes";
 
 export interface LeaveRequest {
   id: string;
@@ -10,4 +10,7 @@ export interface LeaveRequest {
   endDate: number;
   reason: string;
   createdAt: number;
+  reviewedBy: string | null;
+  reviewedAt: number | null;
+  attachment?: LeaveAttachment | null;
 }
