@@ -7,8 +7,6 @@ import { PERMISSIONS } from "@/lib/rbac/permissions";
 import {
   calculatePayrollItem,
   monthToPeriod,
-  overlapDays,
-  WAGE_DAYS_PER_MONTH,
 } from "@/src/enterprise/business/payroll/payrollCalculator";
 
 type EmployeeRow = {
@@ -20,11 +18,6 @@ type EmployeeRow = {
   housing_allowance: number | string | null;
   other_allowances: number | string | null;
   is_saudi: boolean | null;
-};
-
-type UnpaidLeaveRow = {
-  user_id: string;
-  request_data: { start_date?: string; end_date?: string } | null;
 };
 
 type DbError = {
@@ -39,10 +32,6 @@ const toNumber = (value: unknown): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-/**
- * Database error details. Only ever returned to an authenticated owner
- * (the owner check runs before any query). Remove once the feature is stable.
- */
 const dbDetails = (error: DbError | null | undefined) =>
   error
     ? {
@@ -72,7 +61,7 @@ async function isOwner(
  * Body: { "month": "2026-10" }
  *
  * Creates a DRAFT payroll run for the month, calculates every active
- * employee in memory, bulk-inserts payroll_run_items, returns the grid data.
+ * employee in memory (defaults unpaid leave to 0), bulk-inserts items.
  */
 export async function POST(request: Request) {
   try {
@@ -93,7 +82,6 @@ export async function POST(request: Request) {
 
     const organizationId = identity.organizationId;
 
-    // NOTE: swap for a dedicated payroll-runs permission if you have one.
     if (
       !(await isOwner(supabase, user.id, organizationId)) ||
       !hasPermission(identity.role, PERMISSIONS.PAYROLL_EMPLOYEES_MANAGE)
@@ -165,7 +153,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // A payroll run must never silently treat missing salary data as zero.
     const missingSalary = employees.filter(
       (e) =>
         e.basic_salary == null ||
@@ -186,7 +173,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // GOSI depends on nationality, so never guess it.
     const unknownNationality = employees.filter(
       (e) => typeof e.is_saudi !== "boolean",
     );
@@ -204,58 +190,15 @@ export async function POST(request: Request) {
       );
     }
 
-    /* ---------- unpaid leave days from APPROVED unpaid leave requests ---------- */
-    const linkedUserIds = employees
-      .map((e) => e.user_id)
-      .filter((id): id is string => Boolean(id));
-
-    const unpaidDaysByUser = new Map<string, number>();
-
-    if (linkedUserIds.length > 0) {
-      const { data: leaves, error: leavesError } = await supabase
-        .from("employee_requests")
-        .select("user_id, request_data")
-        .eq("organization_id", organizationId)
-        .eq("request_type", "leave")
-        .eq("status", "approved")
-        .eq("request_data->>leave_type", "unpaid")
-        .in("user_id", linkedUserIds);
-
-      if (leavesError) {
-        console.error("Unpaid leave load failed:", leavesError);
-        return NextResponse.json(
-          { error: "Failed to load unpaid leave", details: dbDetails(leavesError) },
-          { status: 500 },
-        );
-      }
-
-      for (const leave of (leaves ?? []) as unknown as UnpaidLeaveRow[]) {
-        const start = leave.request_data?.start_date?.slice(0, 10);
-        const end = leave.request_data?.end_date?.slice(0, 10);
-        if (!start || !end) continue;
-
-        const days = overlapDays(start, end, period.start, period.end);
-        if (days > 0) {
-          unpaidDaysByUser.set(
-            leave.user_id,
-            (unpaidDaysByUser.get(leave.user_id) ?? 0) + days,
-          );
-        }
-      }
-    }
 
     /* ------------------------- calculation engine ------------------------- */
     const calculated = employees.map((employee) => {
-      const unpaid = employee.user_id
-        ? Math.min(unpaidDaysByUser.get(employee.user_id) ?? 0, WAGE_DAYS_PER_MONTH)
-        : 0;
-
       const result = calculatePayrollItem({
         basic_salary: toNumber(employee.basic_salary),
         housing_allowance: toNumber(employee.housing_allowance),
         other_allowances: toNumber(employee.other_allowances),
         is_saudi: employee.is_saudi === true,
-        unpaid_leave_days: unpaid,
+        unpaid_leave_days: 0, 
       });
 
       return { employee, result };
@@ -289,8 +232,7 @@ export async function POST(request: Request) {
           organization_id: organizationId,
           payroll_run_id: run.id,
           employee_id: employee.id,
-          employee_name: employee.full_name, // <--- أضف هذا السطر هنا
-          employee_number: employee.employee_number, // يمكنك إضافة الرقم الوظيفي أيضاً إذا كان الجدول يطلبه
+          employee_name: employee.full_name, 
           ...result,
         })),
       )
@@ -301,8 +243,6 @@ export async function POST(request: Request) {
     if (itemsError || !insertedItems) {
       console.error("Payroll items insert failed:", itemsError);
 
-      // One INSERT statement is atomic, so no items were saved.
-      // Remove the empty run so no orphan draft remains.
       await supabase
         .from("payroll_runs")
         .delete()

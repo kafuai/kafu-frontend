@@ -5,6 +5,7 @@ import { useLocalization } from "@/components/localization/LocalizationContext";
 import {
   CalendarDays,
   LoaderCircle,
+  Download,
   Plus,
   ShieldCheck,
   UserMinus,
@@ -13,6 +14,7 @@ import {
   Pencil,
   X,
   Save,
+  RefreshCw, // تمت إضافة هذه الأيقونة
 } from "lucide-react";
 
 type Run = {
@@ -142,6 +144,10 @@ export default function PayrollRunsPage() {
         editTitle: "تعديل راتب الموظف",
         cancel: "إلغاء",
         saveChanges: "حفظ التعديلات",
+        // نصوص ميزة إعادة الإنشاء
+        recreateConfirm: "هل أنت متأكد من إعادة إنشاء المسير؟ سيتم مسح أي تعديلات يدوية أجريتها وتحديثه بناءً على أحدث البيانات للموظفين.",
+        btnRecreate: "إعادة الإنشاء والتحديث",
+        recreateSuccess: "تم إعادة إنشاء المسير بنجاح بناءً على أحدث البيانات.",
       }
     : {
         title: "Payroll Runs",
@@ -186,6 +192,10 @@ export default function PayrollRunsPage() {
         editTitle: "Edit Employee Payroll",
         cancel: "Cancel",
         saveChanges: "Save Changes",
+        // Recreate feature texts
+        recreateConfirm: "Are you sure you want to recreate the run? Any manual edits will be lost and it will be updated based on current employee data.",
+        btnRecreate: "Recreate & Update",
+        recreateSuccess: "Payroll run recreated successfully based on latest data.",
       };
 
   const formatMoney = (value: number) =>
@@ -240,6 +250,51 @@ export default function PayrollRunsPage() {
       setRun(payload.run as Run);
       setItems((payload.items ?? []) as RunItem[]);
       setNotice(copy.created);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : copy.createError);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  // دالة إعادة الإنشاء والتحديث
+  async function handleRecreate() {
+    if (!run || run.status !== "draft") return;
+    if (!window.confirm(copy.recreateConfirm)) return;
+
+    setCreating(true);
+    setError("");
+    setNotice("");
+    setMissing([]);
+    setEditingItem(null);
+
+    const runMonth = run.period_start.slice(0, 7);
+
+    try {
+      // 1. حذف المسودة القديمة
+      const delRes = await fetch(`/api/payroll/runs/${run.id}`, { method: "DELETE" });
+      const delPayload = await readJson(delRes);
+      if (!delRes.ok) throw new Error(delPayload.error ?? copy.createError);
+
+      // 2. إنشاء المسودة الجديدة لنفس الشهر
+      const createRes = await fetch("/api/payroll/runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ month: runMonth }),
+      });
+      const createPayload = await readJson(createRes);
+
+      if (!createRes.ok) {
+        if (Array.isArray(createPayload.employees)) setMissing(createPayload.employees as MissingEmployee[]);
+        if (createPayload.details) setErrorDetails(createPayload.details as ErrorDetails);
+        setRun(null); // مسح العرض لأن المسير القديم انحذف والجديد فشل (مثلاً بسبب بيانات ناقصة لموظف جديد)
+        setItems([]);
+        throw new Error(createPayload.error ?? copy.createError);
+      }
+
+      setRun(createPayload.run as Run);
+      setItems((createPayload.items ?? []) as RunItem[]);
+      setNotice(copy.recreateSuccess);
     } catch (err) {
       setError(err instanceof Error ? err.message : copy.createError);
     } finally {
@@ -495,7 +550,7 @@ export default function PayrollRunsPage() {
             </section>
 
             <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm">
-              {/* Header with Approve and Download Buttons */}
+              {/* Header with Approve, Recreate and Download Buttons */}
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-4 sm:px-5">
                 <div className="flex items-center gap-3">
                   <h2 className="text-base font-semibold text-[var(--foreground)]">
@@ -515,17 +570,31 @@ export default function PayrollRunsPage() {
                       onClick={downloadCSV}
                       className="inline-flex items-center gap-2 rounded-lg border border-emerald-600 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
                     >
+                      <Download size={16} />
                       {copy.btnDownload}
                     </button>
                   )}
                   {run.status === "draft" && (
-                    <button
-                      onClick={() => void handleApprove()}
-                      disabled={creating}
-                      className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 text-[10px] font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 -translate-y-1"
-                    >
-                      {copy.btnApprove}
-                    </button>
+                    <>
+                      {/* الزر الجديد: إعادة الإنشاء */}
+                      <button
+                        onClick={() => void handleRecreate()}
+                        disabled={creating}
+                         className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 text-[10px] font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 -translate-y-1"
+                      >
+                        {creating ? <LoaderCircle size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                        {copy.btnRecreate}
+                      </button>
+
+                      <button
+                        onClick={() => void handleApprove()}
+                        disabled={creating}
+                        className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 text-[10px] font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 -translate-y-1"
+                      >
+                        {creating ? <LoaderCircle size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                        {copy.btnApprove}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -658,7 +727,7 @@ export default function PayrollRunsPage() {
                                         type="button"
                                         onClick={() => void handleSaveItemDetails(liveAbsence, liveNet)}
                                         disabled={savingItem}
-                                        className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 text-[10px] font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+                                        className="inline-flex items-center gap-2 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
                                       >
                                         {savingItem ? <LoaderCircle size={16} className="animate-spin" /> : <Save size={16} />}
                                         {copy.saveChanges}
