@@ -19,6 +19,7 @@ const protectedRoutes = [
   "/admin",
   "/profile",
   "/payroll",
+  "/attendance",
   ];
 
 const guestRoutes = [

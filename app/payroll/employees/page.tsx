@@ -3,13 +3,12 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, Fragment } from "react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 import {
-  Search,
-  Pencil,
   X,
   UsersRound,
   RefreshCw,
   LoaderCircle,
   UserRound,
+  Pencil,
   ClipboardList,
 } from "lucide-react";
 
@@ -175,6 +174,22 @@ export default function EmployeesPage() {
 
   const copy = isArabic
     ? {
+        badge: "PAYROLL",
+        badgeSub: "الموظفون",
+        heroText: "جميع أعضاء المنشأة في مكان واحد. أكمل بيانات الرواتب والعقد والبنك لكل موظف قبل إنشاء مسير الرواتب.",
+        chips: ["بيانات الرواتب", "العقود والبنوك", "متابعة النواقص"],
+        statTotal: "إجمالي الموظفين",
+        statTotalNote: "أعضاء المنشأة",
+        statActive: "نشطون",
+        statActiveNote: "بياناتهم مكتملة وحالتهم نشط",
+        statInactive: "غير نشطين",
+        statInactiveNote: "لا يدخلون في مسير الرواتب",
+        statIncomplete: "بيانات غير مكتملة",
+        statIncompleteNote: "تحتاج إلى استكمال",
+        loadingTitle: "جارٍ تحميل الموظفين",
+        loadingText: "يتم جلب أعضاء المنشأة وبيانات الرواتب.",
+        errorTitle: "تعذر تحميل الموظفين",
+        forbiddenTitle: "لا تملك صلاحية العرض",
         title: "الموظفون",
         subtitle: "جميع أعضاء المنشأة، أكمل بيانات الرواتب لكل موظف",
         search: "ابحث بالاسم أو البريد أو الرقم الوظيفي أو القسم",
@@ -198,7 +213,7 @@ export default function EmployeesPage() {
         refresh: "تحديث",
         completeTitle: "إكمال بيانات الموظف",
         editTitle: "تعديل بيانات الموظف",
-        formHint: "يمكنك حفظ البيانات المتوفرة لديك الآن وإكمال الباقي لاحقاً.", // تعديل النص للتوضيح
+        formHint: "يمكنك حفظ البيانات المتوفرة لديك الآن وإكمال الباقي لاحقاً.",
         personal: "البيانات الأساسية",
         employment: "البيانات الوظيفية والعقد",
         payroll: "بيانات الرواتب والبنك",
@@ -232,10 +247,25 @@ export default function EmployeesPage() {
         count: "عدد الموظفين",
         none: "—",
         currency: "ر.س",
-        missing: "بيانات غير مكتملة", // تعديل التسمية
+        missing: "بيانات غير مكتملة",
       }
     : {
-        // ... (Same English translation adjustments as above)
+        badge: "PAYROLL",
+        badgeSub: "Employees",
+        heroText: "All organization members in one place. Complete payroll, contract and bank details for each employee before creating a payroll run.",
+        chips: ["Payroll data", "Contracts & banks", "Track missing data"],
+        statTotal: "Total employees",
+        statTotalNote: "Organization members",
+        statActive: "Active",
+        statActiveNote: "Complete data and active status",
+        statInactive: "Inactive",
+        statInactiveNote: "Not included in payroll runs",
+        statIncomplete: "Incomplete data",
+        statIncompleteNote: "Need to be completed",
+        loadingTitle: "Loading employees",
+        loadingText: "Fetching organization members and payroll data.",
+        errorTitle: "Unable to load employees",
+        forbiddenTitle: "No permission to view",
         title: "Employees",
         subtitle: "All organization members. Complete payroll details for each employee.",
         search: "Search name, email, employee number, or department",
@@ -465,9 +495,11 @@ export default function EmployeesPage() {
     }
   }
 
+  /* ------------------------------ styles ------------------------------ */
+
   const inputClass =
-    "mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--primary)]";
-  const labelClass = "block text-sm font-medium text-[var(--foreground)]";
+    "mt-1 block h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm font-bold text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:bg-[var(--surface)]";
+  const labelClass = "block text-xs font-black text-[var(--text-secondary)]";
 
   // قمنا بإزالة خاصية required لكي لا يمنع المتصفح الإرسال
   function field(key: keyof EmployeeForm, label: string, type = "text", dir?: "ltr") {
@@ -488,285 +520,390 @@ export default function EmployeesPage() {
     );
   }
 
-  return (
-    <main dir={isArabic ? "rtl" : "ltr"} className="min-h-[calc(100vh-76px)] bg-[var(--background)] px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-              <UsersRound size={17} />
-              <span>{copy.count}</span>
-              <span className="rounded-full bg-[var(--muted)] px-2.5 py-0.5 font-semibold text-[var(--foreground)]">
-                {rows.length}
-              </span>
-              {canManage && incompleteCount > 0 && (
-                <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                  {incompleteCount} {copy.incomplete}
-                </span>
-              )}
-            </div>
-            <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">
-              {copy.title}
-            </h1>
-            <p className="mt-2 text-sm text-[var(--muted-foreground)]">{copy.subtitle}</p>
-          </div>
+  const headings = [
+    copy.employee,
+    copy.number,
+    copy.job,
+    copy.department,
+    copy.phone,
+    copy.salary,
+    copy.status,
+  ];
 
-          <button
-            type="button"
-            onClick={() => void loadEmployees()}
-            disabled={loadState === "loading"}
-            className="inline-flex items-center bg-[var(--brand-primary)] justify-center gap-2 rounded-xl border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)]  disabled:opacity-50"
-          >
-            <RefreshCw size={16} />
-            {copy.refresh}
-          </button>
-        </div>
+  const stats = [
+    { code: "ALL", label: copy.statTotal, value: rows.length, note: copy.statTotalNote },
+    {
+      code: "ACT",
+      label: copy.statActive,
+      value: rows.filter((r) => !isPayrollIncomplete(r.payroll) && r.payroll?.status === "active").length,
+      note: copy.statActiveNote,
+    },
+    {
+      code: "OFF",
+      label: copy.statInactive,
+      value: rows.filter((r) => r.payroll?.status === "inactive").length,
+      note: copy.statInactiveNote,
+    },
+    { code: "INC", label: copy.statIncomplete, value: incompleteCount, note: copy.statIncompleteNote },
+  ];
+
+  return (
+    <main
+      dir={isArabic ? "rtl" : "ltr"}
+      className="min-h-[calc(100vh-64px)] bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8"
+    >
+      <div className="mx-auto max-w-[1540px]">
+        {/* ------------------------------ Hero ------------------------------ */}
+        <section className="relative overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+          <div className="absolute inset-y-0 start-0 w-1 bg-[var(--brand-primary)]" />
+          <div className="grid gap-6 px-6 py-7 md:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:py-8">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--brand-subtle)] px-3 py-1.5 text-[11px] font-black text-[var(--brand-primary)]">
+                  <span className="h-2 w-2 rounded-full bg-[var(--brand-primary)]" />
+                  {copy.badge}
+                </span>
+                <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-[11px] font-bold text-[var(--text-secondary)]">
+                  {copy.badgeSub}
+                </span>
+              </div>
+
+              <h1 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">{copy.title}</h1>
+              <p className="mt-3 max-w-4xl text-sm leading-7 text-[var(--text-secondary)] md:text-base md:leading-8">
+                {copy.heroText}
+              </p>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {copy.chips.map((chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]"
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void loadEmployees()}
+              disabled={loadState === "loading"}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-5 text-sm font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw size={16} className={loadState === "loading" ? "animate-spin" : ""} />
+              {copy.refresh}
+            </button>
+          </div>
+        </section>
 
         {notice && (
-          <div role="status" className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div
+            role="status"
+            className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800"
+          >
             {notice}
           </div>
         )}
 
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center">
-            <div className="relative min-w-0 flex-1">
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder={copy.search}
-                className="h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-4 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:bg-[var(--surface)]"
-              />
+        {/* ----------------------------- Loading ----------------------------- */}
+        {loadState === "loading" && (
+          <section className="mt-5 rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] p-10 text-center shadow-[var(--shadow-small)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-subtle)]">
+              <span className="h-5 w-5 animate-pulse rounded-full bg-[var(--brand-primary)]" />
             </div>
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-              className="rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none focus:border-[var(--primary)]"
-              aria-label={copy.status}
+            <p className="mt-4 text-base font-black">{copy.loadingTitle}</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">{copy.loadingText}</p>
+          </section>
+        )}
+
+        {/* ------------------------------ Error ------------------------------ */}
+        {loadState === "error" && (
+          <section
+            role="alert"
+            className="mt-5 rounded-[28px] border border-amber-300 bg-amber-50 p-8 text-center text-amber-950 shadow-[var(--shadow-small)]"
+          >
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-lg font-black text-amber-800">
+              !
+            </div>
+            <h2 className="mt-4 text-xl font-black">{copy.errorTitle}</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7">{loadError || copy.loadError}</p>
+            <button
+              type="button"
+              onClick={() => void loadEmployees()}
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--text-primary)] px-6 text-sm font-black text-[var(--surface)] transition hover:opacity-90"
             >
-              <option value="all">{copy.all}</option>
-              <option value="active">{copy.active}</option>
-              <option value="inactive">{copy.inactive}</option>
-              <option value="incomplete">{copy.incomplete}</option>
-            </select>
-          </div>
+              {copy.retry}
+            </button>
+          </section>
+        )}
 
-          {loadState === "loading" && (
-            <div className="flex items-center justify-center gap-3 px-4 py-16 text-sm text-[var(--muted-foreground)]">
-              <LoaderCircle size={20} className="animate-spin" />
-              {copy.loading}
+        {/* ---------------------------- Forbidden ---------------------------- */}
+        {loadState === "forbidden" && (
+          <section className="mt-5 rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] p-10 text-center shadow-[var(--shadow-small)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-muted)] text-lg font-black text-[var(--text-secondary)]">
+              !
             </div>
-          )}
+            <h2 className="mt-4 text-xl font-black">{copy.forbiddenTitle}</h2>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">{copy.forbidden}</p>
+          </section>
+        )}
 
-          {loadState === "error" && (
-            <div role="alert" className="px-4 py-16 text-center">
-              <p className="text-sm text-rose-600">{loadError || copy.loadError}</p>
-              <button
-                type="button"
-                onClick={() => void loadEmployees()}
-                className="mt-4 rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-medium"
-              >
-                {copy.retry}
-              </button>
-            </div>
-          )}
+        {loadState === "loaded" && (
+          <>
+            {/* ------------------------------ Stats ------------------------------ */}
+            <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {stats.map((card) => (
+                <article
+                  key={card.code}
+                  className="group relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
+                >
+                  <div className="absolute inset-x-0 top-0 h-0.5 origin-start scale-x-0 bg-[var(--brand-primary)] transition-transform duration-200 group-hover:scale-x-100" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-[var(--text-muted)]">{card.label}</p>
+                      <h2 className="mt-3 text-2xl font-black tracking-tight md:text-3xl">{card.value}</h2>
+                    </div>
+                    <span className="flex h-9 min-w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-2 text-[10px] font-black text-[var(--brand-primary)]">
+                      {card.code}
+                    </span>
+                  </div>
+                  <div className="mt-4 border-t border-[var(--border-default)] pt-3">
+                    <p className="text-[11px] font-bold text-[var(--text-secondary)]">{card.note}</p>
+                  </div>
+                </article>
+              ))}
+            </section>
 
-          {loadState === "loaded" && (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[850px] text-start text-sm">
-                <thead className="bg-[var(--muted)]/50 text-[var(--muted-foreground)]">
-                  <tr>
-                    {[
-                      copy.employee,
-                      copy.number,
-                      copy.job,
-                      copy.department,
-                      copy.phone,
-                      copy.salary,
-                      copy.status,
-                      // ...(canManage ? [copy.actions] : []),
-                    ].map((heading) => (
-                      <th key={heading} scope="col" className="px-4 py-3 text-start font-semibold">
-                        {heading}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)]">
-                  {filteredRows.map((row) => {
-                    const p = row.payroll;
-                    const isEditingThis = editingRow?.key === row.key;
-                    // الاعتماد على الدالة الجديدة لمعرفة ما إذا كانت البيانات غير مكتملة
-                    const isCompleting = isPayrollIncomplete(p);
+            {/* ------------------------------ Table ------------------------------ */}
+            <section className="mt-5 overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+              <div className="flex flex-col gap-3 border-b border-[var(--border-default)] bg-[var(--surface-muted)] p-4 sm:flex-row sm:items-center">
+                <div className="flex shrink-0 items-center gap-2 text-sm font-black text-[var(--text-secondary)]">
+                  <UsersRound size={17} className="text-[var(--brand-primary)]" />
+                  <span>{copy.count}</span>
+                  <span className="rounded-full bg-[var(--brand-subtle)] px-2.5 py-0.5 text-[11px] font-black text-[var(--brand-primary)]">
+                    {filteredRows.length}
+                  </span>
+                </div>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={copy.search}
+                  className="h-11 min-w-0 flex-1 rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-4 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:bg-[var(--surface)]"
+                />
+                <select
+                  value={statusFilter}
+                  onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+                  className="h-11 rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm font-bold text-[var(--text-secondary)] outline-none focus:border-[var(--brand-primary)]"
+                  aria-label={copy.status}
+                >
+                  <option value="all">{copy.all}</option>
+                  <option value="active">{copy.active}</option>
+                  <option value="inactive">{copy.inactive}</option>
+                  <option value="incomplete">{copy.incomplete}</option>
+                </select>
+              </div>
 
-                    return (
-                      <Fragment key={row.key}>
-                        <tr
-                          onClick={() => toggleRowForm(row)}
-                          className={`transition ${isEditingThis ? "bg-[var(--muted)]/50" : "hover:bg-[var(--muted)]/30"} ${canManage ? "cursor-pointer" : ""}`}
-                        >
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--muted)] text-[var(--foreground)]">
-                                <UserRound size={18} />
-                              </span>
-                              <div className="min-w-0">
-                                <div className="font-semibold text-[var(--foreground)]">{row.full_name || copy.none}</div>
-                                <div className="mt-0.5 truncate text-xs text-[var(--muted-foreground)]" dir="ltr">
-                                  {row.email ?? p?.national_id ?? copy.none}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[900px] text-start text-sm">
+                  <thead className="text-[var(--text-secondary)]">
+                    <tr>
+                      {headings.map((heading) => (
+                        <th key={heading} scope="col" className="whitespace-nowrap px-4 py-3 text-start text-xs font-black">
+                          {heading}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border-default)]">
+                    {filteredRows.map((row) => {
+                      const p = row.payroll;
+                      const isEditingThis = editingRow?.key === row.key;
+                      // الاعتماد على الدالة الجديدة لمعرفة ما إذا كانت البيانات غير مكتملة
+                      const isCompleting = isPayrollIncomplete(p);
+
+                      return (
+                        <Fragment key={row.key}>
+                          <tr
+                            onClick={() => toggleRowForm(row)}
+                            className={`transition ${
+                              isEditingThis ? "bg-[var(--brand-subtle)]" : "hover:bg-[var(--surface-muted)]"
+                            } ${canManage ? "cursor-pointer" : ""}`}
+                          >
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+                                  <UserRound size={18} />
+                                </span>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 font-black">
+                                    {row.full_name || copy.none}
+                                    {canManage && !isEditingThis && (
+                                      <Pencil size={12} className="text-[var(--text-muted)]" />
+                                    )}
+                                  </div>
+                                  <div className="mt-0.5 truncate text-[11px] font-bold text-[var(--text-secondary)]" dir="ltr">
+                                    {row.email ?? p?.national_id ?? copy.none}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 text-[var(--foreground)]">{p?.employee_number ?? copy.none}</td>
-                          <td className="px-4 py-4 text-[var(--foreground)]">{p?.job_title || copy.none}</td>
-                          <td className="px-4 py-4 text-[var(--foreground)]">{p?.department || copy.none}</td>
-                          <td className="px-4 py-4 text-[var(--foreground)]" dir="ltr">{p?.phone || copy.none}</td>
-                          <td className="whitespace-nowrap px-4 py-4 text-[var(--foreground)]">
-                            {p?.basic_salary
-                              ? `${Number(p.basic_salary).toLocaleString(isArabic ? "ar-SA" : "en-US", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })} ${copy.currency}`
-                              : copy.none}
-                          </td>
-                          <td className="px-4 py-4">
-                            {isCompleting ? (
-                              <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                                {copy.missing}
-                              </span>
-                            ) : (
-                              <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${p?.status === "active" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>
-                                {p?.status === "active" ? copy.active : copy.inactive}
-                              </span>
-                            )}
-                          </td>
-                          {/* {canManage && (
-                            <td className="px-4 py-4">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleRowForm(row);
-                                }}
-                                className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                                  !isCompleting ? "border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--muted)]" : "bg-[var(--primary)] text-white hover:opacity-90"
-                                }`}
-                              >
-                                {!isCompleting ? <Pencil size={14} /> : <ClipboardList size={14} />}
-                                {isEditingThis ? copy.cancel : (isCompleting ? copy.complete : copy.edit)}
-                              </button>
                             </td>
-                          )} */}
-                        </tr>
-
-                        {isEditingThis && (
-                          <tr>
-                            <td colSpan={canManage ? 8 : 7} className="p-0 border-b border-[var(--border)]">
-                              <div className="bg-[var(--muted)]/10 px-4 py-6 sm:px-6 shadow-inner border-t border-[var(--border)]">
-                                <form onSubmit={handleSubmit} className="space-y-6">
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <h2 className="text-lg font-semibold text-[var(--foreground)]">
-                                        {isCompleting ? copy.completeTitle : copy.editTitle}
-                                      </h2>
-                                      <p className="mt-1 text-xs text-[var(--muted-foreground)]">{copy.formHint}</p>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={closeForm}
-                                      className="rounded-lg p-2 text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-                                    >
-                                      <X size={18} />
-                                    </button>
-                                  </div>
-
-                                  <div className="grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3">
-                                    <div className="space-y-4">
-                                      <h3 className="text-sm font-semibold text-[var(--foreground)] border-b border-[var(--border)] pb-2">{copy.personal}</h3>
-                                      {field("employee_number", copy.employeeNumber)}
-                                      {field("full_name", copy.fullName)}
-                                      {field("national_id", copy.nationalId)}
-                                      {field("nationality", copy.nationality)}
-                                      {field("date_of_birth", copy.birthDate, "date")}
-                                      {field("phone", copy.phone, "tel", "ltr")}
-                                    </div>
-
-                                    <div className="space-y-4">
-                                      <h3 className="text-sm font-semibold text-[var(--foreground)] border-b border-[var(--border)] pb-2">{copy.employment}</h3>
-                                      {field("job_title", copy.jobTitle)}
-                                      {field("department", copy.department)}
-                                      {field("hire_date", copy.hireDate, "date")}
-                                      {field("contract_type", copy.contractType)}
-                                      {field("contract_start_date", copy.contractStart, "date")}
-                                      {field("contract_end_date", copy.contractEnd, "date")}
-                                      <label className={labelClass}>
-                                        {copy.status} <span className="text-rose-500">*</span>
-                                        <select
-                                          value={form.status}
-                                          onChange={(event) => updateField("status", event.target.value as EmployeeForm["status"])}
-                                          className={inputClass}
-                                        >
-                                          <option value="active">{copy.active}</option>
-                                          <option value="inactive">{copy.inactive}</option>
-                                        </select>
-                                      </label>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                      <h3 className="text-sm font-semibold text-[var(--foreground)] border-b border-[var(--border)] pb-2">{copy.payroll}</h3>
-                                      {field("basic_salary", copy.basicSalary, "number")}
-                                      {field("housing_allowance", copy.housing, "number")}
-                                      {field("other_allowances", copy.other, "number")}
-                                      {field("deductions", copy.deductions, "number")}
-                                      {field("bank_name", copy.bank)}
-                                      {field("iban", copy.iban, "text", "ltr")}
-                                    </div>
-                                  </div>
-
-                                  {formError && (
-                                    <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                                      {formError}
-                                    </div>
-                                  )}
-
-                                  <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end">
-                                    <button
-                                      type="button"
-                                      onClick={closeForm}
-                                      disabled={saving}
-                                     className="rounded-lg border border-[var(--border-default)] px-4 py-2 text-sm font-bold"
-                                    >
-                                      {copy.cancel}
-                                    </button>
-                                    <button
-                                      type="submit"
-                                      disabled={saving}
-                                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50 shadow-sm"
-                                    >
-                                      {saving && <LoaderCircle size={16} className="animate-spin" />}
-                                      {saving ? copy.saving : copy.save}
-                                    </button>
-                                  </div>
-                                </form>
-                              </div>
+                            <td className="px-4 py-3.5 font-bold text-[var(--text-secondary)]">{p?.employee_number ?? copy.none}</td>
+                            <td className="px-4 py-3.5 font-bold text-[var(--text-secondary)]">{p?.job_title || copy.none}</td>
+                            <td className="px-4 py-3.5 font-bold text-[var(--text-secondary)]">{p?.department || copy.none}</td>
+                            <td className="px-4 py-3.5 font-bold text-[var(--text-secondary)]" dir="ltr">
+                              {p?.phone || copy.none}
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3.5 font-black">
+                              {p?.basic_salary
+                                ? `${Number(p.basic_salary).toLocaleString(isArabic ? "ar-SA" : "en-US", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })} ${copy.currency}`
+                                : copy.none}
+                            </td>
+                            <td className="px-4 py-3.5">
+                              {isCompleting ? (
+                                <span className="inline-flex whitespace-nowrap rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-black text-amber-800">
+                                  {copy.missing}
+                                </span>
+                              ) : (
+                                <span
+                                  className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-black ${
+                                    p?.status === "active"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : "bg-[var(--surface-muted)] text-[var(--text-secondary)]"
+                                  }`}
+                                >
+                                  {p?.status === "active" ? copy.active : copy.inactive}
+                                </span>
+                              )}
                             </td>
                           </tr>
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {filteredRows.length === 0 && (
-                <div className="px-4 py-12 text-center text-sm text-[var(--muted-foreground)]">
-                  {copy.noEmployees}
-                </div>
-              )}
-            </div>
-          )}
-        </section>
+
+                          {isEditingThis && (
+                            <tr>
+                              <td colSpan={headings.length} className="p-0">
+                                <div className="border-y border-[var(--brand-primary)]/20 bg-[var(--surface-muted)] px-4 py-6 sm:px-6">
+                                  <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="flex items-start gap-3">
+                                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white shadow-sm">
+                                          <ClipboardList size={20} />
+                                        </span>
+                                        <div>
+                                          <h2 className="text-lg font-black">
+                                            {isCompleting ? copy.completeTitle : copy.editTitle}
+                                          </h2>
+                                          <p className="mt-1 text-xs font-bold text-[var(--text-secondary)]">{copy.formHint}</p>
+                                        </div>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={closeForm}
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[var(--text-secondary)] transition hover:bg-[var(--surface)]"
+                                      >
+                                        <X size={18} />
+                                      </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                                      <div className="space-y-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5">
+                                        <h3 className="border-b border-[var(--border-default)] pb-3 text-sm font-black">
+                                          {copy.personal}
+                                        </h3>
+                                        {field("employee_number", copy.employeeNumber)}
+                                        {field("full_name", copy.fullName)}
+                                        {field("national_id", copy.nationalId)}
+                                        {field("nationality", copy.nationality)}
+                                        {field("date_of_birth", copy.birthDate, "date")}
+                                        {field("phone", copy.phone, "tel", "ltr")}
+                                      </div>
+
+                                      <div className="space-y-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5">
+                                        <h3 className="border-b border-[var(--border-default)] pb-3 text-sm font-black">
+                                          {copy.employment}
+                                        </h3>
+                                        {field("job_title", copy.jobTitle)}
+                                        {field("department", copy.department)}
+                                        {field("hire_date", copy.hireDate, "date")}
+                                        {field("contract_type", copy.contractType)}
+                                        {field("contract_start_date", copy.contractStart, "date")}
+                                        {field("contract_end_date", copy.contractEnd, "date")}
+                                        <label className={labelClass}>
+                                          {copy.status} <span className="text-rose-500">*</span>
+                                          <select
+                                            value={form.status}
+                                            onChange={(event) => updateField("status", event.target.value as EmployeeForm["status"])}
+                                            className={inputClass}
+                                          >
+                                            <option value="active">{copy.active}</option>
+                                            <option value="inactive">{copy.inactive}</option>
+                                          </select>
+                                        </label>
+                                      </div>
+
+                                      <div className="space-y-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5">
+                                        <h3 className="border-b border-[var(--border-default)] pb-3 text-sm font-black">
+                                          {copy.payroll}
+                                        </h3>
+                                        {field("basic_salary", copy.basicSalary, "number")}
+                                        {field("housing_allowance", copy.housing, "number")}
+                                        {field("other_allowances", copy.other, "number")}
+                                        {field("deductions", copy.deductions, "number")}
+                                        {field("bank_name", copy.bank)}
+                                        {field("iban", copy.iban, "text", "ltr")}
+                                      </div>
+                                    </div>
+
+                                    {formError && (
+                                      <div
+                                        role="alert"
+                                        className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700"
+                                      >
+                                        {formError}
+                                      </div>
+                                    )}
+
+                                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                                      <button
+                                        type="button"
+                                        onClick={closeForm}
+                                        disabled={saving}
+                                        className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-5 text-sm font-black text-[var(--text-secondary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] disabled:cursor-not-allowed disabled:opacity-50"
+                                      >
+                                        {copy.cancel}
+                                      </button>
+                                      <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-6 text-sm font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                      >
+                                        {saving && <LoaderCircle size={16} className="animate-spin" />}
+                                        {saving ? copy.saving : copy.save}
+                                      </button>
+                                    </div>
+                                  </form>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {filteredRows.length === 0 && (
+                  <div className="px-4 py-14 text-center text-sm font-bold text-[var(--text-secondary)]">
+                    {copy.noEmployees}
+                  </div>
+                )}
+              </div>
+            </section>
+          </>
+        )}
       </div>
     </main>
   );

@@ -25,6 +25,7 @@ export interface PayrollCalcInput {
   unpaid_leave_days: number;
   /** Extra manual deductions. Defaults to 0. */
   other_deductions?: number;
+  attendance_deduction?: number;
 }
 
 export interface PayrollCalcResult {
@@ -36,6 +37,7 @@ export interface PayrollCalcResult {
   absence_deduction: number;
   other_deductions: number;
   net_salary: number;
+  attendance_deduction: number;
 }
 
 export function calculatePayrollItem(input: PayrollCalcInput): PayrollCalcResult {
@@ -52,6 +54,8 @@ export function calculatePayrollItem(input: PayrollCalcInput): PayrollCalcResult
     WAGE_DAYS_PER_MONTH,
   );
 
+  
+
   // 2) Absence = (gross / 30) * unpaid days
   const absenceDeduction = round2((gross / WAGE_DAYS_PER_MONTH) * unpaidDays);
 
@@ -61,10 +65,13 @@ export function calculatePayrollItem(input: PayrollCalcInput): PayrollCalcResult
 
   const otherDeductions = round2(input.other_deductions ?? 0);
 
+  const attendanceDeduction = round2(Math.max(0, input.attendance_deduction ?? 0));
+
   // 4) Net = gross - all deductions
   const netSalary = round2(
-    gross - absenceDeduction - gosiDeduction - otherDeductions,
+    gross - absenceDeduction - gosiDeduction - otherDeductions - attendanceDeduction,
   );
+  
 
   return {
     basic_salary: basic,
@@ -74,6 +81,7 @@ export function calculatePayrollItem(input: PayrollCalcInput): PayrollCalcResult
     gosi_deduction: gosiDeduction,
     absence_deduction: absenceDeduction,
     other_deductions: otherDeductions,
+    attendance_deduction: attendanceDeduction,
     net_salary: netSalary,
   };
 }

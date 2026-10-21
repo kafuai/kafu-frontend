@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-auth/server";
 import { resolveWorkspaceIdentity } from "@/lib/workspace-identity/tenantResolver";
 import { hasPermission } from "@/lib/rbac/authorization";
 import { PERMISSIONS } from "@/lib/rbac/permissions";
+import { calculatePayrollItem } from "@/src/enterprise/business/payroll/payrollCalculator"
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -43,7 +44,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const { data: items, error: itemsError } = await supabase
       .from("payroll_run_items")
       .select(
-        "id, employee_id, basic_salary, housing_allowance, other_allowances, unpaid_leave_days, gosi_deduction, absence_deduction, other_deductions, net_salary",
+        "id, employee_id, basic_salary, housing_allowance, other_allowances, unpaid_leave_days, gosi_deduction, absence_deduction, other_deductions, attendance_deduction, net_salary",
       )
       .eq("payroll_run_id", id)
       .eq("organization_id", identity.organizationId);
@@ -121,10 +122,34 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ success: true, run: data });
     }
 
-    if (body.action === "update_item" && body.itemId && body.data) {
+        if (body.action === "update_item" && body.itemId && body.data) {
+      const num = (v: unknown) => {
+        const x = Number(v);
+        return Number.isFinite(x) && x >= 0 ? x : null;
+      };
+      const otherAllowances = num(body.data.other_allowances);
+      const otherDeductions = num(body.data.other_deductions);
+      const unpaidDays = num(body.data.unpaid_leave_days);
+
+      if (otherAllowances === null || otherDeductions === null || unpaidDays === null) {
+        return NextResponse.json({ error: "Invalid values." }, { status: 400 });
+      }
+
+      // لا تعديل إلا على مسير draft
+      const { data: runRow } = await supabase
+        .from("payroll_runs")
+        .select("status")
+        .eq("id", id)
+        .eq("organization_id", identity.organizationId)
+        .maybeSingle();
+      if (!runRow) return NextResponse.json({ error: "Run not found" }, { status: 404 });
+      if (runRow.status !== "draft") {
+        return NextResponse.json({ error: "Only draft runs can be edited." }, { status: 400 });
+      }
+
       const { data: existingItem } = await supabase
         .from("payroll_run_items")
-        .select("id")
+        .select("id, employee_id, basic_salary, housing_allowance, attendance_deduction")
         .eq("id", body.itemId)
         .eq("payroll_run_id", id)
         .eq("organization_id", identity.organizationId)
@@ -132,16 +157,39 @@ export async function PATCH(request: Request, context: RouteContext) {
 
       if (!existingItem) return NextResponse.json({ error: "Item not found or unauthorized" }, { status: 404 });
 
+      const { data: emp } = await supabase
+        .from("payroll_employees")
+        .select("is_saudi")
+        .eq("id", existingItem.employee_id)
+        .eq("organization_id", identity.organizationId)
+        .maybeSingle();
+
+      const calc = calculatePayrollItem({
+        basic_salary: Number(existingItem.basic_salary),
+        housing_allowance: Number(existingItem.housing_allowance),
+        other_allowances: otherAllowances,
+        is_saudi: emp?.is_saudi === true,
+        unpaid_leave_days: unpaidDays,
+        other_deductions: otherDeductions,
+        attendance_deduction: Number(existingItem.attendance_deduction ?? 0),
+      });
+
+      if (calc.net_salary < 0) {
+        return NextResponse.json({ error: "Net salary cannot be negative." }, { status: 400 });
+      }
+
       const { data, error } = await supabase
         .from("payroll_run_items")
         .update({
-          other_allowances: body.data.other_allowances,
-          other_deductions: body.data.other_deductions,
-          unpaid_leave_days: body.data.unpaid_leave_days,
-          absence_deduction: body.data.absence_deduction,
-          net_salary: body.data.net_salary,
+          other_allowances: calc.other_allowances,
+          other_deductions: calc.other_deductions,
+          unpaid_leave_days: calc.unpaid_leave_days,
+          absence_deduction: calc.absence_deduction,
+          gosi_deduction: calc.gosi_deduction,
+          net_salary: calc.net_salary,
         })
         .eq("id", body.itemId)
+        .eq("organization_id", identity.organizationId)
         .select()
         .single();
 

@@ -140,7 +140,7 @@ html[data-theme="dark"] .kafu-executive-header {
   justify-content: center;
   gap: 3px;
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: visible;
   scrollbar-width: none;
 }
 
@@ -1141,3 +1141,119 @@ html[dir="rtl"] .kafu-executive-user__identity {
   outline: none;
   box-shadow: 0 0 0 3px var(--brand-subtle);
 }
+
+/* === KAFU NAVIGATION DROPDOWN START === */
+
+.kafu-nav-dropdown-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.kafu-nav-dropdown-menu {
+  position: absolute;
+  z-index: 90;
+  top: calc(100% + 8px);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  min-width: 220px;
+  padding: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(18px);
+  animation: kafu-nav-dropdown-enter 160ms ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+[dir="rtl"] .kafu-nav-dropdown-menu {
+  transform: translateX(50%);
+}
+
+html[data-theme="dark"] .kafu-nav-dropdown-menu {
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(8, 11, 16, 0.98);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+.kafu-nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 150ms ease;
+}
+
+html[data-theme="dark"] .kafu-nav-dropdown-item {
+  color: #cbd5e1;
+}
+
+.kafu-nav-dropdown-item__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: color 150ms ease;
+}
+
+.kafu-nav-dropdown-item:hover,
+.kafu-nav-dropdown-item:focus-visible {
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  outline: none;
+}
+
+html[data-theme="dark"] .kafu-nav-dropdown-item:hover,
+html[data-theme="dark"] .kafu-nav-dropdown-item:focus-visible {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+.kafu-nav-dropdown-item:hover .kafu-nav-dropdown-item__icon {
+  color: var(--brand-primary);
+}
+
+.kafu-nav-dropdown-item[data-active="true"] {
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+  color: var(--brand-primary);
+}
+
+.kafu-nav-dropdown-item[data-active="true"] .kafu-nav-dropdown-item__icon {
+  color: var(--brand-primary);
+}
+
+@keyframes kafu-nav-dropdown-enter {
+  from { opacity: 0; transform: translate(-50%, -6px) scale(0.97); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes kafu-nav-dropdown-enter-rtl {
+  from { opacity: 0; transform: translate(50%, -6px) scale(0.97); }
+  to { opacity: 1; transform: translate(50%, 0) scale(1); }
+}
+
+[dir="rtl"] .kafu-nav-dropdown-menu {
+  transform: translateX(50%);
+  animation: kafu-nav-dropdown-enter-rtl 160ms ease-out;
+}
+
+@media (max-width: 820px) {
+  .kafu-nav-dropdown-menu {
+    inset-inline-start: 0;
+    transform: none;
+  }
+  [dir="rtl"] .kafu-nav-dropdown-menu {
+    inset-inline-start: auto;
+    inset-inline-end: 0;
+    transform: none;
+  }
+}
+
+/* === KAFU NAVIGATION DROPDOWN END === */

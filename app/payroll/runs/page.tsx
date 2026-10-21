@@ -14,7 +14,7 @@ import {
   Pencil,
   X,
   Save,
-  RefreshCw, // تمت إضافة هذه الأيقونة
+  RefreshCw,
 } from "lucide-react";
 
 type Run = {
@@ -36,6 +36,7 @@ type RunItem = {
   unpaid_leave_days: number | string;
   gosi_deduction: number | string;
   absence_deduction: number | string;
+  attendance_deduction: number | string; // ✅ تمت إضافة خصم التأخير هنا
   other_deductions: number | string;
   net_salary: number | string;
 };
@@ -82,6 +83,13 @@ function monthLabel(key: string, isArabic: boolean): string {
   }).format(new Date(Date.UTC(y, m - 1, 1)));
 }
 
+/* ------------------------------ styles ------------------------------ */
+
+const secondaryBtn =
+  "inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-4 text-xs font-black text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+const editInputCls =
+  "mt-1 block h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm font-bold text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-primary)] focus:bg-[var(--surface)]";
+
 export default function PayrollRunsPage() {
   const { locale } = useLocalization();
   const isArabic = locale === "ar";
@@ -102,6 +110,16 @@ export default function PayrollRunsPage() {
 
   const copy = isArabic
     ? {
+        badge: "PAYROLL",
+        badgeSub: "مسيرات الرواتب",
+        heroText: "أنشئ مسير الرواتب الشهري كمسودة، وراجع حسابات كل موظف وخصومات الحضور والتأمينات قبل الاعتماد النهائي.",
+        chips: ["مسودة قابلة للتعديل", "خصومات الحضور المعتمدة", "اعتماد نهائي"],
+        kpiEmployeesNote: "موظفون ضمن المسير",
+        kpiGrossNote: "قبل الخصومات",
+        kpiDeductionsNote: "غياب + تأخير + تأمينات + أخرى",
+        kpiNetNote: "بعد جميع الخصومات",
+        statusApproved: "معتمد",
+        clickToEdit: "انقر للتعديل اليدوي",
         title: "مسيرات الرواتب",
         subtitle: "أنشئ مسير رواتب شهري كمسودة وراجع حسابات الموظفين قبل الاعتماد.",
         monthLabel: "شهر المسير",
@@ -130,6 +148,7 @@ export default function PayrollRunsPage() {
         colGross: "الإجمالي",
         colUnpaid: "أيام الغياب",
         colAbsence: "خصم الغياب",
+        colAttendance: "خصم التأخير", // ✅ الترجمة الجديدة
         colGosi: "التأمينات",
         colOtherDed: "خصومات أخرى",
         colNet: "الصافي",
@@ -144,12 +163,21 @@ export default function PayrollRunsPage() {
         editTitle: "تعديل راتب الموظف",
         cancel: "إلغاء",
         saveChanges: "حفظ التعديلات",
-        // نصوص ميزة إعادة الإنشاء
         recreateConfirm: "هل أنت متأكد من إعادة إنشاء المسير؟ سيتم مسح أي تعديلات يدوية أجريتها وتحديثه بناءً على أحدث البيانات للموظفين.",
         btnRecreate: "إعادة الإنشاء والتحديث",
         recreateSuccess: "تم إعادة إنشاء المسير بنجاح بناءً على أحدث البيانات.",
       }
     : {
+        badge: "PAYROLL",
+        badgeSub: "Payroll runs",
+        heroText: "Create the monthly payroll as a draft, and review each employee's calculation, attendance deductions and GOSI before the final approval.",
+        chips: ["Editable draft", "Approved attendance deductions", "Final approval"],
+        kpiEmployeesNote: "Employees in this run",
+        kpiGrossNote: "Before deductions",
+        kpiDeductionsNote: "Absence + late + GOSI + other",
+        kpiNetNote: "After all deductions",
+        statusApproved: "Approved",
+        clickToEdit: "Click to edit manually",
         title: "Payroll Runs",
         subtitle: "Create a monthly payroll run as a draft and review employee calculations before approval.",
         monthLabel: "Payroll month",
@@ -178,6 +206,7 @@ export default function PayrollRunsPage() {
         colGross: "Gross",
         colUnpaid: "Unpaid days",
         colAbsence: "Absence ded.",
+        colAttendance: "Late ded.", // ✅ الترجمة الجديدة
         colGosi: "GOSI",
         colOtherDed: "Other ded.",
         colNet: "Net",
@@ -192,7 +221,6 @@ export default function PayrollRunsPage() {
         editTitle: "Edit Employee Payroll",
         cancel: "Cancel",
         saveChanges: "Save Changes",
-        // Recreate feature texts
         recreateConfirm: "Are you sure you want to recreate the run? Any manual edits will be lost and it will be updated based on current employee data.",
         btnRecreate: "Recreate & Update",
         recreateSuccess: "Payroll run recreated successfully based on latest data.",
@@ -257,7 +285,6 @@ export default function PayrollRunsPage() {
     }
   }
 
-  // دالة إعادة الإنشاء والتحديث
   async function handleRecreate() {
     if (!run || run.status !== "draft") return;
     if (!window.confirm(copy.recreateConfirm)) return;
@@ -271,12 +298,10 @@ export default function PayrollRunsPage() {
     const runMonth = run.period_start.slice(0, 7);
 
     try {
-      // 1. حذف المسودة القديمة
       const delRes = await fetch(`/api/payroll/runs/${run.id}`, { method: "DELETE" });
       const delPayload = await readJson(delRes);
       if (!delRes.ok) throw new Error(delPayload.error ?? copy.createError);
 
-      // 2. إنشاء المسودة الجديدة لنفس الشهر
       const createRes = await fetch("/api/payroll/runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -287,7 +312,7 @@ export default function PayrollRunsPage() {
       if (!createRes.ok) {
         if (Array.isArray(createPayload.employees)) setMissing(createPayload.employees as MissingEmployee[]);
         if (createPayload.details) setErrorDetails(createPayload.details as ErrorDetails);
-        setRun(null); // مسح العرض لأن المسير القديم انحذف والجديد فشل (مثلاً بسبب بيانات ناقصة لموظف جديد)
+        setRun(null);
         setItems([]);
         throw new Error(createPayload.error ?? copy.createError);
       }
@@ -302,7 +327,6 @@ export default function PayrollRunsPage() {
     }
   }
 
-  // دالة اعتماد المسير
   async function handleApprove() {
     if (!run || !window.confirm(copy.approveConfirm)) return;
 
@@ -313,13 +337,13 @@ export default function PayrollRunsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "approved" }),
       });
-      
+
       const payload = await readJson(response);
       if (!response.ok) throw new Error(payload.error ?? copy.createError);
 
       setRun({ ...run, status: "approved" });
       setNotice(copy.approveSuccess);
-      setEditingItem(null); // إغلاق أي تعديل مفتوح
+      setEditingItem(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : copy.createError);
     } finally {
@@ -327,12 +351,11 @@ export default function PayrollRunsPage() {
     }
   }
 
-  // دالة تحميل ملف Excel (CSV)
   function downloadCSV() {
     if (!items.length) return;
-    const headers = isArabic 
-      ? ["الرقم الوظيفي", "الموظف", "الراتب الأساسي", "بدل السكن", "بدلات أخرى", "أيام الغياب", "خصم الغياب", "التأمينات", "خصومات أخرى", "الصافي"]
-      : ["Employee No", "Name", "Basic", "Housing", "Other Allowances", "Unpaid Days", "Absence Ded", "GOSI", "Other Ded", "Net Salary"];
+    const headers = isArabic
+      ? ["الرقم الوظيفي", "الموظف", "الراتب الأساسي", "بدل السكن", "بدلات أخرى", "أيام الغياب", "خصم الغياب", "خصم التأخير", "التأمينات", "خصومات أخرى", "الصافي"]
+      : ["Employee No", "Name", "Basic", "Housing", "Other Allowances", "Unpaid Days", "Absence Ded", "Late Ded", "GOSI", "Other Ded", "Net Salary"];
 
     const csvRows = items.map(item => [
       item.employee_number || "—",
@@ -342,6 +365,7 @@ export default function PayrollRunsPage() {
       num(item.other_allowances),
       num(item.unpaid_leave_days),
       num(item.absence_deduction),
+      num(item.attendance_deduction), // ✅ تمت إضافة خصم التأخير لملف الإكسيل
       num(item.gosi_deduction),
       num(item.other_deductions),
       num(item.net_salary)
@@ -357,9 +381,8 @@ export default function PayrollRunsPage() {
     document.body.removeChild(link);
   }
 
-  // فتح وإغلاق نافذة التعديل للموظف
   function toggleEditItem(item: RunItem) {
-    if (run?.status !== "draft") return; // لا يسمح بفتح التعديل إذا كان معتمداً
+    if (run?.status !== "draft") return;
     if (editingItem?.id === item.id) {
       setEditingItem(null);
     } else {
@@ -372,7 +395,6 @@ export default function PayrollRunsPage() {
     }
   }
 
-  // حفظ التعديلات اليدوية
   async function handleSaveItemDetails(liveAbsence: number, liveNet: number) {
     if (!editingItem || !run) return;
     setSavingItem(true);
@@ -398,7 +420,6 @@ export default function PayrollRunsPage() {
       const payload = await readJson(response);
       if (!response.ok) throw new Error(payload.error ?? copy.createError);
 
-      // تحديث البيانات في الواجهة مباشرة
       setItems(prevItems => prevItems.map(it => it.id === editingItem.id ? { ...it, ...payload.item } : it));
       setEditingItem(null);
     } catch (err) {
@@ -408,6 +429,7 @@ export default function PayrollRunsPage() {
     }
   }
 
+  // ✅ تم تحديث الحسابات لتشمل الخصم الجديد
   const totals = useMemo(() => {
     const sum = items.reduce(
       (acc, item) => {
@@ -419,12 +441,13 @@ export default function PayrollRunsPage() {
           gross: acc.gross + gross,
           unpaid: acc.unpaid + num(item.unpaid_leave_days),
           absence: acc.absence + num(item.absence_deduction),
+          attendance: acc.attendance + num(item.attendance_deduction),
           gosi: acc.gosi + num(item.gosi_deduction),
           otherDed: acc.otherDed + num(item.other_deductions),
           net: acc.net + num(item.net_salary),
         };
       },
-      { basic: 0, housing: 0, other: 0, gross: 0, unpaid: 0, absence: 0, gosi: 0, otherDed: 0, net: 0 },
+      { basic: 0, housing: 0, other: 0, gross: 0, unpaid: 0, absence: 0, attendance: 0, gosi: 0, otherDed: 0, net: 0 },
     );
 
     return {
@@ -434,13 +457,15 @@ export default function PayrollRunsPage() {
       gross: round2(sum.gross),
       unpaid: sum.unpaid,
       absence: round2(sum.absence),
+      attendance: round2(sum.attendance),
       gosi: round2(sum.gosi),
       otherDed: round2(sum.otherDed),
       net: round2(sum.net),
-      deductions: round2(sum.absence + sum.gosi + sum.otherDed),
+      deductions: round2(sum.absence + sum.attendance + sum.gosi + sum.otherDed),
     };
   }, [items]);
 
+  // ✅ إضافة عنوان "خصم التأخير"
   const headings = [
     copy.colNumber,
     copy.colName,
@@ -451,34 +476,61 @@ export default function PayrollRunsPage() {
     copy.colGross,
     copy.colUnpaid,
     copy.colAbsence,
+    copy.colAttendance,
     copy.colGosi,
     copy.colOtherDed,
     copy.colNet,
   ];
 
   const kpis = [
-    { label: copy.kpiEmployees, value: String(items.length), icon: <UsersRound size={18} /> },
-    { label: copy.kpiGross, value: `${formatMoney(totals.gross)} ${copy.currency}`, icon: <Wallet size={18} /> },
-    { label: copy.kpiDeductions, value: `${formatMoney(totals.deductions)} ${copy.currency}`, icon: <UserMinus size={18} /> },
-    { label: copy.kpiNet, value: `${formatMoney(totals.net)} ${copy.currency}`, icon: <ShieldCheck size={18} /> },
+    { code: "EMP", label: copy.kpiEmployees, value: String(items.length), note: copy.kpiEmployeesNote, icon: <UsersRound size={16} /> },
+    { code: "GRS", label: copy.kpiGross, value: `${formatMoney(totals.gross)} ${copy.currency}`, note: copy.kpiGrossNote, icon: <Wallet size={16} /> },
+    { code: "DED", label: copy.kpiDeductions, value: `${formatMoney(totals.deductions)} ${copy.currency}`, note: copy.kpiDeductionsNote, icon: <UserMinus size={16} /> },
+    { code: "NET", label: copy.kpiNet, value: `${formatMoney(totals.net)} ${copy.currency}`, note: copy.kpiNetNote, icon: <ShieldCheck size={16} /> },
   ];
 
   return (
     <main
       dir={isArabic ? "rtl" : "ltr"}
-      className="min-h-[calc(100vh-76px)] bg-[var(--background)] px-4 py-6 sm:px-6 lg:px-8"
+      className="min-h-[calc(100vh-64px)] bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8"
     >
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)] sm:text-3xl">
-            {copy.title}
-          </h1>
-          <p className="mt-2 text-sm text-[var(--muted-foreground)]">{copy.subtitle}</p>
-        </header>
+      <div className="mx-auto max-w-[1540px]">
+        {/* ------------------------------ Hero ------------------------------ */}
+        <section className="relative overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+          <div className="absolute inset-y-0 start-0 w-1 bg-[var(--brand-primary)]" />
+          <div className="px-6 py-7 md:px-8 lg:py-8">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--brand-subtle)] px-3 py-1.5 text-[11px] font-black text-[var(--brand-primary)]">
+                <span className="h-2 w-2 rounded-full bg-[var(--brand-primary)]" />
+                {copy.badge}
+              </span>
+              <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-[11px] font-bold text-[var(--text-secondary)]">
+                {copy.badgeSub}
+              </span>
+            </div>
 
-        <section className="mb-5 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm sm:p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <label className="block text-sm font-medium text-[var(--foreground)]">
+            <h1 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">{copy.title}</h1>
+            <p className="mt-3 max-w-4xl text-sm leading-7 text-[var(--text-secondary)] md:text-base md:leading-8">
+              {copy.heroText}
+            </p>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {copy.chips.map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* --------------------------- Create panel --------------------------- */}
+        <section className="mt-5 overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+          <div className="flex flex-col gap-4 bg-[var(--surface-muted)] p-4 sm:flex-row sm:items-end sm:p-5">
+            <label className="block text-xs font-black text-[var(--text-secondary)]">
               {copy.monthLabel}
               <input
                 type="month"
@@ -486,110 +538,131 @@ export default function PayrollRunsPage() {
                 onChange={(event) => setMonth(event.target.value)}
                 disabled={creating}
                 dir="ltr"
-                className="mt-1 block w-full rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--primary)] sm:w-56"
+                className="mt-1 block h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm font-bold text-[var(--text-primary)] outline-none transition focus:border-[var(--brand-primary)] focus:bg-[var(--surface)] disabled:opacity-60 sm:w-56"
               />
             </label>
-
             <button
-              type="button"
-              onClick={() => void handleCreate()}
-              disabled={creating || !month}
-              className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 text-[10px] font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 -translate-y-1"
+              onClick={handleCreate}
+              disabled={creating}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-5 text-sm font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {creating ? <LoaderCircle size={17} className="animate-spin" /> : <Plus size={17} />}
-              {creating ? copy.creating : `${copy.create} · ${monthLabel(month, isArabic)}`}
+              {creating ? <LoaderCircle size={18} className="animate-spin" /> : <Plus size={18} />}
+              {copy.create}
             </button>
           </div>
+
+          {(error || notice || missing.length > 0) && (
+            <div className="space-y-3 border-t border-[var(--border-default)] p-4 sm:p-5">
+              {error && (
+                <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                  <span className="font-black">{error}</span>
+                  {errorDetails && (
+                    <div className="mt-2 text-xs">
+                      <p className="font-black">{copy.technical}:</p>
+                      <pre className="mt-1 max-h-32 overflow-auto rounded-lg bg-rose-100/60 p-2 text-left" dir="ltr">
+                        {JSON.stringify(errorDetails, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {notice && (
+                <div role="status" className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm font-bold text-blue-800">
+                  {notice}
+                </div>
+              )}
+
+              {missing.length > 0 && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+                  <h3 className="mb-2 text-sm font-black text-amber-900">{copy.missingTitle}</h3>
+                  <ul className="list-inside list-disc text-sm font-bold text-amber-800">
+                    {missing.map((emp) => (
+                      <li key={emp.id}>
+                        <span className="font-mono text-xs">{emp.employee_number}</span> - {emp.full_name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
-        {notice && (
-          <div role="status" className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            {notice}
-          </div>
-        )}
-
-        {error && (
-          <div role="alert" className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            <div className="flex items-start gap-2">
-              <div className="min-w-0">
-                <p className="font-semibold">{error}</p>
-                {missing.length > 0 && (
-                  <>
-                    <p className="mt-2">{copy.missingTitle}</p>
-                    <ul className="mt-1 list-disc space-y-0.5 ps-5">
-                      {missing.map((employee) => (
-                        <li key={employee.id}>
-                          {employee.full_name} {employee.employee_number ? ` (${employee.employee_number})` : ""}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!run ? (
-          <section className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-[var(--border)] bg-[var(--card)] p-8 text-center text-sm text-[var(--muted-foreground)]">
-            <CalendarDays size={24} />
-            {copy.empty}
+        {/* ------------------------------ Empty ------------------------------ */}
+        {!run && (
+          <section className="mt-5 flex min-h-48 flex-col items-center justify-center gap-3 rounded-[28px] border border-dashed border-[var(--border-default)] bg-[var(--surface)] p-8 text-center shadow-[var(--shadow-small)]">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]">
+              <CalendarDays size={22} />
+            </span>
+            <p className="text-sm font-bold text-[var(--text-secondary)]">{copy.empty}</p>
           </section>
-        ) : (
+        )}
+
+        {run && (
           <>
-            <section className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {/* ------------------------------- KPIs ------------------------------- */}
+            <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {kpis.map((kpi) => (
-                <article key={kpi.label} className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
-                    {kpi.icon}
-                    {kpi.label}
+                <article
+                  key={kpi.code}
+                  className="group relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
+                >
+                  <div className="absolute inset-x-0 top-0 h-0.5 origin-start scale-x-0 bg-[var(--brand-primary)] transition-transform duration-200 group-hover:scale-x-100" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-[var(--text-muted)]">{kpi.label}</p>
+                      <h2 className="mt-3 break-words text-xl font-black tracking-tight md:text-2xl">{kpi.value}</h2>
+                    </div>
+                    <span className="flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-2 text-[10px] font-black text-[var(--brand-primary)]">
+                      {kpi.icon}
+                    </span>
                   </div>
-                  <p className="mt-2 text-xl font-semibold text-[var(--foreground)]">{kpi.value}</p>
+                  <div className="mt-4 border-t border-[var(--border-default)] pt-3">
+                    <p className="text-[11px] font-bold text-[var(--text-secondary)]">{kpi.note}</p>
+                  </div>
                 </article>
               ))}
             </section>
 
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-sm">
-              {/* Header with Approve, Recreate and Download Buttons */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-4 sm:px-5">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-base font-semibold text-[var(--foreground)]">
+            {/* ------------------------------ Table ------------------------------ */}
+            <section className="mt-5 overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--surface-muted)] px-4 py-4 sm:px-5">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="text-base font-black">
                     {monthLabel(run.period_start.slice(0, 7), isArabic)}
                   </h2>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${run.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                    {run.status === 'approved' ? (isArabic ? 'معتمد' : 'Approved') : statusLabel(run.status)}
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-black ${
+                      run.status === "approved" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {run.status === "approved" ? copy.statusApproved : statusLabel(run.status)}
                   </span>
-                  <span className="text-xs text-[var(--muted-foreground)]" dir="ltr">
+                  <span className="text-[11px] font-bold text-[var(--text-secondary)]" dir="ltr">
                     {copy.period}: {run.period_start} → {run.period_end}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {run.status === "approved" && (
                     <button
                       onClick={downloadCSV}
-                      className="inline-flex items-center gap-2 rounded-lg border border-emerald-600 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-50 px-4 text-xs font-black text-emerald-700 transition hover:bg-emerald-100"
                     >
-                      <Download size={16} />
-                      {copy.btnDownload}
+                      <Download size={16} /> {copy.btnDownload}
                     </button>
                   )}
                   {run.status === "draft" && (
                     <>
-                      {/* الزر الجديد: إعادة الإنشاء */}
-                      <button
-                        onClick={() => void handleRecreate()}
-                        disabled={creating}
-                         className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 text-[10px] font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 -translate-y-1"
-                      >
+                      <button onClick={() => void handleRecreate()} disabled={creating} className={secondaryBtn}>
                         {creating ? <LoaderCircle size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                         {copy.btnRecreate}
                       </button>
-
                       <button
                         onClick={() => void handleApprove()}
                         disabled={creating}
-                        className="inline-flex min-h-8 items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 text-[10px] font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 -translate-y-1"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-4 text-xs font-black text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {creating ? <LoaderCircle size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
                         {copy.btnApprove}
@@ -600,139 +673,140 @@ export default function PayrollRunsPage() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1100px] text-start text-sm">
-                  <thead className="bg-[var(--muted)]/50 text-[var(--muted-foreground)]">
+                <table className="w-full min-w-[1200px] text-start text-sm">
+                  <thead className="text-[var(--text-secondary)]">
                     <tr>
                       {headings.map((heading) => (
-                        <th key={heading} scope="col" className="whitespace-nowrap px-4 py-3 text-start font-semibold">
+                        <th key={heading} scope="col" className="whitespace-nowrap px-4 py-3 text-start text-xs font-black">
                           {heading}
                         </th>
                       ))}
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-[var(--border)]">
+                  <tbody className="divide-y divide-[var(--border-default)]">
                     {items.map((item) => {
                       const gross = num(item.basic_salary) + num(item.housing_allowance) + num(item.other_allowances);
                       const unpaid = num(item.unpaid_leave_days);
-                      const net = num(item.net_salary);
                       const isEditing = editingItem?.id === item.id;
 
-                      // الحسبة الحية (Live Preview) عند التعديل
                       const liveGross = num(item.basic_salary) + num(item.housing_allowance) + num(itemForm.other_allowances);
                       const liveAbsence = round2((liveGross / 30) * num(itemForm.unpaid_leave_days));
-                      const liveNet = round2(liveGross - liveAbsence - num(item.gosi_deduction) - num(itemForm.other_deductions));
+                      // ✅ تحديث الحسبة التلقائية لكي تأخذ بالاعتبار التأخير
+                      const liveNet = round2(liveGross - liveAbsence - num(item.attendance_deduction) - num(item.gosi_deduction) - num(itemForm.other_deductions));
 
                       return (
                         <Fragment key={item.id}>
-                          {/* صف البيانات الأساسي (قابل للنقر إذا كان مسودة) */}
-                          <tr 
-                            onClick={() => toggleEditItem(item)} 
-                            className={`transition ${run.status === "draft" ? "cursor-pointer hover:bg-[var(--muted)]/40" : ""} ${isEditing ? "bg-[var(--muted)]/20" : ""}`}
-                            title={run.status === "draft" ? "انقر للتعديل اليدوي" : ""}
+                          <tr
+                            onClick={() => toggleEditItem(item)}
+                            className={`transition ${
+                              run.status === "draft" ? "cursor-pointer hover:bg-[var(--surface-muted)]" : ""
+                            } ${isEditing ? "bg-[var(--brand-subtle)]" : ""}`}
+                            title={run.status === "draft" ? copy.clickToEdit : ""}
                           >
-                            <td className="whitespace-nowrap px-4 py-3 text-[var(--foreground)]">{item.employee_number ?? "—"}</td>
-                            <td className="px-4 py-3 font-semibold text-[var(--foreground)] flex items-center gap-2">
-                              {item.full_name ?? "—"}
-                              {run.status === "draft" && !isEditing && <Pencil size={12} className="text-gray-400" />}
+                            <td className="whitespace-nowrap px-4 py-3.5 font-bold text-[var(--text-secondary)]">
+                              {item.employee_number ?? "—"}
                             </td>
-                            <td className="px-4 py-3">
-                              <span className="inline-flex rounded-full bg-[var(--muted)] px-2.5 py-1 text-xs font-semibold text-[var(--foreground)]">
+                            <td className="px-4 py-3.5">
+                              <div className="flex items-center gap-2 font-black">
+                                {item.full_name ?? "—"}
+                                {run.status === "draft" && !isEditing && (
+                                  <Pencil size={12} className="text-[var(--text-muted)]" />
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <span className="inline-flex rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[11px] font-black text-[var(--text-secondary)]">
                                 {item.is_saudi === true ? copy.saudi : item.is_saudi === false ? copy.nonSaudi : "—"}
                               </span>
                             </td>
-                            <td className="whitespace-nowrap px-4 py-3 text-[var(--foreground)]">{formatMoney(num(item.basic_salary))}</td>
-                            <td className="whitespace-nowrap px-4 py-3 text-[var(--foreground)]">{formatMoney(num(item.housing_allowance))}</td>
-                            
-                            {/* إبراز الحقول القابلة للتعديل عند الفتح */}
-                            <td className={`whitespace-nowrap px-4 py-3 ${isEditing ? "text-[var(--primary)] font-bold" : "text-[var(--foreground)]"}`}>
+                            <td className="whitespace-nowrap px-4 py-3.5">{formatMoney(num(item.basic_salary))}</td>
+                            <td className="whitespace-nowrap px-4 py-3.5">{formatMoney(num(item.housing_allowance))}</td>
+                            <td className={`whitespace-nowrap px-4 py-3.5 ${isEditing ? "font-black text-[var(--brand-primary)]" : ""}`}>
                               {isEditing ? formatMoney(num(itemForm.other_allowances)) : formatMoney(num(item.other_allowances))}
                             </td>
-                            <td className="whitespace-nowrap px-4 py-3 font-medium text-[var(--foreground)]">
+                            <td className="whitespace-nowrap px-4 py-3.5 font-black">
                               {isEditing ? formatMoney(liveGross) : formatMoney(round2(gross))}
                             </td>
-                            <td className={`px-4 py-3 ${isEditing ? "text-rose-600 font-bold" : ""}`}>
+                            <td className="px-4 py-3.5">
                               {isEditing ? (
-                                <span className="inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-800">{itemForm.unpaid_leave_days}</span>
+                                <span className="inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-black text-rose-800">
+                                  {itemForm.unpaid_leave_days}
+                                </span>
                               ) : unpaid > 0 ? (
-                                <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">{unpaid}</span>
+                                <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-black text-amber-800">
+                                  {unpaid}
+                                </span>
                               ) : (
-                                <span className="text-[var(--muted-foreground)]">0</span>
+                                <span className="font-bold text-[var(--text-muted)]">0</span>
                               )}
                             </td>
-                            <td className={`whitespace-nowrap px-4 py-3 ${isEditing ? "text-rose-600 font-bold" : "text-rose-600"}`}>
+                            <td className={`whitespace-nowrap px-4 py-3.5 text-rose-600 ${isEditing ? "font-black" : "font-bold"}`}>
                               {isEditing ? formatMoney(liveAbsence) : formatMoney(num(item.absence_deduction))}
                             </td>
-                            <td className="whitespace-nowrap px-4 py-3 text-rose-600">{formatMoney(num(item.gosi_deduction))}</td>
-                            <td className={`whitespace-nowrap px-4 py-3 ${isEditing ? "text-rose-600 font-bold" : "text-rose-600"}`}>
+
+                            {/* ✅ العمود الجديد الخاص بخصم التأخير */}
+                            <td className="whitespace-nowrap px-4 py-3.5 font-bold text-rose-600">
+                              {formatMoney(num(item.attendance_deduction))}
+                            </td>
+
+                            <td className="whitespace-nowrap px-4 py-3.5 font-bold text-rose-600">
+                              {formatMoney(num(item.gosi_deduction))}
+                            </td>
+                            <td className={`whitespace-nowrap px-4 py-3.5 text-rose-600 ${isEditing ? "font-black" : "font-bold"}`}>
                               {isEditing ? formatMoney(num(itemForm.other_deductions)) : formatMoney(num(item.other_deductions))}
                             </td>
-                            <td className={`whitespace-nowrap px-4 py-3 font-bold ${isEditing ? "text-[var(--primary)]" : (net < 0 ? "text-rose-600" : "text-emerald-700")}`}>
-                              {isEditing ? formatMoney(liveNet) : formatMoney(net)}
+                            <td
+                              className={`whitespace-nowrap px-4 py-3.5 font-black ${
+                                isEditing ? "text-[var(--brand-primary)]" : "text-emerald-700"
+                              }`}
+                            >
+                              {isEditing ? formatMoney(liveNet) : formatMoney(num(item.net_salary))}
                             </td>
                           </tr>
 
-                          {/* القائمة المنسدلة للتعديل اليدوي */}
                           {isEditing && (
                             <tr>
-                              <td colSpan={12} className="p-0 border-b border-[var(--border)]">
-                                <div className="bg-blue-50/50 dark:bg-blue-900/10 px-4 py-5 shadow-inner border-t border-[var(--border)]">
-                                  <div className="flex flex-col lg:flex-row items-end gap-6 justify-between">
-                                    <div className="flex items-center gap-6 flex-wrap">
-                                      <label className="block text-sm font-medium text-[var(--foreground)]">
-                                        {copy.colOther}
-                                        <input
-                                          type="number"
-                                          min="0"
-                                          value={itemForm.other_allowances}
-                                          onChange={(e) => setItemForm({ ...itemForm, other_allowances: num(e.target.value) })}
-                                          className="mt-1 block w-32 rounded-lg border border-[var(--border)] bg-white dark:bg-black px-3 py-2 text-sm outline-none focus:border-[var(--primary)]"
-                                        />
-                                      </label>
-                                      
-                                      <label className="block text-sm font-medium text-[var(--foreground)]">
-                                        {copy.colUnpaid}
-                                        <input
-                                          type="number"
-                                          min="0"
-                                          max="30"
-                                          value={itemForm.unpaid_leave_days}
-                                          onChange={(e) => setItemForm({ ...itemForm, unpaid_leave_days: num(e.target.value) })}
-                                          className="mt-1 block w-32 rounded-lg border border-rose-200 bg-white dark:bg-black px-3 py-2 text-sm outline-none focus:border-rose-500"
-                                        />
-                                      </label>
-
-                                      <label className="block text-sm font-medium text-[var(--foreground)]">
-                                        {copy.colOtherDed}
-                                        <input
-                                          type="number"
-                                          min="0"
-                                          value={itemForm.other_deductions}
-                                          onChange={(e) => setItemForm({ ...itemForm, other_deductions: num(e.target.value) })}
-                                          className="mt-1 block w-32 rounded-lg border border-rose-200 bg-white dark:bg-black px-3 py-2 text-sm outline-none focus:border-rose-500"
-                                        />
-                                      </label>
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() => setEditingItem(null)}
-                                        disabled={savingItem}
-                                        className="rounded-lg border border-[var(--border)] bg-white dark:bg-black px-4 py-2 text-sm font-semibold text-[var(--foreground)] hover:bg-[var(--muted)]"
-                                      >
-                                        {copy.cancel}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => void handleSaveItemDetails(liveAbsence, liveNet)}
-                                        disabled={savingItem}
-                                        className="inline-flex items-center gap-2 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
-                                      >
-                                        {savingItem ? <LoaderCircle size={16} className="animate-spin" /> : <Save size={16} />}
-                                        {copy.saveChanges}
-                                      </button>
-                                    </div>
+                              <td colSpan={headings.length} className="p-0">
+                                <div className="border-y border-[var(--brand-primary)]/20 bg-[var(--surface-muted)] p-4 sm:p-6">
+                                  <div className="mb-4 flex items-center justify-between">
+                                    <h3 className="text-sm font-black">{copy.editTitle}</h3>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setEditingItem(null); }}
+                                      className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition hover:bg-[var(--surface)]"
+                                    >
+                                      <X size={18} />
+                                    </button>
+                                  </div>
+                                  <div className="grid gap-4 sm:grid-cols-3">
+                                    <label className="block text-xs font-black text-[var(--text-secondary)]">
+                                      {copy.colOther}
+                                      <input type="number" min="0" step="1" dir="ltr" className={editInputCls} value={itemForm.other_allowances} onChange={(e) => setItemForm({ ...itemForm, other_allowances: Number(e.target.value) })} onClick={(e) => e.stopPropagation()} />
+                                    </label>
+                                    <label className="block text-xs font-black text-[var(--text-secondary)]">
+                                      {copy.colUnpaid}
+                                      <input type="number" min="0" step="1" dir="ltr" className={editInputCls} value={itemForm.unpaid_leave_days} onChange={(e) => setItemForm({ ...itemForm, unpaid_leave_days: Number(e.target.value) })} onClick={(e) => e.stopPropagation()} />
+                                    </label>
+                                    <label className="block text-xs font-black text-[var(--text-secondary)]">
+                                      {copy.colOtherDed}
+                                      <input type="number" min="0" step="1" dir="ltr" className={editInputCls} value={itemForm.other_deductions} onChange={(e) => setItemForm({ ...itemForm, other_deductions: Number(e.target.value) })} onClick={(e) => e.stopPropagation()} />
+                                    </label>
+                                  </div>
+                                  <div className="mt-5 flex justify-end gap-3">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setEditingItem(null); }}
+                                      className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-5 text-sm font-black text-[var(--text-secondary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)]"
+                                    >
+                                      {copy.cancel}
+                                    </button>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleSaveItemDetails(liveAbsence, liveNet); }}
+                                      disabled={savingItem}
+                                      className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-5 text-sm font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                      {savingItem ? <LoaderCircle size={16} className="animate-spin" /> : <Save size={16} />}
+                                      {copy.saveChanges}
+                                    </button>
                                   </div>
                                 </div>
                               </td>
@@ -743,26 +817,25 @@ export default function PayrollRunsPage() {
                     })}
                   </tbody>
 
-                  <tfoot className="border-t-2 border-[var(--border)] bg-[var(--muted)]/40 font-semibold text-[var(--foreground)]">
+                  <tfoot className="border-t-2 border-[var(--border-default)] bg-[var(--surface-muted)] font-black">
                     <tr>
-                      <td className="px-4 py-3" colSpan={3}>
-                        {copy.totals}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3">{formatMoney(totals.basic)}</td>
-                      <td className="whitespace-nowrap px-4 py-3">{formatMoney(totals.housing)}</td>
-                      <td className="whitespace-nowrap px-4 py-3">{formatMoney(totals.other)}</td>
-                      <td className="whitespace-nowrap px-4 py-3">{formatMoney(totals.gross)}</td>
-                      <td className="px-4 py-3">{totals.unpaid}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-rose-600">{formatMoney(totals.absence)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-rose-600">{formatMoney(totals.gosi)}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-rose-600">{formatMoney(totals.otherDed)}</td>
-                      <td className="whitespace-nowrap px-4 py-3">{formatMoney(totals.net)}</td>
+                      <td colSpan={3} className="px-4 py-3.5">{copy.totals}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5">{formatMoney(totals.basic)}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5">{formatMoney(totals.housing)}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5">{formatMoney(totals.other)}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5">{formatMoney(totals.gross)}</td>
+                      <td className="px-4 py-3.5">{totals.unpaid}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-rose-600">{formatMoney(totals.absence)}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-rose-600">{formatMoney(totals.attendance)}</td> {/* ✅ إجمالي التأخير */}
+                      <td className="whitespace-nowrap px-4 py-3.5 text-rose-600">{formatMoney(totals.gosi)}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-rose-600">{formatMoney(totals.otherDed)}</td>
+                      <td className="whitespace-nowrap px-4 py-3.5 text-emerald-700">{formatMoney(totals.net)}</td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
 
-              <p className="border-t border-[var(--border)] px-4 py-3 text-xs text-[var(--muted-foreground)] sm:px-5">
+              <p className="border-t border-[var(--border-default)] px-4 py-3 text-[11px] font-bold text-[var(--text-muted)] sm:px-5">
                 {copy.hint}
               </p>
             </section>

@@ -24,6 +24,10 @@ export const PERMISSIONS = {
   PAYROLL_RUNS_MANAGE: "payroll.runs.manage",
   PAYROLL_RUNS_APPROVE: "payroll.runs.approve",
   PAYROLL_EXPORT: "payroll.export",
+
+  ATTENDANCE_USE: "attendance.use",
+  ATTENDANCE_MANAGE: "attendance.manage",
+  ATTENDANCE_DEDUCTIONS_REVIEW: "attendance.deductions.review",
   
 
 } as const;
@@ -55,6 +59,9 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.PAYROLL_RUNS_MANAGE,
     PERMISSIONS.PAYROLL_RUNS_APPROVE,
     PERMISSIONS.PAYROLL_EXPORT,
+    PERMISSIONS.ATTENDANCE_USE,
+    PERMISSIONS.ATTENDANCE_MANAGE,
+    PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
   ],
   manager: [
     PERMISSIONS.REQUESTS_VIEW,
@@ -63,12 +70,14 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.POLICIES_MANAGE,
     PERMISSIONS.PROFILE_VIEW,
     PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
+    PERMISSIONS.ATTENDANCE_USE,
   ],
 
   member: [
     PERMISSIONS.EMPLOYEE_USE,
     PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
     PERMISSIONS.PROFILE_VIEW,
+    PERMISSIONS.ATTENDANCE_USE,
   ],
 
   viewer: [],
@@ -92,5 +101,11 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/admin/organizations": PERMISSIONS.ALL,
 
   "/admin/user" : PERMISSIONS.ALL,
-  "/admin": PERMISSIONS.ALL
+  "/admin": PERMISSIONS.ALL,
+
+  "/attendance": PERMISSIONS.ATTENDANCE_USE,
+  "/attendance/dashboard": PERMISSIONS.ATTENDANCE_MANAGE,
+  "/attendance/setup": PERMISSIONS.ATTENDANCE_MANAGE,
+  "/attendance/corrections": PERMISSIONS.ATTENDANCE_MANAGE,
+  "/attendance/deductions": PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
 };
