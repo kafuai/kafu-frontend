@@ -22,6 +22,7 @@ type PayrollEmployee = {
   status: "active" | "inactive";
   hire_date: string | null;
   nationality: string | null;
+  is_saudi: boolean;
   date_of_birth: string | null;
   phone: string | null;
   job_title: string | null;
@@ -69,6 +70,7 @@ type EmployeeForm = {
   deductions: string;
   bank_name: string;
   iban: string;
+  is_saudi: boolean;
 };
 
 const EMPTY_FORM: EmployeeForm = {
@@ -92,6 +94,7 @@ const EMPTY_FORM: EmployeeForm = {
   deductions: "",
   bank_name: "",
   iban: "",
+  is_saudi: true,
 };
 
 const REQUIRED_TEXT: (keyof EmployeeForm)[] = [
@@ -151,6 +154,7 @@ function rowToForm(row: EmployeeRow): EmployeeForm {
     deductions: p?.deductions ? String(p.deductions) : "",
     bank_name: p?.bank_name ?? "",
     iban: p?.iban ?? "",
+    is_saudi: p?.is_saudi ?? true,
   };
 }
 
@@ -248,6 +252,9 @@ export default function EmployeesPage() {
         none: "—",
         currency: "ر.س",
         missing: "بيانات غير مكتملة",
+        isSaudi: "هل الموظف سعودي؟",
+        saudi: "سعودي",
+        nonSaudi: "غير سعودي",
       }
     : {
         badge: "PAYROLL",
@@ -324,6 +331,9 @@ export default function EmployeesPage() {
         none: "—",
         currency: "SAR",
         missing: "Incomplete data",
+        isSaudi: "Is the employee Saudi?",
+        saudi: "Saudi",
+        nonSaudi: "Non-Saudi",
       };
 
   const loadEmployees = useCallback(async () => {
@@ -470,6 +480,7 @@ export default function EmployeesPage() {
       housing_allowance: form.housing_allowance ? Number(form.housing_allowance) : null,
       other_allowances: form.other_allowances ? Number(form.other_allowances) : null,
       deductions: form.deductions ? Number(form.deductions) : null,
+      is_saudi: form.is_saudi,
     };
 
     setSaving(true);
@@ -817,6 +828,19 @@ export default function EmployeesPage() {
                                         {field("full_name", copy.fullName)}
                                         {field("national_id", copy.nationalId)}
                                         {field("nationality", copy.nationality)}
+                                        <label className="block space-y-2">
+                                        <span className=" border-[var(--border-default)] bg-[var(--surface)] ">{copy.isSaudi}</span>
+                                        <select
+                                          value={form.is_saudi ? "true" : "false"}
+                                          onChange={(event) =>
+                                            updateField("is_saudi", event.target.value === "true")
+                                          }
+                                          className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text-primary)]"
+                                        >
+                                          <option value="true">{copy.saudi}</option>
+                                          <option value="false">{copy.nonSaudi}</option>
+                                        </select>
+                                      </label>
                                         {field("date_of_birth", copy.birthDate, "date")}
                                         {field("phone", copy.phone, "tel", "ltr")}
                                       </div>

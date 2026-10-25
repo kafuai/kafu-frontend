@@ -305,6 +305,15 @@ export async function POST(request: Request) {
     payload[field] = parsed;
   }
 
+  if (typeof body.is_saudi !== "boolean") {
+  return NextResponse.json(
+    { error: "Invalid or missing is_saudi" },
+    { status: 400 },
+  );
+}
+
+payload.is_saudi = body.is_saudi;
+
   if (body.status !== "active" && body.status !== "inactive") {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }

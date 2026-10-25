@@ -16,6 +16,7 @@ const EMPLOYEE_FIELDS = [
   "status",
   "hire_date",
   "nationality",
+  "is_saudi",
   "date_of_birth",
   "phone",
   "job_title",
@@ -140,6 +141,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       "status",
       "hire_date",
       "nationality",
+      "is_saudi",
       "date_of_birth",
       "phone",
       "job_title",
@@ -174,6 +176,12 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Invalid full_name" }, { status: 400 });
     }
 
+    if ("is_saudi" in body && typeof body.is_saudi !== "boolean") {
+      return NextResponse.json(
+        { error: "Invalid is_saudi" },
+        { status: 400 },
+      );
+    }
     if ("status" in body && body.status !== "active" && body.status !== "inactive") {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
