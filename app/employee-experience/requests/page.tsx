@@ -134,8 +134,8 @@ const dayStart = (k: string) => Date.parse(`${k}T00:00:00+03:00`);
 const dayEnd = (k: string) => Date.parse(`${k}T23:59:59.999+03:00`);
 
 const fieldCls =
-  "h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm font-bold text-[var(--text-primary)] outline-none focus:border-[var(--brand-primary)]";
-const boxCls = "rounded-2xl border border-[var(--border-default)] bg-[var(--background)] p-4";
+  "h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm font-bold text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:bg-[var(--surface)]";
+const boxCls = "rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4";
 
 /* -------------------------------------------------------------------------- */
 /*                                    Page                                    */
@@ -146,10 +146,19 @@ export default function EmployeeExperienceRequestsPage() {
   const ar = locale === "ar";
 
   const copy = useMemo(() => ({
-    eyebrow: ar ? "تجربة الموظف" : "EMPLOYEE EXPERIENCE",
+    badge: "EMPLOYEE EXPERIENCE",
+    badgeSub: ar ? "الطلبات" : "Requests",
+    chips: ar
+      ? ["الإجازات", "خطابات التعريف", "تصحيح الحضور"]
+      : ["Leave", "Employment letters", "Attendance corrections"],
+    statTotalNote: ar ? "كل الطلبات المحمّلة" : "All loaded requests",
+    statPendingNote: ar ? "تنتظر قرارك" : "Awaiting your decision",
+    statApprovedNote: ar ? "تم قبولها" : "Accepted",
+    statRejectedNote: ar ? "تم رفضها" : "Declined",
+    loadingText: ar ? "يتم جلب الإجازات والخطابات وطلبات التصحيح." : "Fetching leave, letters and correction requests.",
     title: ar ? "الطلبات" : "Requests",
     description: ar
-      ? "جميع طلبات الموظفين في مكان واحد: الإجازات وخطابات التعريف وتصحيح الحضور والاعتراضات والأعذار."
+      ? "جميع طلبات الموظفين في مكان واحد."
       : "All employee requests in one place: leave, employment letters, attendance corrections, disputes and excuses.",
     statTotal: ar ? "إجمالي الطلبات" : "Total requests",
     statPending: ar ? "معلّقة" : "Pending",
@@ -403,32 +412,50 @@ export default function EmployeeExperienceRequestsPage() {
     ) : "—";
 
   const statCards = [
-    { label: copy.statTotal, value: stats.total },
-    { label: copy.statPending, value: stats.pending },
-    { label: copy.statApproved, value: stats.approved },
-    { label: copy.statRejected, value: stats.rejected },
+    { code: "ALL", label: copy.statTotal, value: stats.total, note: copy.statTotalNote },
+    { code: "PND", label: copy.statPending, value: stats.pending, note: copy.statPendingNote },
+    { code: "APR", label: copy.statApproved, value: stats.approved, note: copy.statApprovedNote },
+    { code: "REJ", label: copy.statRejected, value: stats.rejected, note: copy.statRejectedNote },
   ];
 
   /* -------------------------------- render ------------------------------ */
 
   return (
-    <main dir={ar ? "rtl" : "ltr"} className="min-h-[calc(100vh-76px)] bg-[var(--background)]">
-      <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        {/* Header */}
-        <header className="mb-6">
-          <span className="text-[11px] font-bold tracking-[0.14em] text-[var(--text-muted)]">{copy.eyebrow}</span>
-          <h1 className="mt-2 text-2xl font-black tracking-[-0.03em] sm:text-3xl">{copy.title}</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--text-secondary)]">{copy.description}</p>
-        </header>
+    <main
+      dir={ar ? "rtl" : "ltr"}
+      className="min-h-[calc(100vh-64px)] bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8"
+    >
+      <div className="mx-auto max-w-[1540px]">
+        {/* ------------------------------ Hero ------------------------------ */}
+        <section className="relative overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+          <div className="absolute inset-y-0 start-0 w-1 bg-[var(--brand-primary)]" />
+          <div className="px-6 py-7 md:px-8 lg:py-8">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--brand-subtle)] px-3 py-1.5 text-[11px] font-black text-[var(--brand-primary)]">
+                <span className="h-2 w-2 rounded-full bg-[var(--brand-primary)]" />
+                {copy.badge}
+              </span>
+              <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-[11px] font-bold text-[var(--text-secondary)]">
+                {copy.badgeSub}
+              </span>
+            </div>
 
-        {/* Stats */}
-        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {statCards.map((c) => (
-            <article key={c.label} className="rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-4 shadow-[var(--shadow-small)]">
-              <p className="text-2xl font-black tracking-tight">{c.value}</p>
-              <p className="mt-0.5 text-xs font-bold text-[var(--text-muted)]">{c.label}</p>
-            </article>
-          ))}
+            <h1 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">{copy.title}</h1>
+            <p className="mt-3 max-w-4xl text-sm leading-7 text-[var(--text-secondary)] md:text-base md:leading-8">
+              {copy.description}
+            </p>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {copy.chips.map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+          </div>
         </section>
 
         {banner && (
@@ -444,266 +471,363 @@ export default function EmployeeExperienceRequestsPage() {
           </div>
         )}
         {warning && state === "loaded" && (
-          <div role="status" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900">{warning}</div>
+          <div role="status" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900">
+            {warning}
+          </div>
         )}
 
-        <section className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.38fr)]">
-          {/* ------------------------------ List ------------------------------ */}
-          <article className="min-w-0 overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
-            <div className="space-y-3 border-b border-[var(--border-default)] p-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-black">{copy.listTitle}</h2>
-                <span className="flex h-8 min-w-8 items-center justify-center rounded-lg bg-[var(--surface-muted)] px-2 text-xs font-black">{filtered.length}</span>
-              </div>
-              <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={copy.search} className={fieldCls} />
-              <div className="grid grid-cols-2 gap-2">
-                <select value={group} onChange={(e) => setGroup(e.target.value as RequestGroup | "all")} className={fieldCls}>
-                  <option value="all">{copy.allTypes}</option>
-                  <option value="leave">{copy.groups.leave}</option>
-                  <option value="letter">{copy.groups.letter}</option>
-                  <option value="attendance">{copy.groups.attendance}</option>
-                </select>
-                <select value={status} onChange={(e) => setStatus(e.target.value as RequestStatus | "all")} className={fieldCls}>
-                  <option value="all">{copy.allStatuses}</option>
-                  <option value="pending">{copy.statPending}</option>
-                  <option value="approved">{copy.statApproved}</option>
-                  <option value="rejected">{copy.statRejected}</option>
-                  <option value="cancelled">{copy.cancelled}</option>
-                </select>
-                <label className="text-[11px] font-black text-[var(--text-secondary)]">{copy.from}
-                  <input type="date" dir="ltr" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className={`${fieldCls} mt-1`} />
-                </label>
-                <label className="text-[11px] font-black text-[var(--text-secondary)]">{copy.to}
-                  <input type="date" dir="ltr" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className={`${fieldCls} mt-1`} />
-                </label>
-              </div>
-              {hasFilters && (
-                <button type="button" onClick={clearFilters} className="text-xs font-black text-[var(--brand-primary)]">{copy.clear}</button>
-              )}
+        {/* ----------------------------- Loading ----------------------------- */}
+        {state === "loading" && (
+          <section className="mt-5 rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] p-10 text-center shadow-[var(--shadow-small)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-subtle)]">
+              <Loader2 size={22} className="animate-spin text-[var(--brand-primary)]" />
             </div>
+            <p className="mt-4 text-base font-black">{copy.loading}</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">{copy.loadingText}</p>
+          </section>
+        )}
 
-            <div className="max-h-[720px] overflow-y-auto p-3">
-              {state === "loading" ? (
-                <div className="flex min-h-56 flex-col items-center justify-center gap-3 text-center">
-                  <Loader2 size={22} className="animate-spin text-[var(--brand-primary)]" />
-                  <p className="text-sm font-bold text-[var(--text-muted)]">{copy.loading}</p>
-                </div>
-              ) : state === "error" ? (
-                <div className="flex min-h-56 flex-col items-center justify-center gap-3 px-6 text-center">
-                  <CircleAlert size={22} className="text-[var(--critical)]" />
-                  <p className="text-sm font-bold">{copy.errorTitle}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{error}</p>
-                  <button
-                    type="button"
-                    onClick={() => { setState("loading"); void load(); }}
-                    className="rounded-lg border border-[var(--border-default)] px-3 py-1.5 text-xs font-bold hover:bg-[var(--surface-muted)]"
-                  >
-                    {copy.retry}
-                  </button>
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className="flex min-h-56 flex-col items-center justify-center text-center">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-muted)] text-[var(--text-muted)]">
-                    {items.length === 0 ? <Inbox size={20} /> : <Search size={20} />}
-                  </span>
-                  <p className="mt-4 text-sm font-bold">{items.length === 0 ? copy.empty : copy.noMatch}</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filtered.map((r) => {
-                    const active = selected?.key === r.key;
-                    return (
-                      <button
-                        key={r.key}
-                        type="button"
-                        onClick={() => setSelectedKey(r.key)}
-                        className={`block w-full rounded-2xl border p-4 text-start transition ${
-                          active ? "border-blue-200 bg-[var(--brand-subtle)]" : "border-transparent hover:border-[var(--border-default)] hover:bg-[var(--background)]"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${active ? "bg-[var(--brand-primary)] text-white" : "bg-[var(--surface-muted)] text-[var(--text-secondary)]"}`}>
-                            {r.group === "leave" ? <CalendarDays size={16} /> : r.group === "letter" ? <FileText size={16} /> : <UserRound size={16} />}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-black">{r.employeeName}</p>
-                            <p className="mt-0.5 truncate text-[11px] text-[var(--text-muted)]">{shortRef(r)} · {fmtShort(r.createdAt)}</p>
-                            <p className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold">
-                              <span className="rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-extrabold text-[var(--brand-primary)]">{copy.groups[r.group]}</span>
-                              <span className="truncate">{typeLabel(r)}</span>
-                              {r.group === "leave" && r.hasAttachment && <Paperclip size={12} className="text-[var(--text-muted)]" />}
-                            </p>
-                            <div className="mt-2"><StatusBadge status={r.status} isArabic={ar} /></div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+        {/* ------------------------------ Error ------------------------------ */}
+        {state === "error" && (
+          <section
+            role="alert"
+            className="mt-5 rounded-[28px] border border-amber-300 bg-amber-50 p-8 text-center text-amber-950 shadow-[var(--shadow-small)]"
+          >
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
+              <CircleAlert size={22} />
             </div>
-          </article>
+            <h2 className="mt-4 text-xl font-black">{copy.errorTitle}</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7">{error}</p>
+            <button
+              type="button"
+              onClick={() => { setState("loading"); void load(); }}
+              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--text-primary)] px-6 text-sm font-black text-[var(--surface)] transition hover:opacity-90"
+            >
+              {copy.retry}
+            </button>
+          </section>
+        )}
 
-          {/* ----------------------------- Details ---------------------------- */}
-          {selected ? (
-            <article className="flex min-w-0 flex-col overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
-              <div className="border-b border-[var(--border-default)] px-5 py-5 sm:px-6">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-extrabold text-[var(--brand-primary)]" title={selected.id}>{shortRef(selected)}</span>
-                  <span className="rounded-full bg-[var(--surface-muted)] px-2.5 py-1 text-[10px] font-extrabold text-[var(--text-secondary)]">{copy.groups[selected.group]}</span>
-                  <StatusBadge status={selected.status} isArabic={ar} />
-                </div>
-                <h2 className="mt-2 text-xl font-black tracking-tight">{typeLabel(selected)}</h2>
-                <p className="mt-1 text-xs text-[var(--text-muted)]">{copy.created}: {fmtDate(selected.createdAt)}</p>
-              </div>
-
-              <div className="space-y-4 p-5 sm:p-6">
-                <div className={`${boxCls} flex items-center gap-3`}>
-                  <UserRound size={17} className="text-[var(--brand-primary)]" />
-                  <div>
-                    <p className="text-[10px] font-bold text-[var(--text-muted)]">{copy.employee}</p>
-                    <p className="font-extrabold">{selected.employeeName}</p>
+        {state === "loaded" && (
+          <>
+            {/* ------------------------------ Stats ------------------------------ */}
+            <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {statCards.map((c) => (
+                <article
+                  key={c.code}
+                  className="group relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
+                >
+                  <div className="absolute inset-x-0 top-0 h-0.5 origin-start scale-x-0 bg-[var(--brand-primary)] transition-transform duration-200 group-hover:scale-x-100" />
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-[var(--text-muted)]">{c.label}</p>
+                      <h2 className="mt-3 text-2xl font-black tracking-tight md:text-3xl">{c.value}</h2>
+                    </div>
+                    <span className="flex h-9 min-w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-2 text-[10px] font-black text-[var(--brand-primary)]">
+                      {c.code}
+                    </span>
                   </div>
+                  <div className="mt-4 border-t border-[var(--border-default)] pt-3">
+                    <p className="text-[11px] font-bold text-[var(--text-secondary)]">{c.note}</p>
+                  </div>
+                </article>
+              ))}
+            </section>
+
+            <section className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.38fr)]">
+              {/* ------------------------------ List ------------------------------ */}
+              <article className="min-w-0 overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+                <div className="space-y-3 border-b border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-black">{copy.listTitle}</h2>
+                    <span className="rounded-full bg-[var(--brand-subtle)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-primary)]">
+                      {filtered.length}
+                    </span>
+                  </div>
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={copy.search}
+                    className={fieldCls}
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <select value={group} onChange={(e) => setGroup(e.target.value as RequestGroup | "all")} className={fieldCls}>
+                      <option value="all">{copy.allTypes}</option>
+                      <option value="leave">{copy.groups.leave}</option>
+                      <option value="letter">{copy.groups.letter}</option>
+                      <option value="attendance">{copy.groups.attendance}</option>
+                    </select>
+                    <select value={status} onChange={(e) => setStatus(e.target.value as RequestStatus | "all")} className={fieldCls}>
+                      <option value="all">{copy.allStatuses}</option>
+                      <option value="pending">{copy.statPending}</option>
+                      <option value="approved">{copy.statApproved}</option>
+                      <option value="rejected">{copy.statRejected}</option>
+                      <option value="cancelled">{copy.cancelled}</option>
+                    </select>
+                    <label className="text-[11px] font-black text-[var(--text-secondary)]">
+                      {copy.from}
+                      <input type="date" dir="ltr" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className={`${fieldCls} mt-1`} />
+                    </label>
+                    <label className="text-[11px] font-black text-[var(--text-secondary)]">
+                      {copy.to}
+                      <input type="date" dir="ltr" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className={`${fieldCls} mt-1`} />
+                    </label>
+                  </div>
+                  {hasFilters && (
+                    <button type="button" onClick={clearFilters} className="text-xs font-black text-[var(--brand-primary)]">
+                      {copy.clear}
+                    </button>
+                  )}
                 </div>
 
-                {/* Leave-specific */}
-                {selected.group === "leave" && (
-                  <>
-                    {selected.leaveType && (
-                      <div className={boxCls}>
-                        <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.leaveType}</p>
-                        <p className="font-bold">{copy.leaveTypes[selected.leaveType] ?? selected.leaveType}</p>
-                      </div>
-                    )}
-                    {selected.startDate && selected.endDate && (
-                      <div className={`${boxCls} flex items-start gap-3`}>
-                        <CalendarDays size={17} className="mt-0.5 text-[var(--brand-primary)]" />
-                        <div>
-                          <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.period}</p>
-                          <p className="mt-0.5 text-sm font-extrabold">{fmtDate(selected.startDate)} — {fmtDate(selected.endDate)}</p>
+                <div className="max-h-[720px] overflow-y-auto p-3">
+                  {filtered.length === 0 ? (
+                    <div className="flex min-h-56 flex-col items-center justify-center text-center">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-muted)] text-[var(--text-muted)]">
+                        {items.length === 0 ? <Inbox size={20} /> : <Search size={20} />}
+                      </span>
+                      <p className="mt-4 text-sm font-bold text-[var(--text-secondary)]">
+                        {items.length === 0 ? copy.empty : copy.noMatch}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {filtered.map((r) => {
+                        const active = selected?.key === r.key;
+                        return (
+                          <button
+                            key={r.key}
+                            type="button"
+                            onClick={() => setSelectedKey(r.key)}
+                            className={`block w-full rounded-2xl border p-4 text-start transition ${
+                              active
+                                ? "border-[var(--brand-primary)] bg-[var(--brand-subtle)]"
+                                : "border-[var(--border-default)] bg-[var(--surface)] hover:border-[var(--brand-primary)]"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <span
+                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                                  active ? "bg-[var(--brand-primary)] text-white" : "bg-[var(--surface-muted)] text-[var(--text-secondary)]"
+                                }`}
+                              >
+                                {r.group === "leave" ? <CalendarDays size={16} /> : r.group === "letter" ? <FileText size={16} /> : <UserRound size={16} />}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-black">{r.employeeName}</p>
+                                <p className="mt-0.5 truncate text-[11px] font-bold text-[var(--text-muted)]">
+                                  {shortRef(r)} · {fmtShort(r.createdAt)}
+                                </p>
+                                <p className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold">
+                                  <span className="rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-extrabold text-[var(--brand-primary)]">
+                                    {copy.groups[r.group]}
+                                  </span>
+                                  <span className="truncate text-[var(--text-secondary)]">{typeLabel(r)}</span>
+                                  {r.group === "leave" && r.hasAttachment && (
+                                    <Paperclip size={12} className="text-[var(--text-muted)]" />
+                                  )}
+                                </p>
+                                <div className="mt-2"><StatusBadge status={r.status} isArabic={ar} /></div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </article>
+
+              {/* ----------------------------- Details ---------------------------- */}
+              {selected ? (
+                <article className="flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+                  <div className="flex items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--surface-muted)] px-6 py-5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white shadow-sm">
+                        {selected.group === "leave" ? <CalendarDays size={20} /> : selected.group === "letter" ? <FileText size={20} /> : <UserRound size={20} />}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[11px] font-black text-[var(--brand-primary)]" title={selected.id}>
+                            {shortRef(selected)}
+                          </span>
+                          <span className="rounded-full bg-[var(--surface)] px-2.5 py-0.5 text-[10px] font-extrabold text-[var(--text-secondary)]">
+                            {copy.groups[selected.group]}
+                          </span>
                         </div>
+                        <h2 className="mt-1 truncate text-lg font-black tracking-tight">{typeLabel(selected)}</h2>
+                        <p className="mt-0.5 text-[11px] font-bold text-[var(--text-muted)]">
+                          {copy.created}: {fmtDate(selected.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <StatusBadge status={selected.status} isArabic={ar} />
+                  </div>
+
+                  <div className="space-y-4 p-5 sm:p-6">
+                    <div className={`${boxCls} flex items-center gap-3`}>
+                      <UserRound size={17} className="text-[var(--brand-primary)]" />
+                      <div>
+                        <p className="text-[10px] font-bold text-[var(--text-muted)]">{copy.employee}</p>
+                        <p className="font-extrabold">{selected.employeeName}</p>
+                      </div>
+                    </div>
+
+                    {/* Leave-specific */}
+                    {selected.group === "leave" && (
+                      <>
+                        {selected.leaveType && (
+                          <div className={boxCls}>
+                            <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.leaveType}</p>
+                            <p className="font-bold">{copy.leaveTypes[selected.leaveType] ?? selected.leaveType}</p>
+                          </div>
+                        )}
+                        {selected.startDate && selected.endDate && (
+                          <div className={`${boxCls} flex items-start gap-3`}>
+                            <CalendarDays size={17} className="mt-0.5 text-[var(--brand-primary)]" />
+                            <div>
+                              <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.period}</p>
+                              <p className="mt-0.5 text-sm font-extrabold">
+                                {fmtDate(selected.startDate)} — {fmtDate(selected.endDate)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {selected.hasAttachment && (
+                          <div className={boxCls}>
+                            <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.attachment}</p>
+                            <button
+                              type="button"
+                              onClick={() => void openAttachment(selected.id)}
+                              className="mt-2 inline-flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-xs font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)]"
+                            >
+                              <Paperclip size={14} /> {selected.attachmentName ?? copy.openAttachment}
+                            </button>
+                            {attachmentError && (
+                              <p className="mt-2 text-xs font-bold text-[var(--critical)]">{attachmentError}</p>
+                            )}
+                          </div>
+                        )}
+                        {selected.status === "pending" && selected.leaveBalance && (
+                          <div className={boxCls}>
+                            <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.balance}</p>
+                            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                              {[
+                                { l: copy.balAllowance, v: selected.leaveBalance.allowance },
+                                { l: copy.balUsed, v: selected.leaveBalance.approved },
+                                { l: copy.balPending, v: selected.leaveBalance.pending },
+                                { l: copy.balRequested, v: selected.leaveBalance.requested },
+                                { l: copy.balAfter, v: selected.leaveBalance.remainingAfter },
+                              ].map((s, i) => (
+                                <div
+                                  key={s.l}
+                                  className="rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-2 py-2.5 text-center"
+                                >
+                                  <p className={`text-base font-black ${i === 4 && s.v < 0 ? "text-[var(--critical)]" : ""}`}>{s.v}</p>
+                                  <p className="mt-0.5 text-[10px] font-bold text-[var(--text-muted)]">{s.l}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Attendance-correction-specific */}
+                    {selected.group === "attendance" && (
+                      <>
+                        <div className={boxCls}>
+                          <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.workDate}</p>
+                          <p dir="ltr" className="mt-1 font-black">{selected.workDate}</p>
+                        </div>
+                        {TIME_TYPES.includes(selected.correctionType) ? (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div className={boxCls}>
+                              <span className="mb-2 block text-xs font-black text-[var(--text-muted)]">{copy.orig}</span>
+                              <div className="font-bold">{pair(selected.original)}</div>
+                            </div>
+                            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                              <span className="mb-2 block text-xs font-black text-blue-700">{copy.prop}</span>
+                              <div className="font-bold text-blue-900">{pair(selected.proposed)}</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className={`${boxCls} text-xs font-bold leading-6 text-[var(--text-secondary)]`}>
+                            {copy.noTimes}
+                          </p>
+                        )}
+                      </>
+                    )}
+
+                    {/* Reason */}
+                    <div className={boxCls}>
+                      <p className="mb-2 flex items-center gap-2 text-[11px] font-bold text-[var(--text-muted)]">
+                        <FileText size={13} /> {copy.reason}
+                      </p>
+                      <p className="whitespace-pre-wrap text-sm leading-7 text-[var(--text-secondary)]">{selected.reason}</p>
+                    </div>
+
+                    {/* Decision info */}
+                    {selected.status !== "pending" && selected.reviewedByName && (
+                      <div className={boxCls}>
+                        <p className="text-xs font-bold text-[var(--text-secondary)]">
+                          {copy.decidedBy}: <b className="text-[var(--text-primary)]">{selected.reviewedByName}</b>
+                          {selected.group === "attendance" && selected.decisionNote ? ` — ${selected.decisionNote}` : ""}
+                        </p>
                       </div>
                     )}
-                    {selected.hasAttachment && (
-                      <div className={boxCls}>
-                        <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.attachment}</p>
+                  </div>
+
+                  {/* Actions */}
+                  {selected.status === "pending" && (
+                    <div className="space-y-3 border-t border-[var(--border-default)] bg-[var(--surface-muted)] p-5 sm:px-6">
+                      {selected.group === "attendance" && TIME_TYPES.includes(selected.correctionType) && (
+                        <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.approveHint}</p>
+                      )}
+                      {selected.group === "attendance" && (
+                        <input
+                          value={note}
+                          maxLength={500}
+                          placeholder={copy.note}
+                          onChange={(e) => setNote(e.target.value)}
+                          className={fieldCls}
+                        />
+                      )}
+                      <div className="flex flex-col gap-3 sm:flex-row">
                         <button
                           type="button"
-                          onClick={() => void openAttachment(selected.id)}
-                          className="mt-2 inline-flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-xs font-extrabold text-[var(--brand-primary)] hover:bg-[var(--brand-subtle)]"
+                          disabled={busyKey === selected.key}
+                          onClick={() => void decide(selected, "approve")}
+                          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-4 text-sm font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <Paperclip size={14} /> {selected.attachmentName ?? copy.openAttachment}
+                          <Check size={17} strokeWidth={2.4} /> {copy.approve}
                         </button>
-                        {attachmentError && <p className="mt-2 text-xs font-bold text-[var(--critical)]">{attachmentError}</p>}
+                        <button
+                          type="button"
+                          disabled={busyKey === selected.key}
+                          onClick={() => void decide(selected, "reject")}
+                          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-4 text-sm font-black text-[var(--text-secondary)] transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <X size={17} strokeWidth={2.4} /> {copy.reject}
+                        </button>
                       </div>
-                    )}
-                    {selected.status === "pending" && selected.leaveBalance && (
-                      <div className={boxCls}>
-                        <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.balance}</p>
-                        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
-                          {[
-                            { l: copy.balAllowance, v: selected.leaveBalance.allowance },
-                            { l: copy.balUsed, v: selected.leaveBalance.approved },
-                            { l: copy.balPending, v: selected.leaveBalance.pending },
-                            { l: copy.balRequested, v: selected.leaveBalance.requested },
-                            { l: copy.balAfter, v: selected.leaveBalance.remainingAfter },
-                          ].map((s, i) => (
-                            <div key={s.l} className="rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-2 py-2.5 text-center">
-                              <p className={`text-base font-black ${i === 4 && s.v < 0 ? "text-[var(--critical)]" : ""}`}>{s.v}</p>
-                              <p className="mt-0.5 text-[10px] font-bold text-[var(--text-muted)]">{s.l}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Attendance-correction-specific */}
-                {selected.group === "attendance" && (
-                  <>
-                    <div className={boxCls}>
-                      <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.workDate}</p>
-                      <p dir="ltr" className="mt-1 font-black">{selected.workDate}</p>
                     </div>
-                    {TIME_TYPES.includes(selected.correctionType) ? (
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className={boxCls}>
-                          <span className="mb-2 block text-xs font-black text-[var(--text-muted)]">{copy.orig}</span>
-                          <div className="font-bold">{pair(selected.original)}</div>
-                        </div>
-                        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                          <span className="mb-2 block text-xs font-black text-blue-700">{copy.prop}</span>
-                          <div className="font-bold text-blue-900">{pair(selected.proposed)}</div>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className={`${boxCls} text-xs font-bold leading-6 text-[var(--text-secondary)]`}>{copy.noTimes}</p>
-                    )}
-                  </>
-                )}
-
-                {/* Reason */}
-                <div className={boxCls}>
-                  <p className="mb-2 flex items-center gap-2 text-[11px] font-bold text-[var(--text-muted)]">
-                    <FileText size={13} /> {copy.reason}
-                  </p>
-                  <p className="whitespace-pre-wrap text-sm leading-7 text-[var(--text-secondary)]">{selected.reason}</p>
-                </div>
-
-                {/* Decision info */}
-                {selected.status !== "pending" && selected.reviewedByName && (
-                  <div className={boxCls}>
-                    <p className="text-xs font-bold text-[var(--text-secondary)]">
-                      {copy.decidedBy}: <b className="text-[var(--text-primary)]">{selected.reviewedByName}</b>
-                      {selected.group === "attendance" && selected.decisionNote ? ` — ${selected.decisionNote}` : ""}
-                    </p>
+                  )}
+                </article>
+              ) : (
+                <article className="flex min-h-[420px] items-center justify-center rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-8 text-center shadow-[var(--shadow-small)]">
+                  <div>
+                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-muted)] text-[var(--text-muted)]">
+                      <Inbox size={23} />
+                    </span>
+                    <p className="mt-4 text-sm font-bold text-[var(--text-secondary)]">{copy.pick}</p>
                   </div>
-                )}
-
-                {/* Actions */}
-                {selected.status === "pending" && (
-                  <div className="space-y-3 border-t border-[var(--border-default)] pt-5">
-                    {selected.group === "attendance" && TIME_TYPES.includes(selected.correctionType) && (
-                      <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.approveHint}</p>
-                    )}
-                    {selected.group === "attendance" && (
-                      <input
-                        value={note}
-                        maxLength={500}
-                        placeholder={copy.note}
-                        onChange={(e) => setNote(e.target.value)}
-                        className={fieldCls}
-                      />
-                    )}
-                    <div className="flex flex-col gap-3 sm:flex-row">
-                      <button
-                        type="button"
-                        disabled={busyKey === selected.key}
-                        onClick={() => void decide(selected, "approve")}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-4 text-sm font-extrabold text-white transition hover:bg-[var(--brand-hover)] disabled:opacity-50"
-                      >
-                        <Check size={17} strokeWidth={2.4} /> {copy.approve}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busyKey === selected.key}
-                        onClick={() => void decide(selected, "reject")}
-                        className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 bg-[var(--surface)] px-4 text-sm font-extrabold text-[var(--critical)] transition hover:bg-[var(--critical-background)] disabled:opacity-50"
-                      >
-                        <X size={17} strokeWidth={2.4} /> {copy.reject}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </article>
-          ) : (
-            <article className="flex min-h-[420px] items-center justify-center rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] p-8 text-center shadow-[var(--shadow-small)]">
-              <p className="text-sm font-bold text-[var(--text-secondary)]">{copy.pick}</p>
-            </article>
-          )}
-        </section>
+                </article>
+              )}
+            </section>
+          </>
+        )}
       </div>
     </main>
   );

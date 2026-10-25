@@ -28,6 +28,7 @@ export const PERMISSIONS = {
   ATTENDANCE_USE: "attendance.use",
   ATTENDANCE_MANAGE: "attendance.manage",
   ATTENDANCE_DEDUCTIONS_REVIEW: "attendance.deductions.review",
+  DASHBOARD_USE: "dashboard.use"
   
 
 } as const;
@@ -62,6 +63,7 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.ATTENDANCE_USE,
     PERMISSIONS.ATTENDANCE_MANAGE,
     PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
+    PERMISSIONS.DASHBOARD_USE,
   ],
   manager: [
     PERMISSIONS.REQUESTS_VIEW,
@@ -71,6 +73,7 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.PROFILE_VIEW,
     PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
     PERMISSIONS.ATTENDANCE_USE,
+    PERMISSIONS.DASHBOARD_USE,
   ],
 
   member: [
@@ -78,6 +81,7 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
     PERMISSIONS.PROFILE_VIEW,
     PERMISSIONS.ATTENDANCE_USE,
+    PERMISSIONS.DASHBOARD_USE,
   ],
 
   viewer: [],
@@ -106,6 +110,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/attendance": PERMISSIONS.ATTENDANCE_USE,
   "/attendance/dashboard": PERMISSIONS.ATTENDANCE_MANAGE,
   "/attendance/setup": PERMISSIONS.ATTENDANCE_MANAGE,
-  "/attendance/corrections": PERMISSIONS.ATTENDANCE_MANAGE,
   "/attendance/deductions": PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
+
+  "/dashboard": PERMISSIONS.DASHBOARD_USE,
 };

@@ -111,7 +111,7 @@ export default function LoginForm() {
       const destination =
         requestedPath?.startsWith("/") && !requestedPath.startsWith("//")
           ? requestedPath
-          : "/employee-experience";
+          : "/dashboard";
 
       router.replace(destination);
       router.refresh();

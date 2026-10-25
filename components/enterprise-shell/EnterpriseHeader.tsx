@@ -26,7 +26,8 @@ import {
   ShieldCheck,
   UserRound,
   Building,
-  UsersRound
+  UsersRound,
+  LayoutDashboardIcon
   } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -59,6 +60,7 @@ const navigationItems: readonly NavigationGroup[] = [
     key: "workspaceGroup",
     icon: Building,
     children: [
+      { key: "dashboard", href: "/dashboard", icon:  LayoutDashboardIcon, permission: PERMISSIONS.DASHBOARD_USE},
       { key: "corporateBrain", href: "/corporate-brain", icon: BrainCircuit, permission: PERMISSIONS.CORPORATE_BRAIN_VIEW },
       { key: "digitalWorkforce", href: "/digital-workforce", icon: Bot, permission: PERMISSIONS.DIGITAL_WORKFORCE_VIEW },
     ]
@@ -69,7 +71,7 @@ const navigationItems: readonly NavigationGroup[] = [
     children: [
       { key: "employees", href: "/payroll/employees", icon: Users, permission: PERMISSIONS.PAYROLL_VIEW },
       { key: "requests", href: "/employee-experience/requests", icon: Inbox, permission: PERMISSIONS.REQUESTS_VIEW },
-      { key: "payroll", href: "/payroll/run", icon: Banknote, permission: PERMISSIONS.PAYROLL_VIEW },
+      { key: "payroll", href: "/payroll/runs", icon: Banknote, permission: PERMISSIONS.PAYROLL_VIEW },
       { key: "policies", href: "/employee-experience/policies", icon: BookOpen, permission: PERMISSIONS.POLICIES_VIEW },
     ]
   },
@@ -80,7 +82,6 @@ const navigationItems: readonly NavigationGroup[] = [
       { key: "attendance", href: "/attendance", icon: Clock, permission: PERMISSIONS.ATTENDANCE_USE },
       { key: "dashboard", href: "/attendance/dashboard", icon: LayoutDashboard, permission: PERMISSIONS.ATTENDANCE_MANAGE },
       { key: "setup", href: "/attendance/setup", icon: UserCheck, permission: PERMISSIONS.ATTENDANCE_MANAGE },
-      { key: "corrections", href: "/attendance/corrections", icon: FileEdit, permission: PERMISSIONS.ATTENDANCE_MANAGE },
       { key: "deductions", href: "/attendance/deductions", icon: Calculator, permission: PERMISSIONS.ATTENDANCE_MANAGE }
     ]
   },
@@ -126,12 +127,12 @@ const HEADER_CONTENT = {
       policies: "السياسات",
       attendanceManage: "إدارة الحضور",
       attendance: "سجل الحضور",
-      dashboard: "لوحة القيادة",
       setup: "الورديات",
       corrections: "التصحيحات",
       deductions: "الخصميات",
       leaves: "الإجازات",
       submit: "تقديم طلب",
+      dashboard: "لوحة التحكم"
     }
   },
   en: {
