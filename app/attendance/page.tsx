@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 import {
-  api, fmtDay, fmtMinutes, fmtMoney, fmtTime, shiftDate, StatusBadge, todayKey,
+  localizeErrorMessage, api, fmtDay, fmtMinutes, fmtMoney, fmtTime, shiftDate, StatusBadge, todayKey,
 } from "@/components/attendance/shared";
 
 /* ------------------------------ constants ------------------------------ */
@@ -207,7 +207,7 @@ export default function AttendancePage() {
 
       setState("loaded");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error");
+      setError(e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage(""));
       setState("error");
     }
   }, [range.from, range.to, range.future]);
@@ -260,7 +260,7 @@ export default function AttendancePage() {
       setMsg({ kind: "ok", text: eventType === "check_in" ? copy.okIn : copy.okOut });
       await load();
     } catch (e) {
-      const text = e instanceof Error ? e.message : "Error";
+      const text = e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage("");
       if (!/network|fetch|failed to/i.test(text)) keyRef.current = null;
       setMsg({ kind: "error", text });
     } finally {
@@ -314,7 +314,7 @@ export default function AttendancePage() {
       setMsg({ kind: "ok", text: copy.fixSent });
       await load();
     } catch (e) {
-      setFxError(e instanceof Error ? e.message : "Error");
+      setFxError(e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage(""));
     } finally {
       setFxBusy(false);
     }
@@ -328,7 +328,7 @@ export default function AttendancePage() {
       setMsg({ kind: "ok", text: copy.cancelled });
       await load();
     } catch (e) {
-      setMsg({ kind: "error", text: e instanceof Error ? e.message : "Error" });
+      setMsg({ kind: "error", text: e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage("") });
     }
   }
 

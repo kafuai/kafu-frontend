@@ -4,7 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, LoaderCircle, RefreshCw } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 import {
-  api, fmtMinutes, fmtMoney, fmtTime, shiftDate, StatusBadge, todayKey,
+  localizeErrorMessage, api, fmtMinutes, fmtMoney, fmtTime, shiftDate, StatusBadge, todayKey,
 } from "@/components/attendance/shared";
 
 /* ------------------------------- types ------------------------------- */
@@ -167,14 +167,14 @@ export default function AttendanceDashboardPage() {
         try {
           await post("/api/attendance/evaluate", { from: date, to: date });
         } catch (e) {
-          setWarning(`${copy.evalWarn}${e instanceof Error ? e.message : ""}`);
+          setWarning(`${copy.evalWarn}${e instanceof Error ? ` ${localizeErrorMessage(e.message)}` : ""}`);
         }
       }
       const r = await api(`/api/attendance/daily?date=${date}`);
       setRows((r.data ?? []) as DailyRow[]);
       setState("loaded");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error");
+      setError(e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage(""));
       setState("error");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -190,7 +190,7 @@ export default function AttendanceDashboardPage() {
       await api(`/api/attendance/days/${dayId}/confirm-absence`, { method: "POST" });
       await loadDaily();
     } catch (e) {
-      setWarning(e instanceof Error ? e.message : "Error");
+      setWarning(e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage(""));
     }
   }
 
@@ -211,7 +211,7 @@ export default function AttendanceDashboardPage() {
       setReport((r.data ?? []) as MonthlyRow[]);
       setGenerated(true);
     } catch (e) {
-      setMonthlyError(e instanceof Error ? e.message : "Error");
+      setMonthlyError(e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage(""));
     } finally {
       setGenerating(false);
     }

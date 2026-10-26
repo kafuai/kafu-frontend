@@ -5,7 +5,7 @@ import {
   Check, Clock, Edit, Map as MapIcon, MapPin, Plus, Power, PowerOff, Save, UserCheck, Users, X,
 } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
-import { api, Banner, dayNames, shiftDate, todayKey } from "@/components/attendance/shared";
+import { localizeErrorMessage, api, Banner, dayNames, shiftDate, todayKey } from "@/components/attendance/shared";
 
 type Tab = "locations" | "shifts" | "assignments";
 
@@ -139,7 +139,7 @@ export default function AttendanceSetupPage() {
       setAsg(a.data ?? []);
       setMembers(a.members ?? []);
     } catch (e) {
-      setMsg({ kind: "error", text: e instanceof Error ? e.message : "Error" });
+      setMsg({ kind: "error", text: e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage("") });
     } finally {
       setLoading(false);
     }
@@ -158,7 +158,7 @@ export default function AttendanceSetupPage() {
       after?.();
       await load();
     } catch (e) {
-      setMsg({ kind: "error", text: e instanceof Error ? e.message : "Error" });
+      setMsg({ kind: "error", text: e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage("") });
     } finally {
       setBusy(false);
     }

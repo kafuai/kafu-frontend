@@ -16,6 +16,7 @@ const EMPLOYEE_FIELDS = [
   "status",
   "hire_date",
   "nationality",
+  "is_saudi",
   "date_of_birth",
   "phone",
   "job_title",
@@ -69,6 +70,19 @@ function parseMoney(value: unknown): number | null {
   if (typeof value !== "string" || !/^\d+(\.\d{1,2})?$/.test(value)) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function isSaudiNationality(value: string): boolean {
+  const nationality = value.trim().toLocaleLowerCase();
+
+  return [
+    "saudi arabia",
+    "kingdom of saudi arabia",
+    "المملكة العربية السعودية",
+    "السعودية",
+    "سعودي",
+    "سعودية",
+  ].includes(nationality);
 }
 
 async function isOwner(
@@ -281,6 +295,10 @@ export async function POST(request: Request) {
     }
     payload[field] = value.trim();
   }
+  
+  payload.is_saudi = isSaudiNationality(
+  payload.nationality as string
+  );
 
   for (const field of REQUIRED_DATE_FIELDS) {
     const value = body[field];
@@ -304,15 +322,6 @@ export async function POST(request: Request) {
     }
     payload[field] = parsed;
   }
-
-  if (typeof body.is_saudi !== "boolean") {
-  return NextResponse.json(
-    { error: "Invalid or missing is_saudi" },
-    { status: 400 },
-  );
-}
-
-payload.is_saudi = body.is_saudi;
 
   if (body.status !== "active" && body.status !== "inactive") {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });

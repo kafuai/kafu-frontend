@@ -353,7 +353,7 @@ export default function EnterpriseHeader() {
     <header className="kafu-executive-header" dir={isArabic ? "rtl" : "ltr"}>
       <div className="kafu-executive-header__inner">
         <div className="kafu-executive-header__brand-zone">
-          <Link href="/" className="kafu-executive-brand" aria-label="KAFU AI">
+          <Link href="/dashboard" className="kafu-executive-brand" aria-label="KAFU AI">
             <Image src="/brand/kafu-logo-en.png" alt="KAFU AI" width={1774} height={887} priority className="kafu-executive-brand__logo" sizes="112px" />
           </Link>
           <span className="kafu-executive-header__divider" aria-hidden="true" />

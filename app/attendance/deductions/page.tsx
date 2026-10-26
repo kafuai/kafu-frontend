@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertCircle, Check, Edit, FileText, Receipt, Settings, ShieldAlert, UserRound, X } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
-import { api, fmtDay, fmtMoney, StatusBadge, todayKey } from "@/components/attendance/shared";
+import { localizeErrorMessage, api, fmtDay, fmtMoney, StatusBadge, todayKey } from "@/components/attendance/shared";
 
 /* ------------------------------ constants ------------------------------ */
 
@@ -127,7 +127,7 @@ export default function AttendanceDeductionsPage() {
       setPolicies(pol.data ?? []);
       setState("loaded");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error");
+      setError(e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage(""));
       setState("error");
     }
   }, []);
@@ -186,7 +186,7 @@ export default function AttendanceDeductionsPage() {
       setIsAdjusting(false);
       await load();
     } catch (e) {
-      setMsg({ kind: "error", text: e instanceof Error ? e.message : "Error" });
+      setMsg({ kind: "error", text: e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage("") });
       await load();
     } finally {
       setBusy(false);
@@ -217,7 +217,7 @@ export default function AttendanceDeductionsPage() {
       });
       await load();
     } catch (e) {
-      setMsg({ kind: "error", text: e instanceof Error ? e.message : "Error" });
+      setMsg({ kind: "error", text: e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage("") });
     } finally {
       setBusy(false);
     }

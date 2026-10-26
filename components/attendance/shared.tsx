@@ -2,10 +2,18 @@
 
 import type { ReactNode } from "react";
 
+import { localizeErrorMessage } from "@/lib/localization/errorMessages";
+export { localizeErrorMessage } from "@/lib/localization/errorMessages";
+
 export async function api<T = any>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, { cache: "no-store", ...init });
+  let res: Response;
+  try {
+    res = await fetch(url, { cache: "no-store", ...init });
+  } catch (error) {
+    throw new Error(localizeErrorMessage(error instanceof Error ? error.message : "network error"));
+  }
   const payload = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(payload.error ?? "Request failed");
+  if (!res.ok) throw new Error(localizeErrorMessage(payload.error ?? payload.message ?? `HTTP ${res.status}`));
   return payload as T;
 }
 

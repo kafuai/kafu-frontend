@@ -2,6 +2,7 @@
 
 import { useMemo, useState, Fragment } from "react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
+import { localizeErrorMessage } from "@/lib/localization/errorMessages";
 import {
   CalendarDays,
   LoaderCircle,
@@ -242,7 +243,7 @@ export default function PayrollRunsPage() {
     const response = await fetch(`/api/payroll/runs/${id}`, { cache: "no-store" });
     const payload = await readJson(response);
 
-    if (!response.ok) throw new Error(payload.error ?? copy.loadError);
+    if (!response.ok) throw new Error(localizeErrorMessage(payload.error ?? copy.loadError, locale));
 
     setRun(payload.run as Run);
     setItems((payload.items ?? []) as RunItem[]);
@@ -272,14 +273,14 @@ export default function PayrollRunsPage() {
       if (!response.ok) {
         if (Array.isArray(payload.employees)) setMissing(payload.employees as MissingEmployee[]);
         if (payload.details) setErrorDetails(payload.details as ErrorDetails);
-        throw new Error(payload.error ?? copy.createError);
+        throw new Error(localizeErrorMessage(payload.error ?? copy.createError, locale));
       }
 
       setRun(payload.run as Run);
       setItems((payload.items ?? []) as RunItem[]);
       setNotice(copy.created);
     } catch (err) {
-      setError(err instanceof Error ? err.message : copy.createError);
+      setError(err instanceof Error ? localizeErrorMessage(err.message, locale) : copy.createError);
     } finally {
       setCreating(false);
     }
@@ -300,7 +301,7 @@ export default function PayrollRunsPage() {
     try {
       const delRes = await fetch(`/api/payroll/runs/${run.id}`, { method: "DELETE" });
       const delPayload = await readJson(delRes);
-      if (!delRes.ok) throw new Error(delPayload.error ?? copy.createError);
+      if (!delRes.ok) throw new Error(localizeErrorMessage(delPayload.error ?? copy.createError, locale));
 
       const createRes = await fetch("/api/payroll/runs", {
         method: "POST",
@@ -314,14 +315,14 @@ export default function PayrollRunsPage() {
         if (createPayload.details) setErrorDetails(createPayload.details as ErrorDetails);
         setRun(null);
         setItems([]);
-        throw new Error(createPayload.error ?? copy.createError);
+        throw new Error(localizeErrorMessage(createPayload.error ?? copy.createError, locale));
       }
 
       setRun(createPayload.run as Run);
       setItems((createPayload.items ?? []) as RunItem[]);
       setNotice(copy.recreateSuccess);
     } catch (err) {
-      setError(err instanceof Error ? err.message : copy.createError);
+      setError(err instanceof Error ? localizeErrorMessage(err.message, locale) : copy.createError);
     } finally {
       setCreating(false);
     }
@@ -339,13 +340,13 @@ export default function PayrollRunsPage() {
       });
 
       const payload = await readJson(response);
-      if (!response.ok) throw new Error(payload.error ?? copy.createError);
+      if (!response.ok) throw new Error(localizeErrorMessage(payload.error ?? copy.createError, locale));
 
       setRun({ ...run, status: "approved" });
       setNotice(copy.approveSuccess);
       setEditingItem(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : copy.createError);
+      setError(err instanceof Error ? localizeErrorMessage(err.message, locale) : copy.createError);
     } finally {
       setCreating(false);
     }
@@ -418,12 +419,12 @@ export default function PayrollRunsPage() {
       });
 
       const payload = await readJson(response);
-      if (!response.ok) throw new Error(payload.error ?? copy.createError);
+      if (!response.ok) throw new Error(localizeErrorMessage(payload.error ?? copy.createError, locale));
 
       setItems(prevItems => prevItems.map(it => it.id === editingItem.id ? { ...it, ...payload.item } : it));
       setEditingItem(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : copy.createError);
+      setError(err instanceof Error ? localizeErrorMessage(err.message, locale) : copy.createError);
     } finally {
       setSavingItem(false);
     }

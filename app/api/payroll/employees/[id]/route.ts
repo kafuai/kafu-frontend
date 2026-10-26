@@ -75,6 +75,19 @@ function parseMoney(value: unknown): number | null {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
+function isSaudiNationality(value: string): boolean {
+  const nationality = value.trim().toLocaleLowerCase();
+
+  return [
+    "saudi arabia",
+    "kingdom of saudi arabia",
+    "المملكة العربية السعودية",
+    "السعودية",
+    "سعودي",
+    "سعودية",
+  ].includes(nationality);
+}
+
 async function getContext() {
   const supabase = await createSupabaseServerClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -141,7 +154,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       "status",
       "hire_date",
       "nationality",
-      "is_saudi",
       "date_of_birth",
       "phone",
       "job_title",
@@ -176,12 +188,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Invalid full_name" }, { status: 400 });
     }
 
-    if ("is_saudi" in body && typeof body.is_saudi !== "boolean") {
-      return NextResponse.json(
-        { error: "Invalid is_saudi" },
-        { status: 400 },
-      );
-    }
     if ("status" in body && body.status !== "active" && body.status !== "inactive") {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
@@ -272,6 +278,12 @@ export async function PATCH(request: Request, context: RouteContext) {
       if (field in money) continue;
 
       updateData[field] = typeof value === "string" ? value.trim() || null : value;
+    }
+
+    if ("nationality" in body) {
+      updateData.is_saudi =
+        typeof body.nationality === "string" &&
+        isSaudiNationality(body.nationality);
     }
 
     const { data, error } = await supabase

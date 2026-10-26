@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent, Fragment } from "react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
+import { localizeErrorMessage } from "@/lib/localization/errorMessages";
 import {
   X,
   UsersRound,
@@ -11,6 +12,11 @@ import {
   Pencil,
   ClipboardList,
 } from "lucide-react";
+import {
+  CountrySelect,
+  GetCountries,
+} from "react-country-state-city";
+import "react-country-state-city/dist/react-country-state-city.css";
 
 type PayrollEmployee = {
   id: string;
@@ -94,7 +100,7 @@ const EMPTY_FORM: EmployeeForm = {
   deductions: "",
   bank_name: "",
   iban: "",
-  is_saudi: true,
+  is_saudi: false,
 };
 
 const REQUIRED_TEXT: (keyof EmployeeForm)[] = [
@@ -154,7 +160,7 @@ function rowToForm(row: EmployeeRow): EmployeeForm {
     deductions: p?.deductions ? String(p.deductions) : "",
     bank_name: p?.bank_name ?? "",
     iban: p?.iban ?? "",
-    is_saudi: p?.is_saudi ?? true,
+    is_saudi: p?.is_saudi ?? false,
   };
 }
 
@@ -175,6 +181,28 @@ export default function EmployeesPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
+
+  
+ const [countries, setCountries] = useState<
+      Awaited<ReturnType<typeof GetCountries>>
+    >([]);
+
+    useEffect(() => {
+      let active = true;
+
+      GetCountries()
+        .then((result) => {
+          if (active) setCountries(result);
+        })
+        .catch((error) => {
+          console.error("Failed to load countries:", error);
+        });
+
+      return () => {
+        active = false;
+      };
+    }, []);
+
 
   const copy = isArabic
     ? {
@@ -252,9 +280,6 @@ export default function EmployeesPage() {
         none: "—",
         currency: "ر.س",
         missing: "بيانات غير مكتملة",
-        isSaudi: "هل الموظف سعودي؟",
-        saudi: "سعودي",
-        nonSaudi: "غير سعودي",
       }
     : {
         badge: "PAYROLL",
@@ -331,9 +356,6 @@ export default function EmployeesPage() {
         none: "—",
         currency: "SAR",
         missing: "Incomplete data",
-        isSaudi: "Is the employee Saudi?",
-        saudi: "Saudi",
-        nonSaudi: "Non-Saudi",
       };
 
   const loadEmployees = useCallback(async () => {
@@ -350,7 +372,7 @@ export default function EmployeesPage() {
         setLoadState("forbidden");
         return;
       }
-      if (!response.ok) throw new Error(payload.error ?? copy.loadError);
+      if (!response.ok) throw new Error(localizeErrorMessage(payload.error ?? copy.loadError, locale));
 
       if (Array.isArray(payload.employees)) {
         setRows(payload.employees as EmployeeRow[]);
@@ -373,7 +395,7 @@ export default function EmployeesPage() {
       setCanManage(payload.canManage === true);
       setLoadState("loaded");
     } catch (error) {
-      setLoadError(error instanceof Error ? error.message : copy.loadError);
+      setLoadError(error instanceof Error ? localizeErrorMessage(error.message, locale) : copy.loadError);
       setLoadState("error");
     }
   }, [copy.loadError]);
@@ -480,7 +502,6 @@ export default function EmployeesPage() {
       housing_allowance: form.housing_allowance ? Number(form.housing_allowance) : null,
       other_allowances: form.other_allowances ? Number(form.other_allowances) : null,
       deductions: form.deductions ? Number(form.deductions) : null,
-      is_saudi: form.is_saudi,
     };
 
     setSaving(true);
@@ -494,13 +515,13 @@ export default function EmployeesPage() {
         }
       );
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error ?? copy.errorSave);
+      if (!response.ok) throw new Error(localizeErrorMessage(payload.error ?? copy.errorSave, locale));
 
       setNotice(isEdit ? copy.saved : copy.created);
       setEditingRow(null);
       await loadEmployees();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : copy.errorSave);
+      setFormError(error instanceof Error ? localizeErrorMessage(error.message, locale) : copy.errorSave);
     } finally {
       setSaving(false);
     }
@@ -827,20 +848,51 @@ export default function EmployeesPage() {
                                         {field("employee_number", copy.employeeNumber)}
                                         {field("full_name", copy.fullName)}
                                         {field("national_id", copy.nationalId)}
-                                        {field("nationality", copy.nationality)}
-                                        <label className="block space-y-2">
-                                        <span className=" border-[var(--border-default)] bg-[var(--surface)] ">{copy.isSaudi}</span>
-                                        <select
-                                          value={form.is_saudi ? "true" : "false"}
-                                          onChange={(event) =>
-                                            updateField("is_saudi", event.target.value === "true")
-                                          }
-                                          className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text-primary)]"
-                                        >
-                                          <option value="true">{copy.saudi}</option>
-                                          <option value="false">{copy.nonSaudi}</option>
-                                        </select>
-                                      </label>
+                                        <label className={labelClass}>
+                                          {copy.nationality}
+
+                                          <CountrySelect
+                                           key={form.nationality || "no-nationality"}
+                                            defaultValue={
+                                            countries.find(
+                                              (country) => {
+                                                const nationality = (form.nationality ?? "")
+                                                  .trim()
+                                                  .toLowerCase();
+
+                                                return (
+                                                  (typeof country.name === "string" &&
+                                                    country.name.toLowerCase() === nationality) ||
+                                                  (typeof country.native === "string" &&
+                                                    country.native.toLowerCase() === nationality)
+                                                );
+                                              }
+                                            ) as any
+                                            }
+                                            placeHolder={
+                                              isArabic
+                                                ? "ابحث عن الجنسية..."
+                                                : "Search nationality..."
+                                            }
+                                            showFlag={false}
+                                            containerClassName="w-full"
+                                            onChange={(country) => {
+                                            if (
+                                              !country ||
+                                              !("iso2" in country) ||
+                                              !("name" in country)
+                                            ) {
+                                              return;
+                                            }
+
+                                            setForm((current) => ({
+                                              ...current,
+                                              nationality: country.name,
+                                              is_saudi: country.iso2.toUpperCase() === "SA",
+                                            }));
+                                          }}
+                                         />
+                                        </label>
                                         {field("date_of_birth", copy.birthDate, "date")}
                                         {field("phone", copy.phone, "tel", "ltr")}
                                       </div>
