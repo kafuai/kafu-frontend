@@ -264,7 +264,7 @@ export default function EmployeesPage() {
         other: "بدلات أخرى",
         deductions: "الخصومات",
         bank: "اسم البنك",
-        iban: "رقم IBAN",
+        iban: "رقم الأيبان",
         email: "البريد الإلكتروني",
         cancel: "إغلاق والتراجع",
         save: "حفظ التغييرات",
@@ -454,6 +454,30 @@ export default function EmployeesPage() {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function getMaxBirthDate(): string {
+    const today = new Date();
+
+    const maxDate = new Date(
+      today.getFullYear() - 18,
+      today.getMonth(),
+      today.getDate()
+    );
+
+    const year = maxDate.getFullYear();
+    const month = String(maxDate.getMonth() + 1).padStart(2, "0");
+    const day = String(maxDate.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  function getTodayDate(): string {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!editingRow) return;
@@ -472,9 +496,47 @@ export default function EmployeesPage() {
       return;
     }
 
-    // التحقق من التاريخ فقط إذا كان كلاهما موجوداً
+   
     if (form.contract_end_date && form.contract_start_date && form.contract_end_date < form.contract_start_date) {
       setFormError(copy.invalidDates);
+      return;
+    }
+
+    const maxBirthDate = getMaxBirthDate();
+
+    if (
+      !form.date_of_birth ||
+      form.date_of_birth > maxBirthDate
+    ) {
+      setFormError(
+        isArabic
+          ? "يجب ألا يقل عمر الموظف عن 18 سنة."
+          : "The employee must be at least 18 years old."
+      );
+      return;
+    }
+
+    const todayDate = getTodayDate();
+
+    if (
+      (form.hire_date && form.hire_date > todayDate) ||
+      (form.contract_start_date && form.contract_start_date > todayDate)
+    ) {
+      setFormError(
+        isArabic
+          ? "تاريخ التوظيف وتاريخ بداية العقد لا يمكن أن يكونا في المستقبل."
+          : "Hire date and contract start date cannot be in the future."
+      );
+      return;
+    }
+
+    
+    if (form.hire_date && form.contract_start_date && form.hire_date > form.contract_start_date) {
+      setFormError(
+        isArabic
+          ? "لا يمكن أن يكون تاريخ التوظيف بعد تاريخ بداية العقد."
+          : "Hire date cannot be after the contract start date."
+      );
       return;
     }
 
@@ -533,8 +595,28 @@ export default function EmployeesPage() {
     "mt-1 block h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm font-bold text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:bg-[var(--surface)]";
   const labelClass = "block text-xs font-black text-[var(--text-secondary)]";
 
-  // قمنا بإزالة خاصية required لكي لا يمنع المتصفح الإرسال
+
   function field(key: keyof EmployeeForm, label: string, type = "text", dir?: "ltr") {
+    
+    const maxLen = 
+      key === "national_id" ? 10 : 
+      key === "phone" ? 10 : 
+      key === "iban" ? 30 :
+      500;
+
+    
+    const maxDate = 
+      key === "date_of_birth" ? getMaxBirthDate() :
+      key === "hire_date" ? (form.contract_start_date || getTodayDate()) :
+      key === "contract_start_date" ? getTodayDate() : 
+      undefined;
+
+    
+    const minVal = 
+      key === "contract_start_date" ? form.hire_date : 
+      key === "contract_end_date" ? form.contract_start_date : 
+      type === "number" ? "0" : undefined;
+
     return (
       <label key={key} className={labelClass}>
         {label} <span className="text-rose-500">*</span>
@@ -544,9 +626,10 @@ export default function EmployeesPage() {
           dir={dir}
           value={String(form[key])}
           onChange={(event) => updateField(key, event.target.value as never)}
-          maxLength={500}
+          max={maxDate}
+          maxLength={maxLen}
           step={type === "number" ? "0.01" : undefined}
-          min={type === "number" ? "0" : undefined}
+          min={minVal} // تم التعديل هنا
         />
       </label>
     );
@@ -818,7 +901,7 @@ export default function EmployeesPage() {
                             <tr>
                               <td colSpan={headings.length} className="p-0">
                                 <div className="border-y border-[var(--brand-primary)]/20 bg-[var(--surface-muted)] px-4 py-6 sm:px-6">
-                                  <form onSubmit={handleSubmit} className="space-y-6">
+                                  <form noValidate onSubmit={handleSubmit} className="space-y-6">
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="flex items-start gap-3">
                                         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white shadow-sm">
