@@ -110,6 +110,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/attendance": PERMISSIONS.ATTENDANCE_USE,
   "/attendance/dashboard": PERMISSIONS.ATTENDANCE_MANAGE,
   "/attendance/setup": PERMISSIONS.ATTENDANCE_MANAGE,
+  "/attendance/holidays": PERMISSIONS.ATTENDANCE_MANAGE,
   "/attendance/deductions": PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
 
   "/dashboard": PERMISSIONS.DASHBOARD_USE,

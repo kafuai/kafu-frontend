@@ -29,7 +29,9 @@ export function evaluateDay(i: DayEvaluationInput): DayEvaluation {
   const { schedule: s, checkIn, checkOut, now } = i;
   const base = { lateMinutes: 0, earlyLeaveMinutes: 0, workedMinutes: null as number | null };
 
-  if (i.isHoliday) return { ...base, status: "holiday" };
+  // A holiday is a calendar context, not a replacement for actual attendance.
+  // Preserve lateness/early-leave calculations when the employee actually worked.
+  if (i.isHoliday && checkIn === null && checkOut === null) return { ...base, status: "holiday" };
   if (i.onApprovedLeave) return { ...base, status: "on_leave" };
 
   const lateMinutes =

@@ -1,5 +1,6 @@
 import "server-only";
 import { NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
 import { PERMISSIONS } from "@/lib/rbac/permissions";
 import { getAttendanceContext, isUuid } from "@/src/enterprise/business/attendance/core/attendanceContext";
 import {
@@ -19,6 +20,10 @@ const REASONS = {
   no_active_shift: {
     ar: "لا توجد وردية فعالة لك الآن.",
     en: "You have no active shift right now.",
+  },
+  official_holiday: {
+    ar: "اليوم إجازة رسمية في الشركة.",
+    en: "Today is an official company holiday.",
   },
   already_checked_in: {
     ar: "تم تسجيل حضورك لهذه الفترة مسبقًا.",
@@ -69,6 +74,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid idempotencyKey" }, { status: 400 });
     }
     const idempotencyKey: string = body.idempotencyKey;
+    const holidayAdmin = createSupabaseAdminClient();
+    const isOfficialHoliday = async (workDate: string) => {
+      const { data, error } = await holidayAdmin
+        .from("organization_holidays")
+        .select("holiday_date")
+        .eq("organization_id", organizationId)
+        .eq("holiday_date", workDate)
+        .limit(1);
+      if (error) throw new Error(error.message);
+      return Boolean(data?.length);
+    };
 
     // إعادة إرسال نفس الطلب: نرجع السجل الأول دون إنشاء مكرر
     const { data: prior } = await supabase
@@ -91,7 +107,9 @@ export async function POST(request: Request) {
       .lte("effective_from", addDays(probeFrom, 1))
       .or(`effective_to.is.null,effective_to.gte.${addDays(probeFrom, -1)}`);
     if (aErr) throw new Error(aErr.message);
-    if (!assignments?.length) return fail("no_active_shift", 409);
+    if (!assignments?.length) {
+      return fail(await isOfficialHoliday(probeFrom) ? "official_holiday" : "no_active_shift", 409);
+    }
 
     const shiftIds = [...new Set(assignments.map((a) => a.shift_id))];
     const { data: shifts } = await supabase
@@ -150,9 +168,34 @@ export async function POST(request: Request) {
       // الحضور: داخل وقت الوردية فقط
       active = all.filter(inStrict)
         .sort((x, y) => Math.abs(now - x.s.start) - Math.abs(now - y.s.start))[0] ?? null;
-      if (!active) return fail("no_active_shift", 409);
+      if (!active) {
+        return fail(await isOfficialHoliday(probeFrom) ? "official_holiday" : "no_active_shift", 409);
+      }
       if (has(active, "check_in")) return fail("already_checked_in", 409);
       if (active.loc && !active.loc.is_active) return fail("no_active_shift", 409);
+
+      // Official-holiday work is explicitly assigned by the Owner. Keep this
+      // check server-side and return the existing generic shift error so the
+      // employee receives no overtime/percentage details.
+      const { data: holidayRows, error: holidayError } = await holidayAdmin
+        .from("organization_holidays")
+        .select("holiday_period_id")
+        .eq("organization_id", organizationId)
+        .eq("holiday_date", active.s.workDate);
+      if (holidayError) throw new Error(holidayError.message);
+      if (holidayRows?.length) {
+        const periodIds = holidayRows.map((h) => h.holiday_period_id as string | null);
+        // Legacy holidays without an Owner-managed period have no employee allow-list.
+        if (periodIds.some((id) => !id)) return fail("official_holiday", 409);
+        const { data: holidayAssignments, error: assignmentError } = await holidayAdmin
+          .from("organization_holiday_assignments")
+          .select("id")
+          .eq("organization_id", organizationId)
+          .eq("user_id", user.id)
+          .in("holiday_period_id", [...new Set(periodIds as string[])]);
+        if (assignmentError) throw new Error(assignmentError.message);
+        if (!holidayAssignments?.length) return fail("official_holiday", 409);
+      }
 
       const act = active;
       const leaves = await new LeaveManager(supabase).list(organizationId, user.id);

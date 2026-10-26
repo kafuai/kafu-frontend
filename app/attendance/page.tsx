@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 import {
-  localizeErrorMessage, api, fmtDay, fmtMinutes, fmtMoney, fmtTime, shiftDate, StatusBadge, todayKey,
+  api, fmtDay, fmtMinutes, fmtMoney, fmtTime, shiftDate, StatusBadge, todayKey,
 } from "@/components/attendance/shared";
 
 /* ------------------------------ constants ------------------------------ */
@@ -59,6 +59,7 @@ export default function AttendancePage() {
         blocked: {
           no_assignment: "لم يتم إسناد وردية لك بعد. تواصل مع المالك.",
           no_active_shift: "لا توجد وردية فعالة الآن.",
+          official_holiday: "اليوم إجازة رسمية في الشركة.",
           on_leave: "لديك إجازة معتمدة اليوم.",
           location_inactive: "موقع العمل المرتبط بورديتك معطّل.",
         } as Record<string, string>,
@@ -115,6 +116,7 @@ export default function AttendancePage() {
         blocked: {
           no_assignment: "No shift has been assigned to you yet. Contact the owner.",
           no_active_shift: "There is no active shift right now.",
+          official_holiday: "Today is an official company holiday.",
           on_leave: "You have an approved leave today.",
           location_inactive: "The work location linked to your shift is disabled.",
         } as Record<string, string>,
@@ -207,7 +209,7 @@ export default function AttendancePage() {
 
       setState("loaded");
     } catch (e) {
-      setError(e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage(""));
+      setError(e instanceof Error ? e.message : "Error");
       setState("error");
     }
   }, [range.from, range.to, range.future]);
@@ -260,7 +262,7 @@ export default function AttendancePage() {
       setMsg({ kind: "ok", text: eventType === "check_in" ? copy.okIn : copy.okOut });
       await load();
     } catch (e) {
-      const text = e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage("");
+      const text = e instanceof Error ? e.message : "Error";
       if (!/network|fetch|failed to/i.test(text)) keyRef.current = null;
       setMsg({ kind: "error", text });
     } finally {
@@ -314,7 +316,7 @@ export default function AttendancePage() {
       setMsg({ kind: "ok", text: copy.fixSent });
       await load();
     } catch (e) {
-      setFxError(e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage(""));
+      setFxError(e instanceof Error ? e.message : "Error");
     } finally {
       setFxBusy(false);
     }
@@ -328,7 +330,7 @@ export default function AttendancePage() {
       setMsg({ kind: "ok", text: copy.cancelled });
       await load();
     } catch (e) {
-      setMsg({ kind: "error", text: e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage("") });
+      setMsg({ kind: "error", text: e instanceof Error ? e.message : "Error" });
     }
   }
 

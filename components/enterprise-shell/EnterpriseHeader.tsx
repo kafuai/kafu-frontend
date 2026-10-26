@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Banknote,
   CalendarClock,
+  CalendarDays,
   CalendarOff,
   Clock,
   FileEdit,
@@ -82,6 +83,7 @@ const navigationItems: readonly NavigationGroup[] = [
       { key: "attendance", href: "/attendance", icon: Clock, permission: PERMISSIONS.ATTENDANCE_USE },
       { key: "dashboard", href: "/attendance/dashboard", icon: LayoutDashboard, permission: PERMISSIONS.ATTENDANCE_MANAGE },
       { key: "setup", href: "/attendance/setup", icon: UserCheck, permission: PERMISSIONS.ATTENDANCE_MANAGE },
+      { key: "holidays", href: "/attendance/holidays", icon: CalendarDays, permission: PERMISSIONS.ATTENDANCE_MANAGE },
       { key: "deductions", href: "/attendance/deductions", icon: Calculator, permission: PERMISSIONS.ATTENDANCE_MANAGE }
     ]
   },
@@ -128,9 +130,10 @@ const HEADER_CONTENT = {
       attendanceManage: "إدارة الحضور",
       attendance: "سجل الحضور",
       setup: "الورديات",
+      holidays: "العطل الرسمية",
       corrections: "التصحيحات",
       deductions: "الخصميات",
-      leaves: "الإجازات",
+      leaves: "الطلبات",
       submit: "تقديم طلب",
       dashboard: "لوحة التحكم"
     }
@@ -162,9 +165,10 @@ const HEADER_CONTENT = {
       attendance: "Attendance Record",
       dashboard: "Dashboard",
       setup: "Shifts",
+      holidays: "Official Holidays",
       corrections: "Corrections",
       deductions: "Deductions",
-      leaves: "Leaves",
+      leaves: "Requests",
       submit: "Submit Request",
     }
   },
@@ -353,7 +357,7 @@ export default function EnterpriseHeader() {
     <header className="kafu-executive-header" dir={isArabic ? "rtl" : "ltr"}>
       <div className="kafu-executive-header__inner">
         <div className="kafu-executive-header__brand-zone">
-          <Link href="/dashboard" className="kafu-executive-brand" aria-label="KAFU AI">
+          <Link href="/" className="kafu-executive-brand" aria-label="KAFU AI">
             <Image src="/brand/kafu-logo-en.png" alt="KAFU AI" width={1774} height={887} priority className="kafu-executive-brand__logo" sizes="112px" />
           </Link>
           <span className="kafu-executive-header__divider" aria-hidden="true" />

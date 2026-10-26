@@ -2,7 +2,6 @@
 
 import { useMemo, useState, Fragment } from "react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
-import { localizeErrorMessage } from "@/lib/localization/errorMessages";
 import {
   CalendarDays,
   LoaderCircle,
@@ -37,7 +36,10 @@ type RunItem = {
   unpaid_leave_days: number | string;
   gosi_deduction: number | string;
   absence_deduction: number | string;
-  attendance_deduction: number | string; // ✅ تمت إضافة خصم التأخير هنا
+  attendance_deduction: number | string;
+  holiday_overtime_hours: number | string;
+  holiday_overtime_days: number | string;
+  holiday_overtime_amount: number | string;
   other_deductions: number | string;
   net_salary: number | string;
 };
@@ -149,7 +151,9 @@ export default function PayrollRunsPage() {
         colGross: "الإجمالي",
         colUnpaid: "أيام الغياب",
         colAbsence: "خصم الغياب",
-        colAttendance: "خصم التأخير", // ✅ الترجمة الجديدة
+        colAttendance: "خصم التأخير",
+        colHolidayOvertimeHours: "أيام إضافي العطلة",
+        colHolidayOvertime: "إضافي العطلة",
         colGosi: "التأمينات",
         colOtherDed: "خصومات أخرى",
         colNet: "الصافي",
@@ -207,7 +211,9 @@ export default function PayrollRunsPage() {
         colGross: "Gross",
         colUnpaid: "Unpaid days",
         colAbsence: "Absence ded.",
-        colAttendance: "Late ded.", // ✅ الترجمة الجديدة
+        colAttendance: "Late ded.",
+        colHolidayOvertimeHours: "Holiday OT days",
+        colHolidayOvertime: "Holiday OT amount",
         colGosi: "GOSI",
         colOtherDed: "Other ded.",
         colNet: "Net",
@@ -243,7 +249,7 @@ export default function PayrollRunsPage() {
     const response = await fetch(`/api/payroll/runs/${id}`, { cache: "no-store" });
     const payload = await readJson(response);
 
-    if (!response.ok) throw new Error(localizeErrorMessage(payload.error ?? copy.loadError, locale));
+    if (!response.ok) throw new Error(payload.error ?? copy.loadError);
 
     setRun(payload.run as Run);
     setItems((payload.items ?? []) as RunItem[]);
@@ -273,14 +279,14 @@ export default function PayrollRunsPage() {
       if (!response.ok) {
         if (Array.isArray(payload.employees)) setMissing(payload.employees as MissingEmployee[]);
         if (payload.details) setErrorDetails(payload.details as ErrorDetails);
-        throw new Error(localizeErrorMessage(payload.error ?? copy.createError, locale));
+        throw new Error(payload.error ?? copy.createError);
       }
 
       setRun(payload.run as Run);
       setItems((payload.items ?? []) as RunItem[]);
       setNotice(copy.created);
     } catch (err) {
-      setError(err instanceof Error ? localizeErrorMessage(err.message, locale) : copy.createError);
+      setError(err instanceof Error ? err.message : copy.createError);
     } finally {
       setCreating(false);
     }
@@ -301,7 +307,7 @@ export default function PayrollRunsPage() {
     try {
       const delRes = await fetch(`/api/payroll/runs/${run.id}`, { method: "DELETE" });
       const delPayload = await readJson(delRes);
-      if (!delRes.ok) throw new Error(localizeErrorMessage(delPayload.error ?? copy.createError, locale));
+      if (!delRes.ok) throw new Error(delPayload.error ?? copy.createError);
 
       const createRes = await fetch("/api/payroll/runs", {
         method: "POST",
@@ -315,14 +321,14 @@ export default function PayrollRunsPage() {
         if (createPayload.details) setErrorDetails(createPayload.details as ErrorDetails);
         setRun(null);
         setItems([]);
-        throw new Error(localizeErrorMessage(createPayload.error ?? copy.createError, locale));
+        throw new Error(createPayload.error ?? copy.createError);
       }
 
       setRun(createPayload.run as Run);
       setItems((createPayload.items ?? []) as RunItem[]);
       setNotice(copy.recreateSuccess);
     } catch (err) {
-      setError(err instanceof Error ? localizeErrorMessage(err.message, locale) : copy.createError);
+      setError(err instanceof Error ? err.message : copy.createError);
     } finally {
       setCreating(false);
     }
@@ -340,13 +346,13 @@ export default function PayrollRunsPage() {
       });
 
       const payload = await readJson(response);
-      if (!response.ok) throw new Error(localizeErrorMessage(payload.error ?? copy.createError, locale));
+      if (!response.ok) throw new Error(payload.error ?? copy.createError);
 
       setRun({ ...run, status: "approved" });
       setNotice(copy.approveSuccess);
       setEditingItem(null);
     } catch (err) {
-      setError(err instanceof Error ? localizeErrorMessage(err.message, locale) : copy.createError);
+      setError(err instanceof Error ? err.message : copy.createError);
     } finally {
       setCreating(false);
     }
@@ -355,8 +361,8 @@ export default function PayrollRunsPage() {
   function downloadCSV() {
     if (!items.length) return;
     const headers = isArabic
-      ? ["الرقم الوظيفي", "الموظف", "الراتب الأساسي", "بدل السكن", "بدلات أخرى", "أيام الغياب", "خصم الغياب", "خصم التأخير", "التأمينات", "خصومات أخرى", "الصافي"]
-      : ["Employee No", "Name", "Basic", "Housing", "Other Allowances", "Unpaid Days", "Absence Ded", "Late Ded", "GOSI", "Other Ded", "Net Salary"];
+      ? ["الرقم الوظيفي", "الموظف", "الراتب الأساسي", "بدل السكن", "بدلات أخرى", "أيام الغياب", "خصم الغياب", "خصم التأخير", "إضافي العطلة", "أيام إضافي العطلة", "التأمينات", "خصومات أخرى", "الصافي"]
+      : ["Employee No", "Name", "Basic", "Housing", "Other Allowances", "Unpaid Days", "Absence Ded", "Late Ded", "Holiday Overtime", "Holiday Overtime Days", "GOSI", "Other Ded", "Net Salary"];
 
     const csvRows = items.map(item => [
       item.employee_number || "—",
@@ -366,7 +372,9 @@ export default function PayrollRunsPage() {
       num(item.other_allowances),
       num(item.unpaid_leave_days),
       num(item.absence_deduction),
-      num(item.attendance_deduction), // ✅ تمت إضافة خصم التأخير لملف الإكسيل
+      num(item.attendance_deduction),
+      num(item.holiday_overtime_amount),
+      num(item.holiday_overtime_days),
       num(item.gosi_deduction),
       num(item.other_deductions),
       num(item.net_salary)
@@ -419,12 +427,12 @@ export default function PayrollRunsPage() {
       });
 
       const payload = await readJson(response);
-      if (!response.ok) throw new Error(localizeErrorMessage(payload.error ?? copy.createError, locale));
+      if (!response.ok) throw new Error(payload.error ?? copy.createError);
 
       setItems(prevItems => prevItems.map(it => it.id === editingItem.id ? { ...it, ...payload.item } : it));
       setEditingItem(null);
     } catch (err) {
-      setError(err instanceof Error ? localizeErrorMessage(err.message, locale) : copy.createError);
+      setError(err instanceof Error ? err.message : copy.createError);
     } finally {
       setSavingItem(false);
     }
@@ -439,7 +447,7 @@ export default function PayrollRunsPage() {
           basic: acc.basic + num(item.basic_salary),
           housing: acc.housing + num(item.housing_allowance),
           other: acc.other + num(item.other_allowances),
-          gross: acc.gross + gross,
+          gross: acc.gross + gross + num(item.holiday_overtime_amount),
           unpaid: acc.unpaid + num(item.unpaid_leave_days),
           absence: acc.absence + num(item.absence_deduction),
           attendance: acc.attendance + num(item.attendance_deduction),
@@ -478,6 +486,8 @@ export default function PayrollRunsPage() {
     copy.colUnpaid,
     copy.colAbsence,
     copy.colAttendance,
+    copy.colHolidayOvertimeHours,
+    copy.colHolidayOvertime,
     copy.colGosi,
     copy.colOtherDed,
     copy.colNet,
@@ -694,7 +704,7 @@ export default function PayrollRunsPage() {
                       const liveGross = num(item.basic_salary) + num(item.housing_allowance) + num(itemForm.other_allowances);
                       const liveAbsence = round2((liveGross / 30) * num(itemForm.unpaid_leave_days));
                       // ✅ تحديث الحسبة التلقائية لكي تأخذ بالاعتبار التأخير
-                      const liveNet = round2(liveGross - liveAbsence - num(item.attendance_deduction) - num(item.gosi_deduction) - num(itemForm.other_deductions));
+                      const liveNet = round2(liveGross - liveAbsence - num(item.attendance_deduction) - num(item.gosi_deduction) - num(itemForm.other_deductions) + num(item.holiday_overtime_amount));
 
                       return (
                         <Fragment key={item.id}>
@@ -749,6 +759,12 @@ export default function PayrollRunsPage() {
                             {/* ✅ العمود الجديد الخاص بخصم التأخير */}
                             <td className="whitespace-nowrap px-4 py-3.5 font-bold text-rose-600">
                               {formatMoney(num(item.attendance_deduction))}
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3.5 font-bold text-emerald-700">
+                              {num(item.holiday_overtime_days).toFixed(2)}
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3.5 font-black text-emerald-700">
+                              {formatMoney(num(item.holiday_overtime_amount))}
                             </td>
 
                             <td className="whitespace-nowrap px-4 py-3.5 font-bold text-rose-600">

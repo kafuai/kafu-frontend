@@ -1,5 +1,6 @@
 import "server-only";
 import { NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
 import { createSupabaseServerClient } from "@/lib/supabase-auth/server";
 import { resolveWorkspaceIdentity } from "@/lib/workspace-identity/tenantResolver";
 import { hasPermission } from "@/lib/rbac/authorization";
@@ -44,7 +45,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const { data: items, error: itemsError } = await supabase
       .from("payroll_run_items")
       .select(
-        "id, employee_id, basic_salary, housing_allowance, other_allowances, unpaid_leave_days, gosi_deduction, absence_deduction, other_deductions, attendance_deduction, net_salary",
+        "id, employee_id, basic_salary, housing_allowance, other_allowances, unpaid_leave_days, gosi_deduction, absence_deduction, other_deductions, attendance_deduction, holiday_overtime_hours, holiday_overtime_days, holiday_overtime_amount, net_salary",
       )
       .eq("payroll_run_id", id)
       .eq("organization_id", identity.organizationId);
@@ -149,7 +150,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
       const { data: existingItem } = await supabase
         .from("payroll_run_items")
-        .select("id, employee_id, basic_salary, housing_allowance, attendance_deduction")
+        .select("id, employee_id, basic_salary, housing_allowance, attendance_deduction, holiday_overtime_days, holiday_overtime_amount")
         .eq("id", body.itemId)
         .eq("payroll_run_id", id)
         .eq("organization_id", identity.organizationId)
@@ -186,7 +187,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           unpaid_leave_days: calc.unpaid_leave_days,
           absence_deduction: calc.absence_deduction,
           gosi_deduction: calc.gosi_deduction,
-          net_salary: calc.net_salary,
+          net_salary: Math.round((calc.net_salary + Number(existingItem.holiday_overtime_amount ?? 0) + Number.EPSILON) * 100) / 100,
         })
         .eq("id", body.itemId)
         .eq("organization_id", identity.organizationId)
@@ -220,32 +221,17 @@ export async function DELETE(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // التأكد من أن المسير مسودة قبل حذفه
-    const { data: run } = await supabase
-      .from("payroll_runs")
-      .select("status")
-      .eq("id", id)
-      .eq("organization_id", identity.organizationId)
-      .maybeSingle();
-
-    if (!run) return NextResponse.json({ error: "Run not found" }, { status: 404 });
-    if (run.status !== "draft") return NextResponse.json({ error: "Cannot delete an approved run" }, { status: 400 });
-
-    // حذف عناصر المسير أولاً
-    await supabase
-      .from("payroll_run_items")
-      .delete()
-      .eq("payroll_run_id", id)
-      .eq("organization_id", identity.organizationId);
-
-    // ثم حذف المسير نفسه
-    const { error: deleteError } = await supabase
-      .from("payroll_runs")
-      .delete()
-      .eq("id", id)
-      .eq("organization_id", identity.organizationId);
-
-    if (deleteError) return NextResponse.json({ error: "Failed to delete run" }, { status: 500 });
+    // Delete draft payroll and all application references in one database transaction.
+    const admin = createSupabaseAdminClient();
+    const { data: deleted, error: deleteError } = await admin.rpc("delete_draft_payroll_run", {
+      p_organization_id: identity.organizationId,
+      p_payroll_run_id: id,
+    });
+    if (deleteError) {
+      console.error("Draft payroll cleanup failed:", deleteError);
+      return NextResponse.json({ error: "Failed to delete draft run safely." }, { status: 500 });
+    }
+    if (!deleted) return NextResponse.json({ error: "Run is not a draft or has existing payroll exports." }, { status: 409 });
 
     return NextResponse.json({ success: true });
   } catch (error) {

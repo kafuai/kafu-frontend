@@ -1,11 +1,13 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { PERMISSIONS } from "@/lib/rbac/permissions";
+import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
 import { getAttendanceContext } from "@/src/enterprise/business/attendance/core/attendanceContext";
 import { loadUserSchedules, pickFocus, type Candidate } from "@/src/enterprise/business/attendance/core/shiftResolver";
 import { evaluateDay, pickEffectiveEvents } from "@/src/enterprise/business/attendance/core/attendanceEvaluator";
 import { LeaveManager, toDateKey } from "@/src/enterprise/business/leave";
-import { CHECKOUT_GRACE_MINUTES } from "@/src/enterprise/business/attendance/utils/schedule";
+import { CHECKOUT_GRACE_MINUTES, DEFAULT_TZ } from "@/src/enterprise/business/attendance/utils/schedule";
+import { dateKeyInTz } from "@/src/enterprise/business/attendance/utils/time";
 
 export async function GET() {
   try {
@@ -14,9 +16,16 @@ export async function GET() {
     const { supabase, user, organizationId } = ctx;
 
     const now = Date.now();
+    const admin = createSupabaseAdminClient();
+    const todayKey = dateKeyInTz(now, DEFAULT_TZ);
+    const { data: todayHolidayRows, error: todayHolidayError } = await admin
+      .from("organization_holidays").select("holiday_period_id")
+      .eq("organization_id", organizationId).eq("holiday_date", todayKey);
+    if (todayHolidayError) throw new Error(todayHolidayError.message);
+    const todayIsHoliday = Boolean(todayHolidayRows?.length);
     const { hasAssignment, candidates } = await loadUserSchedules(supabase, organizationId, user.id, now);
     if (!hasAssignment) {
-      return NextResponse.json({ userId: user.id, blockedReason: "no_assignment", current: null, next: null, recent: null });
+      return NextResponse.json({ userId: user.id, blockedReason: todayIsHoliday ? "official_holiday" : "no_assignment", current: null, next: null, recent: null, isOfficialHoliday: todayIsHoliday });
     }
 
     const { current, next, recent } = pickFocus(candidates, now);
@@ -34,9 +43,26 @@ export async function GET() {
         .gte("occurred_at", from).lte("occurred_at", to);
       const { checkIn, checkOut } = pickEffectiveEvents((evs ?? []) as any, s);
       const onLeave = leaves.some((l) => toDateKey(l.startDate) <= s.workDate && toDateKey(l.endDate) >= s.workDate);
+      const { data: holidayRows, error: holidayError } = await admin
+        .from("organization_holidays").select("holiday_period_id")
+        .eq("organization_id", organizationId).eq("holiday_date", s.workDate);
+      if (holidayError) throw new Error(holidayError.message);
+      const isOfficialHoliday = Boolean(holidayRows?.length);
+      let holidayWorkAllowed = false;
+      if (isOfficialHoliday && holidayRows?.length) {
+        const periodIds = holidayRows.map((h) => h.holiday_period_id as string | null);
+        if (periodIds.length && periodIds.every(Boolean)) {
+          const { data: allowed, error: allowedError } = await admin
+            .from("organization_holiday_assignments").select("id")
+            .eq("organization_id", organizationId).eq("user_id", user.id)
+            .in("holiday_period_id", [...new Set(periodIds as string[])]);
+          if (allowedError) throw new Error(allowedError.message);
+          holidayWorkAllowed = Boolean(allowed?.length);
+        }
+      }
       const live = evaluateDay({
         schedule: s, checkIn, checkOut, now,
-        onApprovedLeave: onLeave, isHoliday: false, hasPendingCorrection: false, absenceConfirmed: false,
+        onApprovedLeave: onLeave, isHoliday: isOfficialHoliday && !holidayWorkAllowed, hasPendingCorrection: false, absenceConfirmed: false,
       });
       return {
         shiftName: c.shift.name,
@@ -53,6 +79,8 @@ export async function GET() {
         checkIn: checkIn ? new Date(checkIn).toISOString() : null,
         checkOut: checkOut ? new Date(checkOut).toISOString() : null,
         onLeave,
+        isOfficialHoliday,
+        holidayWorkAllowed,
         live,
       };
     };
@@ -60,7 +88,8 @@ export async function GET() {
     const [curView, nextView, recentView] = await Promise.all([build(current), build(next), build(recent)]);
 
         let blockedReason: string | null = null;
-    if (!curView) blockedReason = "no_active_shift";
+    if (!curView) blockedReason = todayIsHoliday ? "official_holiday" : "no_active_shift";
+    else if (curView.isOfficialHoliday && !curView.holidayWorkAllowed) blockedReason = "official_holiday";
     else if (curView.onLeave) blockedReason = "on_leave";
     else if (!curView.locationActive) blockedReason = "location_inactive";
 
@@ -82,6 +111,7 @@ export async function GET() {
     return NextResponse.json({
       userId: user.id,
       blockedReason,
+      isOfficialHoliday: todayIsHoliday,
       current: curView,
       next: nextView,
       recent: recentView,

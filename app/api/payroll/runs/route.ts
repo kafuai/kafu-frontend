@@ -1,5 +1,6 @@
 import "server-only";
 import { NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
 import { createSupabaseServerClient } from "@/lib/supabase-auth/server";
 import { resolveWorkspaceIdentity } from "@/lib/workspace-identity/tenantResolver";
 import { hasPermission } from "@/lib/rbac/authorization";
@@ -271,7 +272,109 @@ export async function POST(request: Request) {
       return { employee, result, appliedProposals };
     });
 
-    console.log(calculated);
+    // Read Owner-managed holiday assignments and actual attendance through the
+    // server-only admin client. The employee-facing attendance APIs never return
+    // these settings.
+    const admin = createSupabaseAdminClient();
+    const { data: holidayPeriods, error: holidayPeriodsError } = await admin
+      .from("organization_holiday_periods")
+      .select("id,start_date,end_date")
+      .eq("organization_id", organizationId)
+      .lte("start_date", period.end)
+      .gte("end_date", period.start);
+    if (holidayPeriodsError) throw new Error(holidayPeriodsError.message);
+
+    const holidayPeriodIds = (holidayPeriods ?? []).map((h) => h.id as string);
+    const holidayPeriodById = new Map((holidayPeriods ?? []).map((h) => [h.id as string, h]));
+    const { data: holidayAssignments, error: holidayAssignmentsError } = holidayPeriodIds.length
+      ? await admin.from("organization_holiday_assignments")
+          .select("id,holiday_period_id,user_id,overtime_calculation_type,overtime_percentage,overtime_fixed_daily_amount")
+          .eq("organization_id", organizationId).eq("overtime_enabled", true)
+          .in("holiday_period_id", holidayPeriodIds)
+      : { data: [] as { id: string; holiday_period_id: string; user_id: string; overtime_calculation_type: "percentage" | "fixed_daily"; overtime_percentage: number | string; overtime_fixed_daily_amount: number | string }[], error: null };
+    if (holidayAssignmentsError) throw new Error(holidayAssignmentsError.message);
+
+    type OvertimeApplicationDraft = {
+      assignmentId: string; employeeId: string; hours: number; eligibleDays: number;
+      calculationType: "percentage" | "fixed_daily"; percentage: number;
+      dailyBasicSalary: number; extraPerDay: number; amount: number;
+    };
+    const overtimeDrafts: OvertimeApplicationDraft[] = [];
+    const overtimeTotals = new Map<string, { hours: number; days: number; amount: number }>();
+    const eligibleAssignments = (holidayAssignments ?? []).filter((a) => employeeByUser.has(a.user_id as string));
+    const holidayUserIds = [...new Set(eligibleAssignments.map((a) => a.user_id as string))];
+
+    if (eligibleAssignments.length > 0) {
+      const { data: events, error: eventsError } = await admin.from("attendance_events")
+        .select("user_id,work_date,assignment_id,shift_id,event_type,occurred_at")
+        .eq("organization_id", organizationId)
+        .gte("work_date", period.start).lte("work_date", period.end)
+        .in("user_id", holidayUserIds)
+        .order("occurred_at", { ascending: true });
+      if (eventsError) throw new Error(eventsError.message);
+
+      type AttendanceEvent = { user_id: string; work_date: string; assignment_id: string | null; shift_id: string | null; event_type: string; occurred_at: string };
+      const groups = new Map<string, AttendanceEvent[]>();
+      for (const rawEvent of events ?? []) {
+        const event = rawEvent as AttendanceEvent;
+        const key = `${event.user_id}|${event.work_date}|${event.assignment_id ?? ""}|${event.shift_id ?? ""}`;
+        const group = groups.get(key) ?? [];
+        group.push(event);
+        groups.set(key, group);
+      }
+      const completeHoursByUserDate = new Map<string, number>();
+      for (const group of groups.values()) {
+        const checkIns = group.filter((e) => e.event_type === "check_in");
+        const checkOuts = group.filter((e) => e.event_type === "check_out");
+        for (const checkIn of checkIns) {
+          const checkInMs = Date.parse(checkIn.occurred_at);
+          const checkOut = checkOuts.find((e) => Date.parse(e.occurred_at) > checkInMs);
+          if (!checkOut) continue;
+          const hours = (Date.parse(checkOut.occurred_at) - checkInMs) / 3_600_000;
+          if (!Number.isFinite(hours) || hours <= 0 || hours > 24) continue;
+          const key = `${checkIn.user_id}|${checkIn.work_date}`;
+          completeHoursByUserDate.set(key, (completeHoursByUserDate.get(key) ?? 0) + hours);
+          break; // one complete pair per scheduled assignment/shift/date group
+        }
+      }
+
+      for (const assignment of eligibleAssignments) {
+        const employee = employeeByUser.get(assignment.user_id as string);
+        const holiday = holidayPeriodById.get(assignment.holiday_period_id as string);
+        if (!employee || !holiday) continue;
+        let hours = 0;
+        let eligibleDays = 0;
+        const from = holiday.start_date > period.start ? holiday.start_date : period.start;
+        const to = holiday.end_date < period.end ? holiday.end_date : period.end;
+        const cursor = new Date(`${from}T00:00:00.000Z`);
+        const last = new Date(`${to}T00:00:00.000Z`);
+        while (cursor <= last) {
+          const date = cursor.toISOString().slice(0, 10);
+          const dayHours = completeHoursByUserDate.get(`${assignment.user_id}|${date}`) ?? 0;
+          if (dayHours > 0) {
+            hours += dayHours;
+            eligibleDays += 1; // one eligible day per date; lateness deduction is separate
+          }
+          cursor.setUTCDate(cursor.getUTCDate() + 1);
+        }
+        hours = Math.round(hours * 100) / 100;
+        if (eligibleDays <= 0) continue;
+        const calculationType = assignment.overtime_calculation_type === "fixed_daily" ? "fixed_daily" : "percentage";
+        const dailyBasicSalary = Math.round((toNumber(employee.basic_salary) / 30 + Number.EPSILON) * 100) / 100;
+        const percentage = calculationType === "percentage" ? toNumber(assignment.overtime_percentage) : 0;
+        const extraPerDay = calculationType === "percentage"
+          ? dailyBasicSalary * percentage / 100
+          : toNumber(assignment.overtime_fixed_daily_amount);
+        const amount = Math.round((extraPerDay * eligibleDays + Number.EPSILON) * 100) / 100;
+        if (!Number.isFinite(amount) || amount <= 0) continue;
+        overtimeDrafts.push({ assignmentId: assignment.id as string, employeeId: employee.id, hours, eligibleDays, calculationType, percentage, dailyBasicSalary, extraPerDay, amount });
+        const total = overtimeTotals.get(employee.id) ?? { hours: 0, days: 0, amount: 0 };
+        total.hours = Math.round((total.hours + hours) * 100) / 100;
+        total.days += eligibleDays;
+        total.amount = Math.round((total.amount + amount) * 100) / 100;
+        overtimeTotals.set(employee.id, total);
+      }
+    }
 
     /* --------------------------- 1) create the run --------------------------- */
     const { data: run, error: runError } = await supabase
@@ -288,8 +391,8 @@ export async function POST(request: Request) {
     if (runError || !run) {
       console.error("Payroll run create failed:", runError);
       return NextResponse.json(
-        { error: "Failed to create payroll run", details: dbDetails(runError) },
-        { status: 500 },
+        { error: runError?.code === "23505" ? "A payroll run already exists for this period." : "Failed to create payroll run", details: dbDetails(runError) },
+        { status: runError?.code === "23505" ? 409 : 500 },
       );
     }
 
@@ -303,15 +406,19 @@ export async function POST(request: Request) {
           employee_id: employee.id,
           employee_name: employee.full_name,
           ...result,
+          holiday_overtime_hours: overtimeTotals.get(employee.id)?.hours ?? 0,
+          holiday_overtime_days: overtimeTotals.get(employee.id)?.days ?? 0,
+          holiday_overtime_amount: overtimeTotals.get(employee.id)?.amount ?? 0,
+          net_salary: Math.round((result.net_salary + (overtimeTotals.get(employee.id)?.amount ?? 0) + Number.EPSILON) * 100) / 100,
         })),
       )
       .select(
-        "id, employee_id, basic_salary, housing_allowance, other_allowances, unpaid_leave_days, gosi_deduction, absence_deduction, other_deductions, attendance_deduction, net_salary",
+        "id, employee_id, basic_salary, housing_allowance, other_allowances, unpaid_leave_days, gosi_deduction, absence_deduction, other_deductions, attendance_deduction, holiday_overtime_hours, holiday_overtime_days, holiday_overtime_amount, net_salary",
       );
 
     if (itemsError || !insertedItems) {
       console.error("Payroll items insert failed:", itemsError);
-      await supabase.from("payroll_runs").delete().eq("id", run.id).eq("organization_id", organizationId);
+      await admin.rpc("delete_draft_payroll_run", { p_organization_id: organizationId, p_payroll_run_id: run.id });
       return NextResponse.json(
         { error: "Failed to create payroll items", details: dbDetails(itemsError) },
         { status: 500 },
@@ -339,14 +446,38 @@ export async function POST(request: Request) {
       if (appError) {
         console.error("Attendance deduction apply failed:", appError);
         // تراجع كامل: items (يحذف أي applications بالـ CASCADE) ثم المسير
-        await supabase.from("payroll_run_items").delete()
-          .eq("payroll_run_id", run.id).eq("organization_id", organizationId);
-        await supabase.from("payroll_runs").delete()
-          .eq("id", run.id).eq("organization_id", organizationId);
+        await admin.rpc("delete_draft_payroll_run", { p_organization_id: organizationId, p_payroll_run_id: run.id });
         return NextResponse.json(
           { error: "Failed to apply attendance deductions. Please retry.", details: dbDetails(appError) },
           { status: appError.code === "23505" ? 409 : 500 },
         );
+      }
+    }
+
+    // Persist each holiday assignment once per payroll run. Any failure rolls
+    // back the draft run and its items, so no partial overtime is left applied.
+    const holidayApplications = overtimeDrafts.map((draft) => ({
+      organization_id: organizationId,
+      holiday_assignment_id: draft.assignmentId,
+      payroll_run_id: run.id,
+      payroll_run_item_id: itemByEmployee.get(draft.employeeId) as string,
+      hours: draft.hours,
+      eligible_days: draft.eligibleDays,
+      calculation_type: draft.calculationType,
+      percentage: draft.percentage,
+      hourly_basic_rate: 0,
+      daily_basic_salary: draft.dailyBasicSalary,
+      extra_per_day: draft.extraPerDay,
+      amount: draft.amount,
+      created_by: user.id,
+    }));
+    if (holidayApplications.length > 0) {
+      const { error: holidayApplicationError } = await admin
+        .from("holiday_overtime_applications").insert(holidayApplications);
+      if (holidayApplicationError) {
+        console.error("Holiday overtime application failed:", holidayApplicationError);
+        await admin.rpc("delete_draft_payroll_run", { p_organization_id: organizationId, p_payroll_run_id: run.id });
+        return NextResponse.json({ error: "Failed to apply holiday overtime. The draft payroll run was rolled back." }, { status: holidayApplicationError.code === "23505" ? 409 : 500 });
       }
     }
 
@@ -377,8 +508,10 @@ export async function POST(request: Request) {
         gosi_deduction: acc.gosi_deduction + toNumber(item.gosi_deduction),
         absence_deduction: acc.absence_deduction + toNumber(item.absence_deduction),
         net_salary: acc.net_salary + toNumber(item.net_salary),
+        holiday_overtime_amount: acc.holiday_overtime_amount + toNumber(item.holiday_overtime_amount),
+        holiday_overtime_days: acc.holiday_overtime_days + toNumber(item.holiday_overtime_days),
       }),
-      { gosi_deduction: 0, absence_deduction: 0, net_salary: 0 },
+      { gosi_deduction: 0, absence_deduction: 0, net_salary: 0, holiday_overtime_amount: 0, holiday_overtime_days: 0 },
     );
 
     return NextResponse.json(
@@ -391,7 +524,9 @@ export async function POST(request: Request) {
           gosi_deduction: Math.round(totals.gosi_deduction * 100) / 100,
           absence_deduction: Math.round(totals.absence_deduction * 100) / 100,
           net_salary: Math.round(totals.net_salary * 100) / 100,
+          holiday_overtime_amount: Math.round(totals.holiday_overtime_amount * 100) / 100,
         },
+        holidayOvertime: { applications: holidayApplications.length },
         attendance: {
           applied: applications.length,
           failed: failedProposalIds.length,

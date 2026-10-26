@@ -234,7 +234,7 @@ export async function POST(request: Request) {
       if (day.early_leave_minutes > 0) {
         incidents.push({ type: "early_leave", minutes: day.early_leave_minutes, actualAt: day.check_out_at });
       }
-      if (["on_leave", "holiday", "correction_pending"].includes(day.status)) continue;
+      if (["on_leave", "correction_pending"].includes(day.status)) continue;
 
       for (const inc of incidents) {
         const emp = empByUser.get(day.user_id) ?? null;
