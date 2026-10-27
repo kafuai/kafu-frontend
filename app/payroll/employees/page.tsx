@@ -181,6 +181,8 @@ export default function EmployeesPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
+  const [invalidFields, setInvalidFields] = useState<(keyof EmployeeForm)[]>([]);
+  const invalidInputClass = "!border-2 !border-rose-500 focus:!border-rose-600";
 
   
  const [countries, setCountries] = useState<
@@ -450,9 +452,18 @@ export default function EmployeesPage() {
     setFormError("");
   }
 
-  function updateField<K extends keyof EmployeeForm>(key: K, value: EmployeeForm[K]) {
-    setForm((current) => ({ ...current, [key]: value }));
+  function updateField<K extends keyof EmployeeForm>(
+  key: K,
+  value: EmployeeForm[K]
+) {
+  setForm((current) => ({ ...current, [key]: value }));
+
+  if (String(value ?? "").trim() !== "") {
+    setInvalidFields((current) =>
+      current.filter((field) => field !== key)
+    );
   }
+}
 
   function getMaxBirthDate(): string {
     const today = new Date();
@@ -484,6 +495,34 @@ export default function EmployeesPage() {
 
     setFormError("");
     setNotice("");
+
+    
+    const requiredFields = [
+      ...new Set<keyof EmployeeForm>([
+        ...REQUIRED_TEXT,
+        ...MONEY_FIELDS,
+        "status",
+      ]),
+    ];
+
+    const missingFields = requiredFields.filter(
+      (key) => String(form[key] ?? "").trim() === ""
+    );
+
+    if (missingFields.length > 0) {
+      setInvalidFields(missingFields);
+
+      // حافظ على نمط رسالة الخطأ الحالي، مع إظهار الأحمر لكل الحقول الناقصة.
+      setFormError(
+        localizeErrorMessage(
+          `Invalid or missing ${missingFields[0]}`,
+          locale
+        )
+      );
+
+      return;
+    }
+
 
     // التحقق المالي فقط إذا كان الحقل معبأً بقيمة
     const invalidMoney = MONEY_FIELDS.some((key) => {
@@ -526,6 +565,15 @@ export default function EmployeesPage() {
         isArabic
           ? "تاريخ التوظيف وتاريخ بداية العقد لا يمكن أن يكونا في المستقبل."
           : "Hire date and contract start date cannot be in the future."
+      );
+      return;
+    }
+
+    if (form.hire_date && form.hire_date < form.date_of_birth) {
+      setFormError(
+        isArabic
+        ? "لا يمكن ان يكون تاريخ التوظيف قبل تاريخ الميلاد" :
+        "Hire date cannot be before the date of birth"
       );
       return;
     }
@@ -621,7 +669,9 @@ export default function EmployeesPage() {
       <label key={key} className={labelClass}>
         {label} <span className="text-rose-500">*</span>
         <input
-          className={inputClass}
+        className={`${inputClass} ${
+          invalidFields.includes(key) ? invalidInputClass : ""
+        }`}
           type={type}
           dir={dir}
           value={String(form[key])}
@@ -958,7 +1008,11 @@ export default function EmployeesPage() {
                                                 : "Search nationality..."
                                             }
                                             showFlag={false}
-                                            containerClassName="w-full"
+                                            containerClassName={`w-full rounded-xl ${
+                                              invalidFields.includes("nationality")
+                                                ? "border border-rose-500 ring-1 ring-rose-500"
+                                                : ""
+                                            }`}
                                             onChange={(country) => {
                                             if (
                                               !country ||
@@ -973,6 +1027,9 @@ export default function EmployeesPage() {
                                               nationality: country.name,
                                               is_saudi: country.iso2.toUpperCase() === "SA",
                                             }));
+                                            setInvalidFields((current) =>
+                                              current.filter((field) => field !== "nationality")
+                                            );
                                           }}
                                          />
                                         </label>
