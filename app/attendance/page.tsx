@@ -242,10 +242,28 @@ export default function AttendancePage() {
     setBusy(true);
     setMsg(null);
     try {
+      // نفس المفتاح عند إعادة المحاولة بعد انقطاع الشبكة، ويُصفَّر عند النجاح 
+    if (!keyRef.current) {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
 
-      
-      // نفس المفتاح عند إعادة المحاولة بعد انقطاع الشبكة، ويُصفَّر عند النجاح
-      if (!keyRef.current) keyRef.current = crypto.randomUUID();
+      // Set UUID version 4 and variant bits
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+      const hex = Array.from(bytes, (byte) =>
+        byte.toString(16).padStart(2, "0")
+      ).join("");
+
+      keyRef.current = [
+        hex.slice(0, 8),
+        hex.slice(8, 12),
+        hex.slice(12, 16),
+        hex.slice(16, 20),
+        hex.slice(20, 32),
+      ].join("-");
+    }
+
       let coords: { latitude?: number; longitude?: number; accuracy?: number } = {};
       const target =
         eventType === "check_out" && today?.checkoutTarget === "recent" ? today?.recent : today?.current;
