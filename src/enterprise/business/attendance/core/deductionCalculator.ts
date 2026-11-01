@@ -46,7 +46,7 @@ export function calculateProposal(params: {
   if (!policy) {
     return {
       kind: "proposal", amount: null, method: null, inputs: {},
-      explanation: "لا توجد سياسة خصم معتمدة لهذا النوع. يلزم تحديد السياسة أو المبلغ من المالك.",
+      explanation: "لا توجد سياسة خصم معتمدة لهذا النوع. يلزم تحديد السياسة أو المبلغ من الموارد البشرية.",
     };
   }
 

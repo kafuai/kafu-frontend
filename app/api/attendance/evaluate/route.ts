@@ -52,7 +52,7 @@ export async function POST(request: Request) {
         .eq("organization_id", organizationId)
         .gte("occurred_at", winFrom).lte("occurred_at", winTo),
       supabase.from("attendance_corrections")
-        .select("user_id,work_date")
+        .select("user_id,work_date,correction_type")
         .eq("organization_id", organizationId).eq("status", "pending")
         .gte("work_date", from).lte("work_date", to),
       supabase.from("organization_holidays")
@@ -101,6 +101,26 @@ export async function POST(request: Request) {
 
     const holidaySet = new Set((hol.data ?? []).map((h) => h.holiday_date as string));
     const pendingCorr = new Set((corr.data ?? []).map((c) => `${c.user_id}|${c.work_date}`));
+
+    const pendingDisputeIncidents = new Set<string>();
+
+    for (const c of corr.data ?? []) {
+      let types: string[] = [];
+
+      if (c.correction_type === "dispute_late") {
+        types = ["late"];
+      } else if (c.correction_type === "dispute_absence") {
+        types = ["absence"];
+      } else if (c.correction_type === "excuse") {
+        types = ["late", "early_leave", "absence"];
+      }
+
+      for (const type of types) {
+        pendingDisputeIncidents.add(
+          `${c.user_id}|${c.work_date}|${type}`,
+        );
+      }
+    }
     const confirmedAbsent = new Set(
       (existingDays.data ?? [])
         .filter((d) => d.status === "absent_confirmed")
@@ -197,12 +217,18 @@ export async function POST(request: Request) {
     const dayIds = savedDays.map((d) => d.id as string);
 
     const existingProps: {
-      id: string; user_id: string; attendance_day_id: string; incident_type: string; status: string;
+      id: string;
+      user_id: string;
+      attendance_day_id: string;
+      incident_type: string;
+      incident_date: string;
+      status: string;
     }[] = [];
+    
     for (const ids of chunk(dayIds, 100)) {
       const { data, error: epErr } = await supabase
         .from("attendance_deduction_proposals")
-        .select("id,user_id,attendance_day_id,incident_type,status")
+        .select("id,user_id,attendance_day_id,incident_type,incident_date,status")
         .eq("organization_id", organizationId)
         .in("attendance_day_id", ids);
       if (epErr) throw new Error(epErr.message);
@@ -300,9 +326,17 @@ export async function POST(request: Request) {
 
     // واقعة لم تعد قائمة (مثلًا بعد تصحيح معتمد): نرفض المقترح المفتوح، إلا إذا كان صاحبه هو المُقيِّم نفسه
     for (const p of existingProps) {
-      if (p.incident_type === "absence") continue;
-      if (!OPEN.includes(p.status) || wanted.has(`${p.attendance_day_id}|${p.incident_type}`)) continue;
-      if (p.user_id === user.id) continue;
+    if (p.incident_type === "absence") continue;
+    if (!OPEN.includes(p.status) || wanted.has(`${p.attendance_day_id}|${p.incident_type}`)) continue;
+    if (p.user_id === user.id) continue;
+
+    // Keep the deduction open while its related excuse/dispute
+    // is waiting for the remaining workflow approvals.
+    if (
+      pendingDisputeIncidents.has(
+        `${p.user_id}|${p.incident_date}|${p.incident_type}`,
+      )
+    ) continue;
       await supabase
         .from("attendance_deduction_proposals")
         .update({

@@ -181,6 +181,9 @@ export default function EmployeesPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
+  const [deptByUser, setDeptByUser] = useState<Record<string, string>>({});
+  const [formDeptId, setFormDeptId] = useState("");
   const [invalidFields, setInvalidFields] = useState<(keyof EmployeeForm)[]>([]);
   const invalidInputClass = "!border-2 !border-rose-500 focus:!border-rose-600";
 
@@ -406,6 +409,22 @@ export default function EmployeesPage() {
     void loadEmployees();
   }, [loadEmployees]);
 
+    const loadDepartments = useCallback(async () => {
+    try {
+      const res = await fetch("/api/departments", { cache: "no-store" });
+      if (!res.ok) return; // not allowed (not owner): the department select is simply not shown
+      const p = await res.json();
+      setDepartments((p.data ?? []).map((d: { id: string; name: string }) => ({ id: d.id, name: d.name })));
+      setDeptByUser(p.assignments ?? {});
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadDepartments();
+  }, [loadDepartments]);
+
   const filteredRows = useMemo(() => {
     const query = search.trim().toLocaleLowerCase(isArabic ? "ar" : "en");
     return rows.filter((row) => {
@@ -442,6 +461,7 @@ export default function EmployeesPage() {
     } else {
       setEditingRow(row);
       setForm(rowToForm(row));
+      setFormDeptId(deptByUser[row.user_id ?? ""] ?? "");
       setFormError("");
     }
   }
@@ -505,9 +525,16 @@ export default function EmployeesPage() {
       ]),
     ];
 
-    const missingFields = requiredFields.filter(
-      (key) => String(form[key] ?? "").trim() === ""
-    );
+    const usesDepartmentSelect =
+  departments.length > 0 && Boolean(editingRow.user_id);
+
+    const missingFields = requiredFields.filter((key) => {
+      if (key === "department" && usesDepartmentSelect) {
+        return !formDeptId.trim();
+      }
+
+      return String(form[key] ?? "").trim() === "";
+    });
 
     if (missingFields.length > 0) {
       setInvalidFields(missingFields);
@@ -599,7 +626,9 @@ export default function EmployeesPage() {
       nationality: form.nationality.trim() || null,
       phone: form.phone.trim() || null,
       job_title: form.job_title.trim() || null,
-      department: form.department.trim() || null,
+      department: usesDepartmentSelect
+      ? departments.find((d) => d.id === formDeptId)?.name ?? null
+      : form.department.trim() || null,
       contract_type: form.contract_type.trim() || null,
       bank_name: form.bank_name.trim() || null,
       iban: form.iban.trim() || null,
@@ -625,7 +654,21 @@ export default function EmployeesPage() {
         }
       );
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(localizeErrorMessage(payload.error ?? copy.errorSave, locale));
+            if (!response.ok) throw new Error(payload.error ?? copy.errorSave);
+
+      // department assignment (only when it changed)
+      if (editingRow.user_id && formDeptId !== (deptByUser[editingRow.user_id] ?? "")) {
+        const deptRes = await fetch("/api/departments/members", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: editingRow.user_id, departmentId: formDeptId || null }),
+        });
+        if (!deptRes.ok) {
+          const deptPayload = await deptRes.json().catch(() => ({}));
+          throw new Error(deptPayload.error ?? copy.errorSave);
+        }
+        await loadDepartments();
+      }
 
       setNotice(isEdit ? copy.saved : copy.created);
       setEditingRow(null);
@@ -1042,7 +1085,23 @@ export default function EmployeesPage() {
                                           {copy.employment}
                                         </h3>
                                         {field("job_title", copy.jobTitle)}
-                                        {field("department", copy.department)}
+                                        {departments.length > 0 && editingRow?.user_id ? (
+                                        <label className={labelClass}>
+                                          {isArabic ? "القسم" : "Department"}
+                                          <select
+                                            className={inputClass}
+                                            value={formDeptId}
+                                            onChange={(event) => setFormDeptId(event.target.value)}
+                                          >
+                                            <option value="">{isArabic ? "— بدون قسم —" : "— No department —"}</option>
+                                            {departments.map((d) => (
+                                              <option key={d.id} value={d.id}>{d.name}</option>
+                                            ))}
+                                          </select>
+                                        </label>
+                                      ) : (
+                                        field("department", copy.department)
+                                      )}
                                         {field("hire_date", copy.hireDate, "date")}
                                         {field("contract_type", copy.contractType)}
                                         {field("contract_start_date", copy.contractStart, "date")}

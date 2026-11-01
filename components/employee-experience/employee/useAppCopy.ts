@@ -43,7 +43,7 @@ export function useAppCopy(isArabic: boolean) {
     filterAll: isArabic ? "الكل" : "All",
     filterLeave: isArabic ? "إجازات" : "Leave",
     filterLetters: isArabic ? "خطابات" : "Letters",
-    statusPending: isArabic ? "بانتظار HR" : "Pending HR",
+    statusPending: isArabic ? "بانتظار الموافقة" : "Pending HR",
     statusApproved: isArabic ? "تمت الموافقة" : "Approved",
     statusRejected: isArabic ? "مرفوض" : "Rejected",
     employeeRequestLabel: isArabic ? "طلب موظف" : "Employee request",

@@ -8,6 +8,7 @@ import { addDays, dateKeyInTz, isDateKey, zonedTimeToUtc } from "@/src/enterpris
 import { DEFAULT_TZ } from "@/src/enterprise/business/attendance/utils/schedule";
 import { loadScheduleForDate } from "@/src/enterprise/business/attendance/core/shiftResolver";
 import { pickEffectiveEvents } from "@/src/enterprise/business/attendance/core/attendanceEvaluator";
+import { createApprovalEngine } from "@/src/enterprise/business/approvals";
 
 const TYPES = ["missed_check_in", "missed_check_out", "time_change", "dispute_late", "dispute_absence", "excuse"];
 
@@ -135,6 +136,14 @@ export async function POST(request: Request) {
       entity_type: "attendance_correction", entity_id: data.id,
       after_data: { type: b.correctionType, workDate: b.workDate },
     });
+
+    // Start the company's approval workflow (null = no active workflow => owner reviews it directly).
+    try {
+      await createApprovalEngine(createSupabaseAdminClient()).start(organizationId, "attendance_correction", data.id);
+    } catch (approvalError) {
+      console.error("Approval workflow could not start for correction:", data.id, approvalError);
+    }
+
     return NextResponse.json({ data }, { status: 201 });
   } catch (e) {
     console.error("Correction create failed:", e);

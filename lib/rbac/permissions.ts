@@ -1,3 +1,5 @@
+import { APPROVER_TYPES } from "@/src/enterprise/business/approvals";
+
 export const PERMISSIONS = {
   ALL: "*",
 
@@ -11,7 +13,6 @@ export const PERMISSIONS = {
   REQUESTS_VIEW: "requests.view",
   REQUESTS_MANAGE: "requests.manage",
 
-  POLICIES_VIEW: "policies.view",
   POLICIES_MANAGE: "policies.manage",
 
   EMPLOYEE_USE: "employee.use",
@@ -28,9 +29,13 @@ export const PERMISSIONS = {
   ATTENDANCE_USE: "attendance.use",
   ATTENDANCE_MANAGE: "attendance.manage",
   ATTENDANCE_DEDUCTIONS_REVIEW: "attendance.deductions.review",
-  DASHBOARD_USE: "dashboard.use"
-  
+  DASHBOARD_USE: "dashboard.use",
+  // Approval workflows: USE = see my inbox / decide steps assigned to me (authorization of each
+  // decision still comes from the frozen workflow snapshot). MANAGE = configure workflows (HR/owner).
+  APPROVALS_MANAGE: "approvals.manage",
+  APPROVALS_VIEW: "approvals.view",
 
+  HR_DASHBOARD_VIEW: "hr_dashboard.view",
 } as const;
 
 export type Permission =
@@ -49,9 +54,9 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.DISCOVERY_VIEW,
     PERMISSIONS.CORPORATE_BRAIN_VIEW,
     PERMISSIONS.DIGITAL_WORKFORCE_VIEW,
+    PERMISSIONS.EMPLOYEE_USE,
     PERMISSIONS.REQUESTS_VIEW,
     PERMISSIONS.REQUESTS_MANAGE,
-    PERMISSIONS.POLICIES_VIEW,
     PERMISSIONS.POLICIES_MANAGE,
     PERMISSIONS.PROFILE_VIEW,
     PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
@@ -64,16 +69,19 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.ATTENDANCE_MANAGE,
     PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
     PERMISSIONS.DASHBOARD_USE,
+    PERMISSIONS.APPROVALS_MANAGE,
+    PERMISSIONS.APPROVALS_VIEW,
+    PERMISSIONS.HR_DASHBOARD_VIEW,
   ],
   manager: [
+    PERMISSIONS.EMPLOYEE_USE,
     PERMISSIONS.REQUESTS_VIEW,
     PERMISSIONS.REQUESTS_MANAGE,
-    PERMISSIONS.POLICIES_VIEW,
-    PERMISSIONS.POLICIES_MANAGE,
     PERMISSIONS.PROFILE_VIEW,
     PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
     PERMISSIONS.ATTENDANCE_USE,
     PERMISSIONS.DASHBOARD_USE,
+    PERMISSIONS.APPROVALS_MANAGE,
   ],
 
   member: [
@@ -94,8 +102,8 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/corporate-brain": PERMISSIONS.CORPORATE_BRAIN_VIEW,
   "/digital-workforce": PERMISSIONS.DIGITAL_WORKFORCE_VIEW,
 
-  "/employee-experience/requests": PERMISSIONS.REQUESTS_VIEW,
-  "/employee-experience/policies": PERMISSIONS.POLICIES_VIEW,
+  "/employee-experience/requests": PERMISSIONS.REQUESTS_MANAGE,
+  "/employee-experience/policies": PERMISSIONS.POLICIES_MANAGE,
   "/employee-experience/employee": PERMISSIONS.EMPLOYEE_USE,
 
   "/profile" : PERMISSIONS.PROFILE_VIEW,
@@ -114,4 +122,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/attendance/deductions": PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
 
   "/dashboard": PERMISSIONS.DASHBOARD_USE,
+  "/employee-experience/approvals": PERMISSIONS.APPROVALS_VIEW,
+  "/employee-experience/departments": PERMISSIONS.APPROVALS_VIEW,
+  "/hr-dashboard": PERMISSIONS.HR_DASHBOARD_VIEW,
 };

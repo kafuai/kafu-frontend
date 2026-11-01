@@ -71,9 +71,10 @@ const navigationItems: readonly NavigationGroup[] = [
     icon: UsersRound,
     children: [
       { key: "employees", href: "/payroll/employees", icon: Users, permission: PERMISSIONS.PAYROLL_VIEW },
-      { key: "requests", href: "/employee-experience/requests", icon: Inbox, permission: PERMISSIONS.REQUESTS_VIEW },
+      { key: "requests", href: "/employee-experience/requests", icon: Inbox, permission: PERMISSIONS.REQUESTS_MANAGE},
       { key: "payroll", href: "/payroll/runs", icon: Banknote, permission: PERMISSIONS.PAYROLL_VIEW },
-      { key: "policies", href: "/employee-experience/policies", icon: BookOpen, permission: PERMISSIONS.POLICIES_VIEW },
+      // { key: "workflow", href: "/approvals", icon: Banknote, permission: PERMISSIONS.APPROVALS_MANAGE},
+      { key: "policies", href: "/employee-experience/policies", icon: BookOpen, permission: PERMISSIONS.POLICIES_MANAGE },
     ]
   },
   {

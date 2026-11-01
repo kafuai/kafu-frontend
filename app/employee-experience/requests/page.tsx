@@ -1,834 +1,1135 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarDays, Check, CircleAlert, FileText, Inbox, Loader2,
-  Paperclip, Search, UserRound, X,
+  Activity,
+  Bot,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  CircleAlert,
+  Inbox,
+  Loader2,
+  MessageSquareText,
+  Search,
+  Sparkles,
+  UserRound,
+  X,
 } from "lucide-react";
+
 import { useLocalization } from "@/components/localization/LocalizationContext";
-import { api, fmtTime, StatusBadge } from "@/components/attendance/shared";
 
 /* -------------------------------------------------------------------------- */
 /*                                   Types                                    */
 /* -------------------------------------------------------------------------- */
 
 type RequestStatus = "pending" | "approved" | "rejected" | "cancelled";
-type RequestGroup = "leave" | "letter" | "attendance";
-type CorrectionType =
-  | "missed_check_in" | "missed_check_out" | "time_change"
-  | "dispute_late" | "dispute_absence" | "excuse";
+type RequestKind = "leave" | "employment_letter" | "attendance_correction";
 
-const TIME_TYPES: CorrectionType[] = ["missed_check_in", "missed_check_out", "time_change"];
+function formatShortReference(id: string): string {
+  const shortId = id.replace(/-/g, "").slice(-6).toUpperCase();
+  return `REQ-${shortId}`;
+}
 
-type LeaveBalanceInfo = {
-  year: number; allowance: number; approved: number; pending: number;
-  used: number; remaining: number; requested: number; remainingAfter: number;
+type ApprovalStepView = {
+  order: number;
+  name: string | null;
+  approverType: string;
+  isRequired: boolean;
+  skipped: boolean;
+  skipReason: string | null;
+  pendingResolution: boolean;
+  fallbackUsed: boolean;
+  approvers: string[];
+  decision: { decision: string; note: string | null; by: string; at: string } | null;
 };
-type TimePair = { checkIn?: string | null; checkOut?: string | null };
 
-type Base = {
-  key: string;            // `${source}:${id}` (unique across tables)
-  id: string;             // original id in its own table
-  source: "employee_requests" | "attendance_corrections";
-  status: RequestStatus;
+type ApprovalInfo = {
+  instanceId: string;
+  status: string;
+  currentStep: number | null;
+  totalSteps: number;
+  effectStatus: string;
+  canDecide: boolean;
+  steps: ApprovalStepView[];
+};
+
+type EmployeeRequest = {
+  id: string;
   employeeId: string;
   employeeName: string;
-  createdAt: number;
-  reason: string;
-  reviewedByName: string | null;
-};
-type LeaveItem = Base & {
-  group: "leave";
-  leaveType: string | null;
-  startDate: number | null;
-  endDate: number | null;
-  leaveBalance: LeaveBalanceInfo | null;
-  hasAttachment: boolean;
-  attachmentName: string | null;
-};
-type LetterItem = Base & { group: "letter" };
-type CorrectionItem = Base & {
-  group: "attendance";
-  correctionType: CorrectionType;
-  workDate: string;
-  original: TimePair | null;
-  proposed: TimePair | null;
-  decisionNote: string | null;
-};
-type UnifiedRequest = LeaveItem | LetterItem | CorrectionItem;
-
-type RawEmployeeRequest = {
-  id: string; employeeId: string; employeeName?: string;
-  requestType: "leave" | "employment_letter";
-  status: RequestStatus; reason: string;
-  startDate?: number; endDate?: number; createdAt: number;
-  leaveType?: string; reviewedByName?: string | null;
+  requestType: RequestKind;
+  title: string;
+  description: string;
+  status: RequestStatus;
+  createdAt: string;
+  requestedDates?: string;
+  leaveTypeLabel?: string;
   leaveBalance?: LeaveBalanceInfo | null;
-  hasAttachment?: boolean; attachmentName?: string | null;
-};
-type RawCorrection = {
-  id: string; user_id: string; userName?: string; status: RequestStatus;
-  created_at: string; reason: string; correction_type: CorrectionType;
-  work_date: string; original_value?: TimePair | null; proposed_value?: TimePair | null;
-  reviewedByName?: string | null; decision_note?: string | null;
+  approval: ApprovalInfo | null;
+  canDecide: boolean;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                                  Helpers                                   */
-/* -------------------------------------------------------------------------- */
+type ApiLeaveRequest = {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  requestType: RequestKind;
+  status: RequestStatus;
+  reason: string;
+  startDate: number;
+  endDate: number;
+  createdAt: number;
+  leaveType?: string;
+  correctionType?: string;
+  workDate?: string;
+  leaveBalance?: LeaveBalanceInfo | null;
+  approval?: ApprovalInfo | null;
+  canDecide?: boolean;
+};
 
-function mapEmployeeRequest(r: RawEmployeeRequest): LeaveItem | LetterItem {
-  const base = {
-    id: r.id,
-    key: `employee_requests:${r.id}`,
-    source: "employee_requests" as const,
-    status: r.status,
-    employeeId: r.employeeId,
-    employeeName: r.employeeName ?? r.employeeId,
-    createdAt: r.createdAt,
-    reason: r.reason ?? "",
-    reviewedByName: r.reviewedByName ?? null,
-  };
-  if (r.requestType === "leave") {
-    return {
-      ...base,
-      group: "leave",
-      leaveType: r.leaveType ?? null,
-      startDate: r.startDate ?? null,
-      endDate: r.endDate ?? null,
-      leaveBalance: r.leaveBalance ?? null,
-      hasAttachment: Boolean(r.hasAttachment),
-      attachmentName: r.attachmentName ?? null,
-    };
-  }
-  return { ...base, group: "letter" };
-}
-
-function mapCorrection(r: RawCorrection): CorrectionItem {
-  return {
-    id: r.id,
-    key: `attendance_corrections:${r.id}`,
-    source: "attendance_corrections",
-    group: "attendance",
-    status: r.status,
-    employeeId: r.user_id,
-    employeeName: r.userName ?? r.user_id,
-    createdAt: Date.parse(r.created_at),
-    reason: r.reason ?? "",
-    reviewedByName: r.reviewedByName ?? null,
-    correctionType: r.correction_type,
-    workDate: r.work_date,
-    original: r.original_value ?? null,
-    proposed: r.proposed_value ?? null,
-    decisionNote: r.decision_note ?? null,
-  };
-}
-
-function shortRef(r: UnifiedRequest): string {
-  const s = r.id.replace(/-/g, "").slice(-6).toUpperCase();
-  return `${r.source === "attendance_corrections" ? "ATT" : "REQ"}-${s}`;
-}
-
-// Riyadh is UTC+3 with no DST.
-const dayStart = (k: string) => Date.parse(`${k}T00:00:00+03:00`);
-const dayEnd = (k: string) => Date.parse(`${k}T23:59:59.999+03:00`);
-
-const fieldCls =
-  "h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-3 text-sm font-bold text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:bg-[var(--surface)]";
-const boxCls = "rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4";
+type LeaveBalanceInfo = {
+  year: number;
+  allowance: number;
+  approved: number;
+  pending: number;
+  used: number;
+  remaining: number;
+  requested: number;
+  remainingAfter: number;
+};
 
 /* -------------------------------------------------------------------------- */
-/*                                    Page                                    */
+/*                                Main Page                                   */
 /* -------------------------------------------------------------------------- */
 
 export default function EmployeeExperienceRequestsPage() {
   const { locale } = useLocalization();
-  const ar = locale === "ar";
+  const isArabic = locale === "ar";
 
-  const copy = useMemo(() => ({
-    badge: "EMPLOYEE EXPERIENCE",
-    badgeSub: ar ? "الطلبات" : "Requests",
-    chips: ar
-      ? ["الإجازات", "خطابات التعريف", "تصحيح الحضور"]
-      : ["Leave", "Employment letters", "Attendance corrections"],
-    statTotalNote: ar ? "كل الطلبات المحمّلة" : "All loaded requests",
-    statPendingNote: ar ? "تنتظر قرارك" : "Awaiting your decision",
-    statApprovedNote: ar ? "تم قبولها" : "Accepted",
-    statRejectedNote: ar ? "تم رفضها" : "Declined",
-    loadingText: ar ? "يتم جلب الإجازات والخطابات وطلبات التصحيح." : "Fetching leave, letters and correction requests.",
-    title: ar ? "الطلبات" : "Requests",
-    description: ar
-      ? "جميع طلبات الموظفين في مكان واحد."
-      : "All employee requests in one place: leave, employment letters, attendance corrections, disputes and excuses.",
-    statTotal: ar ? "إجمالي الطلبات" : "Total requests",
-    statPending: ar ? "معلّقة" : "Pending",
-    statApproved: ar ? "مقبولة" : "Approved",
-    statRejected: ar ? "مرفوضة" : "Rejected",
-    cancelled: ar ? "ملغي" : "Cancelled",
-    listTitle: ar ? "الطلبات" : "Requests",
-    search: ar ? "ابحث باسم الموظف..." : "Search by employee name...",
-    allTypes: ar ? "كل الأنواع" : "All types",
-    allStatuses: ar ? "كل الحالات" : "All statuses",
-    from: ar ? "من تاريخ" : "From",
-    to: ar ? "إلى تاريخ" : "To",
-    clear: ar ? "مسح الفلاتر" : "Clear filters",
-    empty: ar ? "لا توجد طلبات." : "No requests.",
-    noMatch: ar ? "لا توجد نتائج مطابقة." : "No matching results.",
-    pick: ar ? "اختر طلبًا لعرض تفاصيله." : "Select a request to see its details.",
-    loading: ar ? "جارٍ تحميل الطلبات..." : "Loading requests...",
-    errorTitle: ar ? "تعذر تحميل الطلبات" : "Couldn't load requests",
-    retry: ar ? "إعادة المحاولة" : "Retry",
-    loadFailed: ar ? "تعذر تحميل الطلبات." : "Unable to load requests.",
-    partialFailed: ar
-      ? "تعذر تحميل جزء من الطلبات، والقائمة المعروضة قد تكون ناقصة."
-      : "Part of the requests could not be loaded; the list may be incomplete.",
-    decisionSaved: ar ? "تم حفظ القرار." : "Decision saved.",
-    evalFailed: ar
-      ? "تم اعتماد التصحيح لكن تعذر إعادة تقييم اليوم تلقائيًا. افتح لوحة الحضور واضغط تحديث."
-      : "The correction was approved but the day could not be re-evaluated automatically. Open the attendance dashboard and press refresh.",
-    attachment: ar ? "المرفق" : "Attachment",
-    openAttachment: ar ? "فتح المرفق" : "Open attachment",
-    attachmentError: ar ? "تعذر فتح المرفق." : "Unable to open the attachment.",
-    employee: ar ? "الموظف" : "Employee",
-    created: ar ? "تاريخ الإنشاء" : "Created",
-    reason: ar ? "سبب الطلب" : "Request reason",
-    leaveType: ar ? "نوع الإجازة" : "Leave type",
-    period: ar ? "الفترة المطلوبة" : "Requested period",
-    workDate: ar ? "تاريخ الدوام" : "Shift date",
-    orig: ar ? "الأصلي" : "Original",
-    prop: ar ? "المقترح" : "Proposed",
-    in: ar ? "حضور" : "In",
-    out: ar ? "انصراف" : "Out",
-    noTimes: ar
-      ? "هذا النوع لا يحمل أوقاتًا مقترحة. الموافقة عليه تُغلق المقترحات المالية المفتوحة المرتبطة، دون إنشاء أحداث حضور."
-      : "This type carries no proposed times. Approving it closes the related open financial proposals, without creating attendance events.",
-    approveHint: ar
-      ? "الموافقة على تصحيح وقت تضيف حدثًا جديدًا بمصدر «تصحيح»، وتعيد تقييم اليوم."
-      : "Approving a time correction adds a new event with source “correction” and re-evaluates the day.",
-    note: ar ? "ملاحظة القرار (اختياري)" : "Decision note (optional)",
-    approve: ar ? "موافقة" : "Approve",
-    reject: ar ? "رفض" : "Reject",
-    decidedBy: ar ? "قرار بواسطة" : "Decided by",
-    balance: ar ? "رصيد الموظف" : "Employee balance",
-    balAllowance: ar ? "المسموح" : "Allowance",
-    balUsed: ar ? "المستخدم" : "Used",
-    balPending: ar ? "معلّق (أخرى)" : "Other pending",
-    balRequested: ar ? "المطلوب الآن" : "Requested now",
-    balAfter: ar ? "المتبقي بعد الموافقة" : "Remaining if approved",
-    groups: {
-      leave: ar ? "إجازة" : "Leave",
-      letter: ar ? "خطاب تعريف" : "Employment letter",
-      attendance: ar ? "حضور" : "Attendance",
-    } as Record<string, string>,
-    types: {
-      leave: ar ? "طلب إجازة" : "Leave request",
-      letter: ar ? "طلب خطاب تعريف" : "Employment letter request",
-      missed_check_in: ar ? "نسيان تسجيل الحضور" : "Missed check-in",
-      missed_check_out: ar ? "نسيان تسجيل الانصراف" : "Missed check-out",
-      time_change: ar ? "تعديل وقت" : "Time change",
-      dispute_late: ar ? "اعتراض على التأخير" : "Lateness dispute",
-      dispute_absence: ar ? "اعتراض على الغياب" : "Absence dispute",
-      excuse: ar ? "تسجيل عذر" : "Excuse",
-    } as Record<string, string>,
-    leaveTypes: {
-      annual: ar ? "إجازة سنوية" : "Annual leave",
-      sick: ar ? "إجازة مرضية" : "Sick leave",
-      emergency: ar ? "إجازة طارئة" : "Emergency leave",
-      unpaid: ar ? "إجازة بدون راتب" : "Unpaid leave",
-      maternity: ar ? "إجازة أمومة" : "Maternity leave",
-      other: ar ? "إجازة أخرى" : "Other leave",
-    } as Record<string, string>,
-  }), [ar]);
+  const [rawRequests, setRawRequests] = useState<ApiLeaveRequest[]>([]);
+  const [canManage, setCanManage] = useState(false);
+  const [loadState, setLoadState] = useState<"loading" | "loaded" | "error">("loading");
+  const [loadError, setLoadError] = useState<string>("");
 
-  /* ------------------------------- state ------------------------------- */
-
-  const [items, setItems] = useState<UnifiedRequest[]>([]);
-  const [state, setState] = useState<"loading" | "loaded" | "error">("loading");
-  const [error, setError] = useState("");
-  const [warning, setWarning] = useState("");
-  const [banner, setBanner] = useState<{ kind: "ok" | "error" | "warn"; text: string } | null>(null);
-  const [busyKey, setBusyKey] = useState("");
-  const [attachmentError, setAttachmentError] = useState("");
-
-  const [group, setGroup] = useState<RequestGroup | "all">("all");
-  const [status, setStatus] = useState<RequestStatus | "all">("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [search, setSearch] = useState("");
-  const [selectedKey, setSelectedKey] = useState("");
+  const [selectedRequestId, setSelectedRequestId] = useState<string>("");
+  const [actionState, setActionState] = useState<"idle" | "working">("idle");
+  const [actionMessage, setActionMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [note, setNote] = useState("");
 
-  /* ------------------------------- loading ------------------------------ */
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<RequestStatus | "all">("all");
 
-  const load = useCallback(async () => {
-    const [emp, att] = await Promise.allSettled([
-      api<{ data?: RawEmployeeRequest[] }>("/api/employee-experience"),
-      api<{ canManage?: boolean; data?: RawCorrection[] }>("/api/attendance/corrections"),
-    ]);
+  function formatDate(timestamp: number) {
+    return new Intl.DateTimeFormat(isArabic ? "ar-SA" : "en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(timestamp));
+  }
 
-    const next: UnifiedRequest[] = [];
-    let failures = 0;
+  const leaveTypeLabels: Record<string, string> = {
+    annual: isArabic ? "إجازة سنوية" : "Annual leave",
+    sick: isArabic ? "إجازة مرضية" : "Sick leave",
+    emergency: isArabic ? "إجازة طارئة" : "Emergency leave",
+    unpaid: isArabic ? "إجازة بدون راتب" : "Unpaid leave",
+    maternity: isArabic ? "إجازة أمومة" : "Maternity leave",
+    other: isArabic ? "إجازة أخرى" : "Other leave",
+  };
 
-    if (emp.status === "fulfilled") {
-      next.push(...(emp.value.data ?? []).map(mapEmployeeRequest));
-    } else failures += 1;
+  const correctionTypeLabels: Record<string, string> = {
+    missed_check_in: isArabic ? "نسيان تسجيل الحضور" : "Missed check-in",
+    missed_check_out: isArabic ? "نسيان تسجيل الانصراف" : "Missed check-out",
+    time_change: isArabic ? "تعديل وقت" : "Time change",
+    dispute_late: isArabic ? "اعتراض على التأخير" : "Lateness dispute",
+    dispute_absence: isArabic ? "اعتراض على الغياب" : "Absence dispute",
+    excuse: isArabic ? "تسجيل عذر" : "Excuse",
+  };
 
-    // The corrections endpoint also serves normal employees (their own rows).
-    // Include it only for real reviewers (canManage). 403/Unauthorized = no
-    // attendance access, which is not a failure.
-    if (att.status === "fulfilled") {
-      if (att.value.canManage) next.push(...(att.value.data ?? []).map(mapCorrection));
-    } else if (!/forbidden|unauthorized/i.test(String(att.reason?.message ?? ""))) {
-      failures += 1;
+  const approverTypeLabels: Record<string, string> = {
+    // direct_manager: isArabic ? "المدير المباشر" : "Direct manager",
+    department_manager: isArabic ? "مدير القسم" : "Department manager",
+    specific_user: isArabic ? "مستخدم محدد" : "Specific user",
+    role: isArabic ? "دور" : "Role",
+    previous_approver_manager: isArabic ? "مدير قسم الموافق السابق" : "Department head of previous approver",
+  };
+
+  const skipReasonLabels: Record<string, string> = {
+    same_approver_as_previous: isArabic ? "تم التخطي: نفس الشخص قرر على خطوة سابقة" : "Skipped: same person already decided an earlier step",
+    no_eligible_approver: isArabic ? "تم التخطي: لا يوجد موافق مؤهل" : "Skipped: no eligible approver",
+    no_previous_approver: isArabic ? "تم التخطي: لا يوجد موافق سابق" : "Skipped: no previous approver",
+  };
+
+  function mapApiRequest(item: ApiLeaveRequest): EmployeeRequest {
+    const kind = item.requestType;
+    const isLeave = kind === "leave";
+    const isCorrection = kind === "attendance_correction";
+
+    return {
+      id: item.id,
+      employeeId: item.employeeId,
+      employeeName: item.employeeName,
+      requestType: kind,
+      title: isLeave
+        ? (isArabic ? "طلب إجازة" : "Leave request")
+        : isCorrection
+          ? (isArabic ? "طلب تصحيح حضور" : "Attendance correction request")
+          : (isArabic ? "طلب خطاب تعريف" : "Employment letter request"),
+      description: item.reason,
+      status: item.status,
+      createdAt: formatDate(item.createdAt),
+      requestedDates:
+        isLeave && item.startDate && item.endDate
+          ? `${formatDate(item.startDate)} — ${formatDate(item.endDate)}`
+          : isCorrection && item.workDate
+            ? item.workDate
+            : undefined,
+      leaveTypeLabel:
+        isLeave && item.leaveType
+          ? leaveTypeLabels[item.leaveType] ?? item.leaveType
+          : isCorrection && item.correctionType
+            ? correctionTypeLabels[item.correctionType] ?? item.correctionType
+            : undefined,
+      leaveBalance:
+        isLeave && item.status === "pending" ? item.leaveBalance ?? null : null,
+      approval: item.approval ?? null,
+      canDecide: item.canDecide === true,
+    };
+  }
+
+  const requests = useMemo(
+    () => rawRequests.map(mapApiRequest),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rawRequests, isArabic],
+  );
+
+  async function loadRequests() {
+    setLoadState((current) => (current === "loaded" ? current : "loading"));
+    setLoadError("");
+
+    try {
+      const response = await fetch("/api/employee-experience", { method: "GET" });
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          payload.error ??
+            (isArabic ? "تعذر تحميل الطلبات." : "Unable to load requests."),
+        );
+      }
+
+      const raw = (payload.data ?? []) as ApiLeaveRequest[];
+      setRawRequests(raw);
+      setCanManage(payload.canManage === true);
+
+      // Prefer the request waiting for this user's decision.
+      setSelectedRequestId(
+        (current) =>
+          current ||
+          raw.find((r) => r.canDecide)?.id ||
+          raw[0]?.id ||
+          "",
+      );
+      setLoadState("loaded");
+    } catch (error) {
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : isArabic
+            ? "تعذر تحميل الطلبات."
+            : "Unable to load requests.",
+      );
+      setLoadState("error");
     }
-
-    if (failures === 2 || (failures === 1 && next.length === 0)) {
-      const reason = emp.status === "rejected" ? emp.reason : att.status === "rejected" ? att.reason : null;
-      setError(reason instanceof Error ? reason.message : copy.loadFailed);
-      setState("error");
-      return;
-    }
-
-    setWarning(failures > 0 ? copy.partialFailed : "");
-    next.sort((a, b) => b.createdAt - a.createdAt);
-    setItems(next);
-    setState("loaded");
-  }, [copy.loadFailed, copy.partialFailed]);
+  }
 
   useEffect(() => {
-    void load();
+    loadRequests();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => setNote(""), [selectedKey]);
+  const copy = {
+    pageEyebrow: isArabic ? "تجربة الموظف" : "EMPLOYEE EXPERIENCE",
+    pageTitle: isArabic
+      ? "مركز عمليات الموارد البشرية"
+      : "HR Operations Center",
+    pageDescription: isArabic
+      ? "راجع الطلبات التي تنتظر قرارك حسب مسار الموافقات المعتمد في شركتك."
+      : "Review the requests waiting for your decision, following your company's approval workflow.",
+    live: isArabic ? "النظام يعمل" : "System operational",
+    manager: isArabic
+      ? "مدير تجربة الموظف"
+      : "Employee Experience Manager",
+    managerDescription: isArabic
+      ? "يستقبل طلبات الموظفين وينشئها في النظام، ويوجّهها لكل موافق حسب مسار الموافقات."
+      : "Receives employee requests, creates them in the system, and routes them to each approver following the approval workflow.",
+    requests: isArabic ? "طلبات الموظفين" : "Employee Requests",
+    requestsDescription: isArabic
+      ? "الطلبات التي تخصك أو تمر عبر مسار موافقتك."
+      : "Requests assigned to you or passing through your approval path.",
+    searchPlaceholder: isArabic
+      ? "ابحث باسم الموظف أو رقم الطلب..."
+      : "Search employee name or request ID...",
+    all: isArabic ? "الكل" : "All",
+    pending: isArabic ? "بانتظار المراجعة" : "Pending",
+    approved: isArabic ? "تمت الموافقة" : "Approved",
+    rejected: isArabic ? "مرفوض" : "Rejected",
+    noRequests: isArabic ? "لا توجد طلبات مطابقة." : "No matching requests.",
+    selectRequest: isArabic
+      ? "اختر طلبًا لعرض التفاصيل"
+      : "Select a request to view details",
+    employee: isArabic ? "الموظف" : "Employee",
+    employeeId: isArabic ? "اسم الموظف" : "Employee name",
+    request: isArabic ? "الطلب" : "Request",
+    requestedPeriod: isArabic ? "الفترة المطلوبة" : "Requested period",
+    requestedAction: isArabic ? "الإجراء المطلوب" : "Requested Action",
+    requestedActionText: isArabic
+      ? "مراجعة طلب الموظف والموافقة عليه أو رفضه."
+      : "Review the employee request and approve or reject it.",
+    approve: isArabic ? "موافقة" : "Approve",
+    reject: isArabic ? "رفض" : "Reject",
+    notePlaceholder: isArabic
+      ? "ملاحظة القرار (إلزامية عند الرفض)"
+      : "Decision note (required when rejecting)",
+    notYourTurn: isArabic
+      ? "ليس لديك إجراء حاليًا على هذا الطلب."
+      : "You have no action to take on this request right now.",
+    approvalPath: isArabic ? "مسار الموافقة" : "Approval path",
+    step: isArabic ? "الخطوة" : "Step",
+    optional: isArabic ? "اختيارية" : "optional",
+    skipped: isArabic ? "تم التخطي" : "Skipped",
+    fallbackHr: isArabic ? "بديل: الموارد البشرية" : "fallback: HR",
+    current: isArabic ? "الحالية" : "Current",
+    effectFailed: isArabic
+      ? "تم حفظ القرار لكن تعذر تنفيذ أثره على الطلب."
+      : "The decision was saved but applying it to the request failed.",
+    retry: isArabic ? "إعادة المحاولة" : "Retry",
+    saved: isArabic ? "تم حفظ القرار." : "Decision saved.",
+    loading: isArabic ? "جارٍ تحميل الطلبات..." : "Loading requests...",
+    loadErrorTitle: isArabic
+      ? "تعذر تحميل الطلبات"
+      : "Couldn't load requests",
+    actionFailed: isArabic ? "تعذر تنفيذ الإجراء." : "Action failed.",
+    createdAt: isArabic ? "تاريخ الإنشاء" : "Created",
+    leaveType: isArabic ? "نوع الإجازة" : "Leave type",
+    correctionType: isArabic ? "نوع الطلب" : "Request type",
+    balanceAllowance: isArabic ? "المسموح" : "Allowance",
+    balanceUsed: isArabic ? "المستخدم" : "Used",
+    balancePending: isArabic ? "معلّق (طلبات أخرى)" : "Other pending",
+    balanceRequested: isArabic ? "المطلوب الآن" : "Requested now",
+    balanceAfter: isArabic ? "المتبقي بعد الموافقة" : "Remaining if approved",
+    retryRequests: isArabic ? "إعادة المحاولة" : "Retry",
+  };
 
-  /* ------------------------------ decisions ----------------------------- */
+  const selectedRequest =
+    requests.find((request) => request.id === selectedRequestId) ??
+    requests[0] ??
+    null;
 
-  async function decide(item: UnifiedRequest, action: "approve" | "reject") {
-    setBusyKey(item.key);
-    setBanner(null);
+  const filteredRequests = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return requests.filter((request) => {
+      const matchesStatus =
+        statusFilter === "all" || request.status === statusFilter;
+
+      if (!matchesStatus) return false;
+      if (!normalizedSearch) return true;
+
+      return [
+        request.id,
+        formatShortReference(request.id),
+        request.employeeId,
+        request.employeeName,
+        request.description,
+      ].some((value) => value.toLowerCase().includes(normalizedSearch));
+    });
+  }, [requests, search, statusFilter]);
+
+  const stats = useMemo(() => {
+    return {
+      pending: requests.filter((r) => r.status === "pending").length,
+      approved: requests.filter((r) => r.status === "approved").length,
+      rejected: requests.filter((r) => r.status === "rejected").length,
+    };
+  }, [requests]);
+
+  async function handleDecision(
+    target: EmployeeRequest,
+    decision: "approve" | "reject",
+  ) {
+    setActionState("working");
+    setActionMessage(null);
+
     try {
-      if (item.group === "attendance") {
-        await api(`/api/attendance/corrections/${item.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, note }),
-        });
+      let response: Response;
 
-        // Same behaviour as the old corrections page: re-evaluate the day.
-        let evalFailed = false;
-        if (action === "approve") {
-          try {
-            await api("/api/attendance/evaluate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ from: item.workDate, to: item.workDate }),
-            });
-          } catch {
-            evalFailed = true;
-          }
-        }
-        setBanner(
-          evalFailed
-            ? { kind: "warn", text: copy.evalFailed }
-            : { kind: "ok", text: copy.decisionSaved },
-        );
+      if (target.approval) {
+        // Request runs through the company's approval workflow.
+        response = await fetch(`/api/approvals/${target.approval.instanceId}/decision`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            decision: decision === "approve" ? "approved" : "rejected",
+            note,
+          }),
+        });
       } else {
-        const base =
-          item.group === "letter"
+        // No workflow: direct HR approval (same endpoints as before).
+        const basePath =
+          target.requestType === "employment_letter"
             ? "/api/employee-experience/letters"
             : "/api/employee-experience/requests";
-        await api(`${base}/${item.id}/${action}`, { method: "POST" });
-        setBanner({ kind: "ok", text: copy.decisionSaved });
+
+        response = await fetch(`${basePath}/${target.id}/${decision}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: note }),
+        });
       }
-      await load();
-    } catch (e) {
-      setBanner({ kind: "error", text: e instanceof Error ? e.message : "Error" });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? copy.actionFailed);
+      }
+
+      setNote("");
+      setActionMessage(
+        payload.data?.effectStatus === "failed"
+          ? { kind: "error", text: copy.effectFailed }
+          : { kind: "ok", text: copy.saved },
+      );
+      await loadRequests();
+    } catch (error) {
+      console.error(`Failed to ${decision} request:`, error);
+      setActionMessage({
+        kind: "error",
+        text: error instanceof Error ? error.message : copy.actionFailed,
+      });
+      await loadRequests(); // state may have changed (someone else decided)
     } finally {
-      setBusyKey("");
+      setActionState("idle");
     }
   }
 
-  async function openAttachment(requestId: string) {
-    setAttachmentError("");
+  async function handleRetryEffects(instanceId: string) {
+    setActionState("working");
+    setActionMessage(null);
     try {
-      const res = await fetch(`/api/employee-experience/requests/${requestId}/attachment`);
-      const payload = await res.json();
-      if (!res.ok || !payload.data?.url) {
-        throw new Error(payload.error ?? copy.attachmentError);
-      }
-      const a = document.createElement("a");
-      a.href = payload.data.url;
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } catch (e) {
-      setAttachmentError(e instanceof Error ? e.message : copy.attachmentError);
+      const response = await fetch(`/api/approvals/${instanceId}/retry`, { method: "POST" });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error ?? copy.actionFailed);
+      await loadRequests();
+    } catch (error) {
+      setActionMessage({
+        kind: "error",
+        text: error instanceof Error ? error.message : copy.actionFailed,
+      });
+    } finally {
+      setActionState("idle");
     }
   }
-
-  /* ------------------------------- derived ------------------------------ */
-
-  const stats = useMemo(() => ({
-    total: items.length,
-    pending: items.filter((r) => r.status === "pending").length,
-    approved: items.filter((r) => r.status === "approved").length,
-    rejected: items.filter((r) => r.status === "rejected").length,
-  }), [items]);
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLocaleLowerCase(ar ? "ar" : "en");
-    return items.filter((r) => {
-      if (group !== "all" && r.group !== group) return false;
-      if (status !== "all" && r.status !== status) return false;
-      if (from && r.createdAt < dayStart(from)) return false;
-      if (to && r.createdAt > dayEnd(to)) return false;
-      if (q && !r.employeeName.toLocaleLowerCase(ar ? "ar" : "en").includes(q)) return false;
-      return true;
-    });
-  }, [items, group, status, from, to, search, ar]);
-
-  const selected: UnifiedRequest | null =
-    filtered.find((r) => r.key === selectedKey) ?? filtered[0] ?? null;
-
-  const typeLabel = (r: UnifiedRequest) =>
-    r.group === "attendance" ? copy.types[r.correctionType] ?? r.correctionType : copy.types[r.group];
-
-  const fmtDate = (n: number) =>
-    new Intl.DateTimeFormat(ar ? "ar-SA" : "en-US", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(n));
-  const fmtShort = (n: number) =>
-    new Intl.DateTimeFormat(ar ? "ar-SA" : "en-US", { day: "2-digit", month: "short" }).format(new Date(n));
-
-  const hasFilters = group !== "all" || status !== "all" || from || to || search;
-  const clearFilters = () => { setGroup("all"); setStatus("all"); setFrom(""); setTo(""); setSearch(""); };
-
-  const pair = (v: TimePair | null) =>
-    v && (v.checkIn || v.checkOut) ? (
-      <span className="flex flex-col gap-1">
-        <span>{copy.in}: <b dir="ltr">{fmtTime(v.checkIn, undefined, ar)}</b></span>
-        <span>{copy.out}: <b dir="ltr">{fmtTime(v.checkOut, undefined, ar)}</b></span>
-      </span>
-    ) : "—";
-
-  const statCards = [
-    { code: "ALL", label: copy.statTotal, value: stats.total, note: copy.statTotalNote },
-    { code: "PND", label: copy.statPending, value: stats.pending, note: copy.statPendingNote },
-    { code: "APR", label: copy.statApproved, value: stats.approved, note: copy.statApprovedNote },
-    { code: "REJ", label: copy.statRejected, value: stats.rejected, note: copy.statRejectedNote },
-  ];
-
-  /* -------------------------------- render ------------------------------ */
 
   return (
     <main
-      dir={ar ? "rtl" : "ltr"}
-      className="min-h-[calc(100vh-64px)] bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8"
+      dir={isArabic ? "rtl" : "ltr"}
+      className="min-h-[calc(100vh-76px)] bg-[var(--background)]"
     >
-      <div className="mx-auto max-w-[1540px]">
-        {/* ------------------------------ Hero ------------------------------ */}
-        <section className="relative overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
-          <div className="absolute inset-y-0 start-0 w-1 bg-[var(--brand-primary)]" />
-          <div className="px-6 py-7 md:px-8 lg:py-8">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--brand-subtle)] px-3 py-1.5 text-[11px] font-black text-[var(--brand-primary)]">
-                <span className="h-2 w-2 rounded-full bg-[var(--brand-primary)]" />
-                {copy.badge}
+      <div className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        {/* Header */}
+        <header className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface)] px-3 py-1.5 text-[11px] font-bold tracking-[0.14em] text-[var(--text-muted)] shadow-[var(--shadow-small)]">
+                <Sparkles size={14} className="text-[var(--brand-primary)]" />
+                {copy.pageEyebrow}
               </span>
-              <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-[11px] font-bold text-[var(--text-secondary)]">
-                {copy.badgeSub}
+
+              <span className="inline-flex items-center gap-2 rounded-full bg-[var(--success-background)] px-3 py-1.5 text-xs font-bold text-[var(--success)]">
+                <span className="h-2 w-2 rounded-full bg-current" />
+                {copy.live}
               </span>
             </div>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">{copy.title}</h1>
-            <p className="mt-3 max-w-4xl text-sm leading-7 text-[var(--text-secondary)] md:text-base md:leading-8">
-              {copy.description}
+            <h1 className="text-2xl font-black tracking-[-0.03em] text-[var(--text-primary)] sm:text-3xl lg:text-[34px]">
+              {copy.pageTitle}
+            </h1>
+
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--text-secondary)] sm:text-[15px]">
+              {copy.pageDescription}
             </p>
+          </div>
+        </header>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              {copy.chips.map((chip) => (
-                <span
-                  key={chip}
-                  className="rounded-lg bg-[var(--surface-muted)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)]"
-                >
-                  {chip}
-                </span>
-              ))}
+        {/* AI Manager + KPI */}
+        <section className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,1fr)]">
+          <article className="relative overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] sm:p-6">
+            <div className="pointer-events-none absolute -end-20 -top-24 h-56 w-56 rounded-full bg-[var(--brand-subtle)] opacity-70 blur-3xl" />
+
+            <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-primary)] text-white shadow-[0_10px_30px_rgba(37,99,235,0.18)]">
+                <Bot size={27} strokeWidth={1.9} />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-lg font-black tracking-tight text-[var(--text-primary)] sm:text-xl">
+                    {copy.manager}
+                  </h2>
+
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--success-background)] px-2.5 py-1 text-[11px] font-bold text-[var(--success)]">
+                    <Activity size={12} />
+                    {isArabic ? "يعمل بشكل طبيعي" : "Operational"}
+                  </span>
+                </div>
+
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--text-secondary)]">
+                  {copy.managerDescription}
+                </p>
+              </div>
             </div>
+          </article>
+
+          <div className="grid grid-cols-3 gap-4">
+            <KpiCard
+              icon={<Inbox size={19} />}
+              value={stats.pending.toString()}
+              label={copy.pending}
+              tone="warning"
+            />
+            <KpiCard
+              icon={<CheckCircle2 size={19} />}
+              value={stats.approved.toString()}
+              label={copy.approved}
+              tone="success"
+            />
+            <KpiCard
+              icon={<CircleAlert size={19} />}
+              value={stats.rejected.toString()}
+              label={copy.rejected}
+              tone="critical"
+            />
           </div>
         </section>
 
-        {banner && (
-          <div
-            role={banner.kind === "error" ? "alert" : "status"}
-            className={`mt-4 rounded-xl border px-4 py-3 text-sm font-bold ${
-              banner.kind === "ok" ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : banner.kind === "warn" ? "border-amber-300 bg-amber-50 text-amber-900"
-              : "border-rose-200 bg-rose-50 text-rose-700"
-            }`}
-          >
-            {banner.text}
-          </div>
-        )}
-        {warning && state === "loaded" && (
-          <div role="status" className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900">
-            {warning}
-          </div>
-        )}
-
-        {/* ----------------------------- Loading ----------------------------- */}
-        {state === "loading" && (
-          <section className="mt-5 rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] p-10 text-center shadow-[var(--shadow-small)]">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-subtle)]">
-              <Loader2 size={22} className="animate-spin text-[var(--brand-primary)]" />
-            </div>
-            <p className="mt-4 text-base font-black">{copy.loading}</p>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">{copy.loadingText}</p>
-          </section>
-        )}
-
-        {/* ------------------------------ Error ------------------------------ */}
-        {state === "error" && (
-          <section
-            role="alert"
-            className="mt-5 rounded-[28px] border border-amber-300 bg-amber-50 p-8 text-center text-amber-950 shadow-[var(--shadow-small)]"
-          >
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
-              <CircleAlert size={22} />
-            </div>
-            <h2 className="mt-4 text-xl font-black">{copy.errorTitle}</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7">{error}</p>
-            <button
-              type="button"
-              onClick={() => { setState("loading"); void load(); }}
-              className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--text-primary)] px-6 text-sm font-black text-[var(--surface)] transition hover:opacity-90"
-            >
-              {copy.retry}
-            </button>
-          </section>
-        )}
-
-        {state === "loaded" && (
-          <>
-            {/* ------------------------------ Stats ------------------------------ */}
-            <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {statCards.map((c) => (
-                <article
-                  key={c.code}
-                  className="group relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]"
-                >
-                  <div className="absolute inset-x-0 top-0 h-0.5 origin-start scale-x-0 bg-[var(--brand-primary)] transition-transform duration-200 group-hover:scale-x-100" />
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-xs font-black text-[var(--text-muted)]">{c.label}</p>
-                      <h2 className="mt-3 text-2xl font-black tracking-tight md:text-3xl">{c.value}</h2>
-                    </div>
-                    <span className="flex h-9 min-w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] px-2 text-[10px] font-black text-[var(--brand-primary)]">
-                      {c.code}
-                    </span>
+        {/* Main workspace */}
+        <section className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.38fr)]">
+          {/* Requests list */}
+          <article className="min-w-0 overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+            <div className="border-b border-[var(--border-default)] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <MessageSquareText
+                      size={19}
+                      className="text-[var(--brand-primary)]"
+                    />
+                    <h2 className="text-base font-black text-[var(--text-primary)]">
+                      {copy.requests}
+                    </h2>
                   </div>
-                  <div className="mt-4 border-t border-[var(--border-default)] pt-3">
-                    <p className="text-[11px] font-bold text-[var(--text-secondary)]">{c.note}</p>
-                  </div>
-                </article>
-              ))}
-            </section>
-
-            <section className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.38fr)]">
-              {/* ------------------------------ List ------------------------------ */}
-              <article className="min-w-0 overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
-                <div className="space-y-3 border-b border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-black">{copy.listTitle}</h2>
-                    <span className="rounded-full bg-[var(--brand-subtle)] px-2.5 py-1 text-[11px] font-black text-[var(--brand-primary)]">
-                      {filtered.length}
-                    </span>
-                  </div>
-                  <input
-                    type="search"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder={copy.search}
-                    className={fieldCls}
-                  />
-                  <div className="grid grid-cols-2 gap-2">
-                    <select value={group} onChange={(e) => setGroup(e.target.value as RequestGroup | "all")} className={fieldCls}>
-                      <option value="all">{copy.allTypes}</option>
-                      <option value="leave">{copy.groups.leave}</option>
-                      <option value="letter">{copy.groups.letter}</option>
-                      <option value="attendance">{copy.groups.attendance}</option>
-                    </select>
-                    <select value={status} onChange={(e) => setStatus(e.target.value as RequestStatus | "all")} className={fieldCls}>
-                      <option value="all">{copy.allStatuses}</option>
-                      <option value="pending">{copy.statPending}</option>
-                      <option value="approved">{copy.statApproved}</option>
-                      <option value="rejected">{copy.statRejected}</option>
-                      <option value="cancelled">{copy.cancelled}</option>
-                    </select>
-                    <label className="text-[11px] font-black text-[var(--text-secondary)]">
-                      {copy.from}
-                      <input type="date" dir="ltr" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className={`${fieldCls} mt-1`} />
-                    </label>
-                    <label className="text-[11px] font-black text-[var(--text-secondary)]">
-                      {copy.to}
-                      <input type="date" dir="ltr" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className={`${fieldCls} mt-1`} />
-                    </label>
-                  </div>
-                  {hasFilters && (
-                    <button type="button" onClick={clearFilters} className="text-xs font-black text-[var(--brand-primary)]">
-                      {copy.clear}
-                    </button>
-                  )}
+                  <p className="mt-1.5 text-xs leading-5 text-[var(--text-muted)]">
+                    {copy.requestsDescription}
+                  </p>
                 </div>
 
-                <div className="max-h-[720px] overflow-y-auto p-3">
-                  {filtered.length === 0 ? (
-                    <div className="flex min-h-56 flex-col items-center justify-center text-center">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-muted)] text-[var(--text-muted)]">
-                        {items.length === 0 ? <Inbox size={20} /> : <Search size={20} />}
-                      </span>
-                      <p className="mt-4 text-sm font-bold text-[var(--text-secondary)]">
-                        {items.length === 0 ? copy.empty : copy.noMatch}
+                <span className="flex h-8 min-w-8 items-center justify-center rounded-lg bg-[var(--surface-muted)] px-2 text-xs font-black text-[var(--text-primary)]">
+                  {filteredRequests.length}
+                </span>
+              </div>
+
+              <div className="mt-4">
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={copy.searchPlaceholder}
+                  className="h-11 w-full rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-4 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)] focus:bg-[var(--surface)]"
+                />
+
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                  <FilterButton
+                    active={statusFilter === "all"}
+                    label={copy.all}
+                    onClick={() => setStatusFilter("all")}
+                  />
+                  <FilterButton
+                    active={statusFilter === "pending"}
+                    label={copy.pending}
+                    onClick={() => setStatusFilter("pending")}
+                  />
+                  <FilterButton
+                    active={statusFilter === "approved"}
+                    label={copy.approved}
+                    onClick={() => setStatusFilter("approved")}
+                  />
+                  <FilterButton
+                    active={statusFilter === "rejected"}
+                    label={copy.rejected}
+                    onClick={() => setStatusFilter("rejected")}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3">
+              {loadState === "loading" ? (
+                <div className="flex min-h-56 flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+                  <Loader2
+                    size={22}
+                    className="animate-spin text-[var(--brand-primary)]"
+                  />
+                  <p className="text-sm font-bold text-[var(--text-muted)]">
+                    {copy.loading}
+                  </p>
+                </div>
+              ) : loadState === "error" ? (
+                <div className="flex min-h-56 flex-col items-center justify-center gap-3 px-6 py-10 text-center">
+                  <CircleAlert size={22} className="text-[var(--critical)]" />
+                  <p className="text-sm font-bold text-[var(--text-primary)]">
+                    {copy.loadErrorTitle}
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {loadError}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={loadRequests}
+                    className="mt-1 rounded-lg border border-[var(--border-default)] px-3 py-1.5 text-xs font-bold text-[var(--text-primary)] hover:bg-[var(--surface-muted)]"
+                  >
+                    {copy.retryRequests}
+                  </button>
+                </div>
+              ) : filteredRequests.length > 0 ? (
+                <div className="space-y-2">
+                  {filteredRequests.map((request) => (
+                    <RequestListItem
+                      key={request.id}
+                      request={request}
+                      selected={selectedRequest?.id === request.id}
+                      locale={locale}
+                      awaitingLabel={isArabic ? "بانتظار قرارك" : "Awaiting you"}
+                      onClick={() => {
+                        setSelectedRequestId(request.id);
+                        setNote("");
+                        setActionMessage(null);
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex min-h-56 flex-col items-center justify-center px-6 py-10 text-center">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--surface-muted)] text-[var(--text-muted)]">
+                    <Search size={20} />
+                  </span>
+                  <p className="mt-4 text-sm font-bold text-[var(--text-primary)]">
+                    {copy.noRequests}
+                  </p>
+                </div>
+              )}
+            </div>
+          </article>
+
+          {/* Details */}
+          {selectedRequest ? (
+            <article className="min-w-0 overflow-hidden rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+              <div className="border-b border-[var(--border-default)] px-5 py-5 sm:px-6">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className="text-xs font-extrabold text-[var(--brand-primary)]"
+                    title={selectedRequest.id}
+                  >
+                    {formatShortReference(selectedRequest.id)}
+                  </span>
+
+                  <StatusBadge
+                    status={selectedRequest.status}
+                    locale={locale}
+                  />
+                </div>
+
+                <h2 className="mt-2 text-xl font-black tracking-tight text-[var(--text-primary)]">
+                  {selectedRequest.title}
+                </h2>
+
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  {copy.createdAt}: {selectedRequest.createdAt}
+                </p>
+              </div>
+
+              <div className="space-y-5 p-5 sm:p-6">
+                <section>
+                  <SectionHeading
+                    icon={<UserRound size={17} />}
+                    title={copy.employee}
+                  />
+                  <div className="mt-3 rounded-2xl border border-[var(--border-default)] bg-[var(--background)] p-4">
+                    <p className="text-[10px] font-bold text-[var(--text-muted)]">
+                      {copy.employeeId}
+                    </p>
+                    <p className="mt-0.5 font-extrabold text-[var(--text-primary)]">
+                      {selectedRequest.employeeName}
+                    </p>
+                  </div>
+                </section>
+
+                <section>
+                  <SectionHeading
+                    icon={<CalendarDays size={17} />}
+                    title={copy.request}
+                  />
+                  {selectedRequest.leaveTypeLabel && (
+                    <div className="mt-3 rounded-2xl border border-[var(--border-default)] bg-[var(--background)] p-4">
+                      <p className="text-[11px] font-bold text-[var(--text-muted)]">
+                        {selectedRequest.requestType === "leave"
+                          ? copy.leaveType
+                          : copy.correctionType}
+                      </p>
+                      <p className="font-bold">
+                        {selectedRequest.leaveTypeLabel}
                       </p>
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {filtered.map((r) => {
-                        const active = selected?.key === r.key;
+                  )}
+
+                  <div className="mt-3 rounded-2xl border border-[var(--border-default)] bg-[var(--background)] p-4">
+                    <p className="text-sm leading-7 text-[var(--text-secondary)]">
+                      {selectedRequest.description}
+                    </p>
+
+                    {selectedRequest.requestedDates ? (
+                      <div className="mt-4 flex items-start gap-3 border-t border-[var(--border-default)] pt-4">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--brand-primary)]">
+                          <CalendarDays size={17} />
+                        </span>
+                        <div>
+                          <p className="text-[11px] font-bold text-[var(--text-muted)]">
+                            {copy.requestedPeriod}
+                          </p>
+                          <p className="mt-0.5 text-sm font-extrabold text-[var(--text-primary)]">
+                            {selectedRequest.requestedDates}
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {selectedRequest.leaveBalance ? (
+                      <div className="mt-4 border-t border-[var(--border-default)] pt-4">
+                        <p className="text-[11px] font-bold text-[var(--text-muted)]">
+                          {isArabic
+                            ? `رصيد ${selectedRequest.leaveTypeLabel} للموظف`
+                            : `Employee ${selectedRequest.leaveTypeLabel} balance`}
+                        </p>
+
+                        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                          <BalanceStat
+                            label={copy.balanceAllowance}
+                            value={selectedRequest.leaveBalance.allowance}
+                          />
+                          <BalanceStat
+                            label={copy.balanceUsed}
+                            value={selectedRequest.leaveBalance.approved}
+                          />
+                          <BalanceStat
+                            label={copy.balancePending}
+                            value={selectedRequest.leaveBalance.pending}
+                          />
+                          <BalanceStat
+                            label={copy.balanceRequested}
+                            value={selectedRequest.leaveBalance.requested}
+                          />
+                          <BalanceStat
+                            label={copy.balanceAfter}
+                            value={selectedRequest.leaveBalance.remainingAfter}
+                            critical={selectedRequest.leaveBalance.remainingAfter < 0}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
+
+                {/* Approval path (only for requests that run through a workflow) */}
+                {selectedRequest.approval && (
+                  <section>
+                    <SectionHeading
+                      icon={<Activity size={17} />}
+                      title={copy.approvalPath}
+                    />
+                    <ol className="mt-3 space-y-2">
+                      {selectedRequest.approval.steps.map((step) => {
+                        const isCurrent =
+                          selectedRequest.approval?.status === "pending" &&
+                          selectedRequest.approval.currentStep === step.order;
+
                         return (
-                          <button
-                            key={r.key}
-                            type="button"
-                            onClick={() => setSelectedKey(r.key)}
-                            className={`block w-full rounded-2xl border p-4 text-start transition ${
-                              active
+                          <li
+                            key={step.order}
+                            className={`rounded-2xl border p-3 ${
+                              isCurrent
                                 ? "border-[var(--brand-primary)] bg-[var(--brand-subtle)]"
-                                : "border-[var(--border-default)] bg-[var(--surface)] hover:border-[var(--brand-primary)]"
+                                : "border-[var(--border-default)]"
                             }`}
                           >
-                            <div className="flex items-start gap-3">
-                              <span
-                                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                                  active ? "bg-[var(--brand-primary)] text-white" : "bg-[var(--surface-muted)] text-[var(--text-secondary)]"
-                                }`}
-                              >
-                                {r.group === "leave" ? <CalendarDays size={16} /> : r.group === "letter" ? <FileText size={16} /> : <UserRound size={16} />}
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-black">{r.employeeName}</p>
-                                <p className="mt-0.5 truncate text-[11px] font-bold text-[var(--text-muted)]">
-                                  {shortRef(r)} · {fmtShort(r.createdAt)}
-                                </p>
-                                <p className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold">
-                                  <span className="rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-extrabold text-[var(--brand-primary)]">
-                                    {copy.groups[r.group]}
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm font-black text-[var(--text-primary)]">
+                                {copy.step} {step.order} ·{" "}
+                                {step.name || approverTypeLabels[step.approverType] || step.approverType}
+                                {!step.isRequired && (
+                                  <span className="ms-2 text-[11px] font-bold text-[var(--text-muted)]">
+                                    ({copy.optional})
                                   </span>
-                                  <span className="truncate text-[var(--text-secondary)]">{typeLabel(r)}</span>
-                                  {r.group === "leave" && r.hasAttachment && (
-                                    <Paperclip size={12} className="text-[var(--text-muted)]" />
-                                  )}
-                                </p>
-                                <div className="mt-2"><StatusBadge status={r.status} isArabic={ar} /></div>
-                              </div>
+                                )}
+                              </p>
+
+                                {step.skipped ? (
+                                  <span className="text-xs font-bold text-[var(--text-muted)]">
+                                  {(step.skipReason && skipReasonLabels[step.skipReason]) || copy.skipped}
+                                </span>
+                              ) : step.decision ? (
+                                <StatusBadge
+                                  status={step.decision.decision as RequestStatus}
+                                  locale={locale}
+                                />
+                              ) : isCurrent ? (
+                                <span className="text-xs font-bold text-[var(--brand-primary)]">
+                                  {copy.current}
+                                </span>
+                              ) : null}
                             </div>
-                          </button>
+
+                            {!step.skipped && (
+                              <p className="mt-1 text-xs font-bold text-[var(--text-secondary)]">
+                                {step.pendingResolution
+                                  ? (isArabic ? "يُحدَّد بعد قرار الخطوة السابقة" : "Resolved after the previous step is decided")
+                                  : step.approvers.join("، ")}
+                                {step.fallbackUsed ? ` · ${copy.fallbackHr}` : ""}
+                              </p>
+                            )}
+
+                            {step.decision && (
+                              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                                {step.decision.by} · {step.decision.at.slice(0, 16).replace("T", " ")}
+                                {step.decision.note ? ` — ${step.decision.note}` : ""}
+                              </p>
+                            )}
+                          </li>
                         );
                       })}
+                    </ol>
+
+                    {selectedRequest.approval.effectStatus === "failed" && (
+                      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-[var(--critical-background)] p-3 text-xs font-bold text-[var(--critical)]">
+                        {copy.effectFailed}
+                        {canManage && (
+                          <button
+                            type="button"
+                            disabled={actionState === "working"}
+                            onClick={() =>
+                              void handleRetryEffects(selectedRequest.approval!.instanceId)
+                            }
+                            className="rounded-lg border border-red-200 bg-[var(--surface)] px-3 py-1.5 disabled:opacity-50"
+                          >
+                            {copy.retry}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </section>
+                )}
+
+                <section className="border-t border-[var(--border-default)] pt-5">
+                  {actionMessage && (
+                    <div
+                      role={actionMessage.kind === "error" ? "alert" : "status"}
+                      className={`mb-3 rounded-xl border px-4 py-3 text-xs font-bold ${
+                        actionMessage.kind === "ok"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                          : "border-rose-200 bg-rose-50 text-rose-700"
+                      }`}
+                    >
+                      {actionMessage.text}
                     </div>
                   )}
-                </div>
-              </article>
 
-              {/* ----------------------------- Details ---------------------------- */}
-              {selected ? (
-                <article className="flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
-                  <div className="flex items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--surface-muted)] px-6 py-5">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white shadow-sm">
-                        {selected.group === "leave" ? <CalendarDays size={20} /> : selected.group === "letter" ? <FileText size={20} /> : <UserRound size={20} />}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[11px] font-black text-[var(--brand-primary)]" title={selected.id}>
-                            {shortRef(selected)}
-                          </span>
-                          <span className="rounded-full bg-[var(--surface)] px-2.5 py-0.5 text-[10px] font-extrabold text-[var(--text-secondary)]">
-                            {copy.groups[selected.group]}
-                          </span>
-                        </div>
-                        <h2 className="mt-1 truncate text-lg font-black tracking-tight">{typeLabel(selected)}</h2>
-                        <p className="mt-0.5 text-[11px] font-bold text-[var(--text-muted)]">
-                          {copy.created}: {fmtDate(selected.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-                    <StatusBadge status={selected.status} isArabic={ar} />
-                  </div>
-
-                  <div className="space-y-4 p-5 sm:p-6">
-                    <div className={`${boxCls} flex items-center gap-3`}>
-                      <UserRound size={17} className="text-[var(--brand-primary)]" />
-                      <div>
-                        <p className="text-[10px] font-bold text-[var(--text-muted)]">{copy.employee}</p>
-                        <p className="font-extrabold">{selected.employeeName}</p>
-                      </div>
-                    </div>
-
-                    {/* Leave-specific */}
-                    {selected.group === "leave" && (
-                      <>
-                        {selected.leaveType && (
-                          <div className={boxCls}>
-                            <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.leaveType}</p>
-                            <p className="font-bold">{copy.leaveTypes[selected.leaveType] ?? selected.leaveType}</p>
-                          </div>
-                        )}
-                        {selected.startDate && selected.endDate && (
-                          <div className={`${boxCls} flex items-start gap-3`}>
-                            <CalendarDays size={17} className="mt-0.5 text-[var(--brand-primary)]" />
-                            <div>
-                              <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.period}</p>
-                              <p className="mt-0.5 text-sm font-extrabold">
-                                {fmtDate(selected.startDate)} — {fmtDate(selected.endDate)}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                        {selected.hasAttachment && (
-                          <div className={boxCls}>
-                            <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.attachment}</p>
-                            <button
-                              type="button"
-                              onClick={() => void openAttachment(selected.id)}
-                              className="mt-2 inline-flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-3 py-2 text-xs font-extrabold text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)]"
-                            >
-                              <Paperclip size={14} /> {selected.attachmentName ?? copy.openAttachment}
-                            </button>
-                            {attachmentError && (
-                              <p className="mt-2 text-xs font-bold text-[var(--critical)]">{attachmentError}</p>
-                            )}
-                          </div>
-                        )}
-                        {selected.status === "pending" && selected.leaveBalance && (
-                          <div className={boxCls}>
-                            <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.balance}</p>
-                            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
-                              {[
-                                { l: copy.balAllowance, v: selected.leaveBalance.allowance },
-                                { l: copy.balUsed, v: selected.leaveBalance.approved },
-                                { l: copy.balPending, v: selected.leaveBalance.pending },
-                                { l: copy.balRequested, v: selected.leaveBalance.requested },
-                                { l: copy.balAfter, v: selected.leaveBalance.remainingAfter },
-                              ].map((s, i) => (
-                                <div
-                                  key={s.l}
-                                  className="rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-2 py-2.5 text-center"
-                                >
-                                  <p className={`text-base font-black ${i === 4 && s.v < 0 ? "text-[var(--critical)]" : ""}`}>{s.v}</p>
-                                  <p className="mt-0.5 text-[10px] font-bold text-[var(--text-muted)]">{s.l}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    {/* Attendance-correction-specific */}
-                    {selected.group === "attendance" && (
-                      <>
-                        <div className={boxCls}>
-                          <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.workDate}</p>
-                          <p dir="ltr" className="mt-1 font-black">{selected.workDate}</p>
-                        </div>
-                        {TIME_TYPES.includes(selected.correctionType) ? (
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            <div className={boxCls}>
-                              <span className="mb-2 block text-xs font-black text-[var(--text-muted)]">{copy.orig}</span>
-                              <div className="font-bold">{pair(selected.original)}</div>
-                            </div>
-                            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                              <span className="mb-2 block text-xs font-black text-blue-700">{copy.prop}</span>
-                              <div className="font-bold text-blue-900">{pair(selected.proposed)}</div>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className={`${boxCls} text-xs font-bold leading-6 text-[var(--text-secondary)]`}>
-                            {copy.noTimes}
-                          </p>
-                        )}
-                      </>
-                    )}
-
-                    {/* Reason */}
-                    <div className={boxCls}>
-                      <p className="mb-2 flex items-center gap-2 text-[11px] font-bold text-[var(--text-muted)]">
-                        <FileText size={13} /> {copy.reason}
+                  {selectedRequest.canDecide ? (
+                    <>
+                      <p className="mb-2 text-xs font-black text-[var(--text-primary)]">
+                        {copy.requestedAction}
                       </p>
-                      <p className="whitespace-pre-wrap text-sm leading-7 text-[var(--text-secondary)]">{selected.reason}</p>
-                    </div>
+                      <p className="mb-3 text-sm leading-7 text-[var(--text-secondary)]">
+                        {copy.requestedActionText}
+                      </p>
 
-                    {/* Decision info */}
-                    {selected.status !== "pending" && selected.reviewedByName && (
-                      <div className={boxCls}>
-                        <p className="text-xs font-bold text-[var(--text-secondary)]">
-                          {copy.decidedBy}: <b className="text-[var(--text-primary)]">{selected.reviewedByName}</b>
-                          {selected.group === "attendance" && selected.decisionNote ? ` — ${selected.decisionNote}` : ""}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                      <textarea
+                        value={note}
+                        onChange={(event) => setNote(event.target.value)}
+                        rows={2}
+                        maxLength={1000}
+                        placeholder={copy.notePlaceholder}
+                        className="mb-3 w-full resize-none rounded-xl border border-[var(--border-default)] bg-[var(--background)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--brand-primary)]"
+                      />
 
-                  {/* Actions */}
-                  {selected.status === "pending" && (
-                    <div className="space-y-3 border-t border-[var(--border-default)] bg-[var(--surface-muted)] p-5 sm:px-6">
-                      {selected.group === "attendance" && TIME_TYPES.includes(selected.correctionType) && (
-                        <p className="text-[11px] font-bold text-[var(--text-muted)]">{copy.approveHint}</p>
-                      )}
-                      {selected.group === "attendance" && (
-                        <input
-                          value={note}
-                          maxLength={500}
-                          placeholder={copy.note}
-                          onChange={(e) => setNote(e.target.value)}
-                          className={fieldCls}
-                        />
-                      )}
                       <div className="flex flex-col gap-3 sm:flex-row">
                         <button
                           type="button"
-                          disabled={busyKey === selected.key}
-                          onClick={() => void decide(selected, "approve")}
-                          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-4 text-sm font-black text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => void handleDecision(selectedRequest, "approve")}
+                          disabled={actionState === "working"}
+                          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-4 text-sm font-extrabold text-white transition hover:bg-[var(--brand-hover)] disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <Check size={17} strokeWidth={2.4} /> {copy.approve}
+                          <Check size={17} strokeWidth={2.4} />
+                          {copy.approve}
                         </button>
+
                         <button
                           type="button"
-                          disabled={busyKey === selected.key}
-                          onClick={() => void decide(selected, "reject")}
-                          className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-4 text-sm font-black text-[var(--text-secondary)] transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => void handleDecision(selectedRequest, "reject")}
+                          disabled={actionState === "working" || note.trim().length < 3}
+                          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 bg-[var(--surface)] px-4 text-sm font-extrabold text-[var(--critical)] transition hover:bg-[var(--critical-background)] disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <X size={17} strokeWidth={2.4} /> {copy.reject}
+                          <X size={17} strokeWidth={2.4} />
+                          {copy.reject}
                         </button>
                       </div>
-                    </div>
-                  )}
-                </article>
-              ) : (
-                <article className="flex min-h-[420px] items-center justify-center rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] p-8 text-center shadow-[var(--shadow-small)]">
-                  <div>
-                    <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-muted)] text-[var(--text-muted)]">
-                      <Inbox size={23} />
-                    </span>
-                    <p className="mt-4 text-sm font-bold text-[var(--text-secondary)]">{copy.pick}</p>
-                  </div>
-                </article>
-              )}
-            </section>
-          </>
-        )}
+                    </>
+                  ) : selectedRequest.status === "pending" ? (
+                    <p className="text-center text-[11px] leading-5 text-[var(--text-muted)]">
+                      {copy.notYourTurn}
+                    </p>
+                  ) : null}
+                </section>
+              </div>
+            </article>
+          ) : (
+            <article className="flex min-h-[500px] items-center justify-center rounded-[22px] border border-[var(--border-default)] bg-[var(--surface)] p-8 text-center shadow-[var(--shadow-small)]">
+              <div>
+                <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--surface-muted)] text-[var(--text-muted)]">
+                  <Inbox size={23} />
+                </span>
+                <p className="mt-4 font-bold text-[var(--text-primary)]">
+                  {copy.selectRequest}
+                </p>
+              </div>
+            </article>
+          )}
+        </section>
       </div>
     </main>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               Components                                   */
+/* -------------------------------------------------------------------------- */
+
+function KpiCard({
+  icon,
+  value,
+  label,
+  tone,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  tone: "brand" | "success" | "warning" | "critical";
+}) {
+  const toneClasses = {
+    brand: "bg-[var(--brand-subtle)] text-[var(--brand-primary)]",
+    success: "bg-[var(--success-background)] text-[var(--success)]",
+    warning: "bg-[var(--warning-background)] text-[var(--warning)]",
+    critical: "bg-[var(--critical-background)] text-[var(--critical)]",
+  };
+
+  return (
+    <article className="flex min-h-[118px] min-w-0 flex-col justify-between rounded-[20px] border border-[var(--border-default)] bg-[var(--surface)] p-4 shadow-[var(--shadow-small)]">
+      <span
+        className={`flex h-9 w-9 items-center justify-center rounded-xl ${toneClasses[tone]}`}
+      >
+        {icon}
+      </span>
+      <div className="mt-3 min-w-0">
+        <p className="text-2xl font-black tracking-[-0.04em] text-[var(--text-primary)]">
+          {value}
+        </p>
+        <p className="mt-0.5 truncate text-[11px] font-bold text-[var(--text-muted)] sm:text-xs">
+          {label}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function FilterButton({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 rounded-lg px-3 py-2 text-xs font-extrabold transition ${
+        active
+          ? "border-2 border-[var(--text-primary)] bg-[var(--surface-muted)] text-[var(--text-primary)]"
+          : "border-2 border-transparent bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function RequestListItem({
+  request,
+  selected,
+  locale,
+  awaitingLabel,
+  onClick,
+}: {
+  request: EmployeeRequest;
+  selected: boolean;
+  locale: "ar" | "en";
+  awaitingLabel: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group block w-full rounded-2xl border p-4 text-start transition ${
+        selected
+          ? "border-blue-200 bg-[var(--brand-subtle)]"
+          : "border-transparent bg-transparent hover:border-[var(--border-default)] hover:bg-[var(--background)]"
+      }`}
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-black ${
+            selected
+              ? "bg-[var(--brand-primary)] text-white"
+              : "bg-[var(--surface-muted)] text-[var(--text-secondary)]"
+          }`}
+        >
+          <CalendarDays size={16} />
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-black text-[var(--text-primary)]">
+                {request.employeeName}
+              </p>
+              <p className="mt-0.5 truncate text-[11px] text-[var(--text-muted)]">
+                {formatShortReference(request.id)}
+              </p>
+            </div>
+
+            <ChevronRight
+              size={16}
+              className={`mt-1 shrink-0 text-[var(--text-muted)] transition ${
+                locale === "ar" ? "rotate-180" : ""
+              } ${selected ? "text-[var(--brand-primary)]" : "opacity-50"}`}
+            />
+          </div>
+
+          <p className="mt-3 line-clamp-1 text-sm font-bold text-[var(--text-primary)]">
+            {request.title}
+          </p>
+          {request.leaveTypeLabel && (
+            <span className="mt-2 inline-flex items-center rounded-md bg-[var(--brand-subtle)] px-2 py-1 text-[10px] font-extrabold text-[var(--brand-primary)]">
+              {request.leaveTypeLabel}
+            </span>
+          )}
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <StatusBadge status={request.status} locale={locale} />
+            {request.canDecide && (
+              <span className="inline-flex items-center rounded-full bg-[var(--brand-subtle)] px-2.5 py-1 text-[10px] font-extrabold text-[var(--brand-primary)]">
+                {awaitingLabel}
+              </span>
+            )}
+            <span className="text-[10px] text-[var(--text-muted)]">
+              {request.createdAt}
+            </span>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function SectionHeading({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-[var(--text-primary)]">
+      <span className="text-[var(--brand-primary)]">{icon}</span>
+      <h3 className="text-sm font-black">{title}</h3>
+    </div>
+  );
+}
+
+function BalanceStat({
+  label,
+  value,
+  critical = false,
+}: {
+  label: string;
+  value: number;
+  critical?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-2 py-2.5 text-center">
+      <p
+        className={`text-base font-black ${
+          critical ? "text-[var(--critical)]" : "text-[var(--text-primary)]"
+        }`}
+      >
+        {value}
+      </p>
+      <p className="mt-0.5 text-[10px] font-bold text-[var(--text-muted)]">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function StatusBadge({
+  status,
+  locale,
+}: {
+  status: RequestStatus;
+  locale: "ar" | "en";
+}) {
+  const labels: Record<RequestStatus, string> = {
+    pending: locale === "ar" ? "بانتظار المراجعة" : "Pending",
+    approved: locale === "ar" ? "تمت الموافقة" : "Approved",
+    rejected: locale === "ar" ? "مرفوض" : "Rejected",
+    cancelled: locale === "ar" ? "ملغى" : "Cancelled",
+  };
+
+  const classes: Record<RequestStatus, string> = {
+    pending: "bg-[var(--warning-background)] text-[var(--warning)]",
+    approved: "bg-[var(--success-background)] text-[var(--success)]",
+    rejected: "bg-[var(--critical-background)] text-[var(--critical)]",
+    cancelled: "bg-[var(--surface-muted)] text-[var(--text-muted)]",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${classes[status]}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {labels[status]}
+    </span>
   );
 }

@@ -2,15 +2,11 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 
-import {
-  createSupabaseServerClient,
-} from "@/lib/supabase-auth/server";
-
-import {
-  resolveWorkspaceIdentity,
-} from "@/lib/workspace-identity/tenantResolver";
-
+import { createSupabaseServerClient } from "@/lib/supabase-auth/server";
+import { resolveWorkspaceIdentity } from "@/lib/workspace-identity/tenantResolver";
 import { EmploymentLetterManager } from "@/src/enterprise/business/employmentLetters/employmentLetterManager";
+import { hasPermission } from "@/lib/rbac/authorization";
+import { PERMISSIONS } from "@/lib/rbac/permissions";
 
 export async function POST(request: Request) {
   try {
@@ -20,23 +16,22 @@ export async function POST(request: Request) {
     const id = approveIndex > 0 ? parts[approveIndex - 1] : "";
 
     if (!id) {
-      return NextResponse.json(
-        { error: "A request ID is required." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "A request ID is required." }, { status: 400 });
     }
 
     const supabase = await createSupabaseServerClient();
     const identity = await resolveWorkspaceIdentity(supabase);
 
-    const employmentLetterManager = new EmploymentLetterManager(
-      supabase,
-    );
+    if (!hasPermission(identity.role ?? "", PERMISSIONS.REQUESTS_MANAGE)) {
+      return NextResponse.json(
+        { error: "You do not have permission to approve requests." },
+        { status: 403 },
+      );
+    }
 
-    const letter = await employmentLetterManager.approve(
-      id,
-      identity.organizationId,
-    );
+    const employmentLetterManager = new EmploymentLetterManager(supabase);
+
+    const letter = await employmentLetterManager.approve(id, identity.organizationId);
 
     return NextResponse.json({
       data: {
@@ -47,18 +42,10 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error(
-      "Employment letter approval failed:",
-      error,
-    );
+    console.error("Employment letter approval failed:", error);
 
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Employment letter approval failed.",
-      },
+      { error: error instanceof Error ? error.message : "Employment letter approval failed." },
       { status: 500 },
     );
   }

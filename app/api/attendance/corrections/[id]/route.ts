@@ -2,7 +2,9 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { PERMISSIONS } from "@/lib/rbac/permissions";
+import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
 import { getAttendanceContext, isUuid } from "@/src/enterprise/business/attendance/core/attendanceContext";
+import { ApprovalError, createApprovalEngine } from "@/src/enterprise/business/approvals";
 
 type RouteContext = { params: Promise<{ id: string }> };
 const OPEN = ["needs_review", "in_review", "needs_extra_approval"];
@@ -30,11 +32,29 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!c) return NextResponse.json({ error: "Not found." }, { status: 404 });
     if (c.status !== "pending") return NextResponse.json({ error: "This request was already processed." }, { status: 409 });
 
+    // A request that runs through an approval workflow is decided ONLY via /api/approvals/{id}/decision.
+    const engine = createApprovalEngine(createSupabaseAdminClient());
+    const managed = await engine.repository.getInstanceBySubject(organizationId, "attendance_correction", id);
+    if (managed && action !== "cancel") {
+      return NextResponse.json(
+        { error: "This request is managed by an approval workflow.", code: "MANAGED_BY_WORKFLOW" },
+        { status: 409 },
+      );
+    }
+
     const now = new Date().toISOString();
     const note = typeof b.note === "string" ? b.note.trim().slice(0, 500) : null;
 
     if (action === "cancel") {
       if (c.user_id !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      if (managed) {
+        try {
+          await engine.cancelBySubject(organizationId, "attendance_correction", id, user.id);
+        } catch (e) {
+          if (e instanceof ApprovalError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.status });
+          throw e;
+        }
+      }
       const { data, error } = await supabase.from("attendance_corrections")
         .update({ status: "cancelled", updated_at: now })
         .eq("id", id).eq("organization_id", organizationId).eq("status", "pending")

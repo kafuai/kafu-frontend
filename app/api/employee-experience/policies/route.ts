@@ -33,7 +33,7 @@ export async function GET() {
     if (
       !hasPermission(
         identity.role ?? "",
-        PERMISSIONS.POLICIES_VIEW,
+        PERMISSIONS.POLICIES_MANAGE,
       )
     ) {
       return NextResponse.json(

@@ -843,7 +843,7 @@ export default function PayrollRunsPage() {
                       <td className="whitespace-nowrap px-4 py-3.5">{formatMoney(totals.gross)}</td>
                       <td className="px-4 py-3.5">{totals.unpaid}</td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-rose-600">{formatMoney(totals.absence)}</td>
-                      <td className="whitespace-nowrap px-4 py-3.5 text-rose-600">{formatMoney(totals.attendance)}</td> {/* ✅ إجمالي التأخير */}
+                      <td className="whitespace-nowrap px-4 py-3.5 text-rose-600">{formatMoney(totals.attendance)}</td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-rose-600">{formatMoney(totals.gosi)}</td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-rose-600">{formatMoney(totals.otherDed)}</td>
                       <td className="whitespace-nowrap px-4 py-3.5 text-emerald-700">{formatMoney(totals.net)}</td>
