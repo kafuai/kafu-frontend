@@ -32,7 +32,6 @@ export default function OfficialHolidaysPage() {
     title: "العطل الرسمية والعمل الإضافي", intro: "أنشئ عطلة وحدد الموظفين المسموح لهم بالعمل. إعدادات النسبة إدارية ولا تظهر للموظف.",
     name: "اسم العطلة", start: "من تاريخ", end: "إلى تاريخ", employees: "الموظفون المسموح لهم بالعمل", search: "ابحث عن موظف",
     selected: "محدد", overtime: "احتساب العمل الإضافي", percentage: "نسبة زيادة على الأجر اليومي (%)", fixedDaily: "مبلغ إضافي ثابت لكل يوم (ريال)", mode: "طريقة حساب الإضافي", dailyBasic: "الأجر اليومي الأساسي", dailyExtra: "الزيادة اليومية", dailyWithExtra: "الأجر اليومي بعد الزيادة", create: "حفظ العطلة", saving: "جارٍ الحفظ...",
-    overtimeHelpTitle: "كيف تُحسب الزيادة اليومية؟", overtimeHelp: "الأجر اليومي الأساسي = الراتب الأساسي الشهري ÷ 30. عند اختيار نسبة، تُحسب الزيادة فقط من الأجر اليومي؛ مثال: راتب 15,000 ريال = 500 ريال يوميًا، ونسبة 15% = 75 ريالًا إضافيًا، فيصبح الأجر اليومي التوضيحي 575 ريالًا. عند اختيار مبلغ ثابت، مثل 75 ريالًا، تضاف 75 ريالًا عن كل يوم مؤهل. الإضافي يضاف إلى مسير الراتب كزيادة فقط، لأن الراتب الأساسي محسوب أصلًا. خصومات التأخير والغياب تبقى مستقلة وتُحسب حسب سياسة الحضور.",
     list: "العطل المسجلة", empty: "لا توجد عطل مسجلة.", delete: "حذف", loading: "جارٍ تحميل الإعدادات...", assigned: "موظف مسموح", overtimePeople: "احتساب إضافي:",
     required: "أدخل اسم العطلة وحدد المدة وموظفًا واحدًا على الأقل.", noOvertime: "بدون عمل إضافي", yesOvertime: "احتساب إضافي",
     saved: "تم حفظ العطلة وإسنادات الموظفين.", deleted: "تم حذف العطلة.", deleteConfirm: "هل تريد حذف هذه العطلة؟ لا يمكن حذف عطلة أُدرجت في مسير رواتب.",
@@ -41,7 +40,6 @@ export default function OfficialHolidaysPage() {
     title: "Official Holidays & Overtime", intro: "Create a holiday and choose who is allowed to work. Overtime settings are administrative and are never shown to employees.",
     name: "Holiday name", start: "Start date", end: "End date", employees: "Employees allowed to work", search: "Search employees",
     selected: "selected", overtime: "Calculate overtime", percentage: "Percentage increase on daily pay (%)", fixedDaily: "Fixed extra amount per day (SAR)", mode: "Overtime calculation method", dailyBasic: "Basic daily pay", dailyExtra: "Daily increase", dailyWithExtra: "Daily pay after increase", create: "Save holiday", saving: "Saving...",
-    overtimeHelpTitle: "How is the daily increase calculated?", overtimeHelp: "Basic daily pay = monthly basic salary ÷ 30. With percentage mode, the entered percentage is the extra amount only. Example: SAR 15,000 monthly salary = SAR 500 daily; 15% adds SAR 75, making the illustrative daily amount SAR 575. With fixed mode, entering SAR 75 adds SAR 75 per eligible day. Only the extra amount is added to payroll because the base salary is already included. Lateness and absence deductions remain separate and follow the attendance policy.",
     list: "Registered holidays", empty: "No holidays registered.", delete: "Delete", loading: "Loading settings...", assigned: "employees allowed", overtimePeople: "Overtime enabled:",
     required: "Enter a name, date range, and select at least one employee.", noOvertime: "No overtime", yesOvertime: "Overtime enabled",
     saved: "Holiday and employee assignments saved.", deleted: "Holiday deleted.", deleteConfirm: "Delete this holiday? A holiday already included in payroll cannot be deleted.",
@@ -125,10 +123,6 @@ export default function OfficialHolidaysPage() {
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3"><h3 className="font-black">{copy.employees}</h3><span className="text-xs font-bold text-[var(--text-secondary)]">{selectedCount} {copy.selected}</span></div>
           <input className={`${inputClass} max-w-md`} placeholder={copy.search} value={search} onChange={(e) => setSearch(e.target.value)} />
-          <aside className="mt-4 rounded-xl border border-[var(--border-default)] bg-[var(--background)] p-4" role="note" aria-label={copy.overtimeHelpTitle}>
-            <p className="text-sm font-black">{copy.overtimeHelpTitle}</p>
-            <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{copy.overtimeHelp}</p>
-          </aside>
           <div className="mt-3 divide-y divide-[var(--border-default)] rounded-xl border border-[var(--border-default)]">
             {visibleMembers.length === 0 ? <p className="p-4 text-sm text-[var(--text-secondary)]">{copy.noEmployees}</p> : visibleMembers.map((m) => {
               const setting = settings[m.userId] ?? { selected: false, overtimeEnabled: false, overtimeMode: "percentage" as const, overtimeValue: "15" };

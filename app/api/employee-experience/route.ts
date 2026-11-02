@@ -62,15 +62,24 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const mineOnly = url.searchParams.get("mine") === "true";
 
-    // Anyone can read THEIR OWN requests; the company-wide / approver view needs requests.view.
-    if (!mineOnly && !hasPermission(identity.role ?? "", PERMISSIONS.REQUESTS_MANAGE)) {
+    const role = identity.role ?? "";
+
+    // Organization-wide visibility is deliberately separate from workflow participation
+    // and from permission to manage workflow configuration.
+    const canViewAllRequests = hasPermission(role, PERMISSIONS.REQUESTS_VIEW_ALL);
+    const canViewRequests =
+      hasPermission(role, PERMISSIONS.REQUESTS_VIEW) ||
+      canViewAllRequests ||
+      hasPermission(role, PERMISSIONS.APPROVALS_VIEW);
+
+    // Employees may always read their own requests. The shared inbox requires a view permission.
+    if (!mineOnly && !canViewRequests) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const role = identity.role ?? "";
-    // HR / owner: sees everything and decides requests that have no workflow.
+    // Only workflow administrators handle legacy requests that have no active workflow.
     const canManage = hasPermission(role, PERMISSIONS.APPROVALS_MANAGE);
-    // Employment letters have no workflow yet: same people as before (requests.manage), now enforced.
+    // Employment letters currently have no workflow; keep them restricted to request managers.
     const canManageLetters = hasPermission(role, PERMISSIONS.REQUESTS_MANAGE);
 
     const adminClient = createSupabaseAdminClient();
@@ -86,15 +95,23 @@ export async function GET(request: Request) {
       employmentLetterManager.list(identity.organizationId, employeeIdFilter),
     ]);
 
-    // Approvals this user is part of (HR: all). Approver sees a request only through its workflow.
+    // Organization-wide viewers see all workflow instances. Everyone else sees only
+    // requests connected to a step assigned to their user in the workflow snapshot.
     const approvals = mineOnly
       ? null
-      : await loadVisibleApprovals(adminClient, identity.organizationId, identity.userId, canManage);
+      : await loadVisibleApprovals(
+          adminClient,
+          identity.organizationId,
+          identity.userId,
+          canViewAllRequests,
+        );
 
-    const leaveRequests = mineOnly || canManage
+    const leaveRequests = mineOnly || canViewAllRequests
       ? allLeave
-      : allLeave.filter((l) => approvals!.views.has(`leave:${l.id}`));
+      : allLeave.filter((l) => approvals?.views.has(`leave:${l.id}`));
 
+    // Employment letters have no approval workflow yet, so they remain owner/admin-only
+    // in the organization inbox and personal-only for employees.
     const letterRequests = mineOnly || canManageLetters ? allLetters : [];
 
     // Attendance corrections/disputes are listed here only when they run through a workflow.

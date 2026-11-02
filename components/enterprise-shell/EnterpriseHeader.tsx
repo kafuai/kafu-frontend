@@ -28,7 +28,8 @@ import {
   UserRound,
   Building,
   UsersRound,
-  LayoutDashboardIcon
+  LayoutDashboardIcon,
+  BriefcaseBusiness
   } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -68,13 +69,22 @@ const navigationItems: readonly NavigationGroup[] = [
   },
   {
     key: "hrGroup",
-    icon: UsersRound,
+    icon: BriefcaseBusiness,
+    children: [
+      { key: "hrDashboard", href: "/hr-dashboard", icon: LayoutDashboard, permission: PERMISSIONS.HR_DASHBOARD_VIEW},
+      { key: "requests", href: "/employee-experience/requests", icon: Inbox, permission: PERMISSIONS.REQUESTS_VIEW},
+      { key: "payroll", href: "/payroll/runs", icon: Banknote, permission: PERMISSIONS.PAYROLL_VIEW },
+      { key: "policies", href: "/employee-experience/policies", icon: BookOpen, permission: PERMISSIONS.POLICIES_MANAGE },
+    ]
+  },
+  {
+    key: "employeeGroup",
+    icon: Users,
     children: [
       { key: "employees", href: "/payroll/employees", icon: Users, permission: PERMISSIONS.PAYROLL_VIEW },
-      { key: "requests", href: "/employee-experience/requests", icon: Inbox, permission: PERMISSIONS.REQUESTS_MANAGE},
-      { key: "payroll", href: "/payroll/runs", icon: Banknote, permission: PERMISSIONS.PAYROLL_VIEW },
-      // { key: "workflow", href: "/approvals", icon: Banknote, permission: PERMISSIONS.APPROVALS_MANAGE},
-      { key: "policies", href: "/employee-experience/policies", icon: BookOpen, permission: PERMISSIONS.POLICIES_MANAGE },
+      {key: "departments", href: "/payroll/departments", icon: Building, permission: PERMISSIONS.DEPARTMENTWS_VIEW},
+      {key: "approvals", href: "/employee-experience/approvals", icon: FileEdit, permission: PERMISSIONS.APPROVALS_MANAGE},
+
     ]
   },
   {
@@ -124,7 +134,7 @@ const HEADER_CONTENT = {
       corporateBrain: "العقل المؤسسي",
       digitalWorkforce: "القوى العاملة الرقمية",
       admin: "لوحة الإدارة",
-      employees: "الموظفون",
+      employees: "قائمة الموظفين",
       requests: "الطلبات",
       payroll: "مسير الرواتب",
       policies: "السياسات",
@@ -136,7 +146,11 @@ const HEADER_CONTENT = {
       deductions: "الخصميات",
       leaves: "الطلبات",
       submit: "تقديم طلب",
-      dashboard: "لوحة التحكم"
+      dashboard: "لوحة التحكم",
+      departments: "الأقسام",
+      approvals: "سير الموافقات",
+      employeeGroup: "الموظفين",
+      hrDashboard: "لوحة تحكم الموارد البشرية"
     }
   },
   en: {
@@ -158,7 +172,7 @@ const HEADER_CONTENT = {
       corporateBrain: "Corporate Brain",
       digitalWorkforce: "Digital Workforce",
       admin: "Admin",
-      employees: "Employees",
+      employees: "Employees List",
       requests: "Requests",
       payroll: "Payroll",
       policies: "Policies",
@@ -171,6 +185,10 @@ const HEADER_CONTENT = {
       deductions: "Deductions",
       leaves: "Requests",
       submit: "Submit Request",
+      departments: "Departments",
+      approvals: "Approvals Workflow",
+      employeeGroup: "Employees",
+      hrDashboard: "HR Dashboard"
     }
   },
 } as const;

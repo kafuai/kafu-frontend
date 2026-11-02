@@ -233,9 +233,21 @@ export default function HrDashboardPage() {
       ]
     : [];
 
-  const legendRow = (items: { name: string; value: number }[]) => (
-    <div className="mt-2 space-y-2 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
-      {items.map((item, index) => (
+ const legendRow = (items: { name: string; value: number }[]) => (
+  <div className="mt-2 space-y-2 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+    {items.map((item) => {
+      const name = item.name.toLowerCase();
+
+      const color =
+        name.includes("present") || name.includes("حاضر")
+          ? "#2563EB" 
+          : name.includes("late") || name.includes("متأخر")
+            ? "#FFC000"
+            : name.includes("absent") || name.includes("غياب")
+              ? "#FF3131"
+              : "#2563EB";
+
+      return (
         <div
           key={item.name}
           className="flex items-center justify-between gap-3 text-xs"
@@ -243,7 +255,7 @@ export default function HrDashboardPage() {
           <span className="flex items-center gap-2 font-bold text-[var(--text-secondary)]">
             <span
               className="h-2.5 w-2.5 rounded-sm"
-              style={{ background: COLORS[index % COLORS.length] }}
+              style={{ background: color }}
             />
             {item.name}
           </span>
@@ -251,10 +263,10 @@ export default function HrDashboardPage() {
             {item.value.toLocaleString()}
           </strong>
         </div>
-      ))}
-    </div>
-  );
-
+      );
+    })}
+  </div>
+);
   return (
     <main
       dir={ar ? "rtl" : "ltr"}
@@ -438,7 +450,7 @@ export default function HrDashboardPage() {
                             type="monotone"
                             dataKey="late"
                             name={text.late}
-                            stroke="#F59E0B"
+                            stroke="#FFC000"
                             strokeWidth={2}
                             dot={false}
                           />
@@ -446,7 +458,7 @@ export default function HrDashboardPage() {
                             type="monotone"
                             dataKey="absent"
                             name={text.absent}
-                            stroke="#DC5252"
+                            stroke="#FF3131"
                             strokeWidth={2}
                             dot={false}
                           />
@@ -507,10 +519,10 @@ export default function HrDashboardPage() {
                             name.includes("present") || name.includes("حاضر")
                               ? "#2563EB"
                               : name.includes("late") || name.includes("متأخر")
-                                ? "#F59E0B"
+                                ? "#FFC000"
                                 : name.includes("absent") || name.includes("غياب")
-                                  ? "#DC5252"
-                                  : "#64748B";
+                                  ? "#FF3131"
+                                  : "#2563EB";
 
                           return (
                             <Cell
@@ -588,13 +600,13 @@ export default function HrDashboardPage() {
                       <Bar
                         dataKey="late"
                         name={text.late}
-                        fill="#F59E0B"
+                        fill="#FFC000"
                         radius={[0, 4, 4, 0]}
                       />
                       <Bar
                         dataKey="absent"
                         name={text.absent}
-                        fill="#DC5252"
+                        fill="#FF3131"
                         radius={[0, 4, 4, 0]}
                       />
                     </BarChart>

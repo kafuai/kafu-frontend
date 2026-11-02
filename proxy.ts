@@ -21,7 +21,9 @@ const protectedRoutes = [
   "/payroll",
   "/attendance",
   "/dashboard",
-  "/approvals"
+  "/approvals",
+  "/departments",
+  "/hr-dashboard",
   ];
 
 const guestRoutes = [

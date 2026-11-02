@@ -21,17 +21,18 @@ export interface ApprovalView {
 }
 
 /**
- * Instances the user may see: every instance for HR (canManage), otherwise only instances where the user
- * is an approver of at least one step (current, past or already-resolved future step).
+ * Instances the user may see: every instance only for users with explicit organization-wide
+ * visibility (canViewAll), otherwise only instances where the user is an approver of at least one
+ * step (current, past or already-resolved future step).
  * Key = `${subject_type}:${request_id}`.
  */
 export async function loadVisibleApprovals(
-  db: SupabaseClient, org: string, userId: string, canManage: boolean,
+  db: SupabaseClient, org: string, userId: string, canViewAll: boolean,
 ): Promise<{ instances: InstanceRow[]; views: Map<string, ApprovalView> }> {
   const repo = new ApprovalRepository(db);
   const all = await repo.listAll(org);
   const instances = all.filter(
-    (i) => canManage || i.steps_snapshot.some((s) => s.approverIds.includes(userId)),
+    (i) => canViewAll || i.steps_snapshot.some((s) => s.approverIds.includes(userId)),
   );
   const decisions = await repo.listDecisionsForInstances(org, instances.map((i) => i.id));
   const names = await repo.profileNames([

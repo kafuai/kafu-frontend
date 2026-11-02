@@ -10,7 +10,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 /** POST { decision: "approved" | "rejected", note? } — approver identity comes from the session only. */
 export async function POST(request: Request, context: RouteContext) {
   try {
-    const ctx = await getApprovalContext(PERMISSIONS.APPROVALS_MANAGE);
+    const ctx = await getApprovalContext(PERMISSIONS.APPROVALS_VIEW);
     if ("error" in ctx) return ctx.error;
     const { id } = await context.params;
     if (!isUuid(id)) return NextResponse.json({ error: "Invalid ID." }, { status: 400 });

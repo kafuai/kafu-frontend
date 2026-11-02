@@ -6,6 +6,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
 import { resolveWorkspaceIdentity } from "@/lib/workspace-identity/tenantResolver";
 import { hasPermission } from "@/lib/rbac/authorization";
 import { PERMISSIONS } from "@/lib/rbac/permissions";
+import { ApprovalRepository } from "@/src/enterprise/business/approvals";
 import { LeaveManager, toDateKey } from "@/src/enterprise/business/leave";
 import {
   LEAVE_ATTACHMENT_BUCKET,
@@ -50,8 +51,25 @@ export async function GET(request: Request) {
     }
 
     const isOwner = ref.employeeId === identity.userId;
-    const canManage = hasPermission(identity.role ?? "", PERMISSIONS.REQUESTS_MANAGE);
-    if (!isOwner && !canManage) {
+    const role = identity.role ?? "";
+    const canViewAllRequests = hasPermission(role, PERMISSIONS.REQUESTS_VIEW_ALL);
+
+    // A non-owner may open an attachment only if they have organization-wide request
+    // visibility or are included in at least one step of this request's frozen workflow.
+    let isWorkflowApprover = false;
+    if (!isOwner && !canViewAllRequests) {
+      const admin = createSupabaseAdminClient();
+      const instance = await new ApprovalRepository(admin).getInstanceBySubject(
+        identity.organizationId,
+        "leave",
+        id,
+      );
+      isWorkflowApprover = Boolean(
+        instance?.steps_snapshot.some((step) => step.approverIds.includes(identity.userId)),
+      );
+    }
+
+    if (!isOwner && !canViewAllRequests && !isWorkflowApprover) {
       return NextResponse.json(
         { error: "You do not have permission to view this attachment." },
         { status: 403 },

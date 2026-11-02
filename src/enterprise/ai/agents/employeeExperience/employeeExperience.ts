@@ -146,8 +146,8 @@ export class EmployeeExperienceAgent {
       type: "unsupported_category",
       message:
         messageLanguage === "en"
-          ? "Your message was classified, but automated processing for this type isn't enabled yet. It will be routed to HR."
-          : "تم تصنيف طلبك، لكن المعالجة الآلية لهذا النوع غير مفعّلة بعد. سيتم تحويله لفريق الموارد البشرية.",
+          ? "Please contact the HR team for assistance."
+          : "يرحى التوصل مع فريق الموارد البشرية للمساعدة.",
       status: "not_supported",
       classification,
     };
