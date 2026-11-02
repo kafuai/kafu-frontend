@@ -61,13 +61,22 @@ export async function GET(request: Request) {
 
     const url = new URL(request.url);
     const mineOnly = url.searchParams.get("mine") === "true";
+    
+    const role = identity.role ?? "";
 
-    // Anyone can read THEIR OWN requests; the company-wide / approver view needs requests.view.
-    if (!mineOnly && !hasPermission(identity.role ?? "", PERMISSIONS.REQUESTS_MANAGE)) {
+    // Organization-wide visibility is deliberately separate from workflow participation
+    // and from permission to manage workflow configuration.
+    const canViewAllRequests = hasPermission(role, PERMISSIONS.REQUESTS_VIEW_ALL);
+    const canViewRequests =
+      hasPermission(role, PERMISSIONS.REQUESTS_VIEW) ||
+      canViewAllRequests ||
+      hasPermission(role, PERMISSIONS.APPROVALS_VIEW);
+
+      // Anyone can read THEIR OWN requests; the company-wide / approver view needs requests.view.
+   if (!mineOnly && !canViewRequests) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const role = identity.role ?? "";
     // HR / owner: sees everything and decides requests that have no workflow.
     const canManage = hasPermission(role, PERMISSIONS.APPROVALS_MANAGE);
     // Employment letters have no workflow yet: same people as before (requests.manage), now enforced.
