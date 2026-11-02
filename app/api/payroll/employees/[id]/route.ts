@@ -218,6 +218,34 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     }
 
+    if (
+      "contract_type" in body &&
+      body.contract_type !== "fixed_term" &&
+      body.contract_type !== "indefinite"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid contract_type" },
+        { status: 400 }
+      );
+    }
+
+    if (body.contract_type === "indefinite") {
+      body.contract_end_date = null;
+    }
+
+    if (
+      body.contract_type === "fixed_term" &&
+      (
+        typeof body.contract_end_date !== "string" ||
+        !isValidDate(body.contract_end_date)
+      )
+    ) {
+      return NextResponse.json(
+        { error: "Contract end date is required" },
+        { status: 400 }
+      );
+    }
+
     const money: Record<string, number> = {};
 
     for (const field of [
@@ -242,8 +270,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       typeof body.contract_end_date === "string" &&
       body.contract_end_date < body.contract_start_date
     ) {
-      return NextResponse.json({ error: "Contract end date cannot precede start date" }, { status: 400 });
-    }
+      return NextResponse.json(
+        { error: "Contract end date cannot precede start date" },
+        { status: 400 }
+      );
+}
 
     if ("user_id" in body && body.user_id !== null) {
       if (typeof body.user_id !== "string" || !isUuid(body.user_id)) {

@@ -104,7 +104,7 @@ export async function updateDraft(
   repo: ApprovalRepository, org: string, id: string, input: { name?: unknown; steps?: unknown },
 ): Promise<WorkflowWithSteps> {
   const wf = await mustWorkflow(repo, org, id);
-  if (wf.status !== "draft") throw new ApprovalError("NOT_DRAFT", "Only a draft can be edited. Create a new version instead.", 409);
+  if (wf.status === "active") throw new ApprovalError("WORKFLOW_ACTIVE", "Active workflows cannot be edited. Deactivate the workflow first.", 409);
   if (input.name !== undefined) await repo.updateWorkflow(org, id, { name: cleanName(input.name) });
   if (input.steps !== undefined) await repo.replaceSteps(org, id, await validateSteps(repo, org, input.steps));
   return (await repo.getWorkflow(org, id))!;
@@ -124,7 +124,7 @@ export async function cloneAsDraft(repo: ApprovalRepository, org: string, userId
 
 export async function activate(repo: ApprovalRepository, org: string, id: string): Promise<WorkflowWithSteps> {
   const wf = await mustWorkflow(repo, org, id);
-  if (wf.status !== "draft") throw new ApprovalError("NOT_DRAFT", "Only a draft can be activated. Create a new version from it.", 409);
+  if (wf.status === "active") throw new ApprovalError("ALREADY_ACTIVE", "Workflow is already active.", 409);
   await validateSteps(repo, org, toInput(wf)); // users may have left since the draft was saved
 
   const prev = await repo.getActiveWorkflow(org, wf.request_type);

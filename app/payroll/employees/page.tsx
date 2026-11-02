@@ -117,7 +117,6 @@ const REQUIRED_TEXT: (keyof EmployeeForm)[] = [
   "hire_date",
   "date_of_birth",
   "contract_start_date",
-  "contract_end_date",
 ];
 
 const MONEY_FIELDS: (keyof EmployeeForm)[] = [
@@ -130,11 +129,18 @@ const MONEY_FIELDS: (keyof EmployeeForm)[] = [
 // دالة لفحص ما إذا كان السجل يحتوي على بيانات ناقصة
 function isPayrollIncomplete(p: PayrollEmployee | null): boolean {
   if (!p) return true;
-  const allRequiredKeys = [...REQUIRED_TEXT, ...MONEY_FIELDS] as (keyof PayrollEmployee)[];
+  const allRequiredKeys = [
+    ...REQUIRED_TEXT,
+    ...MONEY_FIELDS,
+  ] as (keyof PayrollEmployee)[];
+
   return allRequiredKeys.some((key) => {
     const val = p[key];
     return val === null || val === undefined || String(val).trim() === "";
-  });
+  }) || (
+    p.contract_type === "fixed_term" &&
+    !p.contract_end_date
+  );
 }
 
 function rowToForm(row: EmployeeRow): EmployeeForm {
@@ -154,10 +160,10 @@ function rowToForm(row: EmployeeRow): EmployeeForm {
     contract_type: p?.contract_type ?? "",
     contract_start_date: p?.contract_start_date ?? "",
     contract_end_date: p?.contract_end_date ?? "",
-    basic_salary: p?.basic_salary ? String(p.basic_salary) : "",
-    housing_allowance: p?.housing_allowance ? String(p.housing_allowance) : "",
-    other_allowances: p?.other_allowances ? String(p.other_allowances) : "",
-    deductions: p?.deductions ? String(p.deductions) : "",
+    basic_salary: p?.basic_salary != null ? String(p.basic_salary) : "",
+    housing_allowance: p?.housing_allowance != null ? String(p.housing_allowance) : "",
+    other_allowances: p?.other_allowances != null ? String(p.other_allowances) : "",
+    deductions: p?.deductions != null ? String(p.deductions) : "",
     bank_name: p?.bank_name ?? "",
     iban: p?.iban ?? "",
     is_saudi: p?.is_saudi ?? false,
@@ -565,8 +571,12 @@ export default function EmployeesPage() {
       ]),
     ];
 
+    if (form.contract_type === "fixed_term") {
+      requiredFields.push("contract_end_date");
+    }
+
     const usesDepartmentSelect =
-  departments.length > 0 && Boolean(editingRow.user_id);
+      departments.length > 0 && Boolean(editingRow.user_id);
 
     const missingFields = requiredFields.filter((key) => {
       if (key === "department" && usesDepartmentSelect) {
@@ -676,7 +686,10 @@ export default function EmployeesPage() {
       hire_date: form.hire_date || null,
       date_of_birth: form.date_of_birth || null,
       contract_start_date: form.contract_start_date || null,
-      contract_end_date: form.contract_end_date || null,
+      contract_end_date:
+        form.contract_type === "indefinite"
+          ? null
+          : form.contract_end_date || null,
       basic_salary: form.basic_salary ? Number(form.basic_salary) : null,
       housing_allowance: form.housing_allowance ? Number(form.housing_allowance) : null,
       other_allowances: form.other_allowances ? Number(form.other_allowances) : null,
@@ -773,7 +786,6 @@ export default function EmployeesPage() {
     const maxLen = 
       key === "national_id" ? 10 : 
       key === "phone" ? 10 : 
-      key === "iban" ? 30 :
       500;
 
     
@@ -788,6 +800,99 @@ export default function EmployeesPage() {
       key === "contract_start_date" ? form.hire_date : 
       key === "contract_end_date" ? form.contract_start_date : 
       type === "number" ? "0" : undefined;
+
+    if (key === "contract_type") {
+      return (
+        <label key={key} className={labelClass}>
+          {label} <span className="text-rose-500">*</span>
+
+          <select
+            value={form.contract_type}
+            onChange={(event) => {
+              const value = event.target.value;
+
+              updateField("contract_type", value);
+
+              if (value === "indefinite") {
+                updateField("contract_end_date", "");
+              }
+            }}
+            className={inputClass}
+          >
+            <option value="">
+              {isArabic ? "اختر نوع العقد" : "Select contract type"}
+            </option>
+            <option value="fixed_term">
+              {isArabic ? "محدد المدة" : "Fixed-term"}
+            </option>
+            <option value="indefinite">
+              {isArabic ? "غير محدد المدة" : "Indefinite"}
+            </option>
+          </select>
+        </label>
+      );
+    }
+
+    if (key === "contract_end_date") {
+      const isIndefinite = form.contract_type === "indefinite";
+
+      return (
+        <label key={key} className={labelClass}>
+          {label}
+
+          {!isIndefinite && (
+            <span className="text-rose-500"> *</span>
+          )}
+
+          <input
+            type="date"
+            value={form.contract_end_date}
+            disabled={isIndefinite}
+            onChange={(event) =>
+              updateField("contract_end_date", event.target.value)
+            }
+            min={form.contract_start_date || undefined}
+            className={inputClass}
+          />
+        </label>
+      );
+    }
+
+    if (key === "iban") {
+      return (
+        <label key={key} className={labelClass}>
+          {label} <span className="text-rose-500">*</span>
+
+          <div
+            className={`${inputClass} flex items-center gap-2 ${
+              invalidFields.includes(key) ? invalidInputClass : ""
+            }`}
+            dir="ltr"
+          >
+            <span className="font-bold text-[var(--text-secondary)]">
+              SA
+            </span>
+
+            <input
+              type="text"
+              inputMode="numeric"
+              dir="ltr"
+              value={String(form.iban || "").replace(/^SA/i, "").replace(/\D/g, "")}
+              onChange={(event) => {
+                const digits = event.target.value
+                  .replace(/\D/g, "")
+                  .slice(0, 22);
+
+                updateField("iban", `SA${digits}`);
+              }}
+              maxLength={22}
+              placeholder="0000000000000000000000"
+              className="min-w-0 flex-1 bg-transparent font-bold text-[var(--text-primary)] outline-none"
+            />
+          </div>
+        </label>
+      );
+    }
 
     return (
       <label key={key} className={labelClass}>
@@ -1110,6 +1215,7 @@ export default function EmployeesPage() {
 
                                           <CountrySelect
                                            key={form.nationality || "no-nationality"}
+                                           
                                             defaultValue={
                                             countries.find(
                                               (country) => {
@@ -1132,11 +1238,11 @@ export default function EmployeesPage() {
                                                 : "Search nationality..."
                                             }
                                             showFlag={false}
-                                            containerClassName={`w-full rounded-xl ${
-                                              invalidFields.includes("nationality")
-                                                ? "border border-rose-500 ring-1 ring-rose-500"
-                                                : ""
-                                            }`}
+                                           containerClassName={`mt-1 !h-11 !w-full !rounded-xl !border !bg-[var(--background)] !text-sm !font-bold !text-[var(--text-primary)] !shadow-none !transition ${
+                                            invalidFields.includes("nationality")
+                                              ? "!border-rose-500 !ring-1 !ring-rose-500"
+                                              : "!border-[var(--border-default)]"
+                                          }`}
                                             onChange={(country) => {
                                             if (
                                               !country ||

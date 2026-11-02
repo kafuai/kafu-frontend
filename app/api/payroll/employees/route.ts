@@ -249,7 +249,6 @@ const REQUIRED_DATE_FIELDS = [
   "hire_date",
   "date_of_birth",
   "contract_start_date",
-  "contract_end_date",
 ] as const;
 
 const REQUIRED_MONEY_FIELDS = [
@@ -306,14 +305,47 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Invalid or missing ${field}` }, { status: 400 });
     }
     payload[field] = value;
-  }
+    }
 
-  if ((payload.contract_end_date as string) < (payload.contract_start_date as string)) {
+    if (
+    body.contract_type !== "fixed_term" &&
+    body.contract_type !== "indefinite"
+  ) {
     return NextResponse.json(
-      { error: "Contract end date cannot precede start date" },
-      { status: 400 },
+      { error: "Invalid contract_type" },
+      { status: 400 }
     );
   }
+
+  if (
+    body.contract_type === "fixed_term" &&
+    (
+      typeof body.contract_end_date !== "string" ||
+      !isValidDate(body.contract_end_date)
+    )
+  ) {
+    return NextResponse.json(
+      { error: "Contract end date is required" },
+      { status: 400 }
+    );
+  }
+
+  if (body.contract_type === "indefinite") {
+    payload.contract_end_date = null;
+  } else {
+    payload.contract_end_date = body.contract_end_date;
+  }
+
+  if (
+  payload.contract_end_date &&
+  payload.contract_start_date &&
+  payload.contract_end_date < payload.contract_start_date
+) {
+  return NextResponse.json(
+    { error: "Contract end date cannot precede start date" },
+    { status: 400 }
+  );
+}
 
   for (const field of REQUIRED_MONEY_FIELDS) {
     const parsed = parseMoney(body[field]);

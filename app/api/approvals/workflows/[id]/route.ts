@@ -15,7 +15,7 @@ async function base(context: RouteContext) {
   return { ctx, id, repo: new ApprovalRepository(ctx.db) };
 }
 
-/** PUT { name?, steps? } — drafts only */
+/** PUT { name?, steps? } — drafts and inactive workflows only */
 export async function PUT(request: Request, context: RouteContext) {
   try {
     const b = await base(context);

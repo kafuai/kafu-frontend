@@ -305,8 +305,11 @@ export default function ProfilePage() {
           phone: form.phone || null,
           national_id: form.national_id || null,
           date_of_birth: form.date_of_birth || null,
+          
           bank_name: form.bank_name || null,
-          iban: form.iban || null,
+          iban: form.iban.replace(/^SA/i, "").length > 0
+            ? form.iban
+            : null,
         })
         .eq("id", employeeData.id);
 
@@ -512,17 +515,35 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-bold">{t.profile.ibanLabel}</label>
+                <label className="mb-2 block text-sm font-bold">
+                  {t.profile.ibanLabel}
+                </label>
+
+                <div
+                  className={`${inputClass} flex items-center gap-2`}
+                  dir="ltr"
+                >
+                  <span className="font-bold text-gray-500">SA</span>
+
                   <input
                     type="text"
+                    inputMode="numeric"
                     dir="ltr"
-                    value={form.iban}
-                    onChange={(e) => handleFieldChange("iban", e.target.value)}
-                    className={`${inputClass} font-mono ${isArabic ? "text-right" : "text-left"}`}
-                    placeholder="SA0000000000000000000000"
+                    value={form.iban.replace(/^SA/i, "").replace(/\D/g, "").slice(0, 22)}
+                    onChange={(e) => {
+                      const digits = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 22);
+
+                      handleFieldChange("iban", `SA${digits}`);
+                    }}
+                    maxLength={22}
+                    placeholder="0000000000000000000000"
+                    className="min-w-0 flex-1 bg-transparent font-mono outline-none"
                   />
                 </div>
               </div>
+                            </div>
 
               {saveMessage.text && (
                 <div className={`mt-6 flex items-center gap-2 rounded-xl p-4 text-sm font-medium ${

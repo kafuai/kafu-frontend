@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, Copy, Plus, Power, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, Plus, Power, Save, Trash2 } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 import { api, Banner } from "@/components/attendance/shared";
 
@@ -35,6 +35,7 @@ export default function ApprovalSettingsPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [msg, setMsg] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [selectedId, setSelectedId] = useState("");
   const [editId, setEditId] = useState("");
   const [editName, setEditName] = useState("");
   const [editSteps, setEditSteps] = useState<Step[]>([]);
@@ -50,7 +51,22 @@ export default function ApprovalSettingsPage() {
   useEffect(() => { void load(); }, [load]);
 
   const toSteps = (w: Workflow): Step[] => w.steps.map((s) => ({ name: s.name, approverType: s.approver_type, approverUserId: s.approver_user_id, approverRole: s.approver_role, isRequired: s.is_required }));
-  const startEdit = (w: Workflow) => { setEditId(w.id); setEditName(w.name); setEditSteps(toSteps(w)); };
+  const startEdit = (w: Workflow) => {
+    setSelectedId(w.id);
+    setEditId(w.id);
+    setEditName(w.name);
+    setEditSteps(toSteps(w));
+  };
+  const selectWorkflow = (w: Workflow) => {
+    setSelectedId(w.id);
+    if (w.status === "active") {
+      setEditId("");
+      setEditName(w.name);
+      setEditSteps(toSteps(w));
+    } else {
+      startEdit(w);
+    }
+  };
   const patchStep = (i: number, p: Partial<Step>) => setEditSteps((s) => s.map((x, j) => (j === i ? { ...x, ...p } : x)));
   const move = (i: number, d: number) => setEditSteps((s) => { const n = [...s]; const j = i + d; if (j < 0 || j >= n.length) return s; [n[i], n[j]] = [n[j], n[i]]; return n; });
 
@@ -67,9 +83,11 @@ export default function ApprovalSettingsPage() {
   const saveDraft = () => run(() => send(`/api/approvals/workflows/${editId}`, { name: editName, steps: editSteps }, "PUT"), t("تم الحفظ.", "Saved."));
   const act = (id: string, action: string) => run(async () => {
     const r = await send(`/api/approvals/workflows/${id}`, { action });
-    if (action === "clone") startEdit(r.data); else if (action === "activate") setEditId("");
+    if (action === "deactivate") startEdit(r.data);
+    else if (action === "activate") { setSelectedId(id); setEditId(""); }
+    else if (action === "clone") startEdit(r.data);
   }, t("تم التنفيذ.", "Done."));
-  const del = (id: string) => run(async () => { await api(`/api/approvals/workflows/${id}`, { method: "DELETE" }); if (editId === id) setEditId(""); }, t("تم الحذف.", "Deleted."));
+  const del = (id: string) => run(async () => { await api(`/api/approvals/workflows/${id}`, { method: "DELETE" }); if (editId === id) setEditId(""); if (selectedId === id) setSelectedId(""); }, t("تم الحذف.", "Deleted."));
 
   const statusLabel = (s: string) => (s === "active" ? t("فعّال", "Active") : s === "draft" ? t("مسودة", "Draft") : t("معطّل", "Inactive"));
   const statusClasses = (s: string) =>
@@ -81,6 +99,8 @@ export default function ApprovalSettingsPage() {
 
   const activeCount = wfs.filter((w) => w.status === "active").length;
   const draftCount = wfs.filter((w) => w.status === "draft").length;
+  const selectedWorkflow = wfs.find((w) => w.id === selectedId) ?? null;
+  const isReadOnly = selectedWorkflow?.status === "active" && editId !== selectedWorkflow.id;
 
   return (
     <main dir={ar ? "rtl" : "ltr"} className="min-h-[calc(100vh-64px)] bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8">
@@ -147,7 +167,7 @@ export default function ApprovalSettingsPage() {
               </div>
             ) : (
               wfs.map((w) => {
-                const selected = editId === w.id;
+                const selected = selectedId === w.id;
                 return (
                   <article
                     key={w.id}
@@ -166,7 +186,7 @@ export default function ApprovalSettingsPage() {
                     </div>
 
                     <div className="p-5">
-                      <h3 className="text-lg font-black tracking-tight">{typeLabel(w.request_type)}</h3>
+                      <button type="button" className="text-start text-lg font-black tracking-tight hover:text-[var(--brand-primary)]" onClick={() => selectWorkflow(w)}>{typeLabel(w.request_type)}</button>
                       <p className="mt-1.5 text-[11px] font-black text-[var(--brand-primary)]">
                         v{w.version} · {w.steps.length} {t("خطوات", "steps")}
                       </p>
@@ -183,10 +203,10 @@ export default function ApprovalSettingsPage() {
                       )}
 
                       <div className="mt-5 flex flex-wrap gap-2">
-                        {w.status === "draft" && <button type="button" className={ghost} disabled={busy} onClick={() => startEdit(w)}>{t("تعديل", "Edit")}</button>}
-                        {w.status === "draft" && <button type="button" className={ghost} disabled={busy} onClick={() => void act(w.id, "activate")}><Power size={14} />{t("تفعيل", "Activate")}</button>}
+                        {w.status === "active" && <button type="button" className={ghost} disabled={busy} onClick={() => selectWorkflow(w)}><Eye size={14} />{t("عرض الخطوات", "View steps")}</button>}
+                        {(w.status === "draft" || w.status === "inactive") && <button type="button" className={ghost} disabled={busy} onClick={() => startEdit(w)}>{t("تعديل", "Edit")}</button>}
+                        {(w.status === "draft" || w.status === "inactive") && <button type="button" className={ghost} disabled={busy} onClick={() => void act(w.id, "activate")}><Power size={14} />{t("تفعيل", "Activate")}</button>}
                         {w.status === "active" && <button type="button" className={ghost} disabled={busy} onClick={() => void act(w.id, "deactivate")}>{t("تعطيل", "Deactivate")}</button>}
-                        {w.status !== "draft" && <button type="button" className={ghost} disabled={busy} onClick={() => void act(w.id, "clone")}><Copy size={14} />{t("إصدار جديد", "New version")}</button>}
                         {w.status === "draft" && <button type="button" className={iconBtn} disabled={busy} onClick={() => void del(w.id)}><Trash2 size={14} /></button>}
                       </div>
                     </div>
@@ -198,20 +218,48 @@ export default function ApprovalSettingsPage() {
 
           {/* Editor */}
           <div className="overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)] xl:self-start">
-            {!editId ? (
+            {!selectedWorkflow ? (
               <div className="flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-subtle)]">
                   <span className="h-5 w-5 rounded-full bg-[var(--brand-primary)] opacity-60" />
                 </div>
-                <p className="mt-4 text-base font-black">{t("اختر مسودة لتعديلها.", "Pick a draft to edit.")}</p>
+                <p className="mt-4 text-base font-black">{t("اختر مساراً لعرض خطواته أو تعديله.", "Select a workflow to view its steps or edit it.")}</p>
               </div>
+            ) : isReadOnly ? (
+              <>
+                <div className="border-b border-[var(--border-default)] bg-[var(--brand-subtle)] p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black text-[var(--brand-primary)]">WORKFLOW DETAILS · v{selectedWorkflow.version}</p>
+                      <h2 className="mt-2 text-xl font-black">{typeLabel(selectedWorkflow.request_type)}</h2>
+                      <p className="mt-1 text-sm font-bold text-[var(--text-secondary)]">{selectedWorkflow.name}</p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1.5 text-xs font-black ${statusClasses(selectedWorkflow.status)}`}>{statusLabel(selectedWorkflow.status)}</span>
+                  </div>
+                  <p className="mt-4 text-xs font-bold text-[var(--text-secondary)]">{t("هذا المسار فعّال. يمكنك استعراض الخطوات، لكن يجب تعطيله قبل التعديل.", "This workflow is active. You can review its steps, but must deactivate it before editing.")}</p>
+                </div>
+                <div className="space-y-3 p-6">
+                  {selectedWorkflow.steps.map((step, i) => (
+                    <article key={i} className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--surface)] text-xs font-black text-[var(--brand-primary)]">{String(i + 1).padStart(2, "0")}</span>
+                        <span className="text-xs font-black text-[var(--text-muted)]">{step.is_required ? t("إلزامية", "Required") : t("اختيارية", "Optional")}</span>
+                      </div>
+                      <p className="mt-3 text-sm font-black">{step.name || approverLabel(step.approver_type)}</p>
+                      <p className="mt-1 text-xs font-bold text-[var(--text-secondary)]">{approverLabel(step.approver_type)}{step.approver_type === "role" && step.approver_role ? ` · ${step.approver_role}` : ""}</p>
+                      {step.approver_type === "specific_user" && <p className="mt-1 break-all text-xs text-[var(--text-muted)]">{members.find((m) => m.userId === step.approver_user_id)?.name ?? step.approver_user_id}</p>}
+                    </article>
+                  ))}
+                  <button type="button" className={ghost} disabled={busy} onClick={() => void act(selectedWorkflow.id, "deactivate")}><Power size={14} />{t("تعطيل", "Deactivate")}</button>
+                </div>
+              </>
             ) : (
               <>
                 <div className="border-b border-[var(--border-default)] bg-[var(--brand-subtle)] p-6">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-sm font-black text-white shadow-sm">
                     WF
                   </div>
-                  <p className="mt-5 text-xs font-black text-[var(--brand-primary)]">WORKFLOW EDITOR</p>
+                  <p className="mt-5 text-xs font-black text-[var(--brand-primary)]">{selectedWorkflow.status === "inactive" ? t("تعديل مسار معطّل", "EDIT INACTIVE WORKFLOW") : t("محرر مسار الموافقات", "WORKFLOW EDITOR")}</p>
                   <label className="mt-3 block text-xs font-black text-[var(--text-secondary)]">
                     {t("الاسم", "Name")}
                     <input className={input} value={editName} maxLength={120} onChange={(e) => setEditName(e.target.value)} />
