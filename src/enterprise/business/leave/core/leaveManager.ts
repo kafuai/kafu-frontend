@@ -328,6 +328,30 @@ async reject(
   );
 }
 
+  async getPreviousLeaveUsage(
+    organizationId: string,
+    employeeId: string,
+    leaveType: LeaveType,
+    leaveYear: number,
+  ): Promise<{ days: number; throughDate: string } | null> {
+    const { data, error } = await this.supabase
+      .from("employee_leave_usage")
+      .select("used_days, usage_through_date")
+      .eq("organization_id", organizationId)
+      .eq("employee_user_id", employeeId)
+      .eq("leave_type", leaveType)
+      .eq("leave_year", leaveYear)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Unable to load previous leave usage: ${error.message}`);
+    }
+
+    return data
+      ? { days: Number(data.used_days), throughDate: data.usage_through_date }
+      : null;
+  }
+
   async list(
     organizationId?: string,
     employeeId?: string,

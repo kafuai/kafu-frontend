@@ -20,12 +20,25 @@ export interface LeaveBalance {
   remaining: number;
 }
 
+export interface PreviousLeaveUsage {
+  days: number;
+  throughDate: string;
+}
+
+function countLeaveDaysAfterDate(startDate: number, endDate: number, throughDate: string): number {
+  const cutoff = Date.parse(`${throughDate}T00:00:00.000Z`);
+  const firstDayAfterCutoff = cutoff + DAY_MS;
+  const effectiveStart = Math.max(startDate, firstDayAfterCutoff);
+  return effectiveStart > endDate ? 0 : countLeaveDays(effectiveStart, endDate);
+}
+
 export function calculateLeaveBalance(params: {
   type: LeaveType;
   year: number;
   allowance: number;
   existing: readonly LeaveRequest[];
-  excludeRequestId?: string; 
+  previousUsage?: PreviousLeaveUsage | null;
+  excludeRequestId?: string;
 }): LeaveBalance {
   let approved = 0;
   let pending = 0;
@@ -35,12 +48,23 @@ export function calculateLeaveBalance(params: {
     if (leave.id === params.excludeRequestId) continue;
     if (new Date(leave.startDate).getUTCFullYear() !== params.year) continue;
 
-    const days = countLeaveDays(leave.startDate, leave.endDate);
+    const cutoffEnd = params.previousUsage
+      ? Date.parse(`${params.previousUsage.throughDate}T23:59:59.999Z`)
+      : null;
+    const approvedAfterCutoff =
+      leave.status === "approved" &&
+      cutoffEnd !== null &&
+      leave.reviewedAt !== null &&
+      leave.reviewedAt > cutoffEnd;
+    const days = leave.status === "approved" && params.previousUsage && !approvedAfterCutoff
+      ? countLeaveDaysAfterDate(leave.startDate, leave.endDate, params.previousUsage.throughDate)
+      : countLeaveDays(leave.startDate, leave.endDate);
 
     if (leave.status === "approved") approved += days;
     else if (leave.status === "pending") pending += days;
   }
 
+  approved += params.previousUsage?.days ?? 0;
   const used = COUNT_PENDING_TOWARD_BALANCE ? approved + pending : approved;
 
   return {
@@ -67,6 +91,7 @@ export function evaluateLeaveAllowance(
   allowance: number,
   existing: readonly LeaveRequest[],
   locale: Locale = "en",
+  previousUsage?: PreviousLeaveUsage | null,
 ): LeaveAllowanceEvaluation {
   const year = new Date(input.startDate).getUTCFullYear();
 
@@ -75,6 +100,7 @@ export function evaluateLeaveAllowance(
     year,
     allowance,
     existing,
+    previousUsage,
   });
 
   const { used, remaining } = balance;

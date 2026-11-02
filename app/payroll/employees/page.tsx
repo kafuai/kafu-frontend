@@ -165,6 +165,12 @@ function rowToForm(row: EmployeeRow): EmployeeForm {
 }
 
 type StatusFilter = "all" | "active" | "inactive" | "incomplete";
+type LeaveUsageType = "annual" | "sick" | "emergency" | "unpaid" | "maternity";
+const LEAVE_USAGE_TYPES: LeaveUsageType[] = ["annual", "sick", "emergency", "unpaid", "maternity"];
+
+function currentRiyadhDate(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" });
+}
 
 export default function EmployeesPage() {
   const { locale } = useLocalization();
@@ -185,6 +191,14 @@ export default function EmployeesPage() {
   const [deptByUser, setDeptByUser] = useState<Record<string, string>>({});
   const [formDeptId, setFormDeptId] = useState("");
   const [invalidFields, setInvalidFields] = useState<(keyof EmployeeForm)[]>([]);
+  const [leaveUsage, setLeaveUsage] = useState<Record<LeaveUsageType, string>>({
+    annual: "0", sick: "0", emergency: "0", unpaid: "0", maternity: "0",
+  });
+  const [leaveUsageThroughDate, setLeaveUsageThroughDate] = useState(currentRiyadhDate);
+  const [leaveUsageLoading, setLeaveUsageLoading] = useState(false);
+  const [leaveUsageSaving, setLeaveUsageSaving] = useState(false);
+  const [leaveUsageError, setLeaveUsageError] = useState("");
+  const [leaveUsageNotice, setLeaveUsageNotice] = useState("");
   const invalidInputClass = "!border-2 !border-rose-500 focus:!border-rose-600";
 
   
@@ -403,7 +417,7 @@ export default function EmployeesPage() {
       setLoadError(error instanceof Error ? localizeErrorMessage(error.message, locale) : copy.loadError);
       setLoadState("error");
     }
-  }, [copy.loadError]);
+  }, [copy.loadError, locale]);
 
   useEffect(() => {
     void loadEmployees();
@@ -424,6 +438,7 @@ export default function EmployeesPage() {
   useEffect(() => {
     void loadDepartments();
   }, [loadDepartments]);
+
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLocaleLowerCase(isArabic ? "ar" : "en");
@@ -463,6 +478,7 @@ export default function EmployeesPage() {
       setForm(rowToForm(row));
       setFormDeptId(deptByUser[row.user_id ?? ""] ?? "");
       setFormError("");
+      if (row.user_id) void loadPreviousLeaveUsage(row.user_id);
     }
   }
 
@@ -470,6 +486,30 @@ export default function EmployeesPage() {
     if (saving) return;
     setEditingRow(null);
     setFormError("");
+  }
+
+  async function loadPreviousLeaveUsage(employeeUserId: string) {
+    setLeaveUsageLoading(true);
+    setLeaveUsageError("");
+    setLeaveUsageNotice("");
+    const leaveYear = Number(currentRiyadhDate().slice(0, 4));
+    try {
+      const response = await fetch(`/api/payroll/employees/leave-usage?employeeUserId=${encodeURIComponent(employeeUserId)}&leaveYear=${leaveYear}`, {
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error ?? "Unable to load previous leave usage.");
+      const nextUsage: Record<LeaveUsageType, string> = {
+        annual: "0", sick: "0", emergency: "0", unpaid: "0", maternity: "0",
+      };
+      for (const type of LEAVE_USAGE_TYPES) nextUsage[type] = String(payload.usage?.[type] ?? 0);
+      setLeaveUsage(nextUsage);
+      setLeaveUsageThroughDate(payload.usageThroughDate || currentRiyadhDate());
+    } catch (error) {
+      setLeaveUsageError(error instanceof Error ? error.message : "Unable to load previous leave usage.");
+    } finally {
+      setLeaveUsageLoading(false);
+    }
   }
 
   function updateField<K extends keyof EmployeeForm>(
@@ -677,6 +717,47 @@ export default function EmployeesPage() {
       setFormError(error instanceof Error ? localizeErrorMessage(error.message, locale) : copy.errorSave);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function savePreviousLeaveUsage() {
+    if (!editingRow?.user_id || !canManage) return;
+    setLeaveUsageError("");
+    setLeaveUsageNotice("");
+
+    const parsedUsage = Object.fromEntries(
+      LEAVE_USAGE_TYPES.map((type) => [type, Number(leaveUsage[type])]),
+    ) as Record<LeaveUsageType, number>;
+    if (LEAVE_USAGE_TYPES.some((type) =>
+      !Number.isFinite(parsedUsage[type]) || parsedUsage[type] < 0 || parsedUsage[type] > 366 ||
+      Math.round(parsedUsage[type] * 100) !== parsedUsage[type] * 100
+    )) {
+      setLeaveUsageError(isArabic
+        ? "أدخل أياماً صحيحة من 0 إلى 366 وبحد أقصى منزلتين عشريتين."
+        : "Enter valid days from 0 to 366 with up to two decimal places.");
+      return;
+    }
+
+    const leaveYear = Number(currentRiyadhDate().slice(0, 4));
+    setLeaveUsageSaving(true);
+    try {
+      const response = await fetch("/api/payroll/employees/leave-usage", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employeeUserId: editingRow.user_id,
+          leaveYear,
+          usageThroughDate: leaveUsageThroughDate,
+          usage: parsedUsage,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error ?? "Unable to save previous leave usage.");
+      setLeaveUsageNotice(isArabic ? "تم حفظ الإجازات المستخدمة سابقاً." : "Previous leave usage saved.");
+    } catch (error) {
+      setLeaveUsageError(error instanceof Error ? error.message : "Unable to save previous leave usage.");
+    } finally {
+      setLeaveUsageSaving(false);
     }
   }
 
@@ -1131,6 +1212,86 @@ export default function EmployeesPage() {
                                         {field("iban", copy.iban, "text", "ltr")}
                                       </div>
                                     </div>
+
+                                    {editingRow.user_id && (
+                                      <section className="space-y-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5">
+                                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                          <div>
+                                            <h3 className="text-sm font-black">
+                                              {isArabic ? "الإجازات المستخدمة سابقاً خلال السنة" : "Leave used earlier this year"}
+                                            </h3>
+                                            <p className="mt-1 text-xs leading-6 text-[var(--text-secondary)]">
+                                              {isArabic
+                                                ? "أدخل إجمالي الأيام المعتمدة حتى التاريخ المحدد، بما فيها ما تم اعتماده في KAFU AI قبل ذلك التاريخ. لا تُدخل الطلبات المعلقة."
+                                                : "Enter total approved leave days through the selected date, including KAFU AI requests approved by that date. Do not include pending requests."}
+                                            </p>
+                                          </div>
+                                          <span className="text-xs font-bold text-[var(--text-muted)]">
+                                            {isArabic ? `السنة ${currentRiyadhDate().slice(0, 4)}` : `Year ${currentRiyadhDate().slice(0, 4)}`}
+                                          </span>
+                                        </div>
+
+                                        <label className={labelClass}>
+                                          {isArabic ? "احتساب الاستهلاك حتى تاريخ" : "Usage recorded through"}
+                                          <input
+                                            type="date"
+                                            value={leaveUsageThroughDate}
+                                            max={currentRiyadhDate()}
+                                            min={`${currentRiyadhDate().slice(0, 4)}-01-01`}
+                                            onChange={(event) => setLeaveUsageThroughDate(event.target.value)}
+                                            className={inputClass}
+                                            disabled={leaveUsageLoading || leaveUsageSaving}
+                                          />
+                                        </label>
+
+                                        {leaveUsageLoading ? (
+                                          <p className="text-sm text-[var(--text-secondary)]">{isArabic ? "جارٍ تحميل الأرصدة..." : "Loading leave usage..."}</p>
+                                        ) : (
+                                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                                            {LEAVE_USAGE_TYPES.map((type) => {
+                                              const labels: Record<LeaveUsageType, { ar: string; en: string }> = {
+                                                annual: { ar: "سنوية", en: "Annual" },
+                                                sick: { ar: "مرضية", en: "Sick" },
+                                                emergency: { ar: "طارئة", en: "Emergency" },
+                                                unpaid: { ar: "بدون راتب", en: "Unpaid" },
+                                                maternity: { ar: "أمومة", en: "Maternity" },
+                                              };
+                                              return (
+                                                <label key={type} className={labelClass}>
+                                                  {isArabic ? labels[type].ar : labels[type].en}
+                                                  <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="366"
+                                                    step="0.01"
+                                                    value={leaveUsage[type]}
+                                                    onChange={(event) => setLeaveUsage((current) => ({ ...current, [type]: event.target.value }))}
+                                                    className={inputClass}
+                                                    disabled={leaveUsageSaving}
+                                                  />
+                                                </label>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+
+                                        {leaveUsageError && <p role="alert" className="text-sm font-bold text-rose-600">{leaveUsageError}</p>}
+                                        {leaveUsageNotice && <p role="status" className="text-sm font-bold text-emerald-700">{leaveUsageNotice}</p>}
+                                        <div className="flex justify-end">
+                                          <button
+                                            type="button"
+                                            onClick={() => void savePreviousLeaveUsage()}
+                                            disabled={leaveUsageLoading || leaveUsageSaving}
+                                            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)] px-4 text-sm font-black text-[var(--brand-primary)] transition hover:bg-[var(--brand-subtle)] disabled:cursor-not-allowed disabled:opacity-50"
+                                          >
+                                            {leaveUsageSaving && <LoaderCircle size={15} className="animate-spin" />}
+                                            {leaveUsageSaving
+                                              ? (isArabic ? "جارٍ حفظ الاستهلاك..." : "Saving usage...")
+                                              : (isArabic ? "حفظ استهلاك الإجازات" : "Save leave usage")}
+                                          </button>
+                                        </div>
+                                      </section>
+                                    )}
 
                                     {formError && (
                                       <div

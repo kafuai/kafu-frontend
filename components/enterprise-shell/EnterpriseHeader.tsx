@@ -82,7 +82,7 @@ const navigationItems: readonly NavigationGroup[] = [
     icon: Users,
     children: [
       { key: "employees", href: "/payroll/employees", icon: Users, permission: PERMISSIONS.PAYROLL_VIEW },
-      {key: "departments", href: "/payroll/departments", icon: Building, permission: PERMISSIONS.DEPARTMENTWS_VIEW},
+      {key: "departments", href: "/employee-experience/departments", icon: Building, permission: PERMISSIONS.DEPARTMENTWS_VIEW},
       {key: "approvals", href: "/employee-experience/approvals", icon: FileEdit, permission: PERMISSIONS.APPROVALS_MANAGE},
 
     ]

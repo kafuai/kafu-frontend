@@ -62,24 +62,15 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const mineOnly = url.searchParams.get("mine") === "true";
 
-    const role = identity.role ?? "";
-
-    // Organization-wide visibility is deliberately separate from workflow participation
-    // and from permission to manage workflow configuration.
-    const canViewAllRequests = hasPermission(role, PERMISSIONS.REQUESTS_VIEW_ALL);
-    const canViewRequests =
-      hasPermission(role, PERMISSIONS.REQUESTS_VIEW) ||
-      canViewAllRequests ||
-      hasPermission(role, PERMISSIONS.APPROVALS_VIEW);
-
-    // Employees may always read their own requests. The shared inbox requires a view permission.
-    if (!mineOnly && !canViewRequests) {
+    // Anyone can read THEIR OWN requests; the company-wide / approver view needs requests.view.
+    if (!mineOnly && !hasPermission(identity.role ?? "", PERMISSIONS.REQUESTS_MANAGE)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Only workflow administrators handle legacy requests that have no active workflow.
+    const role = identity.role ?? "";
+    // HR / owner: sees everything and decides requests that have no workflow.
     const canManage = hasPermission(role, PERMISSIONS.APPROVALS_MANAGE);
-    // Employment letters currently have no workflow; keep them restricted to request managers.
+    // Employment letters have no workflow yet: same people as before (requests.manage), now enforced.
     const canManageLetters = hasPermission(role, PERMISSIONS.REQUESTS_MANAGE);
 
     const adminClient = createSupabaseAdminClient();
@@ -95,23 +86,15 @@ export async function GET(request: Request) {
       employmentLetterManager.list(identity.organizationId, employeeIdFilter),
     ]);
 
-    // Organization-wide viewers see all workflow instances. Everyone else sees only
-    // requests connected to a step assigned to their user in the workflow snapshot.
+    // Approvals this user is part of (HR: all). Approver sees a request only through its workflow.
     const approvals = mineOnly
       ? null
-      : await loadVisibleApprovals(
-          adminClient,
-          identity.organizationId,
-          identity.userId,
-          canViewAllRequests,
-        );
+      : await loadVisibleApprovals(adminClient, identity.organizationId, identity.userId, canManage);
 
-    const leaveRequests = mineOnly || canViewAllRequests
+    const leaveRequests = mineOnly || canManage
       ? allLeave
-      : allLeave.filter((l) => approvals?.views.has(`leave:${l.id}`));
+      : allLeave.filter((l) => approvals!.views.has(`leave:${l.id}`));
 
-    // Employment letters have no approval workflow yet, so they remain owner/admin-only
-    // in the organization inbox and personal-only for employees.
     const letterRequests = mineOnly || canManageLetters ? allLetters : [];
 
     // Attendance corrections/disputes are listed here only when they run through a workflow.
@@ -176,6 +159,26 @@ export async function GET(request: Request) {
       new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh", year: "numeric" }).format(new Date()),
     );
 
+    const { data: previousUsageRows, error: previousUsageError } = await adminClient
+      .from("employee_leave_usage")
+      .select("employee_user_id, leave_type, leave_year, used_days, usage_through_date")
+      .eq("organization_id", identity.organizationId);
+
+    if (previousUsageError) {
+      throw new Error(`Unable to load previous leave usage: ${previousUsageError.message}`);
+    }
+
+    const previousUsageByEmployee = new Map<string, { days: number; throughDate: string }>();
+    for (const row of previousUsageRows ?? []) {
+      previousUsageByEmployee.set(
+        `${row.employee_user_id}:${row.leave_type}:${row.leave_year}`,
+        { days: Number(row.used_days), throughDate: row.usage_through_date },
+      );
+    }
+
+    const previousUsageOf = (employeeId: string, type: LeaveType, year: number) =>
+      previousUsageByEmployee.get(`${employeeId}:${type}:${year}`) ?? null;
+
     const viewOf = (kind: "leave" | "attendance_correction", id: string): ApprovalView | null =>
       approvals?.views.get(`${kind}:${id}`) ?? null;
 
@@ -190,6 +193,11 @@ export async function GET(request: Request) {
             year: new Date(leave.startDate).getUTCFullYear(),
             allowance,
             existing: leaveByEmployee.get(leave.employeeId) ?? [],
+            previousUsage: previousUsageOf(
+              leave.employeeId,
+              leave.type,
+              new Date(leave.startDate).getUTCFullYear(),
+            ),
             excludeRequestId: leave.id, // employee balance BEFORE this request
           });
           const requested = countLeaveDays(leave.startDate, leave.endDate);
@@ -294,6 +302,7 @@ export async function GET(request: Request) {
           year: currentYear,
           allowance,
           existing: allLeave,
+          previousUsage: previousUsageOf(identity.userId, type, currentYear),
         });
       }
     }

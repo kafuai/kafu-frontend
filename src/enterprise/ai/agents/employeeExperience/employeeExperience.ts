@@ -146,8 +146,8 @@ export class EmployeeExperienceAgent {
       type: "unsupported_category",
       message:
         messageLanguage === "en"
-          ? "Please contact the HR team for assistance."
-          : "يرحى التوصل مع فريق الموارد البشرية للمساعدة.",
+          ? "Your message was classified, but automated processing for this type isn't enabled yet. It will be routed to HR."
+          : "تم تصنيف طلبك، لكن المعالجة الآلية لهذا النوع غير مفعّلة بعد. سيتم تحويله لفريق الموارد البشرية.",
       status: "not_supported",
       classification,
     };
@@ -464,11 +464,19 @@ export class EmployeeExperienceAgent {
 
     if (policy.days !== null) {
       const existing = await this.leaveManager.list(p.organizationId, p.employeeId);
+      const leaveYear = new Date(dates.startDate).getUTCFullYear();
+      const previousUsage = await this.leaveManager.getPreviousLeaveUsage(
+        p.organizationId,
+        p.employeeId,
+        leaveType,
+        leaveYear,
+      );
       const evaluation = evaluateLeaveAllowance(
         { type: leaveType, startDate: dates.startDate, endDate: dates.endDate },
         policy.days,
         existing,
         lang,
+        previousUsage,
       );
       if (!evaluation.allowed) {
         return { blocked: "allowance_exceeded", message: evaluation.message! };

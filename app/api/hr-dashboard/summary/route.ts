@@ -418,8 +418,24 @@ export async function GET() {
     const employeeName = (userId: string) =>
       employeeByUser.get(userId)?.full_name?.trim() ||
       (userIds.includes(userId) ? "موظف" : "غير معروف");
+      
 
-    // دمج أحدث الطلبات والتصحيحات والخصومات المعلقة في جدول واحد.
+    const correctionTypeLabels: Record<string, string> = {
+      missing_check_in: "تسجيل دخول مفقود",
+      missing_check_out: "تسجيل انصراف مفقود",
+      both: "تسجيل دخول وانصراف مفقود",
+      early_leave: "انصراف مبكر",
+      late: "تأخير",
+    };
+
+    const deductionTypeLabels: Record<string, string> = {
+      absence: "غياب",
+      late_arrival: "تأخير عن الدوام",
+      early_leave: "انصراف مبكر",
+      late_and_early_leave: "تأخير وانصراف مبكر",
+      late: "تأخير",
+    };
+
     const pendingItems = [
       ...requests
         .filter((request) => request.status === "pending")
@@ -427,7 +443,7 @@ export async function GET() {
           id: `request-${request.id}`,
           employee: employeeName(request.user_id),
           type: request.request_type,
-          title: request.title ?? "",
+          title: request.title || requestTypeLabels[request.request_type ?? ""] || request.request_type || "",
           createdAt: request.created_at,
           status: "pending",
           href: "/employee-experience/requests",
@@ -437,7 +453,7 @@ export async function GET() {
         id: `correction-${correction.id}`,
         employee: employeeName(correction.user_id),
         type: "correction",
-        title: correction.correction_type,
+        title: correctionTypeLabels[correction.correction_type ?? ""] || correction.correction_type || "",
         createdAt: correction.created_at,
         status: "pending",
         href: "/attendance/dashboard",
@@ -447,7 +463,7 @@ export async function GET() {
         id: `deduction-${deduction.id}`,
         employee: employeeName(deduction.user_id),
         type: "deduction",
-        title: deduction.incident_type,
+        title: deductionTypeLabels[deduction.incident_type ?? ""] || deduction.incident_type || "",
         createdAt: deduction.created_at,
         status: deduction.status,
         href: "/attendance/deductions",
