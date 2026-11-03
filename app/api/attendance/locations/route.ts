@@ -91,7 +91,13 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await ctx.supabase.from("work_locations")
-      .insert({ ...parsed.out, organization_id: ctx.organizationId, created_by: ctx.user.id })
+      .insert({
+      ...parsed.out,
+      geofence_required: parsed.out.geofence_required ?? true,
+      remote_allowed: parsed.out.remote_allowed ?? false,
+      organization_id: ctx.organizationId,
+      created_by: ctx.user.id,
+    })
       .select("*").single();
     if (error) return dbError(error) ?? Promise.reject(new Error(error.message));
     return NextResponse.json({ data }, { status: 201 });

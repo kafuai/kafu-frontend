@@ -119,11 +119,15 @@ export default function AttendanceSetupPage() {
 
   const [lf, setLf] = useState({
     name: "", timezone: "Asia/Riyadh", latitude: "", longitude: "", radiusM: "",
-    geofenceRequired: false, remoteAllowed: false,
+    geofenceRequired: true,
+    remoteAllowed: false,
   });
   const [sf, setSf] = useState({ ...EMPTY_SHIFT });
   const [af, setAf] = useState({
-    userIds: [] as string[], shiftId: "", locationId: "", effectiveFrom: todayKey(), effectiveTo: "",
+    userIds: [] as string[],
+    shiftId: "",
+    effectiveFrom: todayKey(),
+    effectiveTo: "",
   });
   const [lfTouched, setLfTouched] = useState(false);
 
@@ -787,13 +791,6 @@ export default function AttendanceSetupPage() {
                     </select>
                   </label>
                   <label className={labelCls}>
-                    {copy.location}
-                    <select className={inputCls} value={af.locationId} onChange={(e) => setAf({ ...af, locationId: e.target.value })}>
-                      <option value="">{copy.none}</option>
-                      {locs.filter((l) => l.is_active).map((l) => (
-                        <option key={l.id} value={l.id}>{l.name}</option>
-                      ))}
-                    </select>
                   </label>
                   <label className={labelCls}>
                     {copy.from}
@@ -812,7 +809,7 @@ export default function AttendanceSetupPage() {
                   onClick={() =>
                     void send(
                       "/api/attendance/assignments", "POST",
-                      { ...af, locationId: af.locationId || null, effectiveTo: af.effectiveTo || null },
+                      { ...af, effectiveTo: af.effectiveTo || null },
                       () => setAf({ ...af, userIds: [] }),
                     )
                   }

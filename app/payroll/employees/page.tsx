@@ -383,6 +383,24 @@ export default function EmployeesPage() {
         missing: "Incomplete data",
       };
 
+function getRoleLabel(role: string | null) {
+  const roles: Record<string, { ar: string; en: string }> = {
+    owner: { ar: "رئيس", en: "Owner" },
+    manager: { ar: "مدير", en: "Manager" },
+    member: { ar: "موظف", en: "Member" },
+  };
+
+  if (!role) return isArabic ? "غير محدد" : "Not assigned";
+
+  const normalized = role.toLowerCase();
+
+  return roles[normalized]
+    ? isArabic
+      ? roles[normalized].ar
+      : roles[normalized].en
+    : role;
+}
+  
   const loadEmployees = useCallback(async () => {
     setLoadState("loading");
     setLoadError("");
@@ -1137,9 +1155,13 @@ export default function EmployeesPage() {
                                       <Pencil size={12} className="text-[var(--text-muted)]" />
                                     )}
                                   </div>
-                                  <div className="mt-0.5 truncate text-[11px] font-bold text-[var(--text-secondary)]" dir="ltr">
-                                    {row.email ?? p?.national_id ?? copy.none}
-                                  </div>
+                                 <div className="mt-0.5 truncate text-[11px] font-bold text-[var(--text-secondary)]" dir="ltr">
+                                  {row.email ?? p?.national_id ?? copy.none}
+                                </div>
+
+                                <span className="mt-1 inline-flex items-center rounded-md border border-[var(--border-default)] bg-[var(--surface-muted)] px-2 py-0.5 text-[10px] font-bold text-[var(--text-secondary)]">
+                                  {getRoleLabel(row.role)}
+                                </span>
                                 </div>
                               </div>
                             </td>

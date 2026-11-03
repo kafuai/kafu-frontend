@@ -29,7 +29,7 @@ export async function GET() {
 
     const { data: assignments, error } = await supabase
       .from("shift_assignments")
-      .select("id,user_id,shift_id,location_id,effective_from,effective_to,created_at")
+      .select("id,user_id,shift_id,effective_from,effective_to,created_at")
       .eq("organization_id", organizationId)
       .order("effective_from", { ascending: false });
     if (error) throw new Error(error.message);
@@ -56,7 +56,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Select at least one employee." }, { status: 400 });
     }
     if (!isUuid(b.shiftId)) return NextResponse.json({ error: "Invalid shift." }, { status: 400 });
-    if (b.locationId != null && !isUuid(b.locationId)) return NextResponse.json({ error: "Invalid location." }, { status: 400 });
     if (!isDateKey(b.effectiveFrom) || b.effectiveFrom < today) {
       return NextResponse.json({ error: "Start date cannot be in the past." }, { status: 400 });
     }
@@ -78,7 +77,6 @@ export async function POST(request: Request) {
         organization_id: organizationId,
         user_id: uid,
         shift_id: b.shiftId,
-        location_id: b.locationId ?? null,
         effective_from: b.effectiveFrom,
         effective_to: b.effectiveTo ?? null,
         created_by: user.id,
