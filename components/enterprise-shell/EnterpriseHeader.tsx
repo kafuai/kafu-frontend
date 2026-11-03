@@ -92,7 +92,7 @@ const navigationItems: readonly NavigationGroup[] = [
     icon: CalendarClock,
     children: [
       { key: "attendance", href: "/attendance", icon: Clock, permission: PERMISSIONS.ATTENDANCE_USE },
-      { key: "dashboard", href: "/attendance/dashboard", icon: LayoutDashboard, permission: PERMISSIONS.ATTENDANCE_MANAGE },
+      { key: "attendanceDashboard", href: "/attendance/dashboard", icon: LayoutDashboard, permission: PERMISSIONS.ATTENDANCE_MANAGE },
       { key: "setup", href: "/attendance/setup", icon: UserCheck, permission: PERMISSIONS.ATTENDANCE_MANAGE },
       { key: "holidays", href: "/attendance/holidays", icon: CalendarDays, permission: PERMISSIONS.ATTENDANCE_MANAGE },
       { key: "deductions", href: "/attendance/deductions", icon: Calculator, permission: PERMISSIONS.ATTENDANCE_MANAGE }
@@ -150,7 +150,8 @@ const HEADER_CONTENT = {
       departments: "الأقسام",
       approvals: "سير الموافقات",
       employeeGroup: "الموظفين",
-      hrDashboard: "لوحة تحكم الموارد البشرية"
+      hrDashboard: "لوحة الموارد البشرية",
+      attendanceDashboard: "لوحة الحضور والانصراف"
     }
   },
   en: {
@@ -188,7 +189,8 @@ const HEADER_CONTENT = {
       departments: "Departments",
       approvals: "Approvals Workflow",
       employeeGroup: "Employees",
-      hrDashboard: "HR Dashboard"
+      hrDashboard: "HR Dashboard",
+      attendanceDashboard: "Attendance & Infractions Dashboard"
     }
   },
 } as const;

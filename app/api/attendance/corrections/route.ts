@@ -7,7 +7,7 @@ import { getAttendanceContext } from "@/src/enterprise/business/attendance/core/
 import { addDays, dateKeyInTz, isDateKey, zonedTimeToUtc } from "@/src/enterprise/business/attendance/utils/time";
 import { DEFAULT_TZ } from "@/src/enterprise/business/attendance/utils/schedule";
 import { loadScheduleForDate } from "@/src/enterprise/business/attendance/core/shiftResolver";
-import { pickEffectiveEvents } from "@/src/enterprise/business/attendance/core/attendanceEvaluator";
+import { pickEffectiveEvents, evaluateDay} from "@/src/enterprise/business/attendance/core/attendanceEvaluator";
 import { createApprovalEngine } from "@/src/enterprise/business/approvals";
 
 const TYPES = ["missed_check_in", "missed_check_out", "time_change", "dispute_late", "dispute_absence", "excuse"];
@@ -75,12 +75,94 @@ export async function POST(request: Request) {
     if (!cand) return NextResponse.json({ error: "You have no scheduled shift on this date." }, { status: 400 });
     const s = cand.schedule;
 
-    const { data: evs } = await supabase.from("attendance_events")
+    // Load attendance events for this exact work date.
+    const { data: evs, error: eventsError } = await supabase
+      .from("attendance_events")
       .select("event_type,source,occurred_at,created_at")
-      .eq("organization_id", organizationId).eq("user_id", user.id)
-      .gte("occurred_at", new Date(s.start - s.earlyCheckinMinutes * 60_000).toISOString())
-      .lte("occurred_at", new Date(s.end + 6 * 3_600_000).toISOString());
+      .eq("organization_id", organizationId)
+      .eq("user_id", user.id)
+      .eq("work_date", b.workDate)
+      .gte(
+        "occurred_at",
+        new Date(s.start - s.earlyCheckinMinutes * 60_000).toISOString()
+      )
+      .lte(
+        "occurred_at",
+        new Date(s.end + 6 * 3_600_000).toISOString()
+      );
+
+    if (eventsError) {
+      console.error("Attendance events load failed:", eventsError);
+      return NextResponse.json(
+        { error: "Unable to verify your attendance record." },
+        { status: 500 }
+      );
+    }
+
+    // Resolve the effective check-in and check-out events.
     const orig = pickEffectiveEvents((evs ?? []) as any, s);
+
+    // Load the attendance-day context for leave, holiday and confirmed absence.
+    const { data: attendanceDay, error: dayError } = await supabase
+      .from("attendance_days")
+      .select("status")
+      .eq("organization_id", organizationId)
+      .eq("user_id", user.id)
+      .eq("work_date", b.workDate)
+      .limit(1)
+      .maybeSingle();
+
+    if (dayError) {
+      console.error("Attendance day load failed:", dayError);
+      return NextResponse.json(
+        { error: "Unable to verify your attendance status." },
+        { status: 500 }
+      );
+    }
+
+    // Check whether another correction is already pending.
+    const { data: pendingCorrection, error: pendingError } = await supabase
+      .from("attendance_corrections")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("user_id", user.id)
+      .eq("work_date", b.workDate)
+      .eq("status", "pending")
+      .limit(1)
+      .maybeSingle();
+
+    if (pendingError) {
+      console.error("Pending correction check failed:", pendingError);
+      return NextResponse.json(
+        { error: "Unable to verify existing correction requests." },
+        { status: 500 }
+      );
+    }
+
+    // Recalculate the attendance status using current events and schedule.
+    const dayEvaluation = evaluateDay({
+      schedule: s,
+      checkIn: orig.checkIn,
+      checkOut: orig.checkOut,
+      now: Date.now(),
+      onApprovedLeave: attendanceDay?.status === "on_leave",
+      isHoliday: attendanceDay?.status === "holiday",
+      hasPendingCorrection: Boolean(pendingCorrection),
+      absenceConfirmed: attendanceDay?.status === "absent_confirmed",
+    });
+
+    const currentStatus = dayEvaluation.status;
+
+    // A present employee cannot submit an attendance correction.
+    if (currentStatus === "present") {
+      return NextResponse.json(
+        {
+          error: "Your attendance is already complete. Correction requests are not allowed.",
+          attendanceStatus: currentStatus,
+        },
+        { status: 409 }
+      );
+    }
 
     const toMs = (v: any): number | null | "bad" => {
       if (v == null) return null;

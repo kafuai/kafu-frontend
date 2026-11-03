@@ -662,13 +662,16 @@ export default function AttendancePage() {
                           )}
                         </td>
                         <td className="px-4 py-3.5">
-                          <button
-                            type="button"
-                            onClick={() => openFix(r.date)}
-                            className="rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-2.5 py-1.5 text-[11px] font-black text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)]"
-                          >
-                            {copy.fix}
-                          </button>
+                          {["late", "early_leave", "late_early_leave", "incomplete", "possible_absence","absent_confirmed"].includes(r.status) && (
+                            <button
+                              type="button"
+                              onClick={() => openFix(r.date)}
+                              className="inline-flex items-center gap-x-1.5 whitespace-nowrap rounded-lg border border-[var(--border-default)] bg-[var(--surface)] px-2.5 py-1.5 text-[11px] font-black text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)]"
+                            >
+                              <FilePenLine size={16} />
+                              {copy.fix}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

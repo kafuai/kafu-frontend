@@ -15,6 +15,7 @@ export function localizeErrorMessage(message: unknown, locale?: "ar" | "en"): st
   const value = raw.toLowerCase().replace(/[.!]+$/g, "").trim();
   const rules: Array<[RegExp, string, string]> = [
     [/unauthorized|not authenticated|authentication required|sign in/, "يرجى تسجيل الدخول مرة أخرى.", "Please sign in again."],
+    [/attendance is already complete|correction requests are not allowed/,"حضورك مكتمل بالفعل، ولا يمكنك تقديم طلب تصحيح لهذا اليوم.","Your attendance is already complete. You cannot submit a correction request for this day."],
     [/forbidden|permission|not allowed|unauthorized|not authorized|access denied/, "ليس لديك صلاحية لتنفيذ هذه العملية.", "You do not have permission to perform this action."],
     [/workspace not found|organization not found|company not found/, "تعذر العثور على مساحة العمل.", "Workspace not found."],
     [/invalid (json )?body|invalid request|bad request|invalid values|nothing to update/, "الطلب غير صحيح. تحقق من البيانات المدخلة.", "Invalid request. Check the entered data."],
