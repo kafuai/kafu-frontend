@@ -305,6 +305,7 @@ export default function EmployeesPage() {
         none: "—",
         currency: "ر.س",
         missing: "بيانات غير مكتملة",
+        invalidContractType: "لا يمكن انه يكون العقد غير محدد المدة للموظف غير السعودي",
       }
     : {
         badge: "PAYROLL",
@@ -381,6 +382,7 @@ export default function EmployeesPage() {
         none: "—",
         currency: "SAR",
         missing: "Incomplete data",
+        invalidContractType: "Contract cannot be indefinite for non-Saudi employee",
       };
 
 function getRoleLabel(role: string | null) {
@@ -633,6 +635,11 @@ function getRoleLabel(role: string | null) {
    
     if (form.contract_end_date && form.contract_start_date && form.contract_end_date < form.contract_start_date) {
       setFormError(copy.invalidDates);
+      return;
+    }
+
+    if (form.contract_type === "indefinite" && form.nationality.toLowerCase() !== "saudi arabia") {
+      setFormError(copy.invalidContractType);
       return;
     }
 
