@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     let q = supabase
       .from("attendance_deduction_proposals")
       .select(
-        "id,user_id,incident_type,incident_date,scheduled_start,actual_at,minutes,original_amount,final_amount,status,explanation,adjustment_reason,decision_note,decided_by,decided_at,created_at",
+        "id,user_id,incident_type,incident_date,scheduled_start,actual_at,minutes,original_amount,final_amount,status,explanation,adjustment_reason,decision_note,decided_by,decided_at,created_at,resolution_type,leave_days,leave_year",
       )
       .eq("organization_id", organizationId)
       .order("incident_date", { ascending: false })
@@ -58,6 +58,7 @@ export async function GET(request: Request) {
         userName: names.get(r.user_id) ?? r.user_id,
         decidedByName: r.decided_by ? names.get(r.decided_by) ?? null : null,
         appliedToPayroll: applied.has(r.id),
+        appliedToLeave: r.resolution_type === "annual_leave" && r.status === "approved",
       })),
     });
   } catch (error) {

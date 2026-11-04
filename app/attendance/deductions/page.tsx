@@ -50,7 +50,12 @@ export default function AttendanceDeductionsPage() {
         approve: "اعتماد", reject: "رفض", adjust: "تعديل المبلغ", cancel: "إلغاء",
         newAmount: "المبلغ الجديد", diff: "الفرق عن الأصلي", reasonPh: "اكتب سبب التعديل...",
         confirm: "أؤكد اعتماد المبلغ المعدّل", save: "حفظ القرار", saving: "جارٍ الحفظ...",
-        inPayroll: "أُدرج في المسير", saved: "تم حفظ القرار.", policySaved: "تم اعتماد السياسة.",
+        inPayroll: "أُدرج في المسير", leaveApplied: "خُصم من الإجازة السنوية", leaveDeduct: "خصم يوم من الإجازة السنوية",
+        leaveConfirm: "هل تريد خصم يوم واحد من رصيد الإجازة السنوية لهذا الموظف؟ سيتم تحديث رصيده مباشرة.",
+        leaveReverse: "عكس خصم الإجازة السنوية", leaveReverseConfirm: "هل تريد إلغاء خصم الإجازة وإعادة الأيام إلى رصيد الموظف؟",
+        resolutionTitle: "طريقة معالجة الغياب", payrollChoice: "خصم مبلغ من الراتب", leaveChoice: "خصم من الإجازة السنوية",
+        proposedAmount: "المبلغ المقترح", proposedLeaveDays: "أيام الإجازة المقترحة", leaveDaysHint: "يمكنك تعديل عدد الأيام، مثل 1 أو 1.5 أو 2.",
+        saved: "تم حفظ القرار.", policySaved: "تم اعتماد السياسة.",
         noAmount: "لا يوجد مبلغ محسوب (لا سياسة معتمدة)", awaiting: "بانتظار المبلغ",
         needsAmountHint: "لا يوجد مبلغ محسوب لهذه الواقعة. حدّد المبلغ يدويًا عبر «تعديل المبلغ» مع ذكر السبب.",
         extraHint: "هذا الخصم يخص حسابك أنت. لا يمكنك اعتماده أو رفضه بنفسك، ويحتاج إلى owner آخر.",
@@ -87,7 +92,12 @@ export default function AttendanceDeductionsPage() {
         approve: "Approve", reject: "Reject", adjust: "Adjust amount", cancel: "Cancel",
         newAmount: "New amount", diff: "Difference from original", reasonPh: "Write the adjustment reason...",
         confirm: "I confirm the adjusted amount", save: "Save decision", saving: "Saving...",
-        inPayroll: "Included in payroll", saved: "Decision saved.", policySaved: "Policy approved.",
+        inPayroll: "Included in payroll", leaveApplied: "Deducted from annual leave", leaveDeduct: "Deduct 1 day from annual leave",
+        leaveConfirm: "Deduct one day from this employee's annual leave balance? The balance will be updated immediately.",
+        leaveReverse: "Reverse annual leave deduction", leaveReverseConfirm: "Reverse this leave deduction and return the days to the employee's balance?",
+        resolutionTitle: "Absence resolution", payrollChoice: "Deduct an amount from payroll", leaveChoice: "Deduct from annual leave",
+        proposedAmount: "Proposed amount", proposedLeaveDays: "Proposed leave days", leaveDaysHint: "You can adjust the number of days, e.g. 1, 1.5 or 2.",
+        saved: "Decision saved.", policySaved: "Policy approved.",
         noAmount: "No calculated amount (no approved policy)", awaiting: "Amount pending",
         needsAmountHint: "There is no calculated amount for this incident. Set the amount manually via “Adjust amount” with a reason.",
         extraHint: "This deduction is about your own account. You cannot approve or reject it yourself; another owner must.",
@@ -118,6 +128,8 @@ export default function AttendanceDeductionsPage() {
   const [selectedId, setSelectedId] = useState("");
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [adj, setAdj] = useState({ amount: "", reason: "", confirm: false });
+  const [resolutionType, setResolutionType] = useState<"payroll" | "annual_leave">("payroll");
+  const [leaveDays, setLeaveDays] = useState("1");
   const [pf, setPf] = useState<Record<string, any>>({});
 
   const load = useCallback(async () => {
@@ -156,13 +168,15 @@ export default function AttendanceDeductionsPage() {
 
   useEffect(() => {
     setIsAdjusting(false);
+    setResolutionType("payroll");
+    setLeaveDays("1");
   }, [selectedId]);
 
   const selected = filtered.find((r) => r.id === selectedId) ?? null;
 
   const stats = useMemo(() => {
     const ready = rows
-      .filter((r) => r.status === "approved" && !r.appliedToPayroll)
+      .filter((r) => r.status === "approved" && r.resolution_type !== "annual_leave" && !r.appliedToPayroll)
       .reduce((sum, r) => sum + Number(r.final_amount ?? 0), 0);
     return [
       { code: "REV", label: copy.statReview, value: String(rows.filter((r) => ["needs_review", "in_review"].includes(r.status)).length), note: copy.statReviewNote },
@@ -391,7 +405,9 @@ export default function AttendanceDeductionsPage() {
                             {p.minutes ? ` (${p.minutes} ${copy.minShort})` : ""}
                           </span>
                           <span className="shrink-0 font-black">
-                            {amountOf(p) === null ? copy.awaiting : fmtMoney(amountOf(p), isArabic)}
+                            {p.resolution_type === "annual_leave"
+                              ? `${Number(p.leave_days ?? 1)} ${isArabic ? "يوم إجازة" : "leave day(s)"}`
+                              : amountOf(p) === null ? copy.awaiting : fmtMoney(amountOf(p), isArabic)}
                           </span>
                         </div>
                       </button>
@@ -411,6 +427,7 @@ export default function AttendanceDeductionsPage() {
                   {selected ? (() => {
                     const p = selected;
                     const open = OPEN.includes(p.status) && !p.appliedToPayroll;
+                    const canReverseLeave = p.status === "approved" && p.resolution_type === "annual_leave";
                     const newAmt = Number(adj.amount);
                     const adjusted = p.final_amount !== null && p.original_amount !== p.final_amount;
 
@@ -432,6 +449,11 @@ export default function AttendanceDeductionsPage() {
                                 {copy.inPayroll}
                               </span>
                             )}
+                            {p.appliedToLeave && (
+                              <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-black text-blue-800">
+                                {copy.leaveApplied} · {Number(p.leave_days ?? 1)}
+                              </span>
+                            )}
                             <StatusBadge status={p.status} isArabic={isArabic} />
                           </div>
                         </div>
@@ -445,6 +467,74 @@ export default function AttendanceDeductionsPage() {
                             </span>
                           </div>
 
+                          {open && p.incident_type === "absence" && (
+                            <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-4">
+                              <h3 className="mb-3 text-sm font-black">{copy.resolutionTitle}</h3>
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
+                                  resolutionType === "payroll"
+                                    ? "border-[var(--brand-primary)] bg-[var(--brand-subtle)]"
+                                    : "border-[var(--border-default)] bg-[var(--surface-muted)]"
+                                }`}>
+                                  <input
+                                    type="radio"
+                                    name="absence-resolution"
+                                    className="mt-1 h-4 w-4 accent-[var(--brand-primary)]"
+                                    checked={resolutionType === "payroll"}
+                                    onChange={() => setResolutionType("payroll")}
+                                  />
+                                  <span className="text-sm font-black">{copy.payrollChoice}</span>
+                                </label>
+                                <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
+                                  resolutionType === "annual_leave"
+                                    ? "border-[var(--brand-primary)] bg-[var(--brand-subtle)]"
+                                    : "border-[var(--border-default)] bg-[var(--surface-muted)]"
+                                }`}>
+                                  <input
+                                    type="radio"
+                                    name="absence-resolution"
+                                    className="mt-1 h-4 w-4 accent-[var(--brand-primary)]"
+                                    checked={resolutionType === "annual_leave"}
+                                    onChange={() => setResolutionType("annual_leave")}
+                                  />
+                                  <span className="text-sm font-black">{copy.leaveChoice}</span>
+                                </label>
+                              </div>
+
+                              {resolutionType === "payroll" ? (
+                                <div className="mt-4 rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+                                  <span className="block text-xs font-black text-[var(--text-muted)]">{copy.proposedAmount}</span>
+                                  <span className="mt-1 block text-lg font-black">
+                                    {p.original_amount === null ? copy.noAmount : fmtMoney(p.final_amount ?? p.original_amount, isArabic)}
+                                  </span>
+                                  <p className="mt-1 text-xs text-[var(--text-secondary)]">{copy.needsAmountHint}</p>
+                                </div>
+                              ) : (
+                                <div className="mt-4">
+                                  <label className={labelCls}>
+                                    {copy.proposedLeaveDays}
+                                    <input
+                                      type="number"
+                                      min="0.5"
+                                      max="366"
+                                      step="0.5"
+                                      dir="ltr"
+                                      className={inputCls}
+                                      value={leaveDays}
+                                      onChange={(e) => setLeaveDays(e.target.value)}
+                                    />
+                                  </label>
+                                  <p className="mt-2 text-xs font-bold text-[var(--text-secondary)]">{copy.leaveDaysHint}</p>
+                                </div>
+                              )}
+                            </section>
+                          )}
+
+                          {p.resolution_type === "annual_leave" ? (
+                            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm font-black text-blue-900">
+                              {copy.leaveApplied}: {Number(p.leave_days ?? 1)} {isArabic ? "يوم" : "day(s)"} · {p.leave_year}
+                            </div>
+                          ) : (
                           <div className="grid gap-3 sm:grid-cols-2">
                             <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
                               <span className="mb-2 block text-xs font-black text-[var(--text-muted)]">{copy.orig}</span>
@@ -459,6 +549,7 @@ export default function AttendanceDeductionsPage() {
                               </div>
                             )}
                           </div>
+                          )}
 
                           {open && p.original_amount === null && (
                             <p className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-bold leading-6 text-amber-900">
@@ -500,22 +591,61 @@ export default function AttendanceDeductionsPage() {
                           )}
                         </div>
 
-                        {/* Actions */}
-                        {open && !isAdjusting && (
-                          <div className="flex flex-wrap gap-3 border-t border-[var(--border-default)] bg-[var(--surface-muted)] p-5">
-                            {p.original_amount !== null && (
-                              <button type="button" className={primaryBtn} disabled={busy} onClick={() => void decide(p.id, { action: "approve" })}>
-                                <Check size={16} /> {copy.approve}
-                              </button>
-                            )}
+                        {/* Reverse an already-applied annual leave deduction */}
+                        {canReverseLeave && (
+                          <div className="border-t border-[var(--border-default)] bg-[var(--surface-muted)] p-5">
                             <button
                               type="button"
                               className={ghostBtn}
                               disabled={busy}
-                              onClick={() => { setIsAdjusting(true); setAdj({ amount: String(p.original_amount ?? ""), reason: "", confirm: false }); }}
+                              onClick={() => {
+                                if (window.confirm(copy.leaveReverseConfirm)) {
+                                  void decide(p.id, { action: "reverse_annual_leave", confirm: true });
+                                }
+                              }}
                             >
-                              <Edit size={16} /> {copy.adjust}
+                              <X size={16} /> {copy.leaveReverse}
                             </button>
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        {open && !isAdjusting && (
+                          <div className="flex flex-wrap gap-3 border-t border-[var(--border-default)] bg-[var(--surface-muted)] p-5">
+                            {p.incident_type === "absence" && resolutionType === "annual_leave" ? (
+                              <button
+                                type="button"
+                                className={primaryBtn}
+                                disabled={busy || !Number.isFinite(Number(leaveDays)) || Number(leaveDays) <= 0 || Number(leaveDays) > 366}
+                                onClick={() => {
+                                  if (window.confirm(copy.leaveConfirm)) {
+                                    void decide(p.id, {
+                                      action: "deduct_annual_leave",
+                                      leaveDays: Number(leaveDays),
+                                      confirm: true,
+                                    });
+                                  }
+                                }}
+                              >
+                                <Check size={16} /> {copy.leaveDeduct}
+                              </button>
+                            ) : (
+                              p.original_amount !== null && (
+                                <button type="button" className={primaryBtn} disabled={busy} onClick={() => void decide(p.id, { action: "approve" })}>
+                                  <Check size={16} /> {copy.approve}
+                                </button>
+                              )
+                            )}
+                            {!(p.incident_type === "absence" && resolutionType === "annual_leave") && (
+                              <button
+                                type="button"
+                                className={ghostBtn}
+                                disabled={busy}
+                                onClick={() => { setIsAdjusting(true); setAdj({ amount: String(p.original_amount ?? ""), reason: "", confirm: false }); }}
+                              >
+                                <Edit size={16} /> {copy.adjust}
+                              </button>
+                            )}
                             <button type="button" className={dangerBtn} disabled={busy} onClick={() => void decide(p.id, { action: "reject" })}>
                               <X size={16} /> {copy.reject}
                             </button>

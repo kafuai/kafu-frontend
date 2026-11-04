@@ -198,6 +198,7 @@ export async function POST(request: Request) {
       .from("attendance_deduction_proposals")
       .select("id, user_id, payroll_employee_id, final_amount")
       .eq("organization_id", organizationId)
+      .neq("resolution_type", "annual_leave")
       .in("status", ["approved", "apply_failed"])
       .not("final_amount", "is", null)
       .gt("final_amount", 0)

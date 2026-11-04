@@ -11,6 +11,7 @@ export interface CompanyPolicy {
   content: string;
   createdAt: string;
   updatedAt: string;
+  leaveAllowances: Partial<Record<Exclude<LeaveType, "other">, { covered: boolean; days: number | null }>> | null;
 }
 // Must stay in sync with the policy_type values in TYPE_KEYWORDS.leave
 const LEAVE_TYPE_TO_POLICY_TYPE: Record<LeaveType, string | null> = {
@@ -32,6 +33,7 @@ type PolicyRow = {
   content: string;
   created_at: string;
   updated_at: string;
+  leave_allowances: CompanyPolicy["leaveAllowances"];
 };
 
 export interface CreatePolicyInput {
@@ -61,7 +63,7 @@ const LEAVE_TYPE_POLICY_TERMS: Record<LeaveType, string[]> = {
 
 // CHANGED: single place for the column list (policy_type added)
 const POLICY_COLUMNS =
-  "id,organization_id,company_id,category,policy_type,title,content,created_at,updated_at";
+  "id,organization_id,company_id,category,policy_type,title,content,created_at,updated_at,leave_allowances";
 
 // CHANGED: dedicated error so routes can return 409 instead of 500
 export class PolicyDuplicateError extends Error {
@@ -331,6 +333,9 @@ export class PolicyManager {
           : {}),
         ...(input.title ? { title: input.title.trim() } : {}),
         ...(input.content ? { content: input.content.trim() } : {}),
+        ...((input.content !== undefined || input.category !== undefined || input.policyType !== undefined)
+          ? { leave_allowances: null }
+          : {}),
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -352,6 +357,22 @@ export class PolicyManager {
     }
 
     return this.mapRow(data as PolicyRow);
+  }
+
+  async saveLeaveAllowances(
+    id: string,
+    organizationId: string,
+    allowances: NonNullable<CompanyPolicy["leaveAllowances"]>,
+  ): Promise<void> {
+    const { error } = await this.supabase
+      .from("company_policies")
+      .update({ leave_allowances: allowances })
+      .eq("id", id)
+      .eq("organization_id", organizationId);
+
+    if (error) {
+      throw new Error(`Unable to save extracted leave allowances: ${error.message}`);
+    }
   }
 
   async delete(id: string, organizationId: string): Promise<void> {
@@ -510,7 +531,7 @@ export class PolicyManager {
       .filter((word) => word.length > 2);
 
       
-    const scored = policies.map((policy) => {
+    const scored = pool.map((policy) => {
       const title = policy.title.toLowerCase();
       const content = policy.content.toLowerCase();
 
@@ -552,6 +573,7 @@ export class PolicyManager {
       content: row.content,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+      leaveAllowances: row.leave_allowances ?? null,
     };
   }
 }
