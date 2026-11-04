@@ -58,7 +58,7 @@ export default function AttendanceDeductionsPage() {
         saved: "تم حفظ القرار.", policySaved: "تم اعتماد السياسة.",
         noAmount: "لا يوجد مبلغ محسوب (لا سياسة معتمدة)", awaiting: "بانتظار المبلغ",
         needsAmountHint: "لا يوجد مبلغ محسوب لهذه الواقعة. حدّد المبلغ يدويًا عبر «تعديل المبلغ» مع ذكر السبب.",
-        extraHint: "هذا الخصم يخص حسابك أنت. لا يمكنك اعتماده أو رفضه بنفسك، ويحتاج إلى owner آخر.",
+        extraHint: "يحتاج الى اعتماد اضافي.",
         decidedBy: "قرار بواسطة", minShort: "د",
         types: { late: "تأخير", early_leave: "انصراف مبكر", absence: "غياب" } as Record<string, string>,
         statuses: {

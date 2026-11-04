@@ -244,8 +244,10 @@ export class ApprovalRepository {
   async listMembers(org: string): Promise<{ userId: string; role: string; name: string }[]> {
     const { data, error } = await this.db.from("organization_memberships").select("user_id,role").eq("organization_id", org);
     if (error) fail("list members", error);
-    const names = await this.profileNames((data ?? []).map((m) => m.user_id as string));
-    return (data ?? []).map((m) => ({
+    // Only users who can act as approvers should be selectable in workflow settings.
+    const eligible = (data ?? []).filter((m) => ["owner", "manager"].includes(String(m.role ?? "").toLowerCase()));
+    const names = await this.profileNames(eligible.map((m) => m.user_id as string));
+    return eligible.map((m) => ({
       userId: m.user_id as string, role: String(m.role ?? ""), name: names.get(m.user_id as string) ?? (m.user_id as string),
     }));
   }

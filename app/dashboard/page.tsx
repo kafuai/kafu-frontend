@@ -56,6 +56,16 @@ type AttendanceToday = {
     checkIn: string | null;
     checkOut: string | null;
     shiftName: string;
+    timezone?: string;
+    live?: { status?: string; lateMinutes?: number };
+  } | null;
+  next?: {
+    shiftName: string;
+    start: string;
+    end: string;
+    timezone: string;
+    checkIn: string | null;
+    checkOut: string | null;
     live?: { status?: string; lateMinutes?: number };
   } | null;
   canCheckIn?: boolean;
@@ -70,17 +80,17 @@ function formatDate(value: string, locale: string) {
   }).format(new Date(`${value}T12:00:00`));
 }
 
-function formatTime(value: string | null | undefined, locale: string) {
+function formatTime(value: string | null | undefined, locale: string, timezone = "Asia/Riyadh") {
   if (!value) return locale === "ar" ? "لم يُسجّل بعد" : "Not recorded";
   return new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en", {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Asia/Riyadh",
+    timeZone: timezone,
   }).format(new Date(value));
 }
 
 function attendanceStatus(attendance: AttendanceToday | null, locale: string) {
-  const view = attendance?.current ?? attendance?.recent ?? null;
+  const view = attendance?.current ?? attendance?.recent ?? attendance?.next ?? null;
   if (!view) {
     if (attendance?.blockedReason === "no_assignment") return locale === "ar" ? "لا توجد وردية مسندة" : "No shift assigned";
     if (attendance?.blockedReason === "on_leave") return locale === "ar" ? "إجازة معتمدة" : "Approved leave";
@@ -137,9 +147,9 @@ export default function DashboardPage() {
     title: "لوحة التحكم", welcome: "مرحبًا", subtitle: "ملخصك اليومي ومسارات الوصول إلى وظائف KAFU AI.",
     profile: "الملف الشخصي", job: "المسمى الوظيفي", department: "الإدارة / القسم",
     employeeNumber: "الرقم الوظيفي", unavailable: "غير متوفر", personalTitle: "بياناتك الوظيفية",
-    attendanceTitle: "الحضور والانصراف اليوم", shift: "الوردية", checkIn: "وقت الحضور",
+    attendanceTitle: "الحضور والانصراف اليوم", shift: "الوردية", checkIn: "وقت الحضور", lateBy: "مدة التأخير بالدقائق",
     checkOut: "وقت الانصراف", openAttendance: "فتح نظام الحضور", noShift: "لا توجد وردية مسندة حاليًا",
-    recentShift: "آخر دوام", checkoutHint: "يمكنك تسجيل الانصراف من صفحة الحضور.",
+    recentShift: "آخر دوام", nextShift: "الوردية القادمة", checkoutHint: "يمكنك تسجيل الانصراف من صفحة الحضور.",
     linksTitle: "الوصول السريع", employeeExperience: "خدمات الموظف", employeeExperienceDesc: "المساعد والطلبات والخدمات المتاحة لحسابك",
     attendance: "الحضور والانصراف", attendanceDesc: "تسجيل حضورك وانصرافك ومراجعة سجلك",
     profileDesc: "عرض بياناتك الوظيفية وتحديث البيانات المتاحة",
@@ -158,8 +168,8 @@ export default function DashboardPage() {
     title: "Dashboard", welcome: "Welcome", subtitle: "Your daily summary and shortcuts to KAFU AI.",
     profile: "Profile", job: "Job title", department: "Department", employeeNumber: "Employee number",
     unavailable: "Not available", personalTitle: "Your employment details", attendanceTitle: "Today's attendance",
-    shift: "Shift", checkIn: "Check-in", checkOut: "Check-out", openAttendance: "Open attendance",
-    noShift: "No current shift assigned", recentShift: "Last shift", checkoutHint: "You can check out from the attendance page.",
+    shift: "Shift", checkIn: "Check-in", checkOut: "Check-out", lateBy: "Minutes late", openAttendance: "Open attendance",
+    noShift: "No current shift assigned", recentShift: "Last shift", checkoutHint: "You can check out from the attendance page.", nextShift: "Upcoming shift",
     linksTitle: "Quick access", employeeExperience: "Employee services",
     employeeExperienceDesc: "Assistant, requests and services available to your account",
     attendance: "Attendance", attendanceDesc: "Check in/out and review your record",
@@ -207,6 +217,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     void Promise.resolve().then(() => load());
+    const refreshAttendance = async () => {
+      try {
+        const response = await fetch("/api/attendance/today", { cache: "no-store" });
+        if (!response.ok) throw new Error("attendance");
+        setAttendance(await response.json());
+        setAttendanceState("loaded");
+      } catch {
+        setAttendance(null);
+        setAttendanceState("error");
+      }
+    };
+    const interval = window.setInterval(() => void refreshAttendance(), 30_000);
+    return () => window.clearInterval(interval);
   }, [load]);
 
   const Arrow = isArabic ? ArrowLeft : ArrowRight;
@@ -264,7 +287,7 @@ export default function DashboardPage() {
   const person = data.personal;
   const shownName = person.fullName?.trim() || copy.profile;
   const roleIsOwner = data.role === "owner";
-  const attView = attendance?.current ?? attendance?.recent ?? null;
+  const attView = attendance?.current ?? attendance?.recent ?? attendance?.next ?? null;
   const showCheckoutHint = !attendance?.current && Boolean(attendance?.canCheckOut);
 
   const quickLinks = [
@@ -370,20 +393,25 @@ export default function DashboardPage() {
               {attendanceState === "loaded" && (
                 <>
                   <p className="text-xl font-black">{attendanceStatus(attendance, locale)}</p>
+                  {(attView?.live?.status === "late" && (attView.live.lateMinutes ?? 0) > 0) && (
+                    <p className="mt-1 text-xs font-black text-amber-700">
+                      {copy.lateBy}: {attView.live.lateMinutes}
+                    </p>
+                  )}
 
                   {attView ? (
                     <>
                       <p className="mt-1 text-xs font-bold text-[var(--text-secondary)]">
-                        {attendance?.current ? copy.shift : copy.recentShift}: {attView.shiftName}
+                       {attendance?.current? copy.shift: attendance?.recent? copy.recentShift: attendance?.next? copy.nextShift: copy.shift}: {attView.shiftName}
                       </p>
                       <div className="mt-4 grid grid-cols-2 gap-3">
                         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
                           <p className={labelCls}>{copy.checkIn}</p>
-                          <p className="mt-2 font-black">{formatTime(attView.checkIn, locale)}</p>
+                          <p className="mt-2 font-black">{formatTime(attView.checkIn, locale, attView.timezone)}</p>
                         </div>
                         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
                           <p className={labelCls}>{copy.checkOut}</p>
-                          <p className="mt-2 font-black">{formatTime(attView.checkOut, locale)}</p>
+                          <p className="mt-2 font-black">{formatTime(attView.checkOut, locale, attView.timezone)}</p>
                         </div>
                       </div>
                       {showCheckoutHint && (

@@ -9,6 +9,8 @@ import { LeaveManager, toDateKey } from "@/src/enterprise/business/leave";
 import { CHECKOUT_GRACE_MINUTES, DEFAULT_TZ } from "@/src/enterprise/business/attendance/utils/schedule";
 import { dateKeyInTz } from "@/src/enterprise/business/attendance/utils/time";
 
+const MINUTE_MS = 60_000;
+
 export async function GET() {
   try {
     const ctx = await getAttendanceContext(PERMISSIONS.ATTENDANCE_USE);
@@ -36,11 +38,12 @@ export async function GET() {
       const s = c.schedule;
       const from = new Date(s.start - s.earlyCheckinMinutes * 60_000).toISOString();
       const to = new Date(s.end + 6 * 3_600_000).toISOString();
-      const { data: evs } = await supabase
+      const { data: evs, error: eventsError } = await supabase
         .from("attendance_events")
         .select("event_type,source,occurred_at,created_at")
         .eq("organization_id", organizationId).eq("user_id", user.id)
         .gte("occurred_at", from).lte("occurred_at", to);
+      if (eventsError) throw new Error(eventsError.message);
       const { checkIn, checkOut } = pickEffectiveEvents((evs ?? []) as any, s);
       const onLeave = leaves.some((l) => toDateKey(l.startDate) <= s.workDate && toDateKey(l.endDate) >= s.workDate);
       const { data: holidayRows, error: holidayError } = await admin
@@ -64,6 +67,15 @@ export async function GET() {
         schedule: s, checkIn, checkOut, now,
         onApprovedLeave: onLeave, isHoliday: isOfficialHoliday && !holidayWorkAllowed, hasPendingCorrection: false, absenceConfirmed: false,
       });
+      // Match the live lateness calculation used by the attendance history APIs.
+      // This is a display-only state; it does not create or persist an absence/deduction.
+      if (
+        live.status === "scheduled" && checkIn === null &&
+        now > s.start + s.graceMinutes * MINUTE_MS && now <= s.end
+      ) {
+        live.status = "late";
+        live.lateMinutes = Math.floor((now - s.start) / MINUTE_MS);
+      }
       return {
         shiftName: c.shift.name,
         workDate: s.workDate,

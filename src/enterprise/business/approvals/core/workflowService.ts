@@ -59,6 +59,9 @@ export async function validateSteps(repo: ApprovalRepository, org: string, raw: 
     if (userIds.some((id) => !roles.has(id))) {
       throw new ApprovalError("INVALID_APPROVER", "A selected user is not a member of this company.", 422);
     }
+    if (userIds.some((id) => !ASSIGNABLE_ROLES.includes(roles.get(id) as (typeof ASSIGNABLE_ROLES)[number]))) {
+      throw new ApprovalError("INVALID_APPROVER", "A specific user approver must have the Owner or Manager role.", 422);
+    }
   }
   return steps;
 }
