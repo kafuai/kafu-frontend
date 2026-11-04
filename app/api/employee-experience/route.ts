@@ -170,18 +170,18 @@ export async function GET(request: Request) {
 
     const { data: previousUsageRows, error: previousUsageError } = await adminClient
       .from("employee_leave_usage")
-      .select("employee_user_id, leave_type, leave_year, used_days, usage_through_date")
+      .select("employee_user_id, leave_type, leave_year, used_days")
       .eq("organization_id", identity.organizationId);
 
     if (previousUsageError) {
       throw new Error(`Unable to load previous leave usage: ${previousUsageError.message}`);
     }
 
-    const previousUsageByEmployee = new Map<string, { days: number; throughDate: string }>();
+    const previousUsageByEmployee = new Map<string, { days: number }>();
     for (const row of previousUsageRows ?? []) {
       previousUsageByEmployee.set(
         `${row.employee_user_id}:${row.leave_type}:${row.leave_year}`,
-        { days: Number(row.used_days), throughDate: row.usage_through_date },
+        { days: Number(row.used_days) },
       );
     }
 

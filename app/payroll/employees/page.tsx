@@ -200,7 +200,9 @@ export default function EmployeesPage() {
   const [leaveUsage, setLeaveUsage] = useState<Record<LeaveUsageType, string>>({
     annual: "0", sick: "0", emergency: "0", unpaid: "0", maternity: "0",
   });
-  const [leaveUsageThroughDate, setLeaveUsageThroughDate] = useState(currentRiyadhDate);
+  const [leaveUsageInitialized, setLeaveUsageInitialized] = useState(false);
+  const [leaveUsageLastUpdatedBy, setLeaveUsageLastUpdatedBy] = useState<string | null>(null);
+  const [leaveUsageLastUpdatedAt, setLeaveUsageLastUpdatedAt] = useState<string | null>(null);
   const [leaveUsageLoading, setLeaveUsageLoading] = useState(false);
   const [leaveUsageSaving, setLeaveUsageSaving] = useState(false);
   const [leaveUsageError, setLeaveUsageError] = useState("");
@@ -515,6 +517,7 @@ function getRoleLabel(role: string | null) {
   }
 
   async function loadPreviousLeaveUsage(employeeUserId: string) {
+    setLeaveUsageInitialized(false);
     setLeaveUsageLoading(true);
     setLeaveUsageError("");
     setLeaveUsageNotice("");
@@ -528,9 +531,16 @@ function getRoleLabel(role: string | null) {
       const nextUsage: Record<LeaveUsageType, string> = {
         annual: "0", sick: "0", emergency: "0", unpaid: "0", maternity: "0",
       };
-      for (const type of LEAVE_USAGE_TYPES) nextUsage[type] = String(payload.usage?.[type] ?? 0);
+      const initialized = Boolean(payload.initialized);
+      // Before first setup, these inputs are the historical baseline only.
+      // Any KAFU-approved usage already in the counter is preserved and added by initialization.
+      if (initialized) {
+        for (const type of LEAVE_USAGE_TYPES) nextUsage[type] = String(payload.usage?.[type] ?? 0);
+      }
       setLeaveUsage(nextUsage);
-      setLeaveUsageThroughDate(payload.usageThroughDate || currentRiyadhDate());
+      setLeaveUsageInitialized(initialized);
+      setLeaveUsageLastUpdatedBy(payload.lastUpdatedByName ?? payload.lastUpdatedBy ?? null);
+      setLeaveUsageLastUpdatedAt(payload.lastUpdatedAt ?? null);
     } catch (error) {
       setLeaveUsageError(error instanceof Error ? error.message : "Unable to load previous leave usage.");
     } finally {
@@ -780,18 +790,20 @@ function getRoleLabel(role: string | null) {
     setLeaveUsageSaving(true);
     try {
       const response = await fetch("/api/payroll/employees/leave-usage", {
-        method: "PUT",
+        method: leaveUsageInitialized ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           employeeUserId: editingRow.user_id,
           leaveYear,
-          usageThroughDate: leaveUsageThroughDate,
           usage: parsedUsage,
         }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error ?? "Unable to save previous leave usage.");
-      setLeaveUsageNotice(isArabic ? "تم حفظ الإجازات المستخدمة سابقاً." : "Previous leave usage saved.");
+      await loadPreviousLeaveUsage(editingRow.user_id);
+      setLeaveUsageNotice(leaveUsageInitialized
+        ? (isArabic ? "تم حفظ التعديلات اليدوية وتسجيل آخر شخص قام بها." : "Manual changes saved. The latest editor has been recorded.")
+        : (isArabic ? "تمت تهيئة استهلاك الإجازات. سيحدّث النظام الرصيد تلقائياً بعد الاعتماد، ويمكنك تعديله يدوياً لاحقاً." : "Leave usage initialized. The system will update it automatically after approvals, and you can still edit it manually later."));
     } catch (error) {
       setLeaveUsageError(error instanceof Error ? error.message : "Unable to save previous leave usage.");
     } finally {
@@ -1373,31 +1385,18 @@ function getRoleLabel(role: string | null) {
                                         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                                           <div>
                                             <h3 className="text-sm font-black">
-                                              {isArabic ? "الإجازات المستخدمة سابقاً خلال السنة" : "Leave used earlier this year"}
+                                              {isArabic ? "استهلاك الإجازات للسنة الحالية" : "Current-year leave usage"}
                                             </h3>
                                             <p className="mt-1 text-xs leading-6 text-[var(--text-secondary)]">
-                                              {isArabic
-                                                ? "أدخل إجمالي الأيام المعتمدة حتى التاريخ المحدد، بما فيها ما تم اعتماده في KAFU AI قبل ذلك التاريخ. لا تُدخل الطلبات المعلقة."
-                                                : "Enter total approved leave days through the selected date, including KAFU AI requests approved by that date. Do not include pending requests."}
+                                              {leaveUsageInitialized
+                                                ? (isArabic ? "هذا الرصيد تراكمي ويُحدّث تلقائياً عند اعتماد الإجازات. يمكنك تصحيحه يدوياً في أي وقت." : "This cumulative counter updates automatically when leave is approved. You can manually correct it at any time.")
+                                                : (isArabic ? "أدخل الاستخدام التاريخي السابق لتفعيل KAFU AI فقط. لا تُدخل الإجازات التي اعتمدت داخل المنصة؛ فهي محفوظة وتُضاف تلقائياً، ولا تُدخل الطلبات المعلقة." : "Enter only historical usage from before KAFU AI tracking. Do not include leave already approved in KAFU AI; it is tracked and added automatically. Exclude pending requests.")}
                                             </p>
                                           </div>
                                           <span className="text-xs font-bold text-[var(--text-muted)]">
                                             {isArabic ? `السنة ${currentRiyadhDate().slice(0, 4)}` : `Year ${currentRiyadhDate().slice(0, 4)}`}
                                           </span>
                                         </div>
-
-                                        <label className={labelClass}>
-                                          {isArabic ? "احتساب الاستهلاك حتى تاريخ" : "Usage recorded through"}
-                                          <input
-                                            type="date"
-                                            value={leaveUsageThroughDate}
-                                            max={currentRiyadhDate()}
-                                            min={`${currentRiyadhDate().slice(0, 4)}-01-01`}
-                                            onChange={(event) => setLeaveUsageThroughDate(event.target.value)}
-                                            className={inputClass}
-                                            disabled={leaveUsageLoading || leaveUsageSaving}
-                                          />
-                                        </label>
 
                                         {leaveUsageLoading ? (
                                           <p className="text-sm text-[var(--text-secondary)]">{isArabic ? "جارٍ تحميل الأرصدة..." : "Loading leave usage..."}</p>
@@ -1422,7 +1421,7 @@ function getRoleLabel(role: string | null) {
                                                     value={leaveUsage[type]}
                                                     onChange={(event) => setLeaveUsage((current) => ({ ...current, [type]: event.target.value }))}
                                                     className={inputClass}
-                                                    disabled={leaveUsageSaving}
+                                                    disabled={leaveUsageLoading || leaveUsageSaving}
                                                   />
                                                 </label>
                                               );
@@ -1430,21 +1429,30 @@ function getRoleLabel(role: string | null) {
                                           </div>
                                         )}
 
+                                        {leaveUsageLastUpdatedAt && (
+                                          <p className="text-xs text-[var(--text-muted)]">
+                                            {isArabic ? "آخر تعديل: " : "Last updated: "}
+                                            {new Date(leaveUsageLastUpdatedAt).toLocaleString(isArabic ? "ar-SA" : "en-US", { timeZone: "Asia/Riyadh" })}
+                                            {leaveUsageLastUpdatedBy && ` · ${isArabic ? "بواسطة" : "by"} ${leaveUsageLastUpdatedBy}`}
+                                          </p>
+                                        )}
                                         {leaveUsageError && <p role="alert" className="text-sm font-bold text-rose-600">{leaveUsageError}</p>}
                                         {leaveUsageNotice && <p role="status" className="text-sm font-bold text-emerald-700">{leaveUsageNotice}</p>}
                                         <div className="flex justify-end">
-                                          <button
-                                            type="button"
-                                            onClick={() => void savePreviousLeaveUsage()}
-                                            disabled={leaveUsageLoading || leaveUsageSaving}
-                                            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)] px-4 text-sm font-black text-[var(--brand-primary)] transition hover:bg-[var(--brand-subtle)] disabled:cursor-not-allowed disabled:opacity-50"
-                                          >
-                                            {leaveUsageSaving && <LoaderCircle size={15} className="animate-spin" />}
-                                            {leaveUsageSaving
-                                              ? (isArabic ? "جارٍ حفظ الاستهلاك..." : "Saving usage...")
-                                              : (isArabic ? "حفظ استهلاك الإجازات" : "Save leave usage")}
-                                          </button>
-                                        </div>
+                                            <button
+                                              type="button"
+                                              onClick={() => void savePreviousLeaveUsage()}
+                                              disabled={leaveUsageLoading || leaveUsageSaving}
+                                              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)] px-4 text-sm font-black text-[var(--brand-primary)] transition hover:bg-[var(--brand-subtle)] disabled:cursor-not-allowed disabled:opacity-50"
+                                            >
+                                              {leaveUsageSaving && <LoaderCircle size={15} className="animate-spin" />}
+                                              {leaveUsageSaving
+                                                ? (isArabic ? "جارٍ حفظ الاستهلاك..." : "Saving usage...")
+                                                : leaveUsageInitialized
+                                                  ? (isArabic ? "حفظ التعديلات اليدوية" : "Save manual changes")
+                                                  : (isArabic ? "تهيئة استهلاك الإجازات" : "Initialize leave usage")}
+                                            </button>
+                                          </div>
                                       </section>
                                     )}
 

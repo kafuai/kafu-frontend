@@ -355,6 +355,27 @@ export default function EmployeeExperienceRequestsPage() {
     };
   }, [requests]);
 
+  async function handleCancelApprovedLeave(target: EmployeeRequest) {
+    const confirmed = window.confirm(isArabic
+      ? "هل تريد إلغاء الإجازة المعتمدة؟ سيتم عكس الأيام من رصيد الموظف."
+      : "Cancel this approved leave? Its days will be reversed from the employee's usage counter.");
+    if (!confirmed) return;
+
+    setActionState("working");
+    setActionMessage(null);
+    try {
+      const response = await fetch(`/api/employee-experience/requests/${target.id}/cancel`, { method: "POST" });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error ?? copy.actionFailed);
+      setActionMessage({ kind: "ok", text: copy.saved });
+      await loadRequests();
+    } catch (error) {
+      setActionMessage({ kind: "error", text: error instanceof Error ? error.message : copy.actionFailed });
+    } finally {
+      setActionState("idle");
+    }
+  }
+
   async function handleDecision(
     target: EmployeeRequest,
     decision: "approve" | "reject",
@@ -897,6 +918,15 @@ export default function EmployeeExperienceRequestsPage() {
                     <p className="text-center text-[11px] leading-5 text-[var(--text-muted)]">
                       {copy.notYourTurn}
                     </p>
+                  ) : canManage && selectedRequest.requestType === "leave" && selectedRequest.status === "approved" ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleCancelApprovedLeave(selectedRequest)}
+                      disabled={actionState === "working"}
+                      className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-200 bg-[var(--surface)] px-4 text-sm font-extrabold text-[var(--critical)] transition hover:bg-[var(--critical-background)] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isArabic ? "إلغاء الإجازة المعتمدة" : "Cancel approved leave"}
+                    </button>
                   ) : null}
                 </section>
               </div>

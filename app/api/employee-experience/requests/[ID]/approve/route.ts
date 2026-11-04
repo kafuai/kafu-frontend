@@ -68,8 +68,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "This request was already processed." }, { status: 409 });
     }
 
-    const leaveManager = new LeaveManager(supabase);
-    const leave = await leaveManager.approve(id, identity.organizationId);
+    const leaveManager = new LeaveManager(admin);
+    const leave = await leaveManager.approve(id, identity.organizationId, identity.userId);
 
     return NextResponse.json({
       data: {

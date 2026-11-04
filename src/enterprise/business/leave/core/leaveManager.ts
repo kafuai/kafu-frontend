@@ -247,44 +247,31 @@ export class LeaveManager {
   }
 
   async approve(
-  id: string,
-  organizationId: string,
-): Promise<LeaveRequest> {
-  const {
-    data,
-    error,
-  } = await this.supabase
-    .from("employee_requests")
-    .update({
-      status: "approved",
-      reviewed_by: await this.getCurrentUserId(),
-      reviewed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("request_type", "leave")
-    .eq("organization_id", organizationId) // <-- NEW: org scoping
-    .select(
-      "id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at, reviewed_by, reviewed_at",
-    )
-    .single();
+    id: string,
+    organizationId: string,
+    reviewerId: string,
+  ): Promise<LeaveRequest> {
+    const { error: rpcError } = await this.supabase.rpc("approve_leave_request_with_usage", {
+      p_request_id: id,
+      p_organization_id: organizationId,
+      p_reviewer_id: reviewerId,
+    });
+    if (rpcError) {
+      throw new Error(`Unable to approve leave request: ${rpcError.message}`);
+    }
 
-  if (error) {
-    throw new Error(
-      `Unable to approve leave request: ${error.message}`,
-    );
+    const { data, error } = await this.supabase
+      .from("employee_requests")
+      .select("id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at,reviewed_by,reviewed_at")
+      .eq("id", id)
+      .eq("organization_id", organizationId)
+      .eq("request_type", "leave")
+      .single();
+    if (error || !data) {
+      throw new Error(`Leave was approved but could not be reloaded: ${error?.message ?? "Request not found."}`);
+    }
+    return this.mapToLeaveRequest(data as EmployeeRequestRow);
   }
-
-  if (!data) {
-    throw new Error(
-      "Leave request not found.",
-    );
-  }
-
-  return this.mapToLeaveRequest(
-    data as EmployeeRequestRow,
-  );
-}
 
 async reject(
   id: string,
@@ -305,22 +292,19 @@ async reject(
     })
     .eq("id", id)
     .eq("request_type", "leave")
-    .eq("organization_id", organizationId) // <-- NEW: org scoping
+    .eq("organization_id", organizationId)
+    .eq("status", "pending")
     .select(
       "id,user_id,organization_id,company_id,request_type,status,description,request_data,created_at, reviewed_by, reviewed_at",
     )
-    .single();
+    .maybeSingle();
 
   if (error) {
-    throw new Error(
-      `Unable to reject leave request: ${error.message}`,
-    );
+    throw new Error(`Unable to reject leave request: ${error.message}`);
   }
 
   if (!data) {
-    throw new Error(
-      "Leave request not found.",
-    );
+    throw new Error("Leave request is no longer pending or was not found.");
   }
 
   return this.mapToLeaveRequest(
@@ -333,10 +317,10 @@ async reject(
     employeeId: string,
     leaveType: LeaveType,
     leaveYear: number,
-  ): Promise<{ days: number; throughDate: string } | null> {
+  ): Promise<{ days: number } | null> {
     const { data, error } = await this.supabase
       .from("employee_leave_usage")
-      .select("used_days, usage_through_date")
+      .select("used_days")
       .eq("organization_id", organizationId)
       .eq("employee_user_id", employeeId)
       .eq("leave_type", leaveType)
@@ -348,7 +332,7 @@ async reject(
     }
 
     return data
-      ? { days: Number(data.used_days), throughDate: data.usage_through_date }
+      ? { days: Number(data.used_days) }
       : null;
   }
 

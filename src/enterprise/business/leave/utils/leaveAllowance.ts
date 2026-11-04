@@ -5,8 +5,6 @@ type Locale = "ar" | "en";
 
 const DAY_MS = 86_400_000;
 
-const COUNT_PENDING_TOWARD_BALANCE = true;
-
 export function countLeaveDays(startDate: number, endDate: number): number {
   return Math.round((endDate - startDate) / DAY_MS) + 1;
 }
@@ -22,14 +20,6 @@ export interface LeaveBalance {
 
 export interface PreviousLeaveUsage {
   days: number;
-  throughDate: string;
-}
-
-function countLeaveDaysAfterDate(startDate: number, endDate: number, throughDate: string): number {
-  const cutoff = Date.parse(`${throughDate}T00:00:00.000Z`);
-  const firstDayAfterCutoff = cutoff + DAY_MS;
-  const effectiveStart = Math.max(startDate, firstDayAfterCutoff);
-  return effectiveStart > endDate ? 0 : countLeaveDays(effectiveStart, endDate);
 }
 
 export function calculateLeaveBalance(params: {
@@ -40,32 +30,17 @@ export function calculateLeaveBalance(params: {
   previousUsage?: PreviousLeaveUsage | null;
   excludeRequestId?: string;
 }): LeaveBalance {
-  let approved = 0;
   let pending = 0;
 
   for (const leave of params.existing) {
-    if (leave.type !== params.type) continue;
-    if (leave.id === params.excludeRequestId) continue;
+    if (leave.type !== params.type || leave.id === params.excludeRequestId) continue;
     if (new Date(leave.startDate).getUTCFullYear() !== params.year) continue;
-
-    const cutoffEnd = params.previousUsage
-      ? Date.parse(`${params.previousUsage.throughDate}T23:59:59.999Z`)
-      : null;
-    const approvedAfterCutoff =
-      leave.status === "approved" &&
-      cutoffEnd !== null &&
-      leave.reviewedAt !== null &&
-      leave.reviewedAt > cutoffEnd;
-    const days = leave.status === "approved" && params.previousUsage && !approvedAfterCutoff
-      ? countLeaveDaysAfterDate(leave.startDate, leave.endDate, params.previousUsage.throughDate)
-      : countLeaveDays(leave.startDate, leave.endDate);
-
-    if (leave.status === "approved") approved += days;
-    else if (leave.status === "pending") pending += days;
+    if (leave.status === "pending") pending += countLeaveDays(leave.startDate, leave.endDate);
   }
 
-  approved += params.previousUsage?.days ?? 0;
-  const used = COUNT_PENDING_TOWARD_BALANCE ? approved + pending : approved;
+  // employee_leave_usage is the sole source of cumulative usage.
+  const approved = params.previousUsage?.days ?? 0;
+  const used = approved;
 
   return {
     year: params.year,
@@ -112,8 +87,8 @@ export function evaluateLeaveAllowance(
 
   const message =
     locale === "en"
-      ? `You requested ${requested} day(s), but your remaining leave balance for ${year} is ${remaining} day(s) (allowance: ${allowance}, already used or pending: ${used}).`
-      : `طلبت ${requested} يوم، لكن رصيد إجازتك المتبقي لسنة ${year} هو ${remaining} يوم (المسموح: ${allowance}، المستخدم أو المعلّق: ${used}).`;
+      ? `You requested ${requested} day(s), but your remaining leave balance for ${year} is ${remaining} day(s) (allowance: ${allowance}, already used: ${used}).`
+      : `طلبت ${requested} يوم، لكن رصيد إجازتك المتبقي لسنة ${year} هو ${remaining} يوم (المسموح: ${allowance}، المستخدم: ${used}).`;
 
   return { allowed: false, allowance, used, requested, remaining, message };
 }

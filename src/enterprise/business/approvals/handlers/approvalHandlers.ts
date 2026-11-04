@@ -10,19 +10,32 @@ const OPEN_PROPOSALS = ["needs_review", "in_review", "needs_extra_approval"];
 async function setLeaveStatus(ctx: HandlerContext, status: "approved" | "rejected") {
   const { db, organizationId: org, instance } = ctx;
   const now = new Date().toISOString();
-  const patch: Record<string, unknown> = { status, reviewed_by: ctx.finalApproverId, reviewed_at: now, updated_at: now };
-  if (status === "rejected") patch.response_data = ctx.note ? { reason: ctx.note } : {};
 
-  // Conditional on status='pending': can never overwrite a different final state.
+  if (status === "approved") {
+    if (!ctx.finalApproverId) throw new ApprovalError("MISSING_APPROVER", "Final approver is required.", 400);
+    const { error } = await db.rpc("approve_leave_request_with_usage", {
+      p_request_id: instance.request_id,
+      p_organization_id: org,
+      p_reviewer_id: ctx.finalApproverId,
+    });
+    if (error) throw new Error(`leave approval effect failed: ${error.message}`);
+    return;
+  }
+
+  const patch: Record<string, unknown> = {
+    status, reviewed_by: ctx.finalApproverId, reviewed_at: now, updated_at: now,
+    response_data: ctx.note ? { reason: ctx.note } : {},
+  };
   const { data, error } = await db.from("employee_requests").update(patch)
     .eq("id", instance.request_id).eq("organization_id", org).eq("request_type", "leave").eq("status", "pending")
     .select("id").maybeSingle();
   if (error) throw new Error(`leave update failed: ${error.message}`);
   if (data) return;
 
-  const { data: cur } = await db.from("employee_requests").select("status")
+  const { data: cur, error: readError } = await db.from("employee_requests").select("status")
     .eq("id", instance.request_id).eq("organization_id", org).maybeSingle();
-  if (cur?.status === status) return; // idempotent retry
+  if (readError) throw new Error(`leave status check failed: ${readError.message}`);
+  if (cur?.status === status) return;
   throw new ApprovalError("SUBJECT_STATE_CONFLICT", "The leave request is no longer pending.", 409);
 }
 
