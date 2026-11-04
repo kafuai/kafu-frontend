@@ -919,6 +919,26 @@ function getRoleLabel(role: string | null) {
       );
     }
 
+    if (key === "bank_name") {
+      return (
+        <label key={key} className={labelClass}>
+          {label} <span className="text-rose-500">*</span>
+          <input
+            type="text"
+            inputMode="text"
+            value={form.bank_name}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (/^[\p{L}\s]*$/u.test(value)) {
+                updateField("bank_name", value);
+              }
+            }}
+            className={inputClass}
+          />
+        </label>
+      );
+    }
+
     return (
       <label key={key} className={labelClass}>
         {label} <span className="text-rose-500">*</span>
