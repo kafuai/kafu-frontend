@@ -10,8 +10,8 @@ import {
   type ReactNode,
 } from "react";
 
-export type ThemeMode = "light" | "dark" | "system";
-export type ResolvedTheme = "light" | "dark";
+export type ThemeMode = "light";
+export type ResolvedTheme = "light";
 
 interface ThemeContextValue {
   theme: ThemeMode;
@@ -22,92 +22,30 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const THEME_STORAGE_KEY = "kafu-ai-theme";
-
-function resolveSystemTheme(): ResolvedTheme {
-  if (typeof window === "undefined") {
-    return "light";
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
-}
-
-function getStoredTheme(): ThemeMode {
-  if (typeof window === "undefined") {
-    return "system";
-  }
-
-  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-
-  if (
-    storedTheme === "light" ||
-    storedTheme === "dark" ||
-    storedTheme === "system"
-  ) {
-    return storedTheme;
-  }
-
-  return "system";
-}
-
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>("system");
-  const [resolvedTheme, setResolvedTheme] =
-    useState<ResolvedTheme>("light");
+  const [theme] = useState<ThemeMode>("light");
+  const [resolvedTheme] = useState<ResolvedTheme>("light");
 
-  const applyTheme = useCallback((nextTheme: ThemeMode) => {
-    const nextResolvedTheme =
-      nextTheme === "system" ? resolveSystemTheme() : nextTheme;
+  // Force the application to use light mode only.
+  useEffect(() => {
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.style.colorScheme = "light";
 
-    setResolvedTheme(nextResolvedTheme);
-
-    document.documentElement.dataset.theme = nextResolvedTheme;
-    document.documentElement.style.colorScheme = nextResolvedTheme;
+    // Remove any previously stored dark/system theme preference.
+    window.localStorage.removeItem("kafu-ai-theme");
   }, []);
 
-  useEffect(() => {
-    const storedTheme = getStoredTheme();
+  // Keep the existing API compatible with any component that uses setTheme.
+  const setTheme = useCallback((_nextTheme: ThemeMode) => {
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.style.colorScheme = "light";
+  }, []);
 
-    const timeoutId = window.setTimeout(() => {
-      setThemeState(storedTheme);
-      applyTheme(storedTheme);
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [applyTheme]);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-    const handleSystemThemeChange = () => {
-      if (theme === "system") {
-        applyTheme("system");
-      }
-    };
-
-    mediaQuery.addEventListener("change", handleSystemThemeChange);
-
-    return () => {
-      mediaQuery.removeEventListener("change", handleSystemThemeChange);
-    };
-  }, [applyTheme, theme]);
-
-  const setTheme = useCallback(
-    (nextTheme: ThemeMode) => {
-      setThemeState(nextTheme);
-      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
-      applyTheme(nextTheme);
-    },
-    [applyTheme],
-  );
-
+  // Keep the existing API compatible with any component that uses toggleTheme.
   const toggleTheme = useCallback(() => {
-    setTheme(resolvedTheme === "dark" ? "light" : "dark");
-  }, [resolvedTheme, setTheme]);
+    document.documentElement.dataset.theme = "light";
+    document.documentElement.style.colorScheme = "light";
+  }, []);
 
   const value = useMemo(
     () => ({

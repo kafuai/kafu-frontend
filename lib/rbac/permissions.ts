@@ -1,0 +1,133 @@
+import { APPROVER_TYPES } from "@/src/enterprise/business/approvals";
+
+export const PERMISSIONS = {
+  ALL: "*",
+
+  ASSESSMENT_VIEW: "assessment.view",
+  DISCOVERY_VIEW: "discovery.view",
+
+  CORPORATE_BRAIN_VIEW: "corporate_brain.view",
+
+  DIGITAL_WORKFORCE_VIEW: "digital_workforce.view",
+
+  REQUESTS_VIEW: "requests.view",
+  REQUESTS_VIEW_ALL: "requests.view_all",
+  REQUESTS_MANAGE: "requests.manage",
+
+  POLICIES_MANAGE: "policies.manage",
+
+  EMPLOYEE_USE: "employee.use",
+
+  PROFILE_VIEW: "profile.view",
+
+  EMPLOYEE_EXPERINCE_USE: "employee-experince.use",
+  PAYROLL_VIEW: "payroll.view",
+  PAYROLL_EMPLOYEES_MANAGE: "payroll.employees.manage",
+  PAYROLL_RUNS_MANAGE: "payroll.runs.manage",
+  PAYROLL_RUNS_APPROVE: "payroll.runs.approve",
+  PAYROLL_EXPORT: "payroll.export",
+
+  ATTENDANCE_USE: "attendance.use",
+  ATTENDANCE_MANAGE: "attendance.manage",
+  ATTENDANCE_DEDUCTIONS_REVIEW: "attendance.deductions.review",
+  DASHBOARD_USE: "dashboard.use",
+  // Approval workflows: USE = see my inbox / decide steps assigned to me (authorization of each
+  // decision still comes from the frozen workflow snapshot). MANAGE = configure workflows (HR/owner).
+  APPROVALS_MANAGE: "approvals.manage",
+  APPROVALS_VIEW: "approvals.view",
+
+  HR_DASHBOARD_VIEW: "hr_dashboard.view",
+  DEPARTMENTWS_VIEW: "departments.view", 
+} as const;
+
+export type Permission =
+  (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+export const ROLE_PERMISSIONS: Record<
+  string,
+  readonly Permission[]
+> = {
+  admin: [
+    PERMISSIONS.ALL,
+  ],
+
+  owner: [
+    PERMISSIONS.ASSESSMENT_VIEW,
+    PERMISSIONS.DISCOVERY_VIEW,
+    PERMISSIONS.CORPORATE_BRAIN_VIEW,
+    PERMISSIONS.DIGITAL_WORKFORCE_VIEW,
+    PERMISSIONS.EMPLOYEE_USE,
+    PERMISSIONS.REQUESTS_VIEW,
+    PERMISSIONS.REQUESTS_VIEW_ALL,
+    PERMISSIONS.REQUESTS_MANAGE,
+    PERMISSIONS.POLICIES_MANAGE,
+    PERMISSIONS.PROFILE_VIEW,
+    PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
+    PERMISSIONS.PAYROLL_VIEW,
+    PERMISSIONS.PAYROLL_EMPLOYEES_MANAGE,
+    PERMISSIONS.PAYROLL_RUNS_MANAGE,
+    PERMISSIONS.PAYROLL_RUNS_APPROVE,
+    PERMISSIONS.PAYROLL_EXPORT,
+    PERMISSIONS.ATTENDANCE_USE,
+    PERMISSIONS.ATTENDANCE_MANAGE,
+    PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
+    PERMISSIONS.DASHBOARD_USE,
+    PERMISSIONS.APPROVALS_MANAGE,
+    PERMISSIONS.APPROVALS_VIEW,
+    PERMISSIONS.HR_DASHBOARD_VIEW,
+    PERMISSIONS.DEPARTMENTWS_VIEW,
+  ],
+  manager: [
+    PERMISSIONS.EMPLOYEE_USE,
+    PERMISSIONS.REQUESTS_VIEW,
+    PERMISSIONS.PROFILE_VIEW,
+    PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
+    PERMISSIONS.ATTENDANCE_USE,
+    PERMISSIONS.DASHBOARD_USE,
+    // Managers can view and decide only workflow items assigned to them.
+    // They cannot manage workflows or browse all organization requests.
+    PERMISSIONS.APPROVALS_VIEW,
+  ],
+
+  member: [
+    PERMISSIONS.EMPLOYEE_USE,
+    PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
+    PERMISSIONS.PROFILE_VIEW,
+    PERMISSIONS.ATTENDANCE_USE,
+    PERMISSIONS.DASHBOARD_USE,
+  ],
+
+  viewer: [],
+};
+
+export const ROUTE_PERMISSIONS: Record<string, Permission> = {
+  "/assessment": PERMISSIONS.ASSESSMENT_VIEW,
+  "/discovery": PERMISSIONS.DISCOVERY_VIEW,
+
+  "/corporate-brain": PERMISSIONS.CORPORATE_BRAIN_VIEW,
+  "/digital-workforce": PERMISSIONS.DIGITAL_WORKFORCE_VIEW,
+
+  "/employee-experience/requests": PERMISSIONS.REQUESTS_VIEW,
+  "/employee-experience/policies": PERMISSIONS.POLICIES_MANAGE,
+  "/employee-experience/employee": PERMISSIONS.EMPLOYEE_USE,
+
+  "/profile" : PERMISSIONS.PROFILE_VIEW,
+
+  "/employee-experience" : PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
+
+  "/admin/organizations": PERMISSIONS.ALL,
+
+  "/admin/user" : PERMISSIONS.ALL,
+  "/admin": PERMISSIONS.ALL,
+
+  "/attendance": PERMISSIONS.ATTENDANCE_USE,
+  "/attendance/dashboard": PERMISSIONS.ATTENDANCE_MANAGE,
+  "/attendance/setup": PERMISSIONS.ATTENDANCE_MANAGE,
+  "/attendance/holidays": PERMISSIONS.ATTENDANCE_MANAGE,
+  "/attendance/deductions": PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
+
+  "/dashboard": PERMISSIONS.DASHBOARD_USE,
+  "/employee-experience/approvals": PERMISSIONS.APPROVALS_MANAGE,
+  "/employee-experience/departments": PERMISSIONS.APPROVALS_VIEW,
+  "/hr-dashboard": PERMISSIONS.HR_DASHBOARD_VIEW,
+};
