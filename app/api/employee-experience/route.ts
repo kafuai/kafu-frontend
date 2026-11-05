@@ -136,10 +136,14 @@ export async function GET(request: Request) {
     typesToResolve.delete("other");
 
     const allowanceByType = new Map<LeaveType, number | null>();
+    const workingDaysByType = new Map<LeaveType, number[]>();
 
     await Promise.all(
       Array.from(typesToResolve).map(async (type) => {
         try {
+          const { days } = await policyManager.getWorkingDays(identity.organizationId, type);
+          workingDaysByType.set(type, days);
+
           const policy = await resolveLeavePolicyAllowance({
             policyManager,
             organizationId: identity.organizationId,
@@ -197,6 +201,7 @@ export async function GET(request: Request) {
         const allowance = allowanceByType.get(leave.type) ?? null;
 
         if (allowance !== null) {
+          const workingDays = workingDaysByType.get(leave.type);
           const balance = calculateLeaveBalance({
             type: leave.type,
             year: new Date(leave.startDate).getUTCFullYear(),
@@ -208,8 +213,9 @@ export async function GET(request: Request) {
               new Date(leave.startDate).getUTCFullYear(),
             ),
             excludeRequestId: leave.id, // employee balance BEFORE this request
+            workingDays,
           });
-          const requested = countLeaveDays(leave.startDate, leave.endDate);
+          const requested = countLeaveDays(leave.startDate, leave.endDate, workingDays);
           leaveBalance = { ...balance, requested, remainingAfter: balance.remaining - requested };
         }
 
@@ -312,6 +318,7 @@ export async function GET(request: Request) {
           allowance,
           existing: allLeave,
           previousUsage: previousUsageOf(identity.userId, type, currentYear),
+          workingDays: workingDaysByType.get(type),
         });
       }
     }

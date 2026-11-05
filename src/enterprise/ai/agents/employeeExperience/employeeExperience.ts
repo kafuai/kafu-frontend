@@ -11,6 +11,7 @@ import {
   LeaveValidationError,
   LeaveValidator,
   evaluateLeaveAllowance,
+  countLeaveDays,
   type LeaveType,
 } from "@/src/enterprise/business/leave";
 import { PolicyManager } from "@/src/enterprise/business/policies/policyManager";
@@ -441,7 +442,7 @@ export class EmployeeExperienceAgent {
     leaveType: LeaveType,
     dates: { startDate: number; endDate: number },
     lang: "ar" | "en",
-  ): Promise<{ blocked: "not_covered" | "allowance_exceeded"; message: string } | null> {
+  ): Promise<{ blocked: "not_covered" | "allowance_exceeded" | "no_working_days"; message: string } | null> {
     const policy = await resolveLeavePolicyAllowance({
       policyManager: this.policyManager,
       organizationId: p.organizationId,
@@ -462,6 +463,23 @@ export class EmployeeExperienceAgent {
       };
     }
 
+    // Weekdays that count for THIS leave type (same rule the SQL approval function applies).
+    const { days: workingDays } = await this.policyManager.getWorkingDays(
+      p.organizationId,
+      leaveType,
+    );
+
+    // A request with no counted day would write nothing to the ledger; refuse it up front.
+    if (countLeaveDays(dates.startDate, dates.endDate, workingDays) === 0) {
+      return {
+        blocked: "no_working_days",
+        message:
+          lang === "en"
+            ? "The selected dates contain no counted days for this leave type, so your request was not created."
+            : "الفترة المحددة لا تحتوي على أي يوم يُحتسب لهذا النوع من الإجازات، لذلك لم يتم إنشاء الطلب.",
+      };
+    }
+
     if (policy.days !== null) {
       const existing = await this.leaveManager.list(p.organizationId, p.employeeId);
       const leaveYear = new Date(dates.startDate).getUTCFullYear();
@@ -477,6 +495,7 @@ export class EmployeeExperienceAgent {
         existing,
         lang,
         previousUsage,
+        workingDays,
       );
       if (!evaluation.allowed) {
         return { blocked: "allowance_exceeded", message: evaluation.message! };

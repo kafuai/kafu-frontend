@@ -13,6 +13,27 @@ export interface CompanyPolicy {
   updatedAt: string;
   leaveAllowances: Partial<Record<Exclude<LeaveType, "other">, { covered: boolean; days: number | null }>> | null;
 }
+
+/* ------------------------------------------------------------------ */
+/* Leave working-days settings (one hidden row per organization)       */
+/* ------------------------------------------------------------------ */
+
+// Same row the SQL function approve_leave_request_with_usage reads.
+const LEAVE_SETTINGS_CATEGORY = "leave_settings";
+const LEAVE_SETTINGS_TYPE = "leave_allowances";
+
+export const WORKING_DAYS_LEAVE_TYPES = ["annual", "sick", "emergency", "unpaid", "maternity"] as const;
+
+/** Default when HR configured nothing: every day counts (the pre-existing behavior). */
+export const ALL_WEEK_DAYS: readonly number[] = [0, 1, 2, 3, 4, 5, 6];
+
+/** Strict validation for input: integers 0 (Sun) .. 6 (Sat), no duplicates, not empty. */
+export function normalizeWorkingDays(value: unknown): number[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  if (!value.every((d) => Number.isInteger(d) && d >= 0 && d <= 6)) return null;
+  return [...new Set(value as number[])].sort((a, b) => a - b);
+}
+
 // Must stay in sync with the policy_type values in TYPE_KEYWORDS.leave
 const LEAVE_TYPE_TO_POLICY_TYPE: Record<LeaveType, string | null> = {
   annual: "annual_leave",
@@ -215,6 +236,7 @@ export class PolicyManager {
       .from("company_policies")
       .select(POLICY_COLUMNS) // CHANGED
       .eq("organization_id", organizationId)
+      .neq("category", LEAVE_SETTINGS_CATEGORY) // settings row is not a policy
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -560,6 +582,95 @@ export class PolicyManager {
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
       .map((item) => item.policy);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Leave working days (per organization, per leave type)             */
+  /* ---------------------------------------------------------------- */
+
+  /** The single per-organization settings row (hidden from the policies list). */
+  async getLeaveSettings(
+    organizationId: string,
+  ): Promise<Record<string, { working_days?: unknown }>> {
+    const { data, error } = await this.supabase
+      .from("company_policies")
+      .select("leave_allowances")
+      .eq("organization_id", organizationId)
+      .eq("category", LEAVE_SETTINGS_CATEGORY)
+      .eq("policy_type", LEAVE_SETTINGS_TYPE)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw new Error(`Unable to load leave settings: ${error.message}`);
+    return (data?.leave_allowances ?? {}) as Record<string, { working_days?: unknown }>;
+  }
+
+  /**
+   * Weekdays (0=Sun..6=Sat) counted for `leaveType`. Mirrors the SQL function
+   * approve_leave_request_with_usage: not configured => all days; configured but empty => error.
+   */
+  async getWorkingDays(
+    organizationId: string,
+    leaveType: LeaveType,
+  ): Promise<{ days: number[]; source: "policy" | "default" }> {
+    const fallback = { days: [...ALL_WEEK_DAYS], source: "default" as const };
+    if (leaveType === "other") return fallback;
+
+    const raw = (await this.getLeaveSettings(organizationId))[leaveType]?.working_days;
+    if (!Array.isArray(raw)) return fallback;
+
+    const days = [...new Set(raw.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))].sort(
+      (a, b) => a - b,
+    ) as number[];
+    if (days.length === 0) {
+      throw new Error(`No working days configured for leave type ${leaveType}.`);
+    }
+    return { days, source: "policy" };
+  }
+
+  /** Sets working_days for ONE leave type; other types and other keys are preserved. */
+  async saveWorkingDays(
+    organizationId: string,
+    companyId: string,
+    leaveType: (typeof WORKING_DAYS_LEAVE_TYPES)[number],
+    days: number[],
+  ): Promise<void> {
+    const workingDays = normalizeWorkingDays(days);
+    if (!workingDays) throw new Error("Invalid working days.");
+
+    const { data: row, error } = await this.supabase
+      .from("company_policies")
+      .select("id,leave_allowances")
+      .eq("organization_id", organizationId)
+      .eq("company_id", companyId)
+      .eq("category", LEAVE_SETTINGS_CATEGORY)
+      .eq("policy_type", LEAVE_SETTINGS_TYPE)
+      .limit(1)
+      .maybeSingle();
+    if (error) throw new Error(`Unable to load leave settings: ${error.message}`);
+
+    const current = (row?.leave_allowances ?? {}) as Record<string, Record<string, unknown>>;
+    const next = {
+      ...current,
+      [leaveType]: { ...(current[leaveType] ?? {}), working_days: workingDays },
+    };
+
+    const write = row
+      ? await this.supabase
+          .from("company_policies")
+          .update({ leave_allowances: next, updated_at: new Date().toISOString() })
+          .eq("id", row.id)
+          .eq("organization_id", organizationId)
+      : await this.supabase.from("company_policies").insert({
+          organization_id: organizationId,
+          company_id: companyId,
+          category: LEAVE_SETTINGS_CATEGORY,
+          policy_type: LEAVE_SETTINGS_TYPE,
+          title: "Leave settings",
+          content: "System settings row. Not a company policy.",
+          leave_allowances: next,
+        });
+    if (write.error) throw new Error(`Unable to save leave working days: ${write.error.message}`);
   }
 
   private mapRow(row: PolicyRow): CompanyPolicy {

@@ -26,12 +26,14 @@ const iconBtnDanger =
 const errorBox =
   "flex items-start gap-2 rounded-xl border border-red-200 bg-[var(--critical-background)] px-3 py-2.5 text-xs font-bold text-[var(--critical)]";
 
+const LEAVE_TYPES = ["annual", "emergency", "unpaid", "maternity"] as const;
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+
 export default function PoliciesPage() {
   const { locale } = useLocalization();
   const isArabic = locale === "ar";
   const { copy, categoryOptions, policyTypeOptions } = useAppCopy(isArabic);
 
-  // نصوص العرض الجديدة فقط (لا توجد في useAppCopy)
   const ui = isArabic
     ? {
         badgeSub: "السياسات",
@@ -41,6 +43,20 @@ export default function PoliciesPage() {
         statTyped: "سياسات لها نوع", statTypedNote: "يعتمد عليها حساب الإجازات بدقة",
         statUntyped: "بلا نوع محدد", statUntypedNote: "سياسات عامة أو قديمة",
         newPolicy: "NEW POLICY",
+        wdTitle: "أيام احتساب الإجازات",
+        wdDesc: "حدّد أيام الأسبوع التي تُحتسب وتُخصم من الرصيد لكل نوع إجازة.",
+        wdSave: "حفظ",
+        wdSaved: "تم حفظ أيام الاحتساب.",
+        wdSaveFailed: "تعذر حفظ أيام الاحتساب.",
+        wdMinOne: "اختر يومًا واحدًا على الأقل.",
+        days: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
+        leaveTypeLabels: {
+          annual: "الإجازة السنوية",
+          sick: "الإجازة المرضية",
+          emergency: "الإجازة الطارئة",
+          unpaid: "الإجازة بدون راتب",
+          maternity: "إجازة الأمومة",
+        } as Record<string, string>,
       }
     : {
         badgeSub: "Policies",
@@ -50,6 +66,20 @@ export default function PoliciesPage() {
         statTyped: "Typed policies", statTypedNote: "Used for accurate leave calculation",
         statUntyped: "Without a type", statUntypedNote: "General or legacy policies",
         newPolicy: "NEW POLICY",
+        wdTitle: "Leave counting days",
+        wdDesc: "Choose which weekdays count and are deducted from the balance, per leave type.",
+        wdSave: "Save",
+        wdSaved: "Counting days saved.",
+        wdSaveFailed: "Unable to save counting days.",
+        wdMinOne: "Select at least one day.",
+        days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        leaveTypeLabels: {
+          annual: "Annual leave",
+          sick: "Sick leave",
+          emergency: "Emergency leave",
+          unpaid: "Unpaid leave",
+          maternity: "Maternity leave",
+        } as Record<string, string>,
       };
 
   // States
@@ -76,6 +106,11 @@ export default function PoliciesPage() {
 
   const [actionError, setActionError] = useState("");
 
+  // Leave counting days (per leave type)
+  const [wdDraft, setWdDraft] = useState<Record<string, number[]>>({});
+  const [wdSaving, setWdSaving] = useState("");
+  const [wdMsg, setWdMsg] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
   async function loadPolicies() {
     setLoadState("loading");
     try {
@@ -89,6 +124,17 @@ export default function PoliciesPage() {
         throw new Error(payload.error ?? copy.errUnableLoad);
       }
       setPolicies(payload.data ?? []);
+
+      const settings = (payload.leaveSettings ?? {}) as Record<string, { working_days?: number[] }>;
+      setWdDraft(
+        Object.fromEntries(
+          LEAVE_TYPES.map((t) => [
+            t,
+            Array.isArray(settings[t]?.working_days) ? (settings[t].working_days as number[]) : ALL_DAYS,
+          ]),
+        ),
+      );
+
       setLoadState("loaded");
     } catch (error) {
       setLoadError(error instanceof Error ? error.message : copy.errUnableLoad);
@@ -202,6 +248,39 @@ export default function PoliciesPage() {
       await loadPolicies();
     } catch (error) {
       setActionError(error instanceof Error ? error.message : copy.errUnableDelete);
+    }
+  }
+
+  function toggleDay(type: string, day: number) {
+    setWdMsg(null);
+    setWdDraft((current) => {
+      const cur = current[type] ?? [];
+      const next = cur.includes(day) ? cur.filter((d) => d !== day) : [...cur, day].sort((a, b) => a - b);
+      return { ...current, [type]: next };
+    });
+  }
+
+  async function saveWorkingDays(type: string) {
+    const days = wdDraft[type] ?? [];
+    if (days.length === 0) {
+      setWdMsg({ kind: "error", text: ui.wdMinOne });
+      return;
+    }
+    setWdSaving(type);
+    setWdMsg(null);
+    try {
+      const response = await fetch("/api/employee-experience/policies", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leaveType: type, workingDays: days }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? ui.wdSaveFailed);
+      setWdMsg({ kind: "ok", text: ui.wdSaved });
+    } catch (error) {
+      setWdMsg({ kind: "error", text: error instanceof Error ? error.message : ui.wdSaveFailed });
+    } finally {
+      setWdSaving("");
     }
   }
 
@@ -626,6 +705,54 @@ export default function PoliciesPage() {
             </section>
           </>
         )}
+
+         <section className="mt-5 overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+              <div className="border-b border-[var(--border-default)] bg-[var(--brand-subtle)] px-6 py-5">
+                <h2 className="text-xl font-black tracking-tight">{ui.wdTitle}</h2>
+                <p className="mt-1 text-xs font-bold text-[var(--text-secondary)]">{ui.wdDesc}</p>
+              </div>
+              <div className="space-y-3 p-6">
+                {wdMsg && (
+                  <div
+                    role={wdMsg.kind === "error" ? "alert" : "status"}
+                    className={
+                      wdMsg.kind === "error"
+                        ? errorBox
+                        : "rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-bold text-emerald-800"
+                    }
+                  >
+                    {wdMsg.text}
+                  </div>
+                )}
+                {LEAVE_TYPES.map((type) => (
+                  <div key={type} className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+                    <p className="text-sm font-black">{ui.leaveTypeLabels[type]}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                      {ui.days.map((label, day) => (
+                        <label key={day} className="flex cursor-pointer items-center gap-2 text-xs font-bold text-[var(--text-secondary)]">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-[var(--brand-primary)]"
+                            checked={(wdDraft[type] ?? []).includes(day)}
+                            onChange={() => toggleDay(type, day)}
+                          />
+                          {label}
+                        </label>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => saveWorkingDays(type)}
+                        disabled={wdSaving === type}
+                        className={`${ghost} ms-auto`}
+                      >
+                        {wdSaving === type ? <LoaderCircle size={14} className="animate-spin" /> : <Save size={14} />}
+                        {ui.wdSave}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
       </div>
     </main>
   );

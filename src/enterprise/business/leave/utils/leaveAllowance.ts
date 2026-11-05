@@ -1,12 +1,35 @@
 import { LeaveRequest } from "../models/leaveModel";
 import { LeaveRequestInput, LeaveType } from "../types/leaveTypes";
+import { toDateKey } from "./leaveValidator";
 
 type Locale = "ar" | "en";
 
 const DAY_MS = 86_400_000;
 
-export function countLeaveDays(startDate: number, endDate: number): number {
-  return Math.round((endDate - startDate) / DAY_MS) + 1;
+function dateKeyToUtc(key: string): number {
+  const [y, m, d] = key.split("-").map(Number);
+  return Date.UTC(y, m - 1, d);
+}
+
+/**
+ * Inclusive day count. Without `workingDays` every calendar day counts (legacy behavior).
+ * With `workingDays` (0 = Sunday ... 6 = Saturday) only those weekdays are counted.
+ * Must stay identical to the SQL function approve_leave_request_with_usage.
+ */
+export function countLeaveDays(
+  startDate: number,
+  endDate: number,
+  workingDays?: readonly number[],
+): number {
+  if (!workingDays) return Math.round((endDate - startDate) / DAY_MS) + 1;
+
+  const allowed = new Set(workingDays);
+  const last = dateKeyToUtc(toDateKey(endDate));
+  let count = 0;
+  for (let cursor = dateKeyToUtc(toDateKey(startDate)); cursor <= last; cursor += DAY_MS) {
+    if (allowed.has(new Date(cursor).getUTCDay())) count++;
+  }
+  return count;
 }
 
 export interface LeaveBalance {
@@ -29,13 +52,16 @@ export function calculateLeaveBalance(params: {
   existing: readonly LeaveRequest[];
   previousUsage?: PreviousLeaveUsage | null;
   excludeRequestId?: string;
+  workingDays?: readonly number[];
 }): LeaveBalance {
   let pending = 0;
 
   for (const leave of params.existing) {
     if (leave.type !== params.type || leave.id === params.excludeRequestId) continue;
     if (new Date(leave.startDate).getUTCFullYear() !== params.year) continue;
-    if (leave.status === "pending") pending += countLeaveDays(leave.startDate, leave.endDate);
+    if (leave.status === "pending") {
+      pending += countLeaveDays(leave.startDate, leave.endDate, params.workingDays);
+    }
   }
 
   // employee_leave_usage is the sole source of cumulative usage.
@@ -67,6 +93,7 @@ export function evaluateLeaveAllowance(
   existing: readonly LeaveRequest[],
   locale: Locale = "en",
   previousUsage?: PreviousLeaveUsage | null,
+  workingDays?: readonly number[],
 ): LeaveAllowanceEvaluation {
   const year = new Date(input.startDate).getUTCFullYear();
 
@@ -76,10 +103,11 @@ export function evaluateLeaveAllowance(
     allowance,
     existing,
     previousUsage,
+    workingDays,
   });
 
   const { used, remaining } = balance;
-  const requested = countLeaveDays(input.startDate, input.endDate);
+  const requested = countLeaveDays(input.startDate, input.endDate, workingDays);
 
   if (requested <= remaining) {
     return { allowed: true, allowance, used, requested, remaining };
