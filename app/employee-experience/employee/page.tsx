@@ -62,6 +62,7 @@ export default function EmployeeExperiencePage() {
   function mapApiStatusToHRStatus(status: string): HRRequestStatus {
     if (status === "approved") return "approved";
     if (status === "rejected") return "rejected";
+    if (status === "cancelled") return "cancelled";
     return "pending";
   }
 

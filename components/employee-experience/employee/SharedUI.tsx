@@ -1,5 +1,14 @@
 // SharedUI.tsx
-import { CalendarDays, CheckCircle2, Clock3, FileText, MessageCircle, RefreshCw, XCircle } from "lucide-react";
+import {
+  Ban,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  FileText,
+  MessageCircle,
+  RefreshCw,
+  XCircle
+} from "lucide-react";
 import { HRRequestStatus, RequestCategory } from "./types";
 
 export function CategoryIcon({ category }: { category: RequestCategory }) {
@@ -12,6 +21,7 @@ export function CategoryIcon({ category }: { category: RequestCategory }) {
 export function StatusIcon({ status }: { status: HRRequestStatus }) {
   if (status === "approved") return <CheckCircle2 size={11} />;
   if (status === "rejected") return <XCircle size={11} />;
+  if (status === "cancelled") return <Ban size={11} />;
   return <Clock3 size={11} />;
 }
 

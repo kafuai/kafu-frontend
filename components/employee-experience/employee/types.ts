@@ -20,7 +20,7 @@ export type ChatMessage = {
   sickForm?: SickFormState;
 };
 
-export type HRRequestStatus = "pending" | "approved" | "rejected";
+export type HRRequestStatus = "pending" | "approved" | "rejected" | "cancelled";
 
 export type HRRequest = {
   id: string;

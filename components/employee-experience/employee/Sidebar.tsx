@@ -49,12 +49,14 @@ export default function Sidebar({
   function statusBadgeClasses(status: string) {
     if (status === "approved") return "bg-emerald-50 text-emerald-600";
     if (status === "rejected") return "bg-red-50 text-red-600";
+    if (status === "cancelled") return "bg-slate-100 text-slate-500";
     return "bg-amber-50 text-amber-600";
   }
 
   function statusLabel(status: string) {
     if (status === "approved") return copy.statusApproved;
     if (status === "rejected") return copy.statusRejected;
+    if (status === "cancelled") return copy.statusCancelled;
     return copy.statusPending;
   }
 
@@ -179,12 +181,18 @@ export default function Sidebar({
                   {request.status !== "pending" && (
                     <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
                       <div className="flex items-start gap-2.5">
-                        <span className={request.status === "approved" ? "text-emerald-600" : "text-rose-600"}>
+                        <span className={
+                          request.status === "approved"
+                            ? "text-emerald-600"
+                            : request.status === "cancelled"
+                              ? "text-slate-500"
+                              : "text-rose-600"
+                        }>
                           <StatusIcon status={request.status as any} />
                         </span>
                         <div className="min-w-0">
                           <p className="text-[10px] font-semibold text-slate-500">
-                            {request.status === "approved" ? copy.statusApproved : copy.statusRejected}
+                            {statusLabel(request.status)}
                           </p>
                           <p className="mt-1 text-[11px] font-semibold text-slate-700">
                             {copy.decisionBy}: {request.reviewedByName ?? "—"}

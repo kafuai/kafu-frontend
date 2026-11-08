@@ -46,6 +46,7 @@ export function useAppCopy(isArabic: boolean) {
     statusPending: isArabic ? "بانتظار الموافقة" : "Pending HR",
     statusApproved: isArabic ? "تمت الموافقة" : "Approved",
     statusRejected: isArabic ? "مرفوض" : "Rejected",
+    statusCancelled: isArabic ? "ملغى" : "Cancelled",
     employeeRequestLabel: isArabic ? "طلب موظف" : "Employee request",
     noRequests: isArabic ? "لا توجد طلبات" : "No requests",
     footerNote: isArabic
