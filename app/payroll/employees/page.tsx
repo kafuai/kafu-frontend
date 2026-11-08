@@ -234,7 +234,7 @@ export default function EmployeesPage() {
   const copy = isArabic
     ? {
         badge: "PAYROLL",
-        badgeSub: "الموظفون",
+        badgeSub: "الموظفين",
         heroText: "جميع أعضاء المنشأة في مكان واحد. أكمل بيانات الرواتب والعقد والبنك لكل موظف قبل إنشاء مسير الرواتب.",
         chips: ["بيانات الرواتب", "العقود والبنوك", "متابعة النواقص"],
         statTotal: "إجمالي الموظفين",
@@ -249,7 +249,7 @@ export default function EmployeesPage() {
         loadingText: "يتم جلب أعضاء المنشأة وبيانات الرواتب.",
         errorTitle: "تعذر تحميل الموظفين",
         forbiddenTitle: "لا تملك صلاحية العرض",
-        title: "الموظفون",
+        title: "الموظفين",
         subtitle: "جميع أعضاء المنشأة، أكمل بيانات الرواتب لكل موظف",
         search: "ابحث بالاسم أو البريد أو الرقم الوظيفي أو القسم",
         all: "كل الحالات",
