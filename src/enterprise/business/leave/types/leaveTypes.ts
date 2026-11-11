@@ -19,4 +19,13 @@ export interface LeaveRequestInput {
   startDate: number;
   endDate: number;
   reason: string;
+  id?: string;                    // NEW: pre-generated so the storage path can contain it
+  attachment?: LeaveAttachment; 
+}
+export interface LeaveAttachment {
+  bucket: string;
+  path: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
 }
