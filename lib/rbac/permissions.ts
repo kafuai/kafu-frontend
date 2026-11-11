@@ -84,8 +84,6 @@ export const ROLE_PERMISSIONS: Record<
     PERMISSIONS.EMPLOYEE_EXPERINCE_USE,
     PERMISSIONS.ATTENDANCE_USE,
     PERMISSIONS.DASHBOARD_USE,
-    // Managers can view and decide only workflow items assigned to them.
-    // They cannot manage workflows or browse all organization requests.
     PERMISSIONS.APPROVALS_VIEW,
   ],
 
@@ -124,6 +122,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/attendance/dashboard": PERMISSIONS.ATTENDANCE_MANAGE,
   "/attendance/setup": PERMISSIONS.ATTENDANCE_MANAGE,
   "/attendance/holidays": PERMISSIONS.ATTENDANCE_MANAGE,
+    "/attendance/devices": PERMISSIONS.ATTENDANCE_MANAGE,
   "/attendance/deductions": PERMISSIONS.ATTENDANCE_DEDUCTIONS_REVIEW,
 
   "/dashboard": PERMISSIONS.DASHBOARD_USE,

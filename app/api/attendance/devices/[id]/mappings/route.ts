@@ -113,6 +113,19 @@ export async function PUT(request: Request, context: RouteContext) {
     const { data: member } = await admin.from("organization_memberships")
       .select("user_id").eq("organization_id", ctx.organizationId).eq("user_id", body.userId).maybeSingle();
     if (!member) return NextResponse.json({ error: "The employee is not a member of this organization." }, { status: 400 });
+        // رقم المستخدم لازم يكون من مستخدمي هذا الجهاز فقط
+    const { data: knownUser } = await admin.from("attendance_device_users")
+      .select("device_user_id").eq("organization_id", ctx.organizationId)
+      .eq("device_id", id).eq("device_user_id", deviceUserId).maybeSingle();
+    if (!knownUser) return NextResponse.json({ error: "This user ID does not exist on the selected device." }, { status: 400 });
+
+    // منع استبدال ربط موظف آخر بالخطأ (التعديل المقصود يرسل replace: true)
+    const { data: current } = await admin.from("attendance_device_user_mappings")
+      .select("user_id").eq("organization_id", ctx.organizationId)
+      .eq("device_id", id).eq("device_user_id", deviceUserId).eq("is_active", true).maybeSingle();
+    if (current && current.user_id !== body.userId && body.replace !== true) {
+      return NextResponse.json({ error: "This device user is already linked to another employee." }, { status: 409 });
+    }
 
     // الموظف مربوط أصلاً بمستخدم ثاني على نفس الجهاز؟
     const { data: taken } = await admin.from("attendance_device_user_mappings")

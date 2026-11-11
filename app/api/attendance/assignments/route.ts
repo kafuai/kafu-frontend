@@ -52,6 +52,7 @@ export async function POST(request: Request) {
     const userIds: string[] = Array.isArray(b.userIds) ? [...new Set(b.userIds as string[])] : [];
     const today = dateKeyInTz(Date.now(), DEFAULT_TZ);
 
+
     if (userIds.length < 1 || userIds.length > 200 || !userIds.every(isUuid)) {
       return NextResponse.json({ error: "Select at least one employee." }, { status: 400 });
     }
@@ -70,6 +71,37 @@ export async function POST(request: Request) {
     if (mErr) throw new Error(mErr.message);
     if ((mem ?? []).length !== userIds.length) {
       return NextResponse.json({ error: "Some users are not members of this organization." }, { status: 400 });
+    }
+
+  
+    const { data: shift, error: sErr } = await supabase.from("shifts")
+      .select("id,device_id").eq("id", b.shiftId).eq("organization_id", organizationId).maybeSingle();
+    if (sErr) throw new Error(sErr.message);
+    if (!shift) return NextResponse.json({ error: "Invalid shift." }, { status: 400 });
+
+    if (shift.device_id) {
+      const admin = createSupabaseAdminClient();
+      const { data: dev, error: dErr } = await admin.from("attendance_devices")
+        .select("id,name,is_active").eq("id", shift.device_id).eq("organization_id", organizationId).maybeSingle();
+      if (dErr) throw new Error(dErr.message);
+      if (!dev || !dev.is_active) {
+        return NextResponse.json({ error: "The device of this shift is disabled. Enable it first." }, { status: 409 });
+      }
+
+      const { data: links, error: lErr } = await admin.from("attendance_device_user_mappings")
+        .select("user_id").eq("organization_id", organizationId)
+        .eq("device_id", dev.id).eq("is_active", true).in("user_id", userIds);
+      if (lErr) throw new Error(lErr.message);
+      const linked = new Set((links ?? []).map((l) => l.user_id as string));
+      const missing = userIds.filter((u) => !linked.has(u));
+      if (missing.length > 0) {
+        const { data: profs } = await admin.from("profiles").select("id,full_name,email").in("id", missing);
+        const names = (profs ?? []).map((p) => p.full_name?.trim() || p.email || p.id).join(", ");
+        return NextResponse.json(
+          { error: `These employees are not linked to the device "${dev.name}": ${names}. Link them first from the devices page.` },
+          { status: 400 },
+        );
+      }
     }
 
     const { data, error } = await supabase.from("shift_assignments")

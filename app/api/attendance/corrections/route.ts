@@ -71,6 +71,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "A reason is required (3–1000 characters)." }, { status: 400 });
     }
 
+
+    // Prevent correction requests for days with an approved deduction.
+    const { data: approvedDeduction, error: deductionError } = await supabase
+      .from("attendance_deduction_proposals")
+      .select("id, incident_type, resolution_type")
+      .eq("organization_id", organizationId)
+      .eq("user_id", user.id)
+      .eq("incident_date", b.workDate)
+      .eq("status", "approved")
+      .limit(1)
+      .maybeSingle();
+
+    if (deductionError) {
+      console.error("Approved deduction check failed:", deductionError);
+      return NextResponse.json(
+        { error: "Unable to verify deduction status for this date." },
+        { status: 500 }
+      );
+    }
+
+    if (approvedDeduction) {
+      return NextResponse.json(
+        {
+          error: "لا يمكن تقديم طلب تصحيح لهذا اليوم، تم اعتماد الخصم بالفعل.",
+          code: "APPROVED_DEDUCTION_EXISTS",
+        },
+        { status: 409 }
+      );
+    }
+
+
     const cand = await loadScheduleForDate(supabase, organizationId, user.id, b.workDate);
     if (!cand) return NextResponse.json({ error: "You have no scheduled shift on this date." }, { status: 400 });
     const s = cand.schedule;

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Check, Clock, Edit, Map as MapIcon, MapPin, Plus, Power, PowerOff, Save, UserCheck, Users, X,
+  Check, Clock, Edit, Map as MapIcon, MapPin, Plus, Power, PowerOff, Save, UserCheck, Users, X, Fingerprint
 } from "lucide-react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 import { localizeErrorMessage, api, Banner, dayNames, shiftDate, todayKey } from "@/components/attendance/shared";
@@ -27,7 +27,7 @@ const iconBtn =
 
 const EMPTY_SHIFT = {
   name: "", startTime: "08:00", endTime: "16:00", workDays: [0, 1, 2, 3, 4],
-  graceMinutes: 10, breakMinutes: 0, earlyCheckinMinutes: 120, locationId: "",
+  graceMinutes: 10, breakMinutes: 0, earlyCheckinMinutes: 120, locationId: "", deviceId: "",
 };
 
 const sameDays = (a: number[], b: number[]) =>
@@ -71,6 +71,10 @@ export default function AttendanceSetupPage() {
         reqField: "هذا الحقل مطلوب", fillAll: "أكمل جميع بيانات الموقع قبل الحفظ.",
         badLat: "خط العرض بين -90 و 90", badLng: "خط الطول بين -180 و 180", badRadius: "النطاق رقم صحيح بين 10 و 50000",
         incompleteLoc: "بيانات ناقصة", incompleteHint: "أكمل بيانات هذا الموقع قبل تفعيله.",
+        device: "جهاز البصمة (اختياري)", noDevice: "بدون جهاز (تسجيل عبر الموقع)",
+        deviceHint: "الموظفون المسنَد لهم عبر جهاز لا يسجلون الحضور من الموقع، ويجب ربطهم بالجهاز أولاً.", viaDevice: "عبر الجهاز",
+        source: "مصدر تسجيل الحضور", groupLoc: "مواقع العمل", groupDev: "أجهزة البصمة",
+        sourceHint: "اختر موقعاً (تحقق جغرافي) أو جهاز بصمة. الوردية المرتبطة بجهاز لا يسجَّل حضورها من الموقع، ويجب ربط موظفيها بالجهاز قبل الإسناد.",
       }
     : {
         badge: "ATTENDANCE", badgeSub: "Attendance setup",
@@ -103,6 +107,10 @@ export default function AttendanceSetupPage() {
         reqField: "This field is required", fillAll: "Complete all location data before saving.",
         badLat: "Latitude must be between -90 and 90", badLng: "Longitude must be between -180 and 180", badRadius: "Radius must be a whole number between 10 and 50000",
         incompleteLoc: "Incomplete data", incompleteHint: "Complete this location's data before enabling it.",
+        device: "Fingerprint device (optional)", noDevice: "No device (check in via location)",
+        deviceHint: "Employees assigned through a device cannot check in from the web. They must be linked to the device first.", viaDevice: "Via device",
+        source: "Attendance source", groupLoc: "Work locations", groupDev: "Fingerprint devices",
+        sourceHint: "Choose a location (geofence) or a fingerprint device. A device shift cannot be checked in from the web, and its employees must be linked to the device before assignment.",
       };
 
   const [tab, setTab] = useState<Tab>("locations");
@@ -113,6 +121,7 @@ export default function AttendanceSetupPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const [devices, setDevices] = useState<any[]>([]);
 
   const [editingShift, setEditingShift] = useState<any | null>(null);
   const [memberSearch, setMemberSearch] = useState("");
@@ -133,15 +142,17 @@ export default function AttendanceSetupPage() {
 
   const load = useCallback(async () => {
     try {
-      const [l, s, a] = await Promise.all([
+      const [l, s, a, d] = await Promise.all([
         api("/api/attendance/locations"),
         api("/api/attendance/shifts"),
         api("/api/attendance/assignments"),
+        api("/api/attendance/devices").catch(() => ({ data: [] })),
       ]);
       setLocs(l.data ?? []);
       setShifts(s.data ?? []);
       setAsg(a.data ?? []);
       setMembers(a.members ?? []);
+      setDevices(d.data ?? []);
     } catch (e) {
       setMsg({ kind: "error", text: e instanceof Error ? localizeErrorMessage(e.message) : localizeErrorMessage("") });
     } finally {
@@ -199,6 +210,7 @@ export default function AttendanceSetupPage() {
 
   const locName = (id: string | null) => locs.find((l) => l.id === id)?.name ?? copy.none;
   const shiftName = (id: string) => shifts.find((s) => s.id === id)?.name ?? id;
+  const deviceName = (id: string) => devices.find((d) => d.id === id)?.name ?? id;
   const memberName = (id: string) => members.find((m) => m.userId === id)?.name ?? id;
 
   const isActiveToday = (a: any) => a.effective_from <= today && (a.effective_to === null || a.effective_to >= today);
@@ -243,6 +255,7 @@ export default function AttendanceSetupPage() {
       startTime: s.start_time.slice(0, 5),
       endTime: s.end_time.slice(0, 5),
       workDays: [...s.work_days],
+      deviceId: s.device_id || "",
       graceMinutes: s.grace_minutes,
       breakMinutes: s.break_minutes,
       earlyCheckinMinutes: s.early_checkin_minutes,
@@ -263,6 +276,7 @@ export default function AttendanceSetupPage() {
     if (sf.breakMinutes !== s.break_minutes) c.breakMinutes = sf.breakMinutes;
     if (sf.earlyCheckinMinutes !== s.early_checkin_minutes) c.earlyCheckinMinutes = sf.earlyCheckinMinutes;
     if ((sf.locationId || null) !== (s.location_id ?? null)) c.locationId = sf.locationId || null;
+    if ((sf.deviceId || null) !== (s.device_id ?? null)) c.deviceId = sf.deviceId || null;
     return c;
   }, [editingShift, sf]);
 
@@ -590,14 +604,33 @@ export default function AttendanceSetupPage() {
                   </label>
                 </div>
                 <label className={labelCls}>
-                  {copy.location}
-                  <select className={inputCls} value={sf.locationId} onChange={(e) => setSf({ ...sf, locationId: e.target.value })}>
+                  {copy.source}
+                  <select
+                    className={inputCls}
+                    value={sf.deviceId ? `dev:${sf.deviceId}` : sf.locationId ? `loc:${sf.locationId}` : ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v.startsWith("dev:")) setSf({ ...sf, deviceId: v.slice(4), locationId: "" });
+                      else if (v.startsWith("loc:")) setSf({ ...sf, locationId: v.slice(4), deviceId: "" });
+                      else setSf({ ...sf, locationId: "", deviceId: "" });
+                    }}
+                  >
                     <option value="">{copy.none}</option>
-                    {locs.filter((l) => l.is_active || l.id === sf.locationId).map((l) => (
-                      <option key={l.id} value={l.id}>{l.name}</option>
-                    ))}
+                    <optgroup label={copy.groupLoc}>
+                      {locs.filter((l) => l.is_active || l.id === sf.locationId).map((l) => (
+                        <option key={l.id} value={`loc:${l.id}`}>{l.name}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label={copy.groupDev}>
+                      {devices.filter((d) => d.is_active || d.id === sf.deviceId).map((d) => (
+                        <option key={d.id} value={`dev:${d.id}`}>{d.name}</option>
+                      ))}
+                    </optgroup>
                   </select>
                 </label>
+                {sf.deviceId && (
+                  <p className="text-[11px] font-bold leading-6 text-[var(--text-muted)]">{copy.sourceHint}</p>
+                )}
 
                 <div>
                   <p className={`${labelCls} mb-2`}>{copy.days}</p>
@@ -639,7 +672,7 @@ export default function AttendanceSetupPage() {
                     if (editingShift) {
                       void send("/api/attendance/shifts", "PATCH", { id: editingShift.id, ...shiftChanges }, resetShiftForm);
                     } else {
-                      void send("/api/attendance/shifts", "POST", { ...sf, locationId: sf.locationId || null }, resetShiftForm);
+                      void send("/api/attendance/shifts", "POST", { ...sf, locationId: sf.locationId || null, deviceId: sf.deviceId || null }, resetShiftForm);
                     }
                   }}
                 >
@@ -679,7 +712,9 @@ export default function AttendanceSetupPage() {
                           {s.start_time.slice(0, 5)} → {s.end_time.slice(0, 5)}
                         </span>
                         <span className="inline-flex items-center gap-1 rounded-md bg-[var(--surface-muted)] px-2 py-1">
-                          <MapPin size={11} /> {locName(s.location_id)}
+                          {s.device_id
+                            ? <><Fingerprint size={11} /> {deviceName(s.device_id)}</>
+                            : <><MapPin size={11} /> {locName(s.location_id)}</>}
                         </span>
                         <span className="rounded-md bg-[var(--surface-muted)] px-2 py-1">
                           {(s.work_days as number[]).map((d) => names[d]).join("، ")}
@@ -790,8 +825,7 @@ export default function AttendanceSetupPage() {
                       ))}
                     </select>
                   </label>
-                  <label className={labelCls}>
-                  </label>
+                  <label className={labelCls}></label>
                   <label className={labelCls}>
                     {copy.from}
                     <input type="date" dir="ltr" min={today} className={inputCls} value={af.effectiveFrom} onChange={(e) => setAf({ ...af, effectiveFrom: e.target.value })} />
@@ -809,7 +843,7 @@ export default function AttendanceSetupPage() {
                   onClick={() =>
                     void send(
                       "/api/attendance/assignments", "POST",
-                      { ...af, effectiveTo: af.effectiveTo || null },
+                     { ...af, effectiveTo: af.effectiveTo || null },
                       () => setAf({ ...af, userIds: [] }),
                     )
                   }
@@ -841,6 +875,9 @@ export default function AttendanceSetupPage() {
                         </h3>
                         <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px] font-bold text-[var(--text-secondary)]">
                           <span className="rounded-md bg-[var(--brand-subtle)] px-2 py-1 font-black text-[var(--brand-primary)]">{shiftName(a.shift_id)}</span>
+                          {a.device_id && (
+                            <span className="rounded-md bg-blue-50 px-2 py-1 font-black text-blue-700">{copy.viaDevice}: {deviceName(a.device_id)}</span>
+                          )}
                           <span dir="ltr" className="rounded-md bg-[var(--surface-muted)] px-2 py-1">
                             {a.effective_from} → {a.effective_to ?? copy.open}
                           </span>

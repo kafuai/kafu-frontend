@@ -11,6 +11,7 @@ export type ShiftRow = {
   end_time: string;
   crosses_midnight: boolean;
   work_days: number[];
+  device_id?: string | null;
   grace_minutes: number;
   break_minutes: number;
   early_checkin_minutes: number;

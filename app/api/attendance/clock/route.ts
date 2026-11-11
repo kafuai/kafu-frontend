@@ -53,6 +53,11 @@ const REASONS = {
     ar: "انتهت مهلة تسجيل الانصراف لهذه الوردية. قدّم طلب تصحيح (نسيت تسجيل الانصراف).",
     en: "The check-out window for this shift has closed. Submit a correction request (forgot to check out).",
   },
+
+    device_only: {
+    ar: "ورديتك مرتبطة بجهاز البصمة. سجّل حضورك وانصرافك عبر الجهاز.",
+    en: "Your shift uses the fingerprint device. Please check in and out on the device.",
+  },
 } as const;
 
 export async function POST(request: Request) {
@@ -221,6 +226,9 @@ export async function POST(request: Request) {
         return fail("no_active_shift", 409);
       }
     }
+
+        // وردية مصدرها جهاز بصمة: لا حضور ولا انصراف من الموقع (تحقق في الـ backend)
+    if (active.shift.device_id) return fail("device_only", 403);
 
     const geo = verifyGeo(active.loc, {
       latitude: num(body?.latitude),

@@ -29,7 +29,8 @@ import {
   Building,
   UsersRound,
   LayoutDashboardIcon,
-  BriefcaseBusiness
+  BriefcaseBusiness,
+  Fingerprint,
   } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -82,9 +83,8 @@ const navigationItems: readonly NavigationGroup[] = [
     icon: Users,
     children: [
       { key: "employees", href: "/payroll/employees", icon: Users, permission: PERMISSIONS.PAYROLL_VIEW },
-      {key: "departments", href: "/employee-experience/departments", icon: Building, permission: PERMISSIONS.DEPARTMENTWS_VIEW},
-      {key: "approvals", href: "/employee-experience/approvals", icon: FileEdit, permission: PERMISSIONS.APPROVALS_MANAGE},
-
+      { key: "departments", href: "/employee-experience/departments", icon: Building, permission: PERMISSIONS.DEPARTMENTWS_VIEW},
+      { key: "approvals", href: "/employee-experience/approvals", icon: FileEdit, permission: PERMISSIONS.APPROVALS_MANAGE},
     ]
   },
   {
@@ -95,7 +95,8 @@ const navigationItems: readonly NavigationGroup[] = [
       { key: "attendanceDashboard", href: "/attendance/dashboard", icon: LayoutDashboard, permission: PERMISSIONS.ATTENDANCE_MANAGE },
       { key: "setup", href: "/attendance/setup", icon: UserCheck, permission: PERMISSIONS.ATTENDANCE_MANAGE },
       { key: "holidays", href: "/attendance/holidays", icon: CalendarDays, permission: PERMISSIONS.ATTENDANCE_MANAGE },
-      { key: "deductions", href: "/attendance/deductions", icon: Calculator, permission: PERMISSIONS.ATTENDANCE_MANAGE }
+      { key: "deductions", href: "/attendance/deductions", icon: Calculator, permission: PERMISSIONS.ATTENDANCE_MANAGE },
+      { key : "devices", href: "/attendance/devices", icon: Fingerprint, permission: PERMISSIONS.ATTENDANCE_MANAGE },
     ]
   },
   {
@@ -151,7 +152,8 @@ const HEADER_CONTENT = {
       approvals: "سير الموافقات",
       employeeGroup: "الموظفين",
       hrDashboard: "لوحة الموارد البشرية",
-      attendanceDashboard: "لوحة الحضور والانصراف"
+      attendanceDashboard: "لوحة الحضور والانصراف",
+      devices: "أجهزة الحضور",
     }
   },
   en: {
@@ -190,7 +192,8 @@ const HEADER_CONTENT = {
       approvals: "Approvals Workflow",
       employeeGroup: "Employees",
       hrDashboard: "HR Dashboard",
-      attendanceDashboard: "Attendance & Infractions Dashboard"
+      attendanceDashboard: "Attendance & Infractions Dashboard",
+      devices: "Attendance Devices",
     }
   },
 } as const;

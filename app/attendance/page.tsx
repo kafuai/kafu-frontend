@@ -99,6 +99,7 @@ export default function AttendancePage() {
         loadingTitle: "جارٍ تحميل حضورك", loadingText: "يتم جلب دوام اليوم وسجلّك.",
         errorTitle: "تعذر تحميل البيانات", retry: "إعادة المحاولة",
         lateCheckoutTitle: "انتهى دوامك ولم تسجّل انصرافك",
+        device_only: "ورديتك مرتبطة بجهاز البصمة، سجّل حضورك وانصرافك عبر الجهاز.",
         lateCheckoutText: (time: string) =>
           `يمكنك تسجيل الانصراف الآن حتى الساعة ${time}. سيُتحقق من موقعك عند التسجيل، وبعد هذا الوقت ستحتاج إلى تقديم طلب تصحيح.`,
       }
@@ -149,6 +150,7 @@ export default function AttendancePage() {
           dispute_late: "Explain why you dispute the lateness.", dispute_absence: "Explain why you dispute the absence.",
           excuse: "State your excuse for the lateness or absence.",
         } as Record<string, string>,
+        device_only: "Your shift uses the fingerprint device. Check in and out on the device.",
         types: {
           missed_check_in: "Forgot to check in", missed_check_out: "Forgot to check out", time_change: "Time change",
           dispute_late: "Dispute lateness", dispute_absence: "Dispute absence", excuse: "Submit an excuse",
@@ -311,6 +313,16 @@ export default function AttendancePage() {
     setFxError("");
     setFixOpen(true);
   }
+
+
+function hasApprovedDeduction(date: string) {
+  return proposals.some(
+    (p) =>
+      p.incident_date === date &&
+      p.status === "approved"
+  );
+}
+
 
   const needsIn = fx.type === "missed_check_in" || fx.type === "time_change";
   const needsOut = fx.type === "missed_check_out" || fx.type === "time_change";
@@ -662,7 +674,8 @@ export default function AttendancePage() {
                           )}
                         </td>
                         <td className="px-4 py-3.5">
-                          {["late", "early_leave", "late_early_leave", "incomplete", "possible_absence","absent_confirmed"].includes(r.status) && (
+                          {["late", "early_leave", "late_early_leave", "incomplete", "possible_absence", "absent_confirmed"].includes(r.status)
+                            && !hasApprovedDeduction(r.date) && (
                             <button
                               type="button"
                               onClick={() => openFix(r.date)}

@@ -91,6 +91,7 @@ export async function GET() {
         checkIn: checkIn ? new Date(checkIn).toISOString() : null,
         checkOut: checkOut ? new Date(checkOut).toISOString() : null,
         onLeave,
+        deviceOnly: Boolean(c.shift.device_id),
         isOfficialHoliday,
         holidayWorkAllowed,
         live,
@@ -103,7 +104,9 @@ export async function GET() {
     if (!curView) blockedReason = todayIsHoliday ? "official_holiday" : "no_active_shift";
     else if (curView.isOfficialHoliday && !curView.holidayWorkAllowed) blockedReason = "official_holiday";
     else if (curView.onLeave) blockedReason = "on_leave";
+    else if (curView.deviceOnly) blockedReason = "device_only";
     else if (!curView.locationActive) blockedReason = "location_inactive";
+    
 
     const GRACE_MS = CHECKOUT_GRACE_MINUTES * 60_000;
     let checkoutTarget: "current" | "recent" | null = null;
@@ -112,7 +115,7 @@ export async function GET() {
     if (curView && !blockedReason && curView.checkIn && !curView.checkOut) {
       checkoutTarget = "current";
     } else if (
-      recent && recentView &&
+      recent && recentView && !recentView.deviceOnly &&
       recentView.checkIn && !recentView.checkOut &&
       now <= recent.schedule.end + GRACE_MS
     ) {

@@ -2,6 +2,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { PERMISSIONS } from "@/lib/rbac/permissions";
 import { getAttendanceContext, isUuid } from "@/src/enterprise/business/attendance/core/attendanceContext";
+import { createSupabaseAdminClient } from "@/lib/supabase-auth/admin";
 
 const hhmm = (v: unknown) => typeof v === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 const int = (v: unknown, min: number, max: number) =>
@@ -45,8 +46,23 @@ function parse(body: any, partial: boolean): { error: string } | { out: Record<s
     if (body.locationId !== null && !isUuid(body.locationId)) return { error: "Invalid location." };
     out.location_id = body.locationId;
   }
+
+  if ("deviceId" in body) {
+    if (body.deviceId !== null && !isUuid(body.deviceId)) return { error: "Invalid device." };
+    out.device_id = body.deviceId;
+  }
+
   if ("isActive" in body) out.is_active = body.isActive === true;
   return { out };
+}
+
+async function checkDevice(organizationId: string, deviceId: string) {
+  const { data, error } = await createSupabaseAdminClient().from("attendance_devices")
+    .select("id,is_active").eq("id", deviceId).eq("organization_id", organizationId).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return NextResponse.json({ error: "Device not found." }, { status: 400 });
+  if (!data.is_active) return NextResponse.json({ error: "This device is disabled. Enable it before using it in a shift." }, { status: 409 });
+  return null;
 }
 
 export async function GET() {
@@ -78,10 +94,20 @@ export async function POST(request: Request) {
     if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
     const o = parsed.out;
+
+    if (o.location_id && o.device_id) {
+      return NextResponse.json({ error: "A shift can use a work location or a fingerprint device, not both." }, { status: 400 });
+    }
+    if (o.device_id) {
+      const bad = await checkDevice(ctx.organizationId, o.device_id);
+      if (bad) return bad;
+    }
+
     const { data, error } = await ctx.supabase.from("shifts")
       .insert({
         ...o,
         location_id: o.location_id ?? null,
+        device_id: o.device_id ?? null,
         crosses_midnight: o.end_time < o.start_time,
         organization_id: ctx.organizationId,
         created_by: ctx.user.id,
@@ -108,7 +134,17 @@ export async function PATCH(request: Request) {
     const o = parsed.out;
     if (Object.keys(o).length === 0) return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
 
-    const scheduleKeys = ["start_time", "end_time", "work_days", "grace_minutes", "break_minutes", "early_checkin_minutes", "location_id"];
+    if (o.device_id && !("location_id" in o)) o.location_id = null;
+    if (o.location_id && !("device_id" in o)) o.device_id = null;
+    if (o.location_id && o.device_id) {
+      return NextResponse.json({ error: "A shift can use a work location or a fingerprint device, not both." }, { status: 400 });
+    }
+    if (o.device_id) {
+      const bad = await checkDevice(ctx.organizationId, o.device_id);
+      if (bad) return bad;
+    }
+
+    const scheduleKeys = ["start_time", "end_time", "work_days", "grace_minutes", "break_minutes", "early_checkin_minutes", "location_id", "device_id"];
     if (scheduleKeys.some((k) => k in o)) {
       const [days, events] = await Promise.all([
         ctx.supabase.from("attendance_days").select("id", { count: "exact", head: true })

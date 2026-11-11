@@ -18,17 +18,19 @@ function validTimezone(value: unknown): value is string {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const ctx = await getAttendanceContext(PERMISSIONS.ATTENDANCE_MANAGE);
     if ("error" in ctx) return ctx.error;
 
-    const { data, error } = await createSupabaseAdminClient()
+    let q = createSupabaseAdminClient()
       .from("attendance_devices")
       .select(DEVICE_COLUMNS)
       .eq("organization_id", ctx.organizationId)
       .order("created_at", { ascending: false });
+    if (new URL(request.url).searchParams.get("activeOnly") === "1") q = q.eq("is_active", true);
 
+    const { data, error } = await q;
     if (error) throw new Error(error.message);
     return NextResponse.json({ data: data ?? [] });
   } catch (error) {
