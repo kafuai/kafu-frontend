@@ -4,92 +4,92 @@ import React from "react";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
 const ARABIC_CONTENT = {
-  badge: "الفوائد التنفيذية",
-  title: "قيمة مباشرة للقيادة والمؤسسة",
+  badge: "قيمة عملية في العمل اليومي",
+  title: "إجراءات أوضح ومتابعة أسهل لفريقك",
   description:
-    "لا يقاس نجاح KAFU AI بعدد التقارير التي ينتجها، بل بقدرته على تحسين سرعة القرار وجودة التنفيذ والنتائج المؤسسية.",
+    "يساعد KAFU AI على تنظيم عمليات الموارد البشرية وتقليل تشتت الطلبات والبيانات بين الملفات والقنوات المختلفة.",
   benefits: [
     {
       metric: "01",
-      title: "وضوح تنفيذي أكبر",
+      title: "بيانات موظفين منظمة",
       description:
-        "صورة موحدة تربط التحديات والقرارات والمبادرات والنتائج أمام القيادة.",
+        "ملف موحد لكل موظف يسهل الرجوع إلى بياناته الوظيفية ومعلوماته ذات الصلة.",
     },
     {
       metric: "02",
-      title: "قرارات أسرع وأكثر ثقة",
+      title: "متابعة الحضور والورديات",
       description:
-        "توصيات مبنية على السياق المؤسسي والأدلة والأولويات بدل الاجتهادات المنفصلة.",
+        "إدارة مواقع العمل وساعات الدوام والورديات ومراجعة حالات الحضور والتأخير والغياب.",
     },
     {
       metric: "03",
-      title: "مساءلة واضحة",
+      title: "طلبات واضحة الحالة",
       description:
-        "كل قرار يرتبط بمالك، موعد، حالة، ومؤشرات متابعة قابلة للقياس.",
+        "يعرف الموظف أين وصل طلبه، ويستطيع المسؤول مراجعته واتخاذ الإجراء المطلوب.",
     },
     {
       metric: "04",
-      title: "تنسيق أفضل بين الإدارات",
+      title: "موافقات منظمة",
       description:
-        "توحيد اللغة والمعلومات والمسؤوليات عبر الفرق والمستويات الإدارية.",
+        "تحديد المسؤولين عن المراجعة والاعتماد بحسب مسار العمل والصلاحيات.",
     },
     {
       metric: "05",
-      title: "حفظ المعرفة المؤسسية",
+      title: "إدارة رواتب مترابطة",
       description:
-        "تقليل ضياع الخبرة والسياق عند انتقال الموظفين أو تغير الفرق.",
+        "تجهيز مسيرات الرواتب ومراجعتها واعتمادها ضمن إجراءات واضحة.",
     },
     {
       metric: "06",
-      title: "قدرة أكبر على التوسع",
+      title: "خدمة ذاتية للموظف",
       description:
-        "إدخال الذكاء الاصطناعي إلى العمل المؤسسي ضمن إطار منظم وقابل للحوكمة.",
+        "تمكين الموظفين من الوصول إلى الخدمات وطرح الاستفسارات وتقديم الطلبات ومتابعتها.",
     },
   ],
 } as const;
 
 // --- المحتوى الإنجليزي ---
 const ENGLISH_CONTENT = {
-  badge: "Executive Benefits",
-  title: "Direct value for leadership and the enterprise",
+  badge: "Practical Value for Everyday Work",
+  title: "Clearer processes and easier follow-up for your team",
   description:
-    "KAFU AI's success is not measured by the number of reports it generates, but by its ability to improve decision speed, execution quality, and enterprise outcomes.",
+    "KAFU AI helps organize HR operations and reduces the fragmentation of employee requests and information across files and channels.",
   benefits: [
     {
       metric: "01",
-      title: "Greater executive clarity",
+      title: "Organized Employee Records",
       description:
-        "A unified view connecting challenges, decisions, initiatives, and outcomes for leadership.",
+        "A structured profile for each employee, making relevant employment information easier to access.",
     },
     {
       metric: "02",
-      title: "Faster and more confident decisions",
+      title: "Attendance & Shift Tracking",
       description:
-        "Recommendations based on enterprise context, evidence, and priorities rather than isolated guesswork.",
+        "Configure work locations, working hours, and shifts while reviewing attendance, lateness, and absence.",
     },
     {
       metric: "03",
-      title: "Clear accountability",
+      title: "Visible Request Status",
       description:
-        "Every decision is linked to an owner, deadline, status, and measurable tracking indicators.",
+        "Employees can see where requests stand, while responsible users review and process them.",
     },
     {
       metric: "04",
-      title: "Better cross-departmental coordination",
+      title: "Structured Approvals",
       description:
-        "Unifying language, information, and responsibilities across teams and management levels.",
+        "Assign reviewers and approvers according to workflow steps and user permissions.",
     },
     {
       metric: "05",
-      title: "Preserving enterprise knowledge",
+      title: "Connected Payroll Management",
       description:
-        "Reducing the loss of expertise and context when employees transition or teams change.",
+        "Prepare, review, and approve payroll runs through clear processes.",
     },
     {
       metric: "06",
-      title: "Greater scalability",
+      title: "Employee Self-Service",
       description:
-        "Introducing AI into enterprise workflows within a structured and governable framework.",
+        "Help employees access services, ask questions, submit requests, and follow their progress.",
     },
   ],
 } as const;

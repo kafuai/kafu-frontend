@@ -5,96 +5,96 @@ import { useLocalization } from "@/components/localization/LocalizationContext";
 
 
 const ARABIC_CONTENT = {
-  badge: "منصة واحدة متصلة",
-  title: "من فهم المؤسسة إلى تنفيذ القرار",
+  badge: "إدارة الموارد البشرية في منصة واحدة",
+  title: "كل ما يحتاجه فريق الموارد البشرية لتسيير العمل اليومي",
   description:
-    "يربط KAFU AI دورة العمل كاملة بدلًا من ترك كل مرحلة في أداة أو ملف أو إدارة منفصلة.",
-  loopBadge: "دورة الذكاء المتصلة",
-  loopSequence: "الاكتشاف ← التقييم ← الفهم ← التوصية ← التنفيذ ← التعلم",
+    "يجمع KAFU AI بيانات الموظفين وعمليات الحضور والإجازات والطلبات والرواتب في مساحة عمل واحدة، مع أدوات تساعد الموظف والمدير وفريق الموارد البشرية على متابعة الإجراءات بوضوح.",
+  loopBadge: "من طلب الموظف إلى الإجراء المعتمد",
+  loopSequence: "تقديم الطلب ← مراجعة المدير ← إجراء الموارد البشرية ← تحديث الحالة",
   capabilities: [
     {
-      label: "اكتشاف",
-      title: "الاكتشاف المؤسسي",
+      label: "الموظفون",
+      title: "إدارة بيانات الموظفين",
       description:
-        "التقاط السياق الحقيقي للمؤسسة من خلال أسئلة موجهة، بيانات تشغيلية، ومدخلات أصحاب العلاقة.",
+        "ملفات منظمة للموظفين تشمل البيانات الوظيفية ومعلومات العمل والبيانات المرتبطة بالرواتب.",
     },
     {
-      label: "تقييم",
-      title: "التقييم والجاهزية",
+      label: "الحضور",
+      title: "الحضور والانصراف",
       description:
-        "قياس الجاهزية المؤسسية، القدرات، فجوات الأداء، والمخاطر التي تعيق التقدم.",
+        "متابعة سجلات الحضور والتأخير والغياب، مع إعداد مواقع العمل وساعات الدوام والورديات.",
     },
     {
-      label: "فهم",
-      title: "العقل المؤسسي",
+      label: "الإجازات",
+      title: "الإجازات وطلبات الموظفين",
       description:
-        "بناء ذاكرة مترابطة للمعرفة والقرارات والأولويات والتجارب السابقة داخل المؤسسة.",
+        "تقديم الطلبات ومتابعة حالتها وإدارتها من خلال مسارات المراجعة والاعتماد.",
     },
     {
-      label: "توصية",
-      title: "التوصيات الذكية",
+      label: "الرواتب",
+      title: "إدارة مسيرات الرواتب",
       description:
-        "تحويل المعطيات إلى توصيات تنفيذية مرتبة حسب الأولوية، الأثر، والثقة.",
+        "تنظيم بيانات الرواتب وتجهيز المسيرات ومراجعتها واعتمادها وفق صلاحيات المستخدمين.",
     },
     {
-      label: "تنفيذ",
-      title: "مركز القيادة",
+      label: "الموافقات",
+      title: "مسارات الموافقات",
       description:
-        "إدارة القرارات، المبادرات، المسؤوليات، المواعيد، والتنبيهات من مساحة موحدة.",
+        "تنظيم انتقال الطلبات بين المسؤولين وتوثيق قرارات الموافقة أو الرفض ومتابعة حالة كل طلب.",
     },
     {
-      label: "توسع",
-      title: "القوى العاملة الرقمية",
+      label: "المساعد الذكي",
+      title: "تجربة موظف أسهل",
       description:
-        "توظيف وكلاء ذكاء اصطناعي لدعم الفرق في التحليل، المتابعة، والتنسيق المؤسسي.",
+        "مساعد ذكي يسهّل على الموظفين الوصول إلى المعلومات والخدمات وتقديم الطلبات ومتابعتها.",
     },
   ],
 } as const;
 
 
 const ENGLISH_CONTENT = {
-  badge: "One Connected Platform",
-  title: "From understanding the enterprise to executing decisions",
+  badge: "HR Operations in One Platform",
+  title: "The tools HR teams need to manage everyday work",
   description:
-    "KAFU AI connects the entire workflow instead of leaving each phase in a separate tool, file, or department.",
-  loopBadge: "Connected Intelligence Loop",
-  loopSequence: "Discover → Assess → Understand → Recommend → Execute → Learn",
+    "KAFU AI brings employee records, attendance, leave, requests, and payroll workflows into one workspace, helping employees, managers, and HR teams follow each process clearly.",
+  loopBadge: "From employee request to completed action",
+  loopSequence: "Employee submits → Manager reviews → HR processes → Status is updated",
   capabilities: [
     {
-      label: "Discover",
-      title: "Enterprise Discovery",
+      label: "People",
+      title: "Employee Management",
       description:
-        "Capture true enterprise context through guided questions, operational data, and stakeholder inputs.",
+        "Organized employee profiles covering employment details, work information, and payroll-related data.",
     },
     {
-      label: "Assess",
-      title: "Assessment & Readiness",
+      label: "Attendance",
+      title: "Time & Attendance",
       description:
-        "Measure enterprise readiness, capabilities, performance gaps, and risks hindering progress.",
+        "Track attendance, lateness, and absence while configuring work locations, working hours, and shifts.",
     },
     {
-      label: "Understand",
-      title: "Enterprise Mind",
+      label: "Leave",
+      title: "Leave & Employee Requests",
       description:
-        "Build an interconnected memory of knowledge, decisions, priorities, and past experiences within the organization.",
+        "Submit requests, follow their status, and process them through review and approval workflows.",
     },
     {
-      label: "Recommend",
-      title: "Smart Recommendations",
+      label: "Payroll",
+      title: "Payroll Runs",
       description:
-        "Transform inputs into actionable recommendations ranked by priority, impact, and confidence.",
+        "Organize salary data and prepare, review, and approve payroll runs according to user permissions.",
     },
     {
-      label: "Execute",
-      title: "Command Center",
+      label: "Approvals",
+      title: "Approval Workflows",
       description:
-        "Manage decisions, initiatives, responsibilities, deadlines, and alerts from a unified space.",
+        "Route requests to the right people, record approval or rejection decisions, and track each request.",
     },
     {
-      label: "Scale",
-      title: "Digital Workforce",
+      label: "AI Assistant",
+      title: "A Better Employee Experience",
       description:
-        "Employ AI agents to support teams in analysis, tracking, and enterprise coordination.",
+        "An AI assistant that helps employees find information and services, submit requests, and follow up.",
     },
   ],
 } as const;

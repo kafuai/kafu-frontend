@@ -1,27 +1,20 @@
 ﻿import { LandingHero } from "./LandingHero";
-import { LandingAudience } from "./LandingAudience";
-import { LandingProblem } from "./LandingProblem";
-import { LandingValue } from "./LandingValue";
+import { LandingProductShowcase } from "./LandingProductShowcase";
 import { LandingPlatform } from "./LandingPlatform";
+import { LandingAudience } from "./LandingAudience";
 import { LandingBenefits } from "./LandingBenefits";
-import { LandingOutcomes } from "./LandingOutcomes";
-import { LandingCTA } from "./LandingCTA";
-import { LandingFAQ } from "./LandingFAQ";
 import { LandingPilot } from "./LandingPilot";
+import { LandingFAQ } from "./LandingFAQ";
+import { LandingCTA } from "./LandingCTA";
 
 export function LandingPage() {
   return (
-    <main
-      className="min-h-screen bg-[var(--landing-bg-primary)] text-[var(--landing-text-primary)]"
-      dir="rtl"
-    >
+    <main className="min-h-screen bg-[var(--background)] text-[var(--text-primary)]">
       <LandingHero />
-      <LandingAudience />
-      <LandingProblem />
-      <LandingValue />
+      <LandingProductShowcase />
       <LandingPlatform />
+      <LandingAudience />
       <LandingBenefits />
-      <LandingOutcomes />
       <LandingPilot />
       <LandingFAQ />
       <LandingCTA />

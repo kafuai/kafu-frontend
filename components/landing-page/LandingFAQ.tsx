@@ -6,64 +6,74 @@ import { useLocalization } from "@/components/localization/LocalizationContext";
 
 const ARABIC_CONTENT = {
   badge: "الأسئلة الشائعة",
-  title: "كل ما تحتاج معرفته",
+  title: "إجابات عن KAFU AI واستخدامه",
   faqs: [
     {
       question: "ما هو KAFU AI؟",
       answer:
-        "منصة ذكاء مؤسسي وتنفيذ تساعد القيادة على فهم المؤسسة، اتخاذ قرارات أوضح، وربط التوصيات بالتنفيذ والمتابعة.",
+        "KAFU AI منصة لإدارة عمليات الموارد البشرية وتجربة الموظف. تجمع إدارة الموظفين والحضور والورديات والإجازات والطلبات والرواتب ومسارات الموافقات في منصة واحدة.",
     },
     {
-      question: "هل KAFU AI نظام موارد بشرية؟",
+      question: "هل يستطيع الموظف تقديم طلباته بنفسه؟",
       answer:
-        "لا. يمكنه دعم تحديات الموارد البشرية والتوطين، لكنه مصمم كمنصة أوسع للمعرفة والقرار والتنفيذ المؤسسي.",
+        "نعم. يستطيع الموظف الوصول إلى الخدمات المتاحة له، وتقديم الطلبات مثل الإجازات، ومتابعة حالتها من خلال المنصة.",
     },
     {
-      question: "كيف تبدأ المؤسسة؟",
+      question: "كيف تتم مراجعة الطلبات والموافقات؟",
       answer:
-        "نبدأ عادةً بـ Pilot محدود النطاق يركز على تحدٍ حقيقي ومؤشرات نجاح واضحة خلال مدة تتراوح غالبًا بين 3 و6 أسابيع.",
+        "تُدار الطلبات من خلال مسارات موافقات، بحيث تتم مراجعتها واتخاذ القرار من المستخدمين المسؤولين وفق الأدوار والصلاحيات المحددة.",
     },
     {
-      question: "هل يمكن ربطه بأنظمة المؤسسة؟",
+      question: "هل يدعم KAFU AI الحضور والورديات؟",
       answer:
-        "نعم. يتم تحديد التكاملات المطلوبة بناءً على نطاق الاستخدام والبيانات والأنظمة الحالية داخل المؤسسة.",
+        "نعم. تتضمن المنصة إعداد مواقع العمل وساعات الدوام والورديات، ومتابعة سجلات الحضور والتأخير والغياب.",
     },
     {
-      question: "هل يمكن استخدامه من أكثر من إدارة؟",
+      question: "هل تتضمن المنصة إدارة الرواتب؟",
       answer:
-        "نعم. تم تصميمه ليجمع القيادة وفرق التحول والموارد البشرية والإدارات التشغيلية حول سياق مؤسسي موحد.",
+        "تتضمن إدارة بيانات الرواتب وتجهيز مسيرات الرواتب ومراجعتها واعتمادها. أما التحويلات البنكية فتتم عبر القنوات والأنظمة المالية المعتمدة لدى المنشأة.",
+    },
+    {
+      question: "هل تختلف الصلاحيات حسب المستخدم؟",
+      answer:
+        "نعم. تُحدد صلاحيات المستخدم بحسب دوره ومسؤولياته، حتى يصل كل مستخدم إلى الوظائف والإجراءات المسموح بها له.",
     },
   ],
 } as const;
 
 const ENGLISH_CONTENT = {
-  badge: "FAQ",
-  title: "Frequently Asked Questions",
+  badge: "Frequently Asked Questions",
+  title: "What to know about KAFU AI",
   faqs: [
     {
       question: "What is KAFU AI?",
       answer:
-        "An enterprise intelligence and execution platform that helps leadership understand the organization, make clearer decisions, and link recommendations to execution and tracking.",
+        "KAFU AI is an HR operations and employee experience platform. It brings employee management, attendance, shifts, leave, requests, payroll, and approval workflows together in one platform.",
     },
     {
-      question: "Is KAFU AI an HR system?",
+      question: "Can employees submit their own requests?",
       answer:
-        "No. It can support HR and localization challenges, but it is designed as a broader platform for enterprise knowledge, decision-making, and execution.",
+        "Yes. Employees can access the services available to them, submit requests such as leave, and track their status through the platform.",
     },
     {
-      question: "How does an organization get started?",
+      question: "How are requests and approvals handled?",
       answer:
-        "We typically start with a limited-scope Pilot focusing on a real challenge and clear success metrics, usually taking between 3 to 6 weeks.",
+        "Requests move through approval workflows, where designated users review them and make decisions according to their assigned roles and permissions.",
     },
     {
-      question: "Can it be integrated with enterprise systems?",
+      question: "Does KAFU AI support attendance and shifts?",
       answer:
-        "Yes. Required integrations are determined based on the scope of use, data, and existing systems within the organization.",
+        "Yes. The platform includes work location, working hour, and shift configuration, along with attendance, lateness, and absence tracking.",
     },
     {
-      question: "Can it be used by multiple departments?",
+      question: "Does the platform include payroll management?",
       answer:
-        "Yes. It is designed to unite leadership, transformation teams, HR, and operational departments around a unified enterprise context.",
+        "It includes salary data management and the preparation, review, and approval of payroll runs. Bank transfers are handled through the organization's approved financial channels and systems.",
+    },
+    {
+      question: "Can access differ by user?",
+      answer:
+        "Yes. User access is assigned according to each person's role and responsibilities, so users can access the functions and actions permitted to them.",
     },
   ],
 } as const;

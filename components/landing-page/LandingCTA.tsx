@@ -6,20 +6,20 @@ import { useLocalization } from "@/components/localization/LocalizationContext";
 
 
 const ARABIC_CONTENT = {
-  badge: "ابدأ بتجربة موجهة",
-  title: "ابدأ بتحويل تحدٍ مؤسسي حقيقي إلى قرار وتنفيذ قابل للقياس",
+  badge: "خلّينا نعرّفك على KAFU AI",
+  title: "اكتشف كيف يمكن لـ KAFU AI تنظيم عمليات الموارد البشرية في منشأتك",
   description:
-    "نبدأ بنطاق واضح، ومؤشرات نجاح متفق عليها، وتجربة تنفيذية توضح قيمة KAFU AI داخل مؤسستك.",
-  cta: "ابدأ الآن",
+    "احجز عرضًا توضيحيًا للتعرّف على إدارة الموظفين والحضور والإجازات والطلبات والرواتب، وكيف يمكن تهيئة المنصة بما يناسب احتياج فريقك.",
+  cta: "احجز عرضًا توضيحيًا",
 } as const;
 
 
 const ENGLISH_CONTENT = {
-  badge: "Start with a Controlled Pilot",
-  title: "Start transforming a real enterprise challenge into measurable decisions and execution",
+  badge: "See KAFU AI in Action",
+  title: "Discover how KAFU AI can organize HR operations in your organization",
   description:
-    "We start with a clear scope, agreed-upon success metrics, and an executive pilot that demonstrates the value of KAFU AI within your organization.",
-  cta: "Get Started Now",
+    "Book a product walkthrough to explore employee management, attendance, leave, requests, and payroll—and see how the platform can be configured around your team's needs.",
+  cta: "Book a Demo",
 } as const;
 
 export function LandingCTA() {
@@ -54,7 +54,7 @@ export function LandingCTA() {
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/book-demo"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--landing-text-primary)] px-7 py-3 text-sm font-extrabold text-[var(--landing-bg-primary)] shadow-[var(--shadow-medium)] transition duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--landing-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--landing-surface)]"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl  px-7 py-3 text-sm font-extrabold text-[var(--landing-bg-primary)] shadow-[var(--shadow-medium)] transition duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--landing-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--landing-surface)]"
             >
               <span>{content.cta}</span>
               {isArabic ? <ArrowLeft size={17} /> : <ArrowRight size={17} />}

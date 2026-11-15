@@ -5,70 +5,70 @@ import { useLocalization } from "@/components/localization/LocalizationContext";
 
 
 const ARABIC_CONTENT = {
-  badge: "تجربة مؤسسية موجهة (Pilot)",
-  title: "ابدأ بتجربة تنفيذية واضحة خلال 3–6 أسابيع",
+  badge: "البدء مع KAFU AI",
+  title: "تهيئة المنصة بما يناسب طريقة عمل منشأتك",
   description:
-    "يبدأ Pilot بنطاق محدد ومؤشرات نجاح متفق عليها، حتى تتمكن القيادة من تقييم القيمة قبل التوسع.",
+    "تبدأ رحلة الاستخدام بفهم احتياج فريقك، ثم إعداد بيانات المنشأة والعمليات التي ستستخدمها، وتجربة الإجراءات مع المستخدمين المعنيين.",
   successBox: {
-    title: "معايير نجاح التجربة (Pilot)",
+    title: "الهدف من مرحلة التهيئة",
     description:
-      "وضوح أعلى، قرار أسرع، مسؤوليات محددة، ومتابعة تنفيذية قابلة للقياس.",
+      "أن تكون بيانات المنشأة ومستخدميها وصلاحياتهم وإجراءات الموارد البشرية الأساسية جاهزة للاستخدام والمراجعة.",
   },
   steps: [
     {
       step: "01",
-      title: "تحديد التحدي",
-      description: "نختار تحديًا مؤسسيًا واضحًا له أثر تنفيذي ويمكن قياس نتائجه.",
+      title: "تحديد الاحتياج",
+      description: "نتعرف على طريقة إدارة الموظفين والحضور والإجازات والطلبات والرواتب في منشأتك.",
     },
     {
       step: "02",
-      title: "جمع السياق",
-      description: "نربط أصحاب العلاقة والبيانات والأولويات اللازمة لفهم الوضع الحالي.",
+      title: "تهيئة المنشأة والمستخدمين",
+      description: "إعداد مساحة المنشأة وإضافة المستخدمين وتحديد الأدوار والصلاحيات المناسبة لهم.",
     },
     {
       step: "03",
-      title: "تشغيل KAFU AI",
-      description: "نحوّل المعطيات إلى تقييمات وتوصيات وخطة تنفيذية قابلة للمتابعة.",
+      title: "إعداد عمليات الموارد البشرية",
+      description: "تهيئة البيانات والإعدادات المطلوبة مثل الأقسام والورديات ومواقع العمل ومسارات الموافقات.",
     },
     {
       step: "04",
-      title: "قياس الأثر",
-      description: "نراجع النتائج مع القيادة ونحدد قرار التوسع أو المرحلة التالية.",
+      title: "التجربة والمراجعة",
+      description: "تجربة الإجراءات مع فريقك، ومراجعة النتائج، ومعالجة الملاحظات قبل التوسع في الاستخدام.",
     },
   ],
 } as const;
 
 
 const ENGLISH_CONTENT = {
-  badge: "Controlled Enterprise Pilot",
-  title: "Start with a clear executive pilot in 3–6 weeks",
+  badge: "Getting Started with KAFU AI",
+  title: "Set up the platform around the way your organization works",
   description:
-    "The Pilot begins with a defined scope and agreed-upon success metrics, enabling leadership to evaluate value before scaling.",
+    "Getting started begins with understanding your team's needs, configuring your organization and the workflows you plan to use, and testing those processes with the people involved.",
   successBox: {
-    title: "Pilot Success Criteria",
+    title: "The goal of onboarding",
     description:
-      "Higher clarity, faster decisions, defined responsibilities, and measurable executive tracking.",
+      "Have your organization, users, permissions, and core HR workflows configured and ready for use and review.",
   },
   steps: [
     {
       step: "01",
-      title: "Identify the Challenge",
-      description: "We select a clear enterprise challenge with an executive impact and measurable results.",
+      title: "Understand Your Needs",
+      description: "Review how your organization manages employees, attendance, leave, requests, and payroll.",
     },
     {
       step: "02",
-      title: "Gather Context",
-      description: "We connect stakeholders, data, and priorities needed to understand the current situation.",
+      title: "Set Up Your Organization & Users",
+      description: "Configure your organization workspace, add users, and assign appropriate roles and permissions.",
     },
     {
       step: "03",
-      title: "Run KAFU AI",
-      description: "We transform inputs into assessments, recommendations, and a trackable execution plan.",
+      title: "Configure HR Operations",
+      description: "Set up the required information and settings, such as departments, shifts, work locations, and approval workflows.",
     },
     {
       step: "04",
-      title: "Measure Impact",
-      description: "We review results with leadership and determine the decision to scale or the next phase.",
+      title: "Test & Review",
+      description: "Run the workflows with your team, review the results, and address feedback before expanding usage.",
     },
   ],
 } as const;

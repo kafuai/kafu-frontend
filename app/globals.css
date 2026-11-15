@@ -37,6 +37,22 @@
   --radius-card: 16px;
   --radius-dialog: 20px;
   --radius-container: 24px;
+
+  /* Public landing pages share the exact application design tokens. */
+  --landing-bg-primary: var(--background);
+  --landing-bg-secondary: var(--surface-muted);
+  --landing-surface: var(--surface);
+  --landing-surface-muted: var(--surface-muted);
+  --landing-surface-hover: var(--surface-elevated);
+  --landing-text-primary: var(--text-primary);
+  --landing-text-secondary: var(--text-secondary);
+  --landing-text-muted: var(--text-muted);
+  --landing-border: var(--border-default);
+  --landing-border-strong: var(--border-strong);
+  --landing-accent: var(--brand-primary);
+  --landing-accent-strong: var(--brand-primary);
+  --landing-accent-soft: var(--brand-subtle);
+  --landing-accent-border: color-mix(in srgb, var(--brand-primary) 24%, var(--border-default));
 }
 
 html[data-theme="dark"] {

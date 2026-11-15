@@ -3,51 +3,51 @@
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
 const ARABIC_CONTENT = {
-  badge: "مصمم لقادة المؤسسات",
-  title: "منصة واحدة تجمع القيادة والفرق حول صورة مؤسسية موحدة",
+  badge: "مصمم لكل أطراف العمل اليومي",
+  title: "كل مستخدم يعرف ما عليه وما يحتاج إلى متابعته",
   description:
-    "صُمم KAFU AI ليدعم من يصنع القرار، ومن يترجم القرار إلى خطط، ومن يقود التنفيذ داخل المؤسسة.",
+    "يوفر KAFU AI تجربة واضحة بحسب دور المستخدم، من الموظف الذي يقدّم الطلب إلى المدير الذي يراجعه وفريق الموارد البشرية الذي يدير العملية.",
   audiences: [
     {
-      title: "القيادات التنفيذية",
-      description: "رؤية موحدة للأداء المؤسسي، الأولويات، المخاطر، والقرارات التي تحتاج إلى تدخل.",
+      title: "فريق الموارد البشرية",
+      description: "إدارة ملفات الموظفين والحضور والإجازات والطلبات والرواتب من مكان واحد.",
     },
     {
-      title: "فرق التحول والاستراتيجية",
-      description: "ربط المبادرات بالأهداف، وتحديد فجوات التنفيذ، وقياس التقدم والنتائج.",
+      title: "المديرون ورؤساء الأقسام",
+      description: "مراجعة طلبات الفريق ومتابعة الحضور والغياب واتخاذ قرارات الموافقة ضمن الصلاحيات المحددة.",
     },
     {
-      title: "الموارد البشرية والتوطين",
-      description: "تحليل القدرات، فجوات القوى العاملة، الاحتياجات المستقبلية، وخطط التطوير.",
+      title: "الموظفون",
+      description: "الوصول إلى الخدمات، وتقديم طلبات الإجازة والخدمات الوظيفية، ومتابعة حالتها.",
     },
     {
-      title: "الإدارات التشغيلية",
-      description: "تحويل التحديات اليومية إلى إجراءات واضحة ومسؤوليات ومؤشرات متابعة.",
+      title: "إدارة المنشأة",
+      description: "متابعة عمليات الموارد البشرية والاطلاع على المعلومات اللازمة للإشراف واتخاذ القرار.",
     },
   ],
 } as const;
 
 const ENGLISH_CONTENT = {
-  badge: "Built for Enterprise Leaders",
-  title: "A single platform uniting leadership and teams around a unified organizational view",
+  badge: "Built Around Everyday HR Work",
+  title: "A clear experience for everyone involved",
   description:
-    "KAFU AI is designed to support decision-makers, those who translate decisions into plans, and those who lead execution within the organization.",
+    "KAFU AI gives each user a role-based experience, from the employee submitting a request to the manager reviewing it and HR managing the process.",
   audiences: [
     {
-      title: "Executive Leadership",
-      description: "A unified view of institutional performance, priorities, risks, and decisions requiring intervention.",
+      title: "HR Teams",
+      description: "Manage employee records, attendance, leave, requests, and payroll in one place.",
     },
     {
-      title: "Transformation & Strategy Teams",
-      description: "Linking initiatives to goals, identifying implementation gaps, and measuring progress and outcomes.",
+      title: "Managers & Department Heads",
+      description: "Review team requests, follow attendance and absence, and make approval decisions within their assigned permissions.",
     },
     {
-      title: "Human Resources & Localization",
-      description: "Analyzing capabilities, workforce gaps, future needs, and development plans.",
+      title: "Employees",
+      description: "Access services, submit leave and employee-service requests, and track their status.",
     },
     {
-      title: "Operational Departments",
-      description: "Transforming daily challenges into clear actions, responsibilities, and tracking indicators.",
+      title: "Business Administrators",
+      description: "Oversee HR operations and access the information needed to supervise day-to-day work.",
     },
   ],
 } as const;
