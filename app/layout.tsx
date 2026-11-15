@@ -2,7 +2,6 @@
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 
 import AppShell from "@/components/foundation/AppShell";
-
 import "./globals.css";
 import "./styles/enterprise-header.css";
 import "./styles/enterprise-shell.css";

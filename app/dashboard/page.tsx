@@ -1,840 +1,603 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-
-import { supabase } from "@/lib/supabase";
-import WorkspaceScopeBoundary from "@/components/enterprise-shell/WorkspaceScopeBoundary";
-import { useWorkspaceScope } from "@/hooks/useWorkspaceScope";
-
-import ExecutiveHero from "@/components/executive-dashboard/ExecutiveHero";
-import ExecutiveKpiGrid from "@/components/executive-dashboard/ExecutiveKpiGrid";
-import ExecutiveInsights from "@/components/executive-dashboard/ExecutiveInsights";
-import ExecutiveDecisionCenter from "@/components/executive-dashboard/ExecutiveDecisionCenter";
-import ExecutiveActivityFeed from "@/components/executive-dashboard/ExecutiveActivityFeed";
-import ExecutiveHealthOverview from "@/components/executive-dashboard/ExecutiveHealthOverview";
-
-import ExecutiveCards from "@/components/dashboard/ExecutiveCards";
-import ExecutiveSignals from "@/components/dashboard/ExecutiveSignals";
-import ExecutiveSummaryCard from "@/components/dashboard/ExecutiveSummaryCard";
-import RiskWatch from "@/components/dashboard/RiskWatch";
-import PipelineSnapshot from "@/components/dashboard/PipelineSnapshot";
-
-import LeadStageButtons from "./LeadStageButtons";
-
 import {
-  DIGITAL_WORKFORCE_BASELINE,
-  buildExecutiveCards,
-  buildStageCounts,
-  calculateCorporateBrainScore,
-  calculatePipelineMetrics,
-  calculateReadinessScore,
-} from "@/lib/executive-dashboard";
+  Activity, ArrowLeft, ArrowRight, CalendarClock, CircleUserRound,
+  ClipboardList, Clock3, FileText, RefreshCw, UsersRound,
+} from "lucide-react";
+import { useLocalization } from "@/components/localization/LocalizationContext";
 
-import {
-  buildExecutivePriorities,
-  buildExecutiveRisks,
-  generateExecutiveSignals,
-} from "@/lib/executive-intelligence";
+type Metric<T> =
+  | { status: "available"; value: T }
+  | { status: "unavailable"; reason: string };
 
-import { buildExecutiveSummary } from "@/lib/executive-summary";
-import { buildDashboardEnterpriseIntelligence } from "../../src/product/dashboard";
-
-type Company = {
-  id: string;
-  name: string | null;
-  industry: string | null;
-  country: string | null;
-  employee_count: number | null;
-  contact_name?: string | null;
-  contact_phone?: string | null;
-};
-
-type DiscoveryAnswer = {
-  id: string;
-  question: string;
-  answer: string;
-  question_order: number;
-};
-
-type PipelineItem = {
-  id: string;
-  status: string | null;
-  sales_rep: string | null;
-  opportunity_value: number | null;
-  response_deadline: string | null;
-  is_overdue: boolean;
-  companies?: {
-    name: string | null;
-    contact_name: string | null;
-    contact_phone: string | null;
-  } | null;
+type PayrollPeriod = {
+  periodStart: string;
+  periodEnd: string;
+  runCount: number;
+  run: { id: string; status: string; periodMatchesCalendar: boolean } | null;
+  state: "not_created" | "created" | "multiple_runs";
 };
 
 type DashboardData = {
-  company: Company;
-  companies: Company[];
-  answers: DiscoveryAnswer[];
-  pipeline: PipelineItem[];
+  role: string;
+  personal: {
+    fullName: string | null;
+    email: string | null;
+    jobTitle: string | null;
+    department: string | null;
+    employeeNumber: string | null;
+    employmentDataAvailable: boolean;
+    profileDataAvailable: boolean;
+  };
+  owner: null | {
+    activeEmployees: Metric<number>;
+    lateEmployees: Metric<number>;
+    pendingRequests: Metric<number>;
+    payrollPeriods: Metric<PayrollPeriod[]>;
+  };
 };
 
-const CLOSED_PIPELINE_STATUSES = new Set(["Won", "Lost"]);
+type AttendanceToday = {
+  blockedReason?: string | null;
+  current?: {
+    shiftName: string;
+    workDate: string;
+    start: string;
+    end: string;
+    timezone: string;
+    checkIn: string | null;
+    checkOut: string | null;
+    live?: { status?: string; lateMinutes?: number };
+    onLeave?: boolean;
+  } | null;
+  recent?: {
+    checkIn: string | null;
+    checkOut: string | null;
+    shiftName: string;
+    timezone?: string;
+    live?: { status?: string; lateMinutes?: number };
+  } | null;
+  next?: {
+    shiftName: string;
+    start: string;
+    end: string;
+    timezone: string;
+    checkIn: string | null;
+    checkOut: string | null;
+    live?: { status?: string; lateMinutes?: number };
+  } | null;
+  canCheckIn?: boolean;
+  canCheckOut?: boolean;
+};
 
-function formatCurrency(value: number | null) {
-  return new Intl.NumberFormat("ar-SA", {
-    style: "currency",
-    currency: "SAR",
-    maximumFractionDigits: 0,
-  }).format(value ?? 0);
+function formatDate(value: string, locale: string) {
+  return new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en", {
+    month: "long",
+    year: "numeric",
+    calendar: "gregory",
+  }).format(new Date(`${value}T12:00:00`));
 }
 
-function getPipelineStatusClasses(status: string | null) {
-  switch (status) {
-    case "Won":
-      return "border-emerald-200 bg-emerald-50 text-emerald-700";
-    case "Lost":
-      return "border-rose-200 bg-rose-50 text-rose-700";
-    case "Proposal":
-      return "border-violet-200 bg-violet-50 text-violet-700";
-    case "Meeting":
-      return "border-amber-200 bg-amber-50 text-amber-700";
-    case "Contacted":
-      return "border-sky-200 bg-sky-50 text-sky-700";
-    default:
-      return "border-blue-200 bg-blue-50 text-blue-700";
+function formatTime(value: string | null | undefined, locale: string, timezone = "Asia/Riyadh") {
+  if (!value) return locale === "ar" ? "لم يُسجّل بعد" : "Not recorded";
+  return new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: timezone,
+  }).format(new Date(value));
+}
+
+function attendanceStatus(attendance: AttendanceToday | null, locale: string) {
+  const view = attendance?.current ?? attendance?.recent ?? attendance?.next ?? null;
+  if (!view) {
+    if (attendance?.blockedReason === "no_assignment") return locale === "ar" ? "لا توجد وردية مسندة" : "No shift assigned";
+    if (attendance?.blockedReason === "on_leave") return locale === "ar" ? "إجازة معتمدة" : "Approved leave";
+    return locale === "ar" ? "لا توجد وردية حالية" : "No current shift";
   }
+  const status = view.live?.status;
+  const ar: Record<string, string> = {
+    present: "حاضر", late: "متأخر", early_leave: "انصراف مبكر",
+    late_early_leave: "تأخير وانصراف مبكر", scheduled: "لم يحن وقت الحضور",
+    not_yet: "لم يُسجّل الحضور بعد", incomplete: "سجل غير مكتمل",
+    on_leave: "إجازة معتمدة", day_off: "يوم راحة", holiday: "إجازة رسمية",
+    possible_absence: "غياب محتمل", absent_confirmed: "غياب معتمد",
+    correction_pending: "تصحيح قيد المراجعة",
+  };
+  const en: Record<string, string> = {
+    present: "Present", late: "Late", early_leave: "Early leave",
+    late_early_leave: "Late and early leave", scheduled: "Not due yet",
+    not_yet: "Not checked in yet", incomplete: "Incomplete record",
+    on_leave: "Approved leave", day_off: "Day off", holiday: "Holiday",
+    possible_absence: "Possible absence", absent_confirmed: "Confirmed absence",
+    correction_pending: "Correction pending",
+  };
+  return (locale === "ar" ? ar : en)[status ?? ""] ?? (status ?? (locale === "ar" ? "غير متاح" : "Unavailable"));
 }
 
-function getPipelineStatusLabel(status: string | null) {
-  switch (status) {
-    case "Won":
-      return "مكتملة";
-    case "Lost":
-      return "مغلقة";
-    case "Proposal":
-      return "عرض مقدم";
-    case "Meeting":
-      return "اجتماع";
-    case "Contacted":
-      return "تم التواصل";
-    default:
-      return "فرصة جديدة";
+function MetricValue({ metric, locale }: { metric: Metric<number>; locale: string }) {
+  if (metric.status === "unavailable") {
+    return <p className="mt-3 text-sm font-bold leading-6 text-amber-700">{metric.reason}</p>;
   }
-}
-
-function DashboardLoadingState() {
   return (
-    <section
-      className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white"
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <div className="animate-pulse p-6 sm:p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-3">
-            <div className="h-3 w-28 rounded-full bg-slate-200" />
-            <div className="h-7 w-64 max-w-full rounded-lg bg-slate-200" />
-          </div>
-
-          <div className="h-10 w-10 rounded-xl bg-slate-100" />
-        </div>
-
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <div className="h-28 rounded-xl bg-slate-100" />
-          <div className="h-28 rounded-xl bg-slate-100" />
-          <div className="h-28 rounded-xl bg-slate-100" />
-        </div>
-
-        <div className="mt-5 h-48 rounded-xl bg-slate-100" />
-
-        <p className="mt-6 text-center text-sm font-semibold text-slate-500">
-          جارٍ تجهيز لوحة القيادة التنفيذية...
-        </p>
-      </div>
-    </section>
+    <h2 className="mt-3 text-2xl font-black tracking-tight tabular-nums md:text-3xl">
+      {metric.value.toLocaleString(locale === "ar" ? "ar-SA" : "en")}
+    </h2>
   );
 }
 
-function DashboardErrorState({ message }: { message: string }) {
-  return (
-    <section
-      className="mt-6 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50"
-      role="alert"
-    >
-      <div className="flex flex-col items-start justify-between gap-6 p-6 sm:p-6 lg:flex-row lg:items-center">
-        <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 py-1.5">
-            <span className="h-2 w-2 rounded-full bg-amber-500" />
-            <span className="text-xs font-bold text-amber-800">
-              يتطلب استكمال الإعداد
-            </span>
-          </div>
+const linkCardCls =
+  "group flex min-h-full flex-col overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]";
+const statCardCls =
+  "group relative overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-5 shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[var(--shadow-medium)]";
+const labelCls = "text-xs font-black text-[var(--text-muted)]";
 
-          <h2 className="mt-4 text-xl font-bold text-slate-950 sm:text-2xl">
-            تعذر تحميل بيانات لوحة القيادة
-          </h2>
+export default function DashboardPage() {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
 
-          <p className="mt-3 leading-7 text-slate-600">{message}</p>
-        </div>
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [attendance, setAttendance] = useState<AttendanceToday | null>(null);
+  const [loadState, setLoadState] = useState<"loading" | "loaded" | "error">("loading");
+  const [attendanceState, setAttendanceState] = useState<"loading" | "loaded" | "error">("loading");
 
-        <Link
-          href="/assessment"
-          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
-        >
-          الانتقال إلى التقييم
-        </Link>
-      </div>
-    </section>
-  );
-}
+  const copy = isArabic ? {
+    badge: "DASHBOARD", badgeSub: "لوحة التحكم",
+    title: "لوحة التحكم", welcome: "مرحبًا", subtitle: "ملخصك اليومي ومسارات الوصول إلى وظائف KAFU AI.",
+    profile: "الملف الشخصي", job: "المسمى الوظيفي", department: "الإدارة / القسم",
+    employeeNumber: "الرقم الوظيفي", unavailable: "غير متوفر", personalTitle: "بياناتك الوظيفية",
+    attendanceTitle: "الحضور والانصراف اليوم", shift: "الوردية", checkIn: "وقت الحضور", lateBy: "مدة التأخير بالدقائق",
+    checkOut: "وقت الانصراف", openAttendance: "فتح نظام الحضور", noShift: "لا توجد وردية مسندة حاليًا",
+    recentShift: "آخر دوام", nextShift: "الوردية القادمة", checkoutHint: "يمكنك تسجيل الانصراف من صفحة الحضور.",
+    linksTitle: "الوصول السريع", employeeExperience: "خدمات الموظف", employeeExperienceDesc: "المساعد والطلبات والخدمات المتاحة لحسابك",
+    attendance: "الحضور والانصراف", attendanceDesc: "تسجيل حضورك وانصرافك ومراجعة سجلك",
+    profileDesc: "عرض بياناتك الوظيفية وتحديث البيانات المتاحة",
+    ownerTitle: "مؤشرات المؤسسة", activeEmployees: "الموظفون النشطون",
+    late: "الموظفون المتأخرون اليوم", pending: "الطلبات قيد المراجعة", requests: "الطلبات",
+    payrollTitle: "مسيرات الرواتب القادمة", period: "الفترة", runState: "حالة المسير", approval: "الموافقة",
+    notCreated: "لم يُنشأ", created: "تم الإنشاء", multiple: "أكثر من مسير للفترة",
+    approved: "تمت الموافقة", notApproved: "لم تتم الموافقة", cancelled: "ملغى", draft: "مسودة",
+    pending_review: "بانتظار المراجعة", pending_approval: "بانتظار الموافقة", exported: "تم التصدير",
+    periodMismatch: "تنبيه: فترة المسير لا تطابق الشهر التقويمي بالكامل.",
+    refresh: "إعادة المحاولة", loadingTitle: "جارٍ تحميل لوحة التحكم", loadingText: "يتم جلب ملخصك وبيانات المؤسسة.",
+    errorTitle: "تعذر تحميل لوحة التحكم", loadError: "تعذر تحميل بيانات لوحة التحكم.",
+    attendanceError: "تعذر تحميل حالة الحضور الحالية.", noProfile: "لم تتوفر بيانات الملف الشخصي.",
+  } : {
+    badge: "DASHBOARD", badgeSub: "Dashboard",
+    title: "Dashboard", welcome: "Welcome", subtitle: "Your daily summary and shortcuts to KAFU AI.",
+    profile: "Profile", job: "Job title", department: "Department", employeeNumber: "Employee number",
+    unavailable: "Not available", personalTitle: "Your employment details", attendanceTitle: "Today's attendance",
+    shift: "Shift", checkIn: "Check-in", checkOut: "Check-out", lateBy: "Minutes late", openAttendance: "Open attendance",
+    noShift: "No current shift assigned", recentShift: "Last shift", checkoutHint: "You can check out from the attendance page.", nextShift: "Upcoming shift",
+    linksTitle: "Quick access", employeeExperience: "Employee services",
+    employeeExperienceDesc: "Assistant, requests and services available to your account",
+    attendance: "Attendance", attendanceDesc: "Check in/out and review your record",
+    profileDesc: "View your employment details and update available information",
+    ownerTitle: "Organization metrics", activeEmployees: "Active employees",
+    late: "Employees late today", pending: "Requests pending review", requests: "Requests",
+    payrollTitle: "Upcoming payroll runs", period: "Period", runState: "Run status", approval: "Approval",
+    notCreated: "Not created", created: "Created", multiple: "Multiple runs for period",
+    approved: "Approved", notApproved: "Not approved", cancelled: "Cancelled", draft: "Draft",
+    pending_review: "Pending review", pending_approval: "Pending approval", exported: "Exported",
+    periodMismatch: "Note: the run period does not match the full calendar month.",
+    refresh: "Retry", loadingTitle: "Loading dashboard", loadingText: "Fetching your summary and organization data.",
+    errorTitle: "Unable to load dashboard", loadError: "Unable to load dashboard data.",
+    attendanceError: "Unable to load current attendance.", noProfile: "Profile data is unavailable.",
+  };
 
-function SectionHeading({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
-        {eyebrow}
-      </p>
-
-      <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-        {title}
-      </h2>
-
-      {description && (
-        <p className="max-w-3xl text-sm leading-7 text-slate-600">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function DashboardContent() {
-  const {
-    activeCompanyId,
-    isLoading: isScopeLoading,
-    error: scopeError,
-  } = useWorkspaceScope();
-  const [company, setCompany] = useState<Company | null>(null);
-  const [answers, setAnswers] = useState<DiscoveryAnswer[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [pipeline, setPipeline] = useState<PipelineItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadDashboard() {
-      if (isScopeLoading) {
-        return;
-      }
-
-      setLoading(true);
-      setMessage("");
-
-      try {
-        if (scopeError) {
-          throw new Error(`تعذر التحقق من مساحة العمل: ${scopeError}`);
-        }
-
-        const companyId = activeCompanyId;
-
-        if (!companyId) {
-          throw new Error(
-            "لم يتم العثور على شركة حالية. ابدأ من التقييم لاختيار الشركة وتجهيز بياناتها.",
-          );
-        }
-
-        const [
-          companiesResult,
-          pipelineResult,
-          companyResult,
-          answersResult,
-        ] = await Promise.all([
-          supabase
-            .from("companies")
-            .select(
-              "id, name, industry, country, employee_count, contact_name, contact_phone",
-            )
-            .order("created_at", { ascending: false }),
-
-          supabase
-            .from("sales_pipeline")
-            .select(`
-              id,
-              status,
-              sales_rep,
-              opportunity_value,
-              response_deadline,
-              companies (
-                name,
-                contact_name,
-                contact_phone
-              )
-            `)
-            .order("created_at", { ascending: false }),
-
-          supabase
-            .from("companies")
-            .select(
-              "id, name, industry, country, employee_count, contact_name, contact_phone",
-            )
-            .eq("id", companyId)
-            .single(),
-
-          supabase
-            .from("discovery_answers")
-            .select("id, question, answer, question_order")
-            .eq("company_id", companyId)
-            .order("question_order", { ascending: true }),
-        ]);
-
-        if (companiesResult.error) {
-          throw new Error(
-            `تعذر تحميل قائمة الشركات: ${companiesResult.error.message}`,
-          );
-        }
-
-        if (pipelineResult.error) {
-          throw new Error(
-            `تعذر تحميل مسار المبيعات: ${pipelineResult.error.message}`,
-          );
-        }
-
-        if (companyResult.error || !companyResult.data) {
-          throw new Error(
-            `تعذر تحميل بيانات الشركة: ${
-              companyResult.error?.message ?? "الشركة غير موجودة"
-            }`,
-          );
-        }
-
-        if (answersResult.error) {
-          throw new Error(
-            `تعذر تحميل إجابات الاستكشاف: ${answersResult.error.message}`,
-          );
-        }
-
-        if (!isMounted) {
-          return;
-        }
-
-        const currentTimestamp = Date.now();
-
-        const normalizedPipeline: PipelineItem[] = (
-          pipelineResult.data ?? []
-        ).map((item) => {
-          const companyRecord = Array.isArray(item.companies)
-            ? item.companies[0] ?? null
-            : item.companies ?? null;
-
-          const deadlineTimestamp = item.response_deadline
-            ? new Date(item.response_deadline).getTime()
-            : null;
-
-          const isOverdue =
-            deadlineTimestamp !== null &&
-            !CLOSED_PIPELINE_STATUSES.has(item.status ?? "") &&
-            deadlineTimestamp < currentTimestamp;
-
-          return {
-            id: item.id,
-            status: item.status,
-            sales_rep: item.sales_rep,
-            opportunity_value: item.opportunity_value,
-            response_deadline: item.response_deadline,
-            is_overdue: isOverdue,
-            companies: companyRecord,
-          };
-        });
-
-        const dashboardData: DashboardData = {
-          company: companyResult.data,
-          companies: companiesResult.data ?? [],
-          answers: answersResult.data ?? [],
-          pipeline: normalizedPipeline,
-        };
-
-        setCompany(dashboardData.company);
-        setCompanies(dashboardData.companies);
-        setAnswers(dashboardData.answers);
-        setPipeline(dashboardData.pipeline);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : "حدث خطأ غير متوقع أثناء تحميل لوحة القيادة.",
-        );
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+  // الطلبان بالتوازي، وكل واحد بحالته المستقلة (لا نعرض «لا توجد وردية» قبل وصول رد الحضور)
+  const load = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoadState("loading");
+      setAttendanceState("loading");
     }
 
-    void loadDashboard();
+    const summaryPromise = fetch("/api/dashboard/summary", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("dashboard");
+        setData(await response.json());
+        setLoadState("loaded");
+      })
+      .catch(() => setLoadState("error"));
 
-    return () => {
-      isMounted = false;
+    const attendancePromise = fetch("/api/attendance/today", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("attendance");
+        setAttendance(await response.json());
+        setAttendanceState("loaded");
+      })
+      .catch(() => {
+        setAttendance(null);
+        setAttendanceState("error");
+      });
+
+    await Promise.all([summaryPromise, attendancePromise]);
+  }, []);
+
+  useEffect(() => {
+    void Promise.resolve().then(() => load());
+    const refreshAttendance = async () => {
+      try {
+        const response = await fetch("/api/attendance/today", { cache: "no-store" });
+        if (!response.ok) throw new Error("attendance");
+        setAttendance(await response.json());
+        setAttendanceState("loaded");
+      } catch {
+        setAttendance(null);
+        setAttendanceState("error");
+      }
     };
-  }, [activeCompanyId, isScopeLoading, scopeError]);
+    const interval = window.setInterval(() => void refreshAttendance(), 30_000);
+    return () => window.clearInterval(interval);
+  }, [load]);
 
-  const pipelineMetrics = useMemo(
-    () => calculatePipelineMetrics(companies, pipeline),
-    [companies, pipeline],
-  );
+  const Arrow = isArabic ? ArrowLeft : ArrowRight;
 
-  const readinessNumber = useMemo(
-    () => calculateReadinessScore(answers.length, company),
-    [answers.length, company],
-  );
+  /* ----------------------------- loading / error ----------------------------- */
 
-  const corporateBrainNumber = useMemo(
-    () => calculateCorporateBrainScore(answers.length),
-    [answers.length],
-  );
+  if (loadState === "loading") {
+    return (
+      <main
+        dir={isArabic ? "rtl" : "ltr"}
+        className="min-h-[calc(100vh-64px)] bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8"
+      >
+        <div className="mx-auto max-w-[1540px]">
+          <section className="rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] p-10 text-center shadow-[var(--shadow-small)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--brand-subtle)]">
+              <span className="h-5 w-5 animate-pulse rounded-full bg-[var(--brand-primary)]" />
+            </div>
+            <p className="mt-4 text-base font-black">{copy.loadingTitle}</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">{copy.loadingText}</p>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
-  const executiveSummary = useMemo(
-    () =>
-      buildExecutiveSummary({
-        companyName: company?.name,
-        industry: company?.industry,
-        country: company?.country,
-        employeeCount: company?.employee_count,
-        discoveryAnswersCount: answers.length,
-        readinessScore: readinessNumber,
-        corporateBrainScore: corporateBrainNumber,
-        overdueLeads: pipelineMetrics.overdueLeads,
-      }),
-    [
-      company,
-      answers.length,
-      readinessNumber,
-      corporateBrainNumber,
-      pipelineMetrics.overdueLeads,
-    ],
-  );
+  if (loadState === "error" || !data) {
+    return (
+      <main
+        dir={isArabic ? "rtl" : "ltr"}
+        className="min-h-[calc(100vh-64px)] bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8"
+      >
+        <div className="mx-auto max-w-[1540px]">
+          <section
+            role="alert"
+            className="rounded-[28px] border border-amber-300 bg-amber-50 p-8 text-center text-amber-950 shadow-[var(--shadow-small)]"
+          >
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-lg font-black text-amber-800">!</div>
+            <h2 className="mt-4 text-xl font-black">{copy.errorTitle}</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7">{copy.loadError}</p>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--text-primary)] px-6 text-sm font-black text-[var(--surface)] transition hover:opacity-90"
+            >
+              <RefreshCw size={16} /> {copy.refresh}
+            </button>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
-  const enterpriseIntelligence = useMemo(
-    () =>
-      company
-        ? buildDashboardEnterpriseIntelligence({
-            organizationId: company.id,
-            companyName: company.name,
-            industry: company.industry,
-            country: company.country,
-            employeeCount: company.employee_count,
-            discoveryAnswersCount: answers.length,
-            readinessScore: readinessNumber,
-            corporateBrainScore: corporateBrainNumber,
-            overdueLeads: pipelineMetrics.overdueLeads,
-          })
-        : null,
-    [
-      company,
-      answers.length,
-      readinessNumber,
-      corporateBrainNumber,
-      pipelineMetrics.overdueLeads,
-    ],
-  );
+  /* --------------------------------- render --------------------------------- */
 
-  const executiveCards = useMemo(
-    () =>
-      buildExecutiveCards({
-        company,
-        answersCount: answers.length,
-        readinessNumber,
-        corporateBrainNumber,
-        digitalWorkforceBaseline: DIGITAL_WORKFORCE_BASELINE,
-        overdueLeads: pipelineMetrics.overdueLeads,
-      }),
-    [
-      company,
-      answers.length,
-      readinessNumber,
-      corporateBrainNumber,
-      pipelineMetrics.overdueLeads,
-    ],
-  );
+  const person = data.personal;
+  const shownName = person.fullName?.trim() || copy.profile;
+  const roleIsOwner = data.role === "owner";
+  const attView = attendance?.current ?? attendance?.recent ?? attendance?.next ?? null;
+  const showCheckoutHint = !attendance?.current && Boolean(attendance?.canCheckOut);
 
-  const signals = useMemo(
-    () =>
-      generateExecutiveSignals({
-        companyName: company?.name,
-        industry: company?.industry,
-        employeeCount: company?.employee_count,
-        discoveryAnswersCount: answers.length,
-        overdueLeads: pipelineMetrics.overdueLeads,
-      }),
-    [company, answers.length, pipelineMetrics.overdueLeads],
-  );
-
-  const priorities = useMemo(() => buildExecutivePriorities(), []);
-
-  const risks = useMemo(
-    () =>
-      buildExecutiveRisks({
-        company,
-        answersCount: answers.length,
-        overdueLeads: pipelineMetrics.overdueLeads,
-      }),
-    [company, answers.length, pipelineMetrics.overdueLeads],
-  );
-
-  const stageCounts = useMemo(() => buildStageCounts(pipeline), [pipeline]);
+  const quickLinks = [
+    { code: "EXP", href: "/employee-experience", icon: <ClipboardList size={20} />, title: copy.employeeExperience, desc: copy.employeeExperienceDesc },
+    { code: "ATT", href: "/attendance", icon: <CalendarClock size={20} />, title: copy.attendance, desc: copy.attendanceDesc },
+    { code: "PRF", href: "/profile", icon: <CircleUserRound size={20} />, title: copy.profile, desc: copy.profileDesc },
+  ];
 
   return (
     <main
-      className="min-h-screen bg-slate-50 px-4 py-6 text-slate-950 sm:px-5 lg:px-8 lg:py-8"
-      dir="rtl"
+      dir={isArabic ? "rtl" : "ltr"}
+      className="min-h-[calc(100vh-64px)] bg-[var(--background)] px-4 py-5 text-[var(--text-primary)] sm:px-6 lg:px-8"
     >
-      <div className="mx-auto max-w-[1440px]">
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <ExecutiveHero />
-
-          <div className="border-t border-slate-200 px-4 py-5 sm:px-5 lg:px-8">
-            <ExecutiveKpiGrid />
-          </div>
-        </section>
-
-        <div className="mt-6 grid gap-6 xl:grid-cols-2">
-          <ExecutiveInsights />
-          <ExecutiveDecisionCenter />
-        </div>
-
-        <div className="mt-6 grid gap-6 xl:grid-cols-2">
-          <ExecutiveHealthOverview />
-          <ExecutiveActivityFeed />
-        </div>
-
-        <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="flex flex-col justify-between gap-5 px-5 py-6 sm:px-8 lg:flex-row lg:items-center">
-            <div className="max-w-4xl">
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
-                  KAFU Executive Dashboard
+      <div className="mx-auto max-w-[1540px]">
+        {/* ------------------------------ Hero ------------------------------ */}
+        <section className="relative overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+          <div className="absolute inset-y-0 start-0 w-1 bg-[var(--brand-primary)]" />
+          <div className="grid gap-6 px-6 py-7 md:px-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:py-8">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--brand-subtle)] px-3 py-1.5 text-[11px] font-black text-[var(--brand-primary)]">
+                  <span className="h-2 w-2 rounded-full bg-[var(--brand-primary)]" />
+                  {copy.badge}
                 </span>
-
-                <span className="text-xs font-medium text-slate-400">
-                  آخر عرض تشغيلي موحد
+                <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-muted)] px-3 py-1.5 text-[11px] font-bold text-[var(--text-secondary)]">
+                  {copy.badgeSub}
                 </span>
               </div>
 
-              <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-                لوحة القيادة التنفيذية
-              </h1>
-
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
-                رؤية موحدة لأداء الشركة وجاهزيتها المؤسسية وذكائها التنفيذي
-                ومسار الفرص التجارية المبني على البيانات الفعلية.
+              <p className="mt-4 text-sm font-black text-[var(--brand-primary)]">
+                {copy.welcome}، {shownName}
+              </p>
+              <h1 className="mt-1 text-3xl font-black tracking-tight md:text-4xl">{copy.title}</h1>
+              <p className="mt-3 max-w-4xl text-sm leading-7 text-[var(--text-secondary)] md:text-base md:leading-8">
+                {copy.subtitle}
               </p>
             </div>
 
-            {company && (
-              <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 lg:min-w-72">
-                <p className="text-xs font-bold text-slate-500">
-                  الشركة الحالية
-                </p>
-
-                <p className="mt-2 truncate text-base font-bold text-slate-950">
-                  {company.name || "شركة غير مسماة"}
-                </p>
-
-                <p className="mt-1 truncate text-sm text-slate-500">
-                  {[company.industry, company.country]
-                    .filter(Boolean)
-                    .join(" • ") || "بيانات التعريف قيد الاستكمال"}
-                </p>
-              </div>
-            )}
+            <Link
+              href="/profile"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-5 text-sm font-black text-[var(--text-secondary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)]"
+            >
+              <CircleUserRound size={18} />
+              {copy.profile}
+              <Arrow size={16} />
+            </Link>
           </div>
         </section>
 
-        {loading && <DashboardLoadingState />}
+        {/* ------------------------ Personal + Attendance ------------------------ */}
+        <section className="mt-5 grid gap-5 lg:grid-cols-2">
+          <article className="overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--surface-muted)] px-5 py-4">
+              <h2 className="text-sm font-black">{copy.personalTitle}</h2>
+              <CircleUserRound size={18} className="text-[var(--brand-primary)]" />
+            </div>
+            <div className="p-5">
+              {!person.profileDataAvailable && (
+                <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-800">
+                  {copy.noProfile}
+                </p>
+              )}
+              <dl className="grid gap-3 sm:grid-cols-2">
+                {[
+                  { l: copy.profile, v: shownName },
+                  { l: copy.job, v: person.employmentDataAvailable ? person.jobTitle || copy.unavailable : copy.unavailable },
+                  { l: copy.department, v: person.employmentDataAvailable ? person.department || copy.unavailable : copy.unavailable },
+                  { l: copy.employeeNumber, v: person.employmentDataAvailable ? person.employeeNumber || copy.unavailable : copy.unavailable },
+                ].map((row) => (
+                  <div key={row.l} className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+                    <dt className={labelCls}>{row.l}</dt>
+                    <dd className="mt-2 break-words font-black">{row.v}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </article>
 
-        {!loading && message && <DashboardErrorState message={message} />}
-
-        {!loading && !message && company && (
-          <>
-            <div className="mt-6">
-              <ExecutiveCards cards={executiveCards} />
+          <article className="flex flex-col overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+            <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--surface-muted)] px-5 py-4">
+              <h2 className="text-sm font-black">{copy.attendanceTitle}</h2>
+              <Activity size={18} className="text-[var(--brand-primary)]" />
             </div>
 
-            {enterpriseIntelligence && (
-              <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                <div className="border-b border-slate-200 px-5 py-5 sm:px-8">
-                  <SectionHeading
-                    eyebrow="Enterprise Intelligence"
-                    title="التوجيه التنفيذي المقترح"
-                    description="ملخص موحد للتحليل والقرار والتوصية المستخلصة من بيانات المؤسسة الحالية."
-                  />
-                </div>
-
-                <div className="grid gap-px bg-slate-200 lg:grid-cols-3">
-                  <article className="bg-white p-6 sm:p-7">
-                    <p className="text-xs font-bold text-slate-500">التحليل</p>
-                    <p className="mt-3 text-sm font-semibold leading-7 text-slate-800">
-                      {enterpriseIntelligence.reasoningSummary}
-                    </p>
-                  </article>
-
-                  <article className="bg-white p-6 sm:p-7">
-                    <p className="text-xs font-bold text-slate-500">
-                      القرار التنفيذي
-                    </p>
-                    <p className="mt-3 text-sm font-semibold leading-7 text-slate-800">
-                      {enterpriseIntelligence.decisionTitle}
-                    </p>
-                  </article>
-
-                  <article className="bg-emerald-50 p-6 sm:p-7">
-                    <p className="text-xs font-bold text-emerald-700">
-                      التوصية
-                    </p>
-                    <p className="mt-3 text-sm font-semibold leading-7 text-emerald-950">
-                      {enterpriseIntelligence.recommendationSummary}
-                    </p>
-                  </article>
-                </div>
-              </section>
-            )}
-
-            <section className="mt-6 grid gap-6 lg:grid-cols-3">
-              <ExecutiveSummaryCard summary={executiveSummary} />
-              <ExecutiveSignals signals={signals} />
-            </section>
-
-            <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-5 py-5 sm:px-8">
-                <SectionHeading
-                  eyebrow="Executive Priorities"
-                  title="الأولويات التنفيذية"
-                  description="المحاور الأعلى أولوية للحفاظ على تقدم المؤسسة وتقليل المخاطر التشغيلية."
-                />
-              </div>
-
-              <div className="grid gap-px bg-slate-200 md:grid-cols-2 xl:grid-cols-4">
-                {priorities.map((item, index) => (
-                  <article
-                    key={`${item}-${index}`}
-                    className="flex min-h-40 flex-col bg-white p-6"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm font-bold text-slate-700">
-                      {String(index + 1).padStart(2, "0")}
-                    </div>
-
-                    <p className="mt-5 text-sm font-semibold leading-7 text-slate-800">
-                      {item}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="mt-6 grid gap-6 lg:grid-cols-3">
-  <RiskWatch risks={risks} />
-
-  <Link
-    href="/sales-intelligence"
-    aria-label="فتح مركز ذكاء المبيعات"
-    className="group block rounded-2xl outline-none transition duration-200 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 lg:col-span-2"
-  >
-    <div className="h-full rounded-2xl transition duration-200 group-hover:shadow-lg">
-      <PipelineSnapshot
-        totalCompanies={pipelineMetrics.totalCompanies}
-        totalLeads={pipelineMetrics.totalLeads}
-        pipelineValue={pipelineMetrics.pipelineValue}
-        conversionRate={pipelineMetrics.conversionRate}
-      />
-    </div>
-
-    <div className="pointer-events-none mt-3 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 transition group-hover:border-blue-300 group-hover:bg-blue-100">
-      <span>عرض التحليل الكامل والتوقعات والتوصيات</span>
-      <span>فتح مركز ذكاء المبيعات ←</span>
-    </div>
-  </Link>
-</section>
-
-            <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-5 py-5 sm:px-8">
-                <SectionHeading
-                  eyebrow="Pipeline Distribution"
-                  title="توزيع مراحل الفرص"
-                />
-              </div>
-
-              <div className="grid gap-px bg-slate-200 sm:grid-cols-2 xl:grid-cols-5">
-                {stageCounts.map((stage) => (
-                  <article
-                    key={getPipelineStatusLabel(stage.stage)}
-                    className="flex min-w-0 items-center justify-between gap-3 bg-white px-5 py-5 sm:px-6"
-                  >
-                    <p className="min-w-0 flex-1 break-words text-sm font-semibold leading-6 text-slate-600">
-                      {getPipelineStatusLabel(stage.stage)}
-                    </p>
-
-                    <p className="shrink-0 text-2xl font-bold tabular-nums tracking-tight text-slate-950">
-                      {stage.count}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-5 py-5 sm:px-8">
-                <SectionHeading
-                  eyebrow="Sales Pipeline"
-                  title="مسار المبيعات"
-                  description="متابعة الفرص من التسجيل والتواصل وحتى الاجتماع والعرض والإغلاق، مع مراقبة الالتزام بزمن الاستجابة."
-                />
-              </div>
-
-              {pipeline.length === 0 ? (
-                <div className="px-5 py-16 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-slate-50">
-                    <span className="text-lg font-bold text-slate-400">0</span>
+            <div className="flex flex-1 flex-col p-5">
+              {attendanceState === "loading" && (
+                <div aria-busy="true" className="space-y-4">
+                  <div className="h-6 w-48 animate-pulse rounded-lg bg-[var(--surface-muted)]" />
+                  <div className="h-4 w-32 animate-pulse rounded-lg bg-[var(--surface-muted)]" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="h-[72px] animate-pulse rounded-2xl bg-[var(--surface-muted)]" />
+                    <div className="h-[72px] animate-pulse rounded-2xl bg-[var(--surface-muted)]" />
                   </div>
-
-                  <h3 className="mt-5 text-lg font-bold text-slate-950">
-                    لا توجد فرص مسجلة حاليًا
-                  </h3>
-
-                  <p className="mx-auto mt-2 max-w-xl text-sm leading-7 text-slate-600">
-                    ستظهر بيانات مسار المبيعات هنا بمجرد تسجيل أول فرصة
-                    تجارية.
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1100px] text-right">
-                    <thead className="bg-slate-50">
-                      <tr className="border-b border-slate-200 text-xs text-slate-500">
-                        <th className="px-5 py-4 font-bold">الشركة</th>
-                        <th className="px-5 py-4 font-bold">المندوب</th>
-                        <th className="px-5 py-4 font-bold">الحالة</th>
-                        <th className="px-5 py-4 font-bold">تحديث الحالة</th>
-                        <th className="px-5 py-4 font-bold">قيمة الفرصة</th>
-                        <th className="px-5 py-4 font-bold">SLA</th>
-                        <th className="px-5 py-4 font-bold">جهة الاتصال</th>
-                        <th className="px-5 py-4 font-bold">الجوال</th>
-                      </tr>
-                    </thead>
-
-                    <tbody className="divide-y divide-slate-200">
-                      {pipeline.map((item) => (
-                        <tr
-                          key={item.id}
-                          className="transition-colors hover:bg-slate-50"
-                        >
-                          <td className="px-5 py-5 text-sm font-bold text-slate-950">
-                            {item.companies?.name || "غير محدد"}
-                          </td>
-
-                          <td className="px-5 py-5 text-sm text-slate-600">
-                            {item.sales_rep || "غير معين"}
-                          </td>
-
-                          <td className="px-5 py-5">
-                            <span
-                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${getPipelineStatusClasses(
-                                item.status,
-                              )}`}
-                            >
-                              {getPipelineStatusLabel(item.status)}
-                            </span>
-                          </td>
-
-                          <td className="px-5 py-5">
-                            <LeadStageButtons pipelineId={item.id} />
-                          </td>
-
-                          <td className="px-5 py-5 text-sm font-semibold text-slate-700">
-                            {formatCurrency(item.opportunity_value)}
-                          </td>
-
-                          <td className="px-5 py-5">
-                            <span
-                              className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${
-                                item.is_overdue
-                                  ? "border-red-200 bg-red-50 text-red-700"
-                                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                              }`}
-                            >
-                              {item.is_overdue ? "متأخر" : "ضمن المسار"}
-                            </span>
-                          </td>
-
-                          <td className="px-5 py-5 text-sm text-slate-600">
-                            {item.companies?.contact_name || "غير محدد"}
-                          </td>
-
-                          <td
-                            className="px-5 py-5 text-sm text-slate-600"
-                            dir="ltr"
-                          >
-                            {item.companies?.contact_phone || "-"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               )}
-            </section>
 
-            <section className="mt-6 overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50">
-              <div className="flex flex-col justify-between gap-6 px-5 py-6 sm:px-8 md:flex-row md:items-center">
-                <div className="max-w-3xl">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700">
-                    Executive Intelligence
-                  </p>
+              {attendanceState === "error" && (
+                <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+                  {copy.attendanceError}
+                </p>
+              )}
 
-                  <h3 className="mt-2 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-                    طبقة الذكاء التنفيذي جاهزة للعمل
-                  </h3>
+              {attendanceState === "loaded" && (
+                <>
+                  <p className="text-xl font-black">{attendanceStatus(attendance, locale)}</p>
+                  {(attView?.live?.status === "late" && (attView.live.lateMinutes ?? 0) > 0) && (
+                    <p className="mt-1 text-xs font-black text-amber-700">
+                      {copy.lateBy}: {attView.live.lateMinutes}
+                    </p>
+                  )}
 
-                  <p className="mt-3 text-sm leading-7 text-slate-600">
-                    تم تحويل بيانات الشركة إلى مؤشرات تنفيذية وقرارات
-                    وتوصيات قابلة للمراجعة ضمن رحلة مؤسسية موحدة.
-                  </p>
-                </div>
+                  {attView ? (
+                    <>
+                      <p className="mt-1 text-xs font-bold text-[var(--text-secondary)]">
+                       {attendance?.current? copy.shift: attendance?.recent? copy.recentShift: attendance?.next? copy.nextShift: copy.shift}: {attView.shiftName}
+                      </p>
+                      <div className="mt-4 grid grid-cols-2 gap-3">
+                        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+                          <p className={labelCls}>{copy.checkIn}</p>
+                          <p className="mt-2 font-black">{formatTime(attView.checkIn, locale, attView.timezone)}</p>
+                        </div>
+                        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4">
+                          <p className={labelCls}>{copy.checkOut}</p>
+                          <p className="mt-2 font-black">{formatTime(attView.checkOut, locale, attView.timezone)}</p>
+                        </div>
+                      </div>
+                      {showCheckoutHint && (
+                        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-900">
+                          {copy.checkoutHint}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    attendance?.blockedReason === "no_assignment" && (
+                      <p className="mt-2 text-sm font-bold text-[var(--text-secondary)]">{copy.noShift}</p>
+                    )
+                  )}
+                </>
+              )}
 
+              <div className="mt-auto pt-5">
                 <Link
-                  href="/journey"
-                  className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+                  href="/attendance"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-5 text-sm font-black text-white transition hover:opacity-90"
                 >
-                  مراجعة الرحلة الكاملة
+                  {copy.openAttendance}
+                  <Arrow size={16} />
                 </Link>
               </div>
-            </section>
-          </>
+            </div>
+          </article>
+        </section>
+
+        {/* ----------------------------- Quick links ----------------------------- */}
+        <section className="mt-8">
+          <div className="mb-5">
+            <p className="text-xs font-black text-[var(--brand-primary)]">QUICK ACCESS</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight md:text-3xl">{copy.linksTitle}</h2>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {quickLinks.map((l) => (
+              <Link key={l.code} href={l.href} className={linkCardCls}>
+                <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)] bg-[var(--surface-muted)] px-5 py-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white shadow-sm">
+                    {l.icon}
+                  </div>
+                  <span className="text-[10px] font-black text-[var(--text-muted)]">{l.code}</span>
+                </div>
+                <div className="flex flex-1 flex-col p-5">
+                  <h3 className="text-lg font-black tracking-tight">{l.title}</h3>
+                  <p className="mt-2 text-sm leading-7 text-[var(--text-secondary)]">{l.desc}</p>
+                  <Arrow className="mt-4 text-[var(--brand-primary)] transition group-hover:translate-x-0.5" size={17} />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* ------------------------------ Owner ------------------------------ */}
+        {roleIsOwner && data.owner && (
+          <section className="mt-8 border-t border-[var(--border-default)] pt-8">
+            <div className="mb-5">
+              <p className="text-xs font-black text-[var(--brand-primary)]">ORGANIZATION</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight md:text-3xl">{copy.ownerTitle}</h2>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <article className={statCardCls}>
+                <div className="absolute inset-x-0 top-0 h-0.5 origin-start scale-x-0 bg-[var(--brand-primary)] transition-transform duration-200 group-hover:scale-x-100" />
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className={labelCls}>{copy.activeEmployees}</p>
+                    <MetricValue metric={data.owner.activeEmployees} locale={locale} />
+                  </div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] text-[var(--brand-primary)]">
+                    <UsersRound size={17} />
+                  </span>
+                </div>
+                <div className="mt-4 border-t border-[var(--border-default)] pt-3">
+                  <Link href="/payroll/employees" className="inline-flex items-center gap-1 text-xs font-black text-[var(--brand-primary)]">
+                    {copy.activeEmployees} <Arrow size={14} />
+                  </Link>
+                </div>
+              </article>
+
+              <article className={statCardCls}>
+                <div className="absolute inset-x-0 top-0 h-0.5 origin-start scale-x-0 bg-[var(--brand-primary)] transition-transform duration-200 group-hover:scale-x-100" />
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className={labelCls}>{copy.late}</p>
+                    <MetricValue metric={data.owner.lateEmployees} locale={locale} />
+                  </div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] text-[var(--brand-primary)]">
+                    <Clock3 size={17} />
+                  </span>
+                </div>
+                <div className="mt-4 border-t border-[var(--border-default)] pt-3">
+                  <Link href="/attendance/dashboard" className="inline-flex items-center gap-1 text-xs font-black text-[var(--brand-primary)]">
+                    {copy.attendance} <Arrow size={14} />
+                  </Link>
+                </div>
+              </article>
+
+              <article className={statCardCls}>
+                <div className="absolute inset-x-0 top-0 h-0.5 origin-start scale-x-0 bg-[var(--brand-primary)] transition-transform duration-200 group-hover:scale-x-100" />
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className={labelCls}>{copy.pending}</p>
+                    <MetricValue metric={data.owner.pendingRequests} locale={locale} />
+                  </div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-muted)] text-[var(--brand-primary)]">
+                    <FileText size={17} />
+                  </span>
+                </div>
+                <div className="mt-4 border-t border-[var(--border-default)] pt-3">
+                  <Link href="/employee-experience/requests" className="inline-flex items-center gap-1 text-xs font-black text-[var(--brand-primary)]">
+                    {copy.requests} <Arrow size={14} />
+                  </Link>
+                </div>
+              </article>
+            </div>
+
+            <article className="mt-5 overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-small)]">
+              <div className="flex items-center justify-between border-b border-[var(--border-default)] bg-[var(--surface-muted)] px-5 py-4">
+                <h3 className="text-sm font-black">{copy.payrollTitle}</h3>
+              </div>
+
+              <div className="p-5">
+                {data.owner.payrollPeriods.status === "unavailable" ? (
+                  <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
+                    {data.owner.payrollPeriods.reason}
+                  </p>
+                ) : (
+                  <div className="grid gap-3 lg:grid-cols-3">
+                    {data.owner.payrollPeriods.value.map((period) => {
+                      const statusLabel = period.run
+                        ? (copy[period.run.status as keyof typeof copy] ?? period.run.status)
+                        : "";
+                      return (
+                        <div
+                          key={period.periodStart}
+                          className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-muted)] p-4"
+                        >
+                          <p className="font-black">{formatDate(period.periodStart, locale)}</p>
+                          <p className="mt-1 text-[11px] font-bold text-[var(--text-secondary)]" dir="ltr">
+                            {copy.period}: {period.periodStart} – {period.periodEnd}
+                          </p>
+                          <p className="mt-3 text-sm font-black">
+                            {copy.runState}:{" "}
+                            {period.state === "not_created"
+                              ? copy.notCreated
+                              : period.state === "multiple_runs"
+                                ? copy.multiple
+                                : `${copy.created} — ${statusLabel}`}
+                          </p>
+
+                          {period.state === "created" && period.run && (
+                            <>
+                              <p className="mt-1 text-xs font-bold text-[var(--text-secondary)]">
+                                {copy.approval}:{" "}
+                                {period.run.status === "approved" || period.run.status === "exported"
+                                  ? copy.approved
+                                  : period.run.status === "cancelled"
+                                    ? copy.cancelled
+                                    : copy.notApproved}
+                              </p>
+                              {!period.run.periodMatchesCalendar && (
+                                <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-800">
+                                  {copy.periodMismatch}
+                                </p>
+                              )}
+                            </>
+                          )}
+
+                          {period.state !== "not_created" && (
+                            <Link href="/payroll/runs" className="mt-3 inline-flex items-center gap-1 text-xs font-black text-[var(--brand-primary)]">
+                              {copy.payrollTitle} <Arrow size={14} />
+                            </Link>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </article>
+          </section>
         )}
       </div>
     </main>
-  );
-}
-
-export default function DashboardPage() {
-  return (
-    <WorkspaceScopeBoundary
-      companyOnly
-      loadingLabel="جارٍ التحقق من مساحة العمل"
-    >
-      <DashboardContent />
-    </WorkspaceScopeBoundary>
   );
 }

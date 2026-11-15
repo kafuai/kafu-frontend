@@ -1,297 +1,138 @@
-# KAFU AI
+# System Overview
 
-# Enterprise Architecture
+## 1. Application Architecture
 
-Version: 1.0
+KAFU AI uses a Next.js application architecture where frontend pages, server-side logic, and API routes exist within the same application. 
+The main architectural layers are:
 
-This document defines the official architecture of the KAFU AI Enterprise Platform.
-All implementation decisions must align with this architecture.
-
----
-
-# Architecture Vision
-
-KAFU AI is an Enterprise AI Operating System designed to understand organizations,
-reason over enterprise knowledge, make decisions, execute work autonomously,
-govern AI behavior, and continuously improve through learning.
-
-The platform is built as a modular, capability-based architecture where every
-module has a single responsibility and integrates into a unified execution model.
-
----
-
-# Architectural Principles
-
-## Architecture First
-
-Architecture always precedes implementation.
-
-## Capability-Based Design
-
-Each module represents one enterprise capability.
-
-## Single Responsibility
-
-Every module owns one responsibility only.
-
-## Reuse Before Build
-
-Existing capabilities must be reused whenever possible.
-
-## No Duplicate Capabilities
-
-Business logic, engines, models, workflows, and policies must not be duplicated.
-
-## Enterprise Grade
-
-Every component must be production-ready, testable, observable, and extensible.
-
-## AI-Centric
-
-Artificial Intelligence is the core orchestration layer of the platform.
-
-## SaaS Ready
-
-Every capability must support multi-tenant deployment and enterprise isolation.
+```text
+Presentation Layer
+        │
+        ▼
+Next.js Pages / Components
+        │
+        ▼
+Application Layer
+        │
+        ├── Authentication
+        ├── RBAC
+        ├── Onboarding
+        ├── AI
+        └── Employee Experience
+        │
+        ▼
+Data Layer
+        │
+        └── Supabase
+```
 
 ---
 
-# Enterprise Architecture Layers
+## 2. Presentation Layer
 
-## Layer 1 — Enterprise Foundation
+The presentation layer is implemented through:
+- `app/`
+- `components/`
+- `features/`
 
-Organization Discovery
+Pages are responsible for rendering user-facing application screens. Examples:
+- `/login`
+- `/assessment`
+- `/discovery`
+- `/corporate-brain`
+- `/digital-workforce`
+- `/employee-experience`
+- `/admin`
 
-Company Profile
-
-Departments
-
-Positions
-
-Policies
-
-Workforce
-
-Documents
-
-Corporate Knowledge
-
----
-
-## Layer 2 — Enterprise Intelligence
-
-Corporate Brain
-
-Knowledge Graph
-
-Semantic Search
-
-Memory
-
-Reasoning
-
-Planning
-
-Prediction
-
-Decision Intelligence
-
-Simulation
-
-Optimization
-
-Recommendations
-
-Learning
-
-Trust
-
-Safety
-
-Governance
+Reusable UI components are located under `components/`.
+Feature-specific logic is grouped under `features/`.
 
 ---
 
-## Layer 3 — Autonomous AI
+## 3. Application Layer
 
-AI Orchestration
+The application layer contains business logic related to:
+- Authentication
+- Organization identity
+- Membership
+- Role permissions
+- AI agents
+- Employee requests
+- Policies
+- AI grounding
 
-AI Runtime
-
-Agent Collaboration
-
-Autonomous Planning
-
-Autonomous Execution
-
-Execution Monitoring
-
-Execution Recovery
-
-Execution Optimization
-
-Execution Intelligence
-
-Execution Governance
-
-Execution Validation
-
-Execution Verification
-
-Execution Resilience
+API endpoints are implemented under:
+- `app/api/`
 
 ---
 
-## Layer 4 — Enterprise Operations
+## 4. Data Layer
 
-Portfolio Management
-
-Program Management
-
-Project Management
-
-Workstream Management
-
-Workflow Management
-
-Task Management
-
-Action Management
-
-Operation Management
-
-Policy Management
-
-Rule Management
-
-Compliance
-
-Observability
-
-Telemetry
-
-Audit
-
-Analytics
-
-Strategic Planning
-
-Decision Support
-
-Insights
+Supabase is used as the primary backend. The application uses Supabase for:
+- Authentication
+- Database queries
+- Organization data
+- User membership
+- Assessment data
+- Discovery answers
+- Policies
+- Employee requests
+- AI-related data
 
 ---
 
-## Layer 5 — Enterprise Platform
+## 5. Organization Context
 
-API Gateway
+Most application functionality operates within an organization context. 
+The effective organization is resolved from the authenticated user's membership.
 
-Automation
+Conceptually:
 
-Integration
+```text
+Authenticated User
+       │
+       ▼
+organization_memberships
+       │
+       ▼
+Organization
+       │
+       ├── Company
+       ├── Assessment
+       ├── Discovery
+       ├── Policies
+       └── Employee Requests
+```
 
-Security
-
-Reporting
-
-Monitoring
-
-Diagnostics
-
-Reliability
-
-Resilience
-
-Runtime
-
-Plugins
-
-Services
-
----
-
-## Layer 6 — Product Experience
-
-Executive Dashboard
-
-Workspace
-
-Executive Reports
-
-Assessment
-
-Discovery
-
-Corporate DNA
-
-Command Center
-
-Digital Workforce
+This prevents application data from being treated as globally shared data.
 
 ---
 
-## Layer 7 — Production Readiness
+## 6. Authentication
 
-Performance
+Authentication is handled through Supabase Auth. 
+The application creates a Supabase server client and retrieves the current authenticated user.
 
-Scalability
+The general flow is:
 
-Testing
-
-Deployment
-
-Documentation
-
-Operational Readiness
-
-Business Continuity
-
-Disaster Recovery
-
-Crisis Management
-
-Cost Optimization
-
----
-
-## Layer 8 — Go To Market
-
-Website
-
-Marketing
-
-Pricing
-
-Sales Assets
-
-Documentation
-
-Demo Environment
-
-Launch Strategy
-
-Brand Assets
-
----
-
-# Development Rules
-
-Before implementing any new capability:
-
-1. Review the Master Roadmap.
-2. Review this architecture.
-3. Search for existing capabilities.
-4. Reuse existing modules whenever possible.
-5. Build only missing capabilities.
-6. Keep enterprise boundaries clear.
-7. Update index.ts once per milestone.
-8. Keep Build green.
-9. Commit only after milestone completion.
-
----
-
-# Architectural Goal
-
-KAFU AI should evolve into a unified Enterprise AI Operating System where all
-capabilities integrate through shared runtime, shared context, shared events,
-shared governance, and shared intelligence without duplication.
+```text
+      User
+       │
+       ▼
+     Login
+       │
+       ▼
+ Supabase Auth
+       │
+       ▼
+Authenticated Session
+       │
+       ▼
+  Next.js Proxy
+       │
+       ▼
+Membership / Role
+       │
+       ▼
+  Route Access
+```

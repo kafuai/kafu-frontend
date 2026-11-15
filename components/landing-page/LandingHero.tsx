@@ -1,136 +1,163 @@
-﻿import Link from "next/link";
+﻿"use client";
+
+import Link from "next/link";
 import {
   ArrowLeft,
+  ArrowRight,
+  ArrowUpLeft,
+  Bot,
+  CalendarCheck,
   CheckCircle2,
+  ClipboardList,
+  Clock3,
   Sparkles,
+  Users,
+  Wallet,
 } from "lucide-react";
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+const COPY = {
+  ar: {
+    eyebrow: "منصة KAFU AI لإدارة الموارد البشرية",
+    title: " عمليات الموارد البشرية.\nتجربة أذكى للجميع.",
+    description:
+      "من إدارة الموظفين والحضور والورديات إلى الرواتب وطلبات الموظفين؛ KAFU AI يجمع عمليات الموارد البشرية في منصة واحدة، مع مساعد ذكي يدعم الموظف وفريق الموارد البشرية.",
+    primary: "اطلب عرضًا توضيحيًا",
+    secondary: "اكتشف إمكانيات المنصة",
+    points: ["مساحة عمل موحدة", "خدمة ذاتية للموظفين", "متابعة وموافقات منظمة"],
+    previewLabel: "مساحة عمل الموارد البشرية",
+    previewTitle: "نظرة موحدة على عملياتك",
+    previewStatus: "نموذج توضيحي للواجهة",
+    modules: [
+      { label: "الموظفون", detail: "الملفات والبيانات الوظيفية", icon: Users },
+      { label: "الحضور والورديات", detail: "الحضور والانصراف وإدارة الورديات", icon: Clock3 },
+      { label: "الرواتب", detail: "إدارة بيانات الرواتب والمسيرات", icon: Wallet },
+      { label: "طلبات الموظفين", detail: "الإجازات والطلبات والموافقات", icon: ClipboardList },
+    ],
+    assistant: "مساعد KAFU الذكي",
+    assistantText: "اسأل عن سياسة الإجازات أو تابع حالة طلبك من مكان واحد.",
+    assistantAction: "اسأل المساعد",
+  },
+  en: {
+    eyebrow: "KAFU AI · Human Resources Platform",
+    title: "HR operation.\nA smarter employee experience.",
+    description:
+      "From employee records, attendance and shifts to payroll and employee requests, KAFU AI brings HR operations together in one platform, with an intelligent assistant for employees and HR teams.",
+    primary: "Request a demo",
+    secondary: "Explore the platform",
+    points: ["One connected workspace", "Employee self-service", "Structured approvals and tracking"],
+    previewLabel: "HR Workspace",
+    previewTitle: "A unified view of your operations",
+    previewStatus: "Illustrative interface preview",
+    modules: [
+      { label: "Employees", detail: "Profiles and employment data", icon: Users },
+      { label: "Attendance & shifts", detail: "Time, attendance and shift management", icon: Clock3 },
+      { label: "Payroll", detail: "Salary data and payroll runs", icon: Wallet },
+      { label: "Employee requests", detail: "Leave, requests and approvals", icon: ClipboardList },
+    ],
+    assistant: "KAFU AI Assistant",
+    assistantText: "Ask about leave policies or check a request from one place.",
+    assistantAction: "Ask assistant",
+  },
+} as const;
 
 export function LandingHero() {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+  const content = isArabic ? COPY.ar : COPY.en;
+  const Arrow = isArabic ? ArrowLeft : ArrowRight;
+
   return (
-    <section className="relative overflow-hidden border-b border-[var(--landing-border)] bg-[var(--landing-bg-primary)]">
+    <section
+      dir={isArabic ? "rtl" : "ltr"}
+      className="relative isolate overflow-hidden border-b border-[var(--border-default)] bg-[var(--background)]"
+    >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--landing-accent)_14%,transparent),transparent_40%),radial-gradient(circle_at_bottom_left,color-mix(in_srgb,var(--brand-primary)_9%,transparent),transparent_36%)]"
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_12%_8%,color-mix(in_srgb,var(--brand-primary)_10%,transparent),transparent_38%),radial-gradient(ellipse_at_90%_90%,color-mix(in_srgb,var(--brand-primary)_7%,transparent),transparent_36%)]"
       />
-
-      <div className="relative mx-auto grid min-h-[610px] max-w-7xl items-center gap-10 px-6 py-16 lg:grid-cols-[1.06fr_0.94fr] lg:px-10 lg:py-20 xl:gap-14">
-        <div className="max-w-3xl">
-          <div className="inline-flex min-h-10 items-center gap-2 rounded-full border border-[var(--landing-accent-border)] bg-[var(--landing-accent-soft)] px-4 text-sm font-semibold text-[var(--landing-accent-strong)]">
-            <Sparkles size={16} />
-
-            <span dir="ltr">
-              Enterprise Intelligence &amp; Execution Platform
-            </span>
+      <div className="mx-auto grid min-h-[650px] max-w-[1440px] items-center gap-14 px-5 py-16 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:px-12 lg:py-24">
+        <div className="max-w-2xl text-start">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface)] px-4 py-2 text-xs font-bold text-[var(--brand-primary)] shadow-[var(--shadow-small)] sm:text-sm">
+            <Sparkles size={15} />
+            <span>{content.eyebrow}</span>
           </div>
-
-          <h1 className="mt-6 max-w-3xl text-[42px] font-bold leading-[1.15] tracking-[-0.035em] text-[var(--landing-text-primary)] sm:text-5xl lg:text-[58px]">
-            حوّل معرفة مؤسستك إلى قرارات وتنفيذ
+          <h1 className="mt-7 whitespace-pre-line text-[2.65rem] font-bold leading-[1.18] tracking-[-0.045em] text-[var(--text-primary)] sm:text-5xl lg:text-[3.65rem]">
+            {content.title}
           </h1>
-
-          <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--landing-text-secondary)] sm:text-lg">
-            يمنح KAFU AI القيادة رؤية موحدة للمؤسسة، ويحوّل البيانات والتحديات
-            والأولويات إلى توصيات واضحة، ومسؤوليات محددة، ومتابعة تنفيذية
-            مستمرة.
+          <p className="mt-6 max-w-xl text-base leading-8 text-[var(--text-secondary)] sm:text-lg sm:leading-9">
+            {content.description}
           </p>
-
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/welcome"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--landing-text-primary)] px-6 py-3 text-sm font-extrabold text-[var(--landing-bg-primary)] shadow-[var(--shadow-medium)] transition duration-200 hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--landing-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--landing-bg-primary)]"
+              href="/book-demo"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-6 py-3 text-sm font-bold text-white shadow-[var(--shadow-medium)] transition hover:-translate-y-0.5 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
             >
-              <span>ابدأ تجربة KAFU AI</span>
-              <ArrowLeft size={17} />
+              {content.primary}
+              <Arrow size={17} />
             </Link>
-
-            <Link
-              href="/executive-summary"
-              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[var(--landing-border-strong)] bg-[var(--landing-surface)] px-6 py-3 text-sm font-extrabold text-[var(--landing-text-primary)] shadow-[var(--shadow-small)] transition duration-200 hover:-translate-y-0.5 hover:border-[var(--landing-accent-border)] hover:bg-[var(--landing-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--landing-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--landing-bg-primary)]"
+            <a
+              href="#platform"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface)] px-6 py-3 text-sm font-bold text-[var(--text-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--surface-muted)]"
             >
-              استعرض التجربة التنفيذية
-            </Link>
+              {content.secondary}
+              {isArabic ? <ArrowUpLeft size={16} /> : <ArrowRight size={16} />}
+            </a>
           </div>
-
-          <div className="mt-7 flex flex-wrap gap-x-7 gap-y-3 text-sm font-medium text-[var(--landing-text-secondary)]">
-            {[
-              "فهم مؤسسي أعمق",
-              "قرارات أسرع",
-              "تنفيذ أكثر وضوحًا",
-            ].map((item) => (
-              <span key={item} className="inline-flex items-center gap-2">
-                <CheckCircle2
-                  size={15}
-                  className="text-[var(--landing-accent)]"
-                />
-
-                {item}
-              </span>
+          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm font-medium text-[var(--text-secondary)]">
+            {content.points.map((point) => (
+              <li key={point} className="inline-flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-[var(--brand-primary)]" />
+                {point}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
-        <div className="relative">
-          <div className="rounded-[26px] border border-[var(--landing-border)] bg-[var(--landing-surface-muted)] p-4 shadow-[var(--shadow-large)] backdrop-blur-sm sm:p-5">
-            <div className="rounded-[20px] border border-[var(--landing-border)] bg-[var(--landing-surface)] p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-5 border-b border-[var(--landing-border)] pb-5">
+        <div className="relative mx-auto w-full max-w-[650px] text-start">
+          <div className="absolute -inset-5 -z-10 rounded-[36px] bg-[color-mix(in_srgb,var(--brand-primary)_7%,transparent)] blur-2xl" />
+          <div className="overflow-hidden rounded-[26px] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow-large)]">
+            <div className="flex items-center justify-between gap-4 border-b border-[var(--border-default)] bg-[var(--surface-muted)] px-5 py-4 sm:px-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-white">
+                  <Users size={19} />
+                </div>
                 <div>
-                  <p className="text-sm font-medium text-[var(--landing-text-secondary)]">
-                    النظرة التنفيذية
-                  </p>
-
-                  <h2 className="mt-1.5 text-xl font-bold text-[var(--landing-text-primary)]">
-                    الذكاء المؤسسي
-                  </h2>
-                </div>
-
-                <div className="inline-flex min-h-8 items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--success)_22%,transparent)] bg-[var(--success-background)] px-3 text-xs font-bold text-[var(--success)]">
-                  <span className="h-2 w-2 rounded-full bg-current" />
-                  مباشر
+                  <p className="text-xs font-semibold text-[var(--text-muted)]">{content.previewLabel}</p>
+                  <h2 className="mt-0.5 text-sm font-bold text-[var(--text-primary)] sm:text-base">{content.previewTitle}</h2>
                 </div>
               </div>
-
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                <MetricCard label="الجاهزية" value="87%" />
-                <MetricCard label="إجراءات الأولوية" value="12" />
-                <MetricCard label="القرارات النشطة" value="8" />
-                <MetricCard label="صحة التنفيذ" value="92%" />
+              <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface)] px-3 py-1.5 text-[10px] font-semibold text-[var(--text-muted)] sm:text-xs">{content.previewStatus}</span>
+            </div>
+            <div className="p-4 sm:p-6">
+              <div className="grid grid-cols-2 gap-3">
+                {content.modules.map((module, index) => {
+                  const Icon = module.icon;
+                  return (
+                    <article key={module.label} className="group rounded-2xl border border-[var(--border-default)] bg-[var(--surface)] p-4 transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-subtle)] sm:p-5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-subtle)] text-[var(--brand-primary)]"><Icon size={19} /></span>
+                        <span className="text-[10px] font-bold text-[var(--text-muted)]" dir="ltr">0{index + 1}</span>
+                      </div>
+                      <h3 className="mt-4 text-sm font-bold text-[var(--text-primary)] sm:text-base">{module.label}</h3>
+                      <p className="mt-1.5 text-xs leading-6 text-[var(--text-secondary)] sm:text-sm">{module.detail}</p>
+                    </article>
+                  );
+                })}
               </div>
-
-              <div className="mt-4 rounded-[16px] border border-[var(--landing-accent-border)] bg-[var(--landing-accent-soft)] p-4">
-                <p className="text-sm font-bold text-[var(--landing-accent-strong)]">
-                  توصية تنفيذية من KAFU AI
-                </p>
-
-                <p className="mt-2 text-sm leading-7 text-[var(--landing-text-secondary)]">
-                  أعطِ الأولوية لتخطيط قدرات القوى العاملة، واربط مبادرات التحول
-                  بمسؤولين واضحين ونتائج قابلة للقياس.
-                </p>
+              <div className="mt-3 flex items-start gap-3 rounded-2xl border border-[color-mix(in_srgb,var(--brand-primary)_22%,var(--border-default))] bg-[var(--brand-subtle)] p-4 sm:p-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--brand-primary)]"><Bot size={20} /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-[var(--text-primary)]">{content.assistant}</p>
+                  <p className="mt-1 text-xs leading-6 text-[var(--text-secondary)] sm:text-sm">{content.assistantText}</p>
+                </div>
+                <span className="hidden shrink-0 items-center gap-1 text-xs font-bold text-[var(--brand-primary)] sm:inline-flex">{content.assistantAction}<Arrow size={14} /></span>
               </div>
             </div>
           </div>
+          <p className="mt-3 text-center text-[11px] text-[var(--text-muted)]">{content.previewStatus}</p>
         </div>
       </div>
     </section>
-  );
-}
-
-interface MetricCardProps {
-  label: string;
-  value: string;
-}
-
-function MetricCard({ label, value }: MetricCardProps) {
-  return (
-    <article className="rounded-[15px] border border-[var(--landing-border)] bg-[var(--landing-surface-muted)] px-4 py-4 transition-colors duration-200 hover:bg-[var(--landing-surface-hover)]">
-      <p className="text-xs font-medium text-[var(--landing-text-secondary)]">
-        {label}
-      </p>
-
-      <p
-        className="mt-2 text-2xl font-bold leading-none text-[var(--landing-text-primary)]"
-        dir="ltr"
-      >
-        {value}
-      </p>
-    </article>
   );
 }

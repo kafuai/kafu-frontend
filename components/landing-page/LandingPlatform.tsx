@@ -1,87 +1,157 @@
-﻿const PLATFORM_CAPABILITIES = [
-  {
-    label: "Discover",
-    title: "الاكتشاف المؤسسي",
-    description:
-      "التقاط السياق الحقيقي للمؤسسة من خلال أسئلة موجهة، بيانات تشغيلية، ومدخلات أصحاب العلاقة.",
-  },
-  {
-    label: "Assess",
-    title: "التقييم والجاهزية",
-    description:
-      "قياس الجاهزية المؤسسية، القدرات، فجوات الأداء، والمخاطر التي تعيق التقدم.",
-  },
-  {
-    label: "Understand",
-    title: "العقل المؤسسي",
-    description:
-      "بناء ذاكرة مترابطة للمعرفة والقرارات والأولويات والتجارب السابقة داخل المؤسسة.",
-  },
-  {
-    label: "Recommend",
-    title: "التوصيات الذكية",
-    description:
-      "تحويل المعطيات إلى توصيات تنفيذية مرتبة حسب الأولوية، الأثر، والثقة.",
-  },
-  {
-    label: "Execute",
-    title: "مركز القيادة",
-    description:
-      "إدارة القرارات، المبادرات، المسؤوليات، المواعيد، والتنبيهات من مساحة موحدة.",
-  },
-  {
-    label: "Scale",
-    title: "القوى العاملة الرقمية",
-    description:
-      "توظيف وكلاء ذكاء اصطناعي لدعم الفرق في التحليل، المتابعة، والتنسيق المؤسسي.",
-  },
-] as const;
+﻿"use client";
+
+import React from "react";
+import { useLocalization } from "@/components/localization/LocalizationContext";
+
+
+const ARABIC_CONTENT = {
+  badge: "إدارة الموارد البشرية في منصة واحدة",
+  title: "كل ما يحتاجه فريق الموارد البشرية لتسيير العمل اليومي",
+  description:
+    "يجمع KAFU AI بيانات الموظفين وعمليات الحضور والإجازات والطلبات والرواتب في مساحة عمل واحدة، مع أدوات تساعد الموظف والمدير وفريق الموارد البشرية على متابعة الإجراءات بوضوح.",
+  loopBadge: "من طلب الموظف إلى الإجراء المعتمد",
+  loopSequence: "تقديم الطلب ← مراجعة المدير ← إجراء الموارد البشرية ← تحديث الحالة",
+  capabilities: [
+    {
+      label: "الموظفون",
+      title: "إدارة بيانات الموظفين",
+      description:
+        "ملفات منظمة للموظفين تشمل البيانات الوظيفية ومعلومات العمل والبيانات المرتبطة بالرواتب.",
+    },
+    {
+      label: "الحضور",
+      title: "الحضور والانصراف",
+      description:
+        "متابعة سجلات الحضور والتأخير والغياب، مع إعداد مواقع العمل وساعات الدوام والورديات.",
+    },
+    {
+      label: "الإجازات",
+      title: "الإجازات وطلبات الموظفين",
+      description:
+        "تقديم الطلبات ومتابعة حالتها وإدارتها من خلال مسارات المراجعة والاعتماد.",
+    },
+    {
+      label: "الرواتب",
+      title: "إدارة مسيرات الرواتب",
+      description:
+        "تنظيم بيانات الرواتب وتجهيز المسيرات ومراجعتها واعتمادها وفق صلاحيات المستخدمين.",
+    },
+    {
+      label: "الموافقات",
+      title: "مسارات الموافقات",
+      description:
+        "تنظيم انتقال الطلبات بين المسؤولين وتوثيق قرارات الموافقة أو الرفض ومتابعة حالة كل طلب.",
+    },
+    {
+      label: "المساعد الذكي",
+      title: "تجربة موظف أسهل",
+      description:
+        "مساعد ذكي يسهّل على الموظفين الوصول إلى المعلومات والخدمات وتقديم الطلبات ومتابعتها.",
+    },
+  ],
+} as const;
+
+
+const ENGLISH_CONTENT = {
+  badge: "HR Operations in One Platform",
+  title: "The tools HR teams need to manage everyday work",
+  description:
+    "KAFU AI brings employee records, attendance, leave, requests, and payroll workflows into one workspace, helping employees, managers, and HR teams follow each process clearly.",
+  loopBadge: "From employee request to completed action",
+  loopSequence: "Employee submits → Manager reviews → HR processes → Status is updated",
+  capabilities: [
+    {
+      label: "People",
+      title: "Employee Management",
+      description:
+        "Organized employee profiles covering employment details, work information, and payroll-related data.",
+    },
+    {
+      label: "Attendance",
+      title: "Time & Attendance",
+      description:
+        "Track attendance, lateness, and absence while configuring work locations, working hours, and shifts.",
+    },
+    {
+      label: "Leave",
+      title: "Leave & Employee Requests",
+      description:
+        "Submit requests, follow their status, and process them through review and approval workflows.",
+    },
+    {
+      label: "Payroll",
+      title: "Payroll Runs",
+      description:
+        "Organize salary data and prepare, review, and approve payroll runs according to user permissions.",
+    },
+    {
+      label: "Approvals",
+      title: "Approval Workflows",
+      description:
+        "Route requests to the right people, record approval or rejection decisions, and track each request.",
+    },
+    {
+      label: "AI Assistant",
+      title: "A Better Employee Experience",
+      description:
+        "An AI assistant that helps employees find information and services, submit requests, and follow up.",
+    },
+  ],
+} as const;
 
 export function LandingPlatform() {
+  const { locale } = useLocalization();
+  const isArabic = locale === "ar";
+  const content = isArabic ? ARABIC_CONTENT : ENGLISH_CONTENT;
+
   return (
-    <section className="border-b border-[var(--landing-border)] bg-[var(--landing-bg-secondary)] px-6 py-20 lg:px-10">
+    <section 
+      dir={isArabic ? "rtl" : "ltr"}
+      className="border-b border-[var(--landing-border)] bg-[var(--landing-bg-secondary)] px-6 py-20 lg:px-10"
+    >
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
-          <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="lg:sticky lg:top-24 lg:self-start text-start">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--landing-accent)] sm:text-sm">
-              One Connected Platform
+              {content.badge}
             </p>
 
             <h2 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--landing-text-primary)] sm:text-4xl lg:text-[2.75rem]">
-              من فهم المؤسسة إلى تنفيذ القرار
+              {content.title}
             </h2>
 
             <p className="mt-5 max-w-xl text-base leading-8 text-[var(--landing-text-secondary)] sm:text-lg">
-              يربط KAFU AI دورة العمل كاملة بدلًا من ترك كل مرحلة في أداة أو
-              ملف أو إدارة منفصلة.
+              {content.description}
             </p>
 
             <div className="mt-7 rounded-2xl border border-[var(--landing-accent-border)] bg-[var(--landing-accent-soft)] p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--landing-accent-strong)]">
-                Connected Intelligence Loop
+                {content.loopBadge}
               </p>
 
               <p
-                dir="ltr"
-                className="mt-3 text-left text-sm leading-7 text-[var(--landing-text-secondary)] sm:text-base"
+                className="mt-3 text-start text-sm leading-7 text-[var(--landing-text-secondary)] sm:text-base"
               >
-                Discover → Assess → Understand → Recommend → Execute → Learn
+                {content.loopSequence}
               </p>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {PLATFORM_CAPABILITIES.map((capability, index) => (
+            {content.capabilities.map((capability, index) => (
               <article
                 key={capability.label}
-                className="min-h-56 rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-surface)] p-6 transition duration-200 hover:border-[var(--landing-accent-border)] hover:bg-[var(--landing-surface-hover)]"
+                className="group flex min-h-56 flex-col rounded-2xl border border-[var(--landing-border)] bg-[var(--landing-surface)] p-6 text-start transition duration-200 hover:border-[var(--landing-accent-border)] hover:bg-[var(--landing-surface-hover)]"
               >
                 <div className="flex items-center justify-between gap-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--landing-accent)]">
                     {capability.label}
                   </p>
 
-                  <span className="text-xs font-medium text-[var(--landing-text-muted)]">
+                  <span 
+                    dir="ltr"
+                    className="text-xs font-medium text-[var(--landing-text-muted)]"
+                  >
                     {String(index + 1).padStart(2, "0")}
                   </span>
                 </div>
@@ -101,4 +171,3 @@ export function LandingPlatform() {
     </section>
   );
 }
-

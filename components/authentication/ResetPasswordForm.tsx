@@ -16,6 +16,7 @@ import {
   getBrowserAuthenticationService,
 } from "../../src/enterprise/authentication/authenticationRuntime";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
+import { validatePassword } from "@/lib/passwordValidation";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -40,10 +41,26 @@ export default function ResetPasswordForm() {
 
     setErrorMessage("");
 
-    if (password.length < 8) {
-      setErrorMessage(
-        "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
-      );
+    const passwordValidation = validatePassword(password);
+
+    if (!passwordValidation.valid) {
+      switch (passwordValidation.reason) {
+        case "too_short":
+          setErrorMessage("Password must be at least 8 characters.");
+          break;
+
+        case "letter_required":
+          setErrorMessage("Password must contain at least one letter.");
+          break;
+
+        case "number_required":
+          setErrorMessage("Password must contain at least one number.");
+          break;
+
+        case "whitespace_not_allowed":
+          setErrorMessage("Password cannot contain spaces.");
+          break;
+      }
       return;
     }
 

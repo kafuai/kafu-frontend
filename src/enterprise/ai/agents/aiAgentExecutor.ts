@@ -4,7 +4,9 @@ import { AIAgentRuntime } from "./aiAgentRuntime";
 export interface ExecuteAIAgentTaskHandler {
   (
     execution: AIAgentExecution,
-  ): Record<string, unknown>;
+  ):
+    | Record<string, unknown>
+    | Promise<Record<string, unknown>>;
 }
 
 export class AIAgentExecutor {
@@ -12,18 +14,28 @@ export class AIAgentExecutor {
     private readonly runtime: AIAgentRuntime,
   ) {}
 
-  execute(
+  async execute(
     execution: AIAgentExecution,
     handler: ExecuteAIAgentTaskHandler,
-  ): AIAgentExecution {
-    const running = this.runtime.start(execution);
+  ): Promise<AIAgentExecution> {
+    const running =
+      this.runtime.start(execution);
 
     try {
-      const output = handler(running);
+      const output =
+        await handler(running);
 
-      return this.runtime.complete(running, output);
+      return this.runtime.complete(
+        running,
+        output,
+      );
     } catch (error) {
-      return this.runtime.fail(running, error as Error);
+      return this.runtime.fail(
+        running,
+        error instanceof Error
+          ? error
+          : String(error),
+      );
     }
   }
 }

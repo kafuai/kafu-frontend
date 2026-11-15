@@ -1,36 +1,137 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KAFU AI Overview
 
-## Getting Started
+KAFU AI is a web-based enterprise AI platform built with Next.js, Supabase, and OpenAI. 
+The platform provides organization-specific AI capabilities based on company data, onboarding information, policies, and employee requests.
 
-First, run the development server:
+## 1. Core Focus Areas
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The current application focuses on:
+- Organization onboarding
+- Assessment
+- Discovery
+- Corporate Brain
+- Digital Workforce
+- Employee Experience
+- Role-Based Access Control (RBAC)
+- Organization and user administration
+- Grounded AI responses
+- HR / employee request management
+
+---
+
+## 2. Technology Stack
+
+| Technology | Purpose |
+| :--- | :--- |
+| **Next.js** | Frontend framework and server-side application |
+| **React** | UI components |
+| **TypeScript** | Type safety |
+| **Supabase** | Authentication, database and backend services |
+| **OpenAI** | AI response generation |
+| **Tailwind CSS** | Styling |
+| **ESLint** | Code quality |
+| **Turbopack** | Next.js development/build tooling |
+
+---
+
+## 3. High-Level Architecture
+
+```text
+                        ┌─────────────────────┐
+                        │       User          │
+                        └──────────┬──────────┘
+                                   │
+                                   ▼
+                        ┌─────────────────────┐
+                        │      Next.js        │
+                        │      Frontend       │
+                        └──────────┬──────────┘
+                                   │
+                 ┌─────────────────┼─────────────────┐
+                 │                 │                 │
+                 ▼                 ▼                 ▼
+          ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+          │    Proxy    │   │ API Routes  │   │   UI Pages  │
+          │ Auth / RBAC │   │ Application │   │             │
+          └──────┬──────┘   └──────┬──────┘   └─────────────┘
+                 │                 │
+                 └────────┬────────┘
+                          ▼
+                   ┌──────────────┐
+                   │   Supabase   │
+                   │ Auth + DB    │
+                   └──────┬───────┘
+                          │
+                          ▼
+                   ┌──────────────┐
+                   │ Organization │
+                   │    Data      │
+                   └──────┬───────┘
+                          │
+                          ▼
+                   ┌──────────────┐
+                   │ OpenAI / AI  │
+                   │ Grounded AI  │
+                   └──────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 4. Main Application Flow
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The intended user flow is:
 
-## Learn More
+```text
+       Login
+         │
+         ▼
+  Authentication
+         │
+         ▼
+Organization / Membership
+         │
+         ▼
+     Assessment
+         │
+         ▼
+      Discovery
+         │
+         ▼
+     Application
+         │
+         ├── Corporate Brain
+         │
+         ├── Digital Workforce
+         │
+         └── Employee Experience
+```
 
-To learn more about Next.js, take a look at the following resources:
+> **Note:** Access to application areas is controlled through authentication, onboarding state, and RBAC.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 5. Main Project Structure
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+kafu-frontend/
+│
+├── app/
+│   ├── admin/
+│   ├── assessment/
+│   ├── corporate-brain/
+│   ├── discovery/
+│   ├── digital-workforce/
+│   ├── employee-experience/
+│   ├── login/
+│   └── api/
+│
+├── components/
+├── features/
+├── lib/
+├── proxy.ts
+├── public/
+├── supabase/
+├── docs/
+├── package.json
+└── README.md
+```
