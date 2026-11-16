@@ -27,7 +27,6 @@ const COPY = {
     points: ["مساحة عمل موحدة", "خدمة ذاتية للموظفين", "متابعة وموافقات منظمة"],
     previewLabel: "مساحة عمل الموارد البشرية",
     previewTitle: "نظرة موحدة على عملياتك",
-    previewStatus: "نموذج توضيحي للواجهة",
     modules: [
       { label: "الموظفون", detail: "الملفات والبيانات الوظيفية", icon: Users },
       { label: "الحضور والورديات", detail: "الحضور والانصراف وإدارة الورديات", icon: Clock3 },
@@ -48,7 +47,6 @@ const COPY = {
     points: ["One connected workspace", "Employee self-service", "Structured approvals and tracking"],
     previewLabel: "HR Workspace",
     previewTitle: "A unified view of your operations",
-    previewStatus: "Illustrative interface preview",
     modules: [
       { label: "Employees", detail: "Profiles and employment data", icon: Users },
       { label: "Attendance & shifts", detail: "Time, attendance and shift management", icon: Clock3 },
@@ -127,7 +125,6 @@ export function LandingHero() {
                   <h2 className="mt-0.5 text-sm font-bold text-[var(--text-primary)] sm:text-base">{content.previewTitle}</h2>
                 </div>
               </div>
-              <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface)] px-3 py-1.5 text-[10px] font-semibold text-[var(--text-muted)] sm:text-xs">{content.previewStatus}</span>
             </div>
             <div className="p-4 sm:p-6">
               <div className="grid grid-cols-2 gap-3">
@@ -155,7 +152,6 @@ export function LandingHero() {
               </div>
             </div>
           </div>
-          <p className="mt-3 text-center text-[11px] text-[var(--text-muted)]">{content.previewStatus}</p>
         </div>
       </div>
     </section>
