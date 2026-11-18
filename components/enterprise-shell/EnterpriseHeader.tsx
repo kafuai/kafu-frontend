@@ -27,7 +27,6 @@ import {
   ShieldCheck,
   UserRound,
   Building,
-  UsersRound,
   LayoutDashboardIcon,
   BriefcaseBusiness,
   Fingerprint,
@@ -104,6 +103,7 @@ const navigationItems: readonly NavigationGroup[] = [
     icon: CalendarOff,
     children: [
       { key: "submit", href: "/employee-experience/employee", icon: Send, permission: PERMISSIONS.EMPLOYEE_USE },
+      { key: "myRequest", href: "/employee-experience/my-requests", icon: Inbox, permission:PERMISSIONS.EMPLOYEE_USE},
     ]
   },
   {
@@ -154,6 +154,7 @@ const HEADER_CONTENT = {
       hrDashboard: "لوحة الموارد البشرية",
       attendanceDashboard: "لوحة الحضور والانصراف",
       devices: "أجهزة الحضور",
+      myRequest: "طلباتي"
     }
   },
   en: {
@@ -194,6 +195,7 @@ const HEADER_CONTENT = {
       hrDashboard: "HR Dashboard",
       attendanceDashboard: "Attendance & Infractions Dashboard",
       devices: "Attendance Devices",
+      myRequest: "My Request"
     }
   },
 } as const;

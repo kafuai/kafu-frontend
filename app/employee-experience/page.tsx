@@ -15,9 +15,9 @@ import { supabase } from "@/lib/supabase";
 import { useLocalization } from "@/components/localization/LocalizationContext";
 
 const CARDS_ROLES = {
-  policies: ["admin", "owner", "manager"],
+  policies: ["admin", "owner"],
   requests: ["admin", "owner", "manager"],
-  employee: ["admin", "member"],
+  employee: ["admin","owner", "manager", "member"],
 };
 
 const CONTENT = {

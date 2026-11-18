@@ -27,12 +27,12 @@ export interface ApprovalView {
  * Key = `${subject_type}:${request_id}`.
  */
 export async function loadVisibleApprovals(
-  db: SupabaseClient, org: string, userId: string, canViewAll: boolean,
+  db: SupabaseClient, org: string, userId: string, canViewAll: boolean, includeRequestedBy = false,
 ): Promise<{ instances: InstanceRow[]; views: Map<string, ApprovalView> }> {
   const repo = new ApprovalRepository(db);
   const all = await repo.listAll(org);
   const instances = all.filter(
-    (i) => canViewAll || i.steps_snapshot.some((s) => s.approverIds.includes(userId)),
+    (i) => canViewAll || (includeRequestedBy && i.requester_id === userId) || i.steps_snapshot.some((s) => s.approverIds.includes(userId)),
   );
   const decisions = await repo.listDecisionsForInstances(org, instances.map((i) => i.id));
   const names = await repo.profileNames([
