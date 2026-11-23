@@ -1,10 +1,13 @@
-﻿import {
+﻿
+import {
   NextResponse,
   type NextRequest,
 } from "next/server";
+
 import {
   createServerClient,
 } from "@supabase/ssr";
+
 import {
   getRoutePermission,
   hasPermission,
@@ -24,7 +27,7 @@ const protectedRoutes = [
   "/approvals",
   "/departments",
   "/hr-dashboard",
-  ];
+];
 
 const guestRoutes = [
   "/login",
@@ -66,18 +69,19 @@ function getSupabasePublicKey(): string {
 type MembershipRow = {
   organization_id: string;
   role: string | null;
+
   organizations:
     | {
         id: string;
         company_id: string | null;
-        assessment_completed: boolean | null; // NEW: حالة إكمال Assessment
-        onboarding_completed: boolean | null; // Existing: حالة إكمال Onboarding بالكامل
+        assessment_completed: boolean | null;
+        onboarding_completed: boolean | null;
       }
     | {
         id: string;
         company_id: string | null;
-        assessment_completed: boolean | null; // NEW: حالة إكمال Assessment
-        onboarding_completed: boolean | null; // Existing: حالة إكمال Onboarding بالكامل
+        assessment_completed: boolean | null;
+        onboarding_completed: boolean | null;
       }[]
     | null;
 };
@@ -121,19 +125,14 @@ async function getOnboardingState(
 
   if (typedMemberships.length === 0) {
     return {
-      assessmentCompleted: false, // NEW: لا يوجد Organization = Assessment غير مكتمل
-      onboardingCompleted: false, // Existing logic
+      assessmentCompleted: false,
+      onboardingCompleted: false,
       role: null,
     };
   }
 
-  /*
-   * A user may theoretically have more than one organization
-   * membership. We consider the relevant state completed if
-   * any organization is marked as completed.
-   */
-  let assessmentCompleted = false; // NEW: نحفظ حالة Assessment بشكل مستقل
-  let onboardingCompleted = false; // Existing: نحفظ حالة Onboarding الكاملة
+  let assessmentCompleted = false;
+  let onboardingCompleted = false;
   let role: string | null = null;
 
   typedMemberships.forEach((membership) => {
@@ -141,23 +140,90 @@ async function getOnboardingState(
       Array.isArray(membership.organizations)
         ? membership.organizations[0]
         : membership.organizations;
-    if (!role && membership.role){
+
+    if (membership.role?.toLowerCase() === "admin") {
+      role = "admin";
+    } else if (!role && membership.role) {
       role = membership.role;
     }
 
-    if (organization?.assessment_completed === true) {
-      assessmentCompleted = true; // NEW: المستخدم أكمل Assessment
+    if (
+      organization?.assessment_completed === true
+    ) {
+      assessmentCompleted = true;
     }
 
-    if (organization?.onboarding_completed === true) {
-      onboardingCompleted = true; // Existing: المستخدم أكمل Discovery أيضًا
+    if (
+      organization?.onboarding_completed === true
+    ) {
+      onboardingCompleted = true;
     }
   });
 
   return {
-    assessmentCompleted, // NEW
-    onboardingCompleted, // Existing
+    assessmentCompleted,
+    onboardingCompleted,
     role,
+  };
+}
+
+/**
+ * Organization suspension enforcement.
+ *
+ * Reads membership and organization status using
+ * the authenticated server-side Supabase client.
+ *
+ * Fails closed if the status cannot be verified.
+ */
+async function getOrganizationAccessState(
+  supabase: ReturnType<typeof createServerClient>,
+  userId: string,
+): Promise<{
+  hasMembership: boolean;
+  hasSuspendedOrganization: boolean;
+  isPlatformAdmin: boolean;
+} | null> {
+  const { data, error } = await supabase
+    .from("organization_memberships")
+    .select("role, organizations(is_active)")
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error(
+      "Failed to verify organization status:",
+      error,
+    );
+
+    return null;
+  }
+
+  const rows = (data ?? []) as Array<{
+    role: string | null;
+    organizations:
+      | { is_active: boolean | null }
+      | { is_active: boolean | null }[]
+      | null;
+  }>;
+
+  const isPlatformAdmin = rows.some(
+    (row) => row.role?.toLowerCase() === "admin",
+  );
+
+  // Fail closed if any linked organization is suspended.
+  // This prevents switching to a suspended tenant
+  // through an account with multiple memberships.
+  const hasSuspendedOrganization = rows.some((row) => {
+    const organization = Array.isArray(row.organizations)
+      ? row.organizations[0]
+      : row.organizations;
+
+    return organization?.is_active !== true;
+  });
+
+  return {
+    hasMembership: rows.length > 0,
+    hasSuspendedOrganization,
+    isPlatformAdmin,
   };
 }
 
@@ -252,6 +318,61 @@ export async function proxy(
     );
 
   /*
+   * Organization suspension enforcement.
+   *
+   * Covers protected pages and every incoming
+   * Next.js API route.
+   *
+   * Users without memberships continue through
+   * the existing onboarding flow.
+   */
+
+  if (
+    data.user &&
+    (
+      isProtectedRoute ||
+      pathname.startsWith("/api/")
+    ) &&
+    pathname !== "/organization-suspended"
+  ) {
+    const organizationAccess =
+      await getOrganizationAccessState(
+        supabase,
+        data.user.id,
+      );
+
+    if (organizationAccess === null) {
+      return NextResponse.json(
+        {
+          error:
+            "Unable to verify organization access.",
+        },
+        { status: 503 },
+      );
+    }
+
+    if (
+      organizationAccess.hasMembership &&
+      !organizationAccess.isPlatformAdmin &&
+      organizationAccess.hasSuspendedOrganization
+    ) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json(
+          {
+            error: "This organization is suspended.",
+          },
+          { status: 403 },
+        );
+      }
+
+      return redirectToPath(
+        request,
+        "/organization-suspended",
+      );
+    }
+  }
+
+  /*
    * Unauthenticated users cannot access protected routes.
    */
   if (
@@ -287,101 +408,94 @@ export async function proxy(
   }
 
   /*
-   * Onboarding state is now a persisted organization-level
-   * state. The proxy no longer calculates completion from
-   * Assessment or Discovery data.
+   * Existing onboarding state.
    */
   if (
     data.user &&
     isProtectedRoute
   ) {
-  const onboardingState =
-  await getOnboardingState(
-    supabase,
-    data.user.id,
-  );
+    const onboardingState =
+      await getOnboardingState(
+        supabase,
+        data.user.id,
+      );
 
-if (onboardingState === null) {
+    if (onboardingState === null) {
+      return response;
+    }
+
+    const {
+      assessmentCompleted,
+      onboardingCompleted,
+      role,
+    } = onboardingState;
+
+    /*
+     * STEP 1:
+     * Assessment is NOT completed.
+     */
+
+    if (
+      !assessmentCompleted &&
+      pathname !== "/assessment"
+    ) {
+      return redirectToPath(
+        request,
+        "/assessment",
+      );
+    }
+
+    /*
+     * STEP 2:
+     * Assessment completed, Discovery incomplete.
+     */
+
+    if (
+      assessmentCompleted &&
+      !onboardingCompleted &&
+      !isOnboardingRoute
+    ) {
+      return redirectToPath(
+        request,
+        "/discovery",
+      );
+    }
+
+    /*
+     * STEP 3:
+     * Existing RBAC authorization.
+     */
+
+    const routePermission =
+      getRoutePermission(pathname);
+
+    if (
+      routePermission &&
+      !role
+    ) {
+      return redirectToPath(
+        request,
+        "/unauthorized",
+      );
+    }
+
+    if (
+      routePermission &&
+      role &&
+      !hasPermission(
+        role,
+        routePermission,
+      )
+    ) {
+      return redirectToPath(
+        request,
+        "/unauthorized",
+      );
+    }
+  }
+
   return response;
 }
-
-const {
-  assessmentCompleted,
-  onboardingCompleted,
-  role,
-} = onboardingState;
-
-/*
- * STEP 1:
- * Assessment is NOT completed.
- *
- * The user is only allowed to access /assessment.
- * Discovery and all protected workspace routes
- * must redirect back to Assessment.
- */
-if (
-  !assessmentCompleted &&
-  pathname !== "/assessment"
-) {
-  return redirectToPath(
-    request,
-    "/assessment",
-  );
-}
-
-/*
- * STEP 2:
- * Assessment is completed, but Discovery is NOT completed.
- *
- * The user can access Assessment and Discovery.
- * Any other protected route must redirect to Discovery.
- */
-if (
-  assessmentCompleted &&
-  !onboardingCompleted &&
-  !isOnboardingRoute
-) {
-  return redirectToPath(
-    request,
-    "/discovery",
-  );
-}
-
-/*
- * STEP 4:
- * Assessment + Discovery are completed.
- *
- * Check RBAC permissions for pilot routes.
- */
-const routePermission =
-  getRoutePermission(pathname);
-
-if (
-  routePermission &&
-  !role
-) {
-  return redirectToPath(
-    request,
-    "/unauthorized",
-  );
-}
-
-if (
-  routePermission &&
-  role &&
-  !hasPermission(
-    role,
-    routePermission,
-  )
-) {
-  return redirectToPath(
-    request,
-    "/unauthorized",
-  );
-}
-}
-}
-
 
 export const config = {
   matcher: [

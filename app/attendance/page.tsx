@@ -192,29 +192,48 @@ export default function AttendancePage() {
   }, [month]);
 
   const load = useCallback(async () => {
-    try {
-      const t = await api("/api/attendance/today");
-      setToday(t);
-      const uid = t.userId as string;
+  try {
+    const [todayResult, rec, props, corr] = await Promise.allSettled([
+      api("/api/attendance/today"),
+      range.future
+        ? Promise.resolve({ data: [] })
+        : api(`/api/attendance/my?from=${range.from}&to=${range.to}`),
+      api("/api/attendance/proposals"),
+      api("/api/attendance/corrections"),
+    ]);
 
-      const [rec, props, corr] = await Promise.allSettled([
-        range.future ? Promise.resolve({ data: [] }) : api(`/api/attendance/my?from=${range.from}&to=${range.to}`),
-        api("/api/attendance/proposals"),
-        api("/api/attendance/corrections"),
-      ]);
+    if (todayResult.status === "rejected") throw todayResult.reason;
+    if (rec.status === "rejected") throw rec.reason;
 
-      if (rec.status === "fulfilled") setRecords((rec.value as any).data ?? []);
-      else throw rec.reason;
-      // حتى لو كان المستخدم owner: نعرض له سجلّه هو فقط
-      if (props.status === "fulfilled") setProposals(((props.value as any).data ?? []).filter((p: any) => p.user_id === uid));
-      if (corr.status === "fulfilled") setFixes(((corr.value as any).data ?? []).filter((c: any) => c.user_id === uid));
+    const t = todayResult.value;
+    const uid = t.userId as string;
 
-      setState("loaded");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error");
-      setState("error");
+    setToday(t);
+    setRecords((rec.value as any).data ?? []);
+
+    // حتى لو كان المستخدم owner: نعرض له سجلّه هو فقط
+    if (props.status === "fulfilled") {
+      setProposals(
+        ((props.value as any).data ?? []).filter(
+          (p: any) => p.user_id === uid
+        )
+      );
     }
-  }, [range.from, range.to, range.future]);
+
+    if (corr.status === "fulfilled") {
+      setFixes(
+        ((corr.value as any).data ?? []).filter(
+          (c: any) => c.user_id === uid
+        )
+      );
+    }
+
+    setState("loaded");
+  } catch (e) {
+    setError(e instanceof Error ? e.message : "Error");
+    setState("error");
+  }
+}, [range.from, range.to, range.future]);
 
   useEffect(() => {
     void load();
